@@ -1,0 +1,88 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: omeka
+      MARIADB_USER: omeka
+      MARIADB_PASSWORD: omeka
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect"]
+      interval: 3s
+      retries: 30
+
+  omeka:
+    image: giocomai/omeka-s-docker:v4.2.0
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./omeka/volume:/var/www/html/volume
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: omeka
+      MYSQL_USER: omeka
+      MYSQL_PASSWORD: omeka
+      OMEKA_ADMIN_EMAIL: admin@example.com
+      OMEKA_ADMIN_PASSWORD: admin-admin
+      OMEKA_SITE_TITLE: "Jon Sarkin Catalog"
+      OMEKA_ENVIRONMENT: development
+    restart: on-failure:5
+
+  qdrant:
+    image: qdrant/qdrant:v1.16
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  clip-api:
+    build:
+      context: ./sarkin-clip
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: omeka_items
+      VECTOR_NAME: visual_vec
+      TEXT_VECTOR_NAME: text_vec_clip
+      SEARCH_MODE: hybrid
+      DEFAULT_LIMIT: 50
+    restart: unless-stopped
+
+  ingest:
+    build:
+      context: ./sarkin-clip
+      dockerfile: Dockerfile.cpu
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: omeka_items
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      INGEST_WORKERS: 3
+    volumes:
+      - ./sarkin-clip/.hf_cache:/app/.hf_cache
+      - ./sarkin-clip/.ocr_cache.json:/app/.ocr_cache.json
+    profiles:
+      - ingest
+
+volumes:
+  dbdata:
+  qdrant_data:
