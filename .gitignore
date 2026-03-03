@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Ansible
+.ansible/
+*.retry
+
+# ML / caches
+.hf_cache/
+.omeka_media_cache/
+.ocr_cache.json
+.search_index.sqlite
+search_index/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Pytest
+.pytest_cache/

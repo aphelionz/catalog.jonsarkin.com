@@ -1,0 +1,10 @@
+[Unit]
+Description=Run signage watchdog on a schedule
+
+[Timer]
+OnBootSec={{ raspi_signage_watchdog_delay }}
+OnUnitActiveSec={{ raspi_signage_watchdog_interval }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

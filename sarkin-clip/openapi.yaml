@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: clip-api
+  version: "1.0"
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - ok
+                      - disabled
+                      - degraded
+  /v1/omeka/items/{omeka_id}/similar:
+    get:
+      summary: Get similar Omeka items
+      parameters:
+        - name: omeka_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 30
+        - name: catalog_version
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 2
+        - name: score_threshold
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+      responses:
+        "200":
+          description: Similar items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimilarResponse"
+        "400":
+          description: Bad request
+        "404":
+          description: Source item not found
+        "422":
+          description: Source item missing required vector
+        "502":
+          description: Qdrant unavailable
+        "503":
+          description: Similar search disabled
+  /v1/omeka/search:
+    get:
+      summary: Search Omeka items by text
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: catalog_version
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 2
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: min_score
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - hybrid
+              - semantic
+              - exact
+            default: hybrid
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "400":
+          description: Bad request
+        "502":
+          description: Qdrant unavailable
+        "503":
+          description: Text search disabled
+components:
+  schemas:
+    ItemPayload:
+      type: object
+      properties:
+        omeka_item_id:
+          oneOf:
+            - type: integer
+            - type: string
+        title:
+          type: string
+          nullable: true
+        omeka_url:
+          type: string
+          nullable: true
+        thumb_url:
+          type: string
+          nullable: true
+        catalog_version:
+          type: integer
+          nullable: true
+      required:
+        - omeka_item_id
+    MatchItem:
+      allOf:
+        - $ref: "#/components/schemas/ItemPayload"
+        - type: object
+          properties:
+            score:
+              type: number
+              format: float
+          required:
+            - score
+    SimilarResponse:
+      type: object
+      properties:
+        source:
+          $ref: "#/components/schemas/ItemPayload"
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/MatchItem"
+      required:
+        - source
+        - matches
+    SearchResult:
+      type: object
+      properties:
+        omeka_item_id:
+          oneOf:
+            - type: integer
+            - type: string
+        title:
+          type: string
+          nullable: true
+        omeka_url:
+          type: string
+          nullable: true
+        thumb_url:
+          type: string
+          nullable: true
+        score:
+          type: number
+          format: float
+        snippet:
+          type: string
+          nullable: true
+      required:
+        - omeka_item_id
+        - score
+    SearchResponse:
+      type: object
+      properties:
+        q:
+          type: string
+        limit:
+          type: integer
+        offset:
+          type: integer
+        preproc_version:
+          type: integer
+        embed_model:
+          type: string
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+      required:
+        - q
+        - limit
+        - offset
+        - preproc_version
+        - embed_model
+        - results

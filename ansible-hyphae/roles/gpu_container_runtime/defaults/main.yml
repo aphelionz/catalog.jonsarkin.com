@@ -1,0 +1,35 @@
+---
+# GPU driver and CUDA container defaults
+gpu_container_runtime_driver_packages:
+  - nvidia-driver-535
+
+gpu_container_runtime_cuda_test_image: nvidia/cuda:12.4.1-base-ubuntu22.04
+
+# Docker and repo setup
+gpu_container_runtime_docker_service: docker
+gpu_container_runtime_prereq_packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - software-properties-common
+gpu_container_runtime_docker_arch: amd64
+
+gpu_container_runtime_docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# Swarm mode control.
+gpu_container_runtime_swarm_enabled: false
+gpu_container_runtime_swarm_force_leave: true
+
+# NVIDIA container toolkit repo selection
+gpu_container_runtime_nvidia_distribution_override: ""
+gpu_container_runtime_nvidia_distribution_fallback: ubuntu22.04
+
+# Docker daemon runtime config
+gpu_container_runtime_default_runtime: nvidia
+gpu_container_runtime_nvidia_runtime_path: /usr/bin/nvidia-container-runtime
+gpu_container_runtime_nvidia_runtime_args: []

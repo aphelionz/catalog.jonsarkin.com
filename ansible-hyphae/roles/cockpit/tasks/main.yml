@@ -1,0 +1,76 @@
+---
+- name: Configure cockpit
+  when: cockpit_enabled
+  block:
+    - name: Install cockpit packages
+      ansible.builtin.apt:
+        name: "{{ cockpit_packages }}"
+        state: present
+      become: true
+
+    - name: Resolve cockpit listen streams
+      ansible.builtin.set_fact:
+        cockpit_effective_listen_streams: >-
+          {{
+            (cockpit_listen_streams if cockpit_listen_streams | length > 0 else
+            (cockpit_listen_addresses
+              | map('regex_replace', '$', ':' ~ cockpit_listen_port)
+              | list))
+          }}
+
+    - name: Ensure cockpit socket drop-in directory exists
+      ansible.builtin.file:
+        path: /etc/systemd/system/cockpit.socket.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      when:
+        - cockpit_manage_socket
+      become: true
+
+    - name: Remove legacy cockpit socket drop-in
+      ansible.builtin.file:
+        path: /etc/systemd/system/cockpit.socket.d/listen.conf
+        state: absent
+      when:
+        - cockpit_manage_socket
+        - cockpit_socket_dropin_name != "listen.conf"
+      notify:
+        - Reload systemd
+        - Restart cockpit socket
+        - Restart cockpit service
+      become: true
+
+    - name: Configure cockpit socket listen streams
+      ansible.builtin.template:
+        src: cockpit.socket.listen.conf.j2
+        dest: "/etc/systemd/system/cockpit.socket.d/{{ cockpit_socket_dropin_name }}"
+        owner: root
+        group: root
+        mode: "0644"
+      when:
+        - cockpit_manage_socket
+        - cockpit_effective_listen_streams | length > 0
+      notify:
+        - Reload systemd
+        - Restart cockpit socket
+        - Restart cockpit service
+      become: true
+
+    - name: Ensure cockpit socket is enabled and running
+      ansible.builtin.systemd:
+        name: cockpit.socket
+        enabled: true
+        state: started
+      become: true
+
+    - name: Ensure cockpit service is stopped when managing the socket
+      ansible.builtin.systemd:
+        name: cockpit.service
+        state: stopped
+      when:
+        - cockpit_manage_socket
+        - cockpit_stop_service_when_socket
+      failed_when: false
+      become: true

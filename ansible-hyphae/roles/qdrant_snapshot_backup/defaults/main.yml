@@ -1,0 +1,13 @@
+---
+qdrant_url: "http://10.10.0.1:6333"
+qdrant_collection: "omeka_items"
+qdrant_backup_root: "/srv/backups/qdrant"
+qdrant_backup_hour: "03"
+qdrant_backup_minute: "15"
+qdrant_api_key: ""
+qdrant_offbox_mode: "none" # none|rsync|rclone
+qdrant_offbox_rsync_target: "/mnt/nas/qdrant/{{ qdrant_collection }}/"
+qdrant_offbox_rclone_target: "remote:hyphae-backups/qdrant/{{ qdrant_collection }}/"
+qdrant_gcs_bucket: "jonsarkin-catalog-backups-us"
+qdrant_gcs_prefix: "qdrant"
+qdrant_gcs_delete_local: false

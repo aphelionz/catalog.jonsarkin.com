@@ -1,0 +1,225 @@
+<?php
+$heading = 'Search Similar Pieces';
+$this->headTitle($heading);
+
+$searchRoute = 'similar-search';
+$searchUrl = $this->url($searchRoute);
+$siteSlug = $siteSlug ?? '';
+$siteItemUrl = function ($id) use ($siteSlug) {
+    if ($siteSlug === '') {
+        return null;
+    }
+    try {
+        return $this->url('site/resource-id', [
+            'site-slug' => $siteSlug,
+            'controller' => 'item',
+            'id' => $id,
+        ]);
+    } catch (\Throwable $e) {
+        return null;
+    }
+};
+?>
+
+<h1><?= $this->escapeHtml($heading) ?></h1>
+
+<style>
+.similar-search-form {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+.similar-search-form label {
+    font-weight: 600;
+}
+.similar-search-form input[type="search"] {
+    flex: 1 1 240px;
+    min-width: 220px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #d0d0d0;
+}
+.similar-search-form button {
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #222;
+    background: #222;
+    color: #fff;
+    cursor: pointer;
+}
+.similar-search-results {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+.similar-search-results .resource {
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.75rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.similar-search-results .resource:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+}
+.similar-search-results .resource-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.similar-search-results .resource-link img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+.similar-search-results .resource-name {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+.similar-search-results .resource-snippet {
+    margin-top: 0.5rem;
+    color: #555;
+    font-size: 0.95rem;
+}
+.similar-search-meta {
+    margin-top: 0.5rem;
+    color: #666;
+}
+.similar-search-error {
+    margin-top: 1rem;
+    color: #7a0b0b;
+}
+.similar-search-pagination {
+    margin: 1.5rem 0 0;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+.similar-search-pagination a {
+    text-decoration: none;
+    border: 1px solid #d0d0d0;
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    color: #222;
+}
+</style>
+
+<form class="similar-search-form" method="get" action="<?= $this->escapeHtmlAttr($searchUrl) ?>">
+    <label for="similar-search-q">Search</label>
+    <input
+        type="search"
+        name="q"
+        id="similar-search-q"
+        value="<?= $this->escapeHtmlAttr($query ?? '') ?>"
+        placeholder="Search the catalog"
+        autocomplete="off"
+    >
+    <input type="hidden" name="limit" value="<?= (int) ($limit ?? 24) ?>">
+    <?php if ($siteSlug !== ''): ?>
+        <input type="hidden" name="site" value="<?= $this->escapeHtmlAttr($siteSlug) ?>">
+    <?php endif; ?>
+    <button type="submit">Search</button>
+</form>
+
+<?php if (!empty($error)): ?>
+    <p class="similar-search-error"><?= $this->escapeHtml($error) ?></p>
+<?php endif; ?>
+
+<?php if (empty($error) && ($query ?? '') === ''): ?>
+    <p>Enter a search term to find similar items.</p>
+<?php endif; ?>
+
+<?php if (!empty($query)): ?>
+    <?php if (!empty($meta['total'])): ?>
+        <p class="similar-search-meta"><?= $this->escapeHtml($meta['total']) ?> results found.</p>
+    <?php endif; ?>
+<?php endif; ?>
+
+<?php if (!empty($query) && empty($results) && empty($error)): ?>
+    <p>No results found.</p>
+<?php endif; ?>
+
+<?php if (!empty($results)): ?>
+    <ul class="resource-list similar-search-results">
+        <?php foreach ($results as $result): ?>
+            <?php
+            $item = $result['item'];
+            $id = $result['id'];
+            $label = $result['title'] ?: sprintf('Item #%d', $id);
+            $linkUrl = null;
+            $thumbUrl = $result['thumb_url'] ?? null;
+
+            if ($item) {
+                $label = $item->displayTitle() ?: $label;
+                if ($siteSlug !== '') {
+                    $linkUrl = $item->siteUrl($siteSlug);
+                }
+            }
+            if (!$linkUrl && !empty($result['url'])) {
+                $linkUrl = $result['url'];
+            }
+            if (!$linkUrl && $siteSlug !== '') {
+                $linkUrl = $siteItemUrl($id);
+            }
+            ?>
+            <li class="item resource">
+                <?php if ($linkUrl): ?>
+                    <a href="<?= $this->escapeHtmlAttr($linkUrl) ?>" class="resource-link">
+                        <?php if ($item): ?>
+                            <?= $this->thumbnail($item, 'square') ?>
+                        <?php elseif ($thumbUrl): ?>
+                            <img src="<?= $this->escapeHtmlAttr($thumbUrl) ?>" alt="<?= $this->escapeHtmlAttr($label) ?>" loading="lazy">
+                        <?php endif; ?>
+                        <span class="resource-name"><?= $this->escapeHtml($label) ?></span>
+                        <?php if (!empty($result['snippet'])): ?>
+                            <span class="resource-snippet"><?= $this->escapeHtml($result['snippet']) ?></span>
+                        <?php endif; ?>
+                    </a>
+                <?php else: ?>
+                    <span class="resource-name"><?= $this->escapeHtml($label) ?></span>
+                    <?php if (!empty($result['snippet'])): ?>
+                        <span class="resource-snippet"><?= $this->escapeHtml($result['snippet']) ?></span>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>
+
+<?php if (!empty($results) && !empty($pagination)): ?>
+    <?php
+    $buildQuery = function ($newOffset) use ($query, $limit, $siteSlug, $searchRoute) {
+        $params = [
+            'q' => $query,
+            'limit' => $limit,
+            'offset' => $newOffset,
+        ];
+        if ($siteSlug !== '') {
+            $params['site'] = $siteSlug;
+        }
+        return $this->url($searchRoute, [], ['query' => $params]);
+    };
+    ?>
+    <div class="similar-search-pagination">
+        <?php if ($pagination['prev_offset'] !== null): ?>
+            <a href="<?= $this->escapeHtmlAttr($buildQuery($pagination['prev_offset'])) ?>">Previous</a>
+        <?php endif; ?>
+        <?php if (!empty($pagination['total_pages'])): ?>
+            <span>Page <?= (int) $pagination['page'] ?> of <?= (int) $pagination['total_pages'] ?></span>
+        <?php endif; ?>
+        <?php if ($pagination['next_offset'] !== null): ?>
+            <a href="<?= $this->escapeHtmlAttr($buildQuery($pagination['next_offset'])) ?>">Next</a>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>

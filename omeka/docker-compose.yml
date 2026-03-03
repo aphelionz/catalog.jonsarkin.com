@@ -1,0 +1,42 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: omeka
+      MARIADB_USER: omeka
+      MARIADB_PASSWORD: omeka
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-u", "root", "-proot"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  omeka:
+    image: giocomai/omeka-s-docker:v4.2.0
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure:5
+    ports:
+      - "8080:80"
+    environment:
+      MYSQL_DATABASE_USER: omeka
+      MYSQL_DATABASE_PASSWORD: omeka
+      MYSQL_DATABASE_NAME: omeka
+      MYSQL_DATABASE_HOST: db
+      MYSQL_DATABASE_PORT: 3306
+
+      OMEKA_ADMIN_EMAIL: admin@example.com
+      OMEKA_ADMIN_NAME: admin
+      OMEKA_ADMIN_PASSWORD: admin-admin
+      OMEKA_SITE_TITLE: Omeka Local
+      APPLICATION_ENV: development
+    volumes:
+      - ./volume:/var/www/html/volume
+
+volumes:
+  dbdata:
+

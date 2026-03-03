@@ -1,0 +1,20 @@
+[Unit]
+Description=Raspberry Pi Signage Kiosk (Virtual Display)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ raspi_signage_user }}
+Group={{ raspi_signage_user }}
+Environment=HOME=/home/{{ raspi_signage_user }}
+Environment=DISPLAY={{ raspi_signage_virtual_display }}
+Environment=XDG_RUNTIME_DIR=/run/raspi-signage-virtual
+RuntimeDirectory=raspi-signage-virtual
+RuntimeDirectoryMode=0700
+WorkingDirectory=/home/{{ raspi_signage_user }}
+ExecStart=/usr/bin/xinit /usr/local/bin/raspi-signage-virtual-session -- /usr/bin/Xvfb {{ raspi_signage_virtual_display }} {{ raspi_signage_virtual_xvfb_args }}
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

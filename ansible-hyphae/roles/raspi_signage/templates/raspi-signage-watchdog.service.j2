@@ -1,0 +1,6 @@
+[Unit]
+Description=Watchdog for Raspberry Pi signage kiosk
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'pgrep -u {{ raspi_signage_user }} -f "{{ raspi_signage_chromium_process_match }}" >/dev/null || /bin/systemctl restart raspi-signage.service'

@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    QDRANT_URL=http://hyphae:6333 \
+    QDRANT_COLLECTION=omeka_items \
+    VECTOR_NAME=visual_vec \
+    SEARCH_DB_PATH=/app/search_index/index.sqlite \
+    SEARCH_MODE=hybrid
+
+WORKDIR /app
+
+COPY requirements.api.txt /app/requirements.api.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r /app/requirements.api.txt && \
+    pip cache purge
+
+COPY clip_api /app/clip_api
+
+CMD ["uvicorn", "clip_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,16 @@
+---
+# Host-level IPv6 disable.
+base_disable_ipv6: true
+
+# Host-specific firewall rules for hyphae.
+base_ufw_ipv6: false
+base_ufw_allow_tcp_ports:
+  - 80
+  - 443
+
+# Remove public SSH rules and allow LAN-only break-glass access.
+base_ufw_delete_tcp_ports:
+  - 22
+base_ufw_allow_tcp_from_rules:
+  - port: 22
+    from_ip: 192.168.0.0/24

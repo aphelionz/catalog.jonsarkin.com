@@ -1,0 +1,13 @@
+{
+  "rule": [
+    {
+      "action": { "type": "Delete" },
+      "condition": { "age": 180, "matchesPrefix": ["qdrant/"] }
+    },
+    {
+      "action": { "type": "Delete" },
+      "condition": { "isLive": false, "age": 30 }
+    }
+  ]
+}
+

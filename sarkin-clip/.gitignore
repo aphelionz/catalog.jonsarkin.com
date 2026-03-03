@@ -1,0 +1,7 @@
+.hf_cache
+.omeka_media_cache
+venv
+.env
+.ocr_cache.json
+.search_index.sqlite
+search_index

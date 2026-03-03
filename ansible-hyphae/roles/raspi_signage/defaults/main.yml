@@ -1,0 +1,74 @@
+---
+raspi_signage_user: signage
+raspi_signage_user_shell: /bin/bash
+raspi_signage_user_groups:
+  - video
+  - audio
+  - input
+  - render
+
+raspi_signage_packages:
+  - xserver-xorg
+  - x11-xserver-utils
+  - xinit
+  - openbox
+  - unclutter
+  - dbus-x11
+  - python3-xdg
+
+raspi_signage_chromium_packages:
+  - chromium
+  - chromium-browser
+raspi_signage_chromium_bin: ""
+raspi_signage_chromium_flags:
+  - --kiosk
+  - --noerrdialogs
+  - --disable-session-crashed-bubble
+  - --disable-infobars
+  - --incognito
+  - --no-first-run
+  - --disable-background-networking
+  - --disable-component-update
+  - --disable-features=TranslateUI
+raspi_signage_chromium_process_match: chromium
+raspi_signage_kiosk_url: "about:blank"
+
+raspi_signage_use_lightdm: false
+raspi_signage_lightdm_packages:
+  - lightdm
+
+raspi_signage_display: ":0"
+raspi_signage_tty: "tty1"
+raspi_signage_xorg_args: "-nocursor"
+raspi_signage_unclutter_args: "-idle 0.5 -root"
+raspi_signage_force_resolution: false
+raspi_signage_resolution: "1920x1080"
+raspi_signage_refresh_hz: 60
+raspi_signage_xrandr_output: "HDMI-1"
+raspi_signage_xrandr_primary: true
+raspi_signage_force_framebuffer: false
+raspi_signage_framebuffer_resolution: "1920x1080"
+
+raspi_signage_virtual_enabled: false
+raspi_signage_virtual_display: ":99"
+raspi_signage_virtual_resolution: "1920x1080"
+raspi_signage_virtual_depth: 24
+raspi_signage_virtual_xvfb_args: "-screen 0 {{ raspi_signage_virtual_resolution }}x{{ raspi_signage_virtual_depth }} -nolisten tcp -ac"
+raspi_signage_virtual_packages:
+  - xvfb
+  - x11vnc
+raspi_signage_virtual_vnc_enabled: true
+raspi_signage_virtual_vnc_port: 5901
+raspi_signage_virtual_vnc_bind_localhost: true
+raspi_signage_virtual_vnc_password: ""
+raspi_signage_virtual_vnc_password_file: "/home/{{ raspi_signage_user }}/.vnc/passwd"
+raspi_signage_virtual_vnc_extra_args: "-noshm -noxdamage"
+raspi_signage_virtual_chromium_user_data_dir: "/home/{{ raspi_signage_user }}/.config/chromium-virtual"
+raspi_signage_virtual_chromium_flags: []
+
+raspi_signage_watchdog_enabled: false
+raspi_signage_watchdog_delay: "2min"
+raspi_signage_watchdog_interval: "1min"
+
+raspi_signage_reboot_enabled: true
+raspi_signage_reboot_time: "03:30"

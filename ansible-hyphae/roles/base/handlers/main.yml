@@ -1,0 +1,17 @@
+---
+- name: Restart sshd
+  ansible.builtin.service:
+    name: "{{ base_sshd_service }}"
+    state: restarted
+  become: true
+
+- name: Restart WireGuard
+  ansible.builtin.systemd:
+    name: "wg-quick@{{ base_wireguard_interface }}"
+    state: restarted
+    enabled: true
+  become: true
+
+- name: Reload sysctl
+  ansible.builtin.command: sysctl --system
+  become: true

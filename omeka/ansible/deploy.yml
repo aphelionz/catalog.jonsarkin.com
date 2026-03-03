@@ -1,0 +1,32 @@
+---
+- name: Deploy Omeka volume to VPS
+  hosts: omeka
+  gather_facts: true
+  vars:
+    omeka_root: /var/www/omeka-s
+    volume_src: "{{ playbook_dir }}/../volume/"
+    deploy_delete: false
+    deploy_use_sudo_rsync: true
+  tasks:
+    - name: Ensure rsync is installed on the VPS
+      become: true
+      ansible.builtin.package:
+        name: rsync
+        state: present
+
+    - name: Sync ./volume into Omeka root (excluding uploads)
+      synchronize:
+        src: "{{ volume_src }}"
+        dest: "{{ omeka_root }}/"
+        mode: push
+        delete: "{{ deploy_delete }}"
+        compress: true
+        recursive: true
+        perms: false
+        owner: false
+        group: false
+        rsync_path: "{{ deploy_use_sudo_rsync | ternary('sudo rsync', omit) }}"
+        rsync_opts:
+          - "--omit-dir-times"
+          - "--exclude=files/"
+          - "--exclude=/config/"

@@ -1,0 +1,9 @@
+[Unit]
+Description=Nightly reboot schedule for Raspberry Pi signage
+
+[Timer]
+OnCalendar=*-*-* {{ raspi_signage_reboot_time }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

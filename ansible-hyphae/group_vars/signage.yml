@@ -1,0 +1,6 @@
+---
+raspi_signage_kiosk_url: "https://display.fishcitystudios.com"
+raspi_signage_force_resolution: false
+raspi_signage_force_framebuffer: true
+raspi_signage_framebuffer_resolution: "1920x1080"
+raspi_signage_virtual_enabled: true

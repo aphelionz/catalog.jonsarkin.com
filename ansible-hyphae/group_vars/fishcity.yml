@@ -1,0 +1,11 @@
+---
+# Enable Cockpit on fishcity hosts and bind to WireGuard.
+cockpit_enabled: true
+cockpit_listen_addresses:
+  - 10.10.0.1
+
+# Keep Docker Swarm disabled on fishcity hosts.
+gpu_container_runtime_swarm_enabled: false
+
+# Enable hyphae status MOTD.
+base_motd_enabled: true

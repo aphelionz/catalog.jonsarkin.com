@@ -1,0 +1,6 @@
+---
+python_runtime_packages:
+  # Use distro-default (LTS) Python packages
+  - python3
+  - python3-venv
+  - python3-pip

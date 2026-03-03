@@ -1,0 +1,10 @@
+[Unit]
+Description=Qdrant snapshot backup timer
+
+[Timer]
+OnCalendar=*-*-* {{ qdrant_backup_hour }}:{{ qdrant_backup_minute }}:00
+Persistent=true
+Unit=qdrant-backup.service
+
+[Install]
+WantedBy=timers.target

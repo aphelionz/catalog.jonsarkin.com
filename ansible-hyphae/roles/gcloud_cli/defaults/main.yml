@@ -1,0 +1,6 @@
+---
+gcloud_cli_keyring_path: /usr/share/keyrings/cloud.google.gpg
+gcloud_cli_key_url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+gcloud_cli_repo: "deb [signed-by={{ gcloud_cli_keyring_path }}] https://packages.cloud.google.com/apt cloud-sdk main"
+gcloud_cli_packages:
+  - google-cloud-cli

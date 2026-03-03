@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+
+export DISPLAY={{ raspi_signage_virtual_display }}
+export HOME=/home/{{ raspi_signage_user }}
+export XDG_RUNTIME_DIR=/run/raspi-signage-virtual
+
+xset s off
+xset -dpms
+xset s noblank
+
+unclutter {{ raspi_signage_unclutter_args }} &
+
+openbox-session &
+flags="{{ (raspi_signage_virtual_chromium_flags | length > 0) | ternary(raspi_signage_virtual_chromium_flags, raspi_signage_chromium_flags) | join(' ') }}"
+case " $flags " in
+  *" --user-data-dir="*) ;;
+  *) flags="$flags --user-data-dir={{ raspi_signage_virtual_chromium_user_data_dir }}" ;;
+esac
+
+while true; do
+  {{ raspi_signage_chromium_bin }} $flags {{ raspi_signage_kiosk_url }} || true
+  sleep 2
+done

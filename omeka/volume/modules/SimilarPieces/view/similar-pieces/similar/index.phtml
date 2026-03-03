@@ -1,0 +1,211 @@
+<?php
+$heading = sprintf('Similar pieces for item #%d', $itemId);
+$this->headTitle($heading);
+?>
+
+<h1><?= $this->escapeHtml($heading) ?></h1>
+
+<style>
+.similar-pieces-source {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid #e6e6e6;
+    border-radius: 16px;
+    background: #fff;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+.similar-pieces-source .source-media {
+    flex: 0 0 320px;
+    max-width: 100%;
+}
+.similar-pieces-source img,
+.similar-pieces-source .source-media img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+}
+.similar-pieces-source .source-body {
+    flex: 1 1 240px;
+}
+.similar-pieces-source .source-kicker {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    color: #666;
+    margin-bottom: 0.4rem;
+}
+.similar-pieces-source .source-title {
+    font-size: 1.5rem;
+    margin: 0.2rem 0 0.8rem;
+}
+.similar-pieces-source .source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+}
+.similar-pieces-grid {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+.similar-pieces-grid .resource {
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.75rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.similar-pieces-grid .resource:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+}
+.similar-pieces-grid .resource-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.similar-pieces-grid .resource-link img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+.similar-pieces-grid .resource-name {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+.similar-pieces-warning {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #f2c94c;
+    border-radius: 12px;
+    background: #fff7db;
+    color: #5a4b00;
+}
+.similar-pieces-error {
+    margin-top: 1rem;
+}
+</style>
+
+<?php if (!empty($healthWarning)): ?>
+    <p class="similar-pieces-warning"><?= $this->escapeHtml($healthWarning) ?></p>
+<?php endif; ?>
+
+<?php if ($error): ?>
+    <p class="similar-pieces-error"><?= $this->escapeHtml($error) ?></p>
+<?php endif; ?>
+
+<?php if (!$error): ?>
+    <?php
+    $sourceData = $source ?? null;
+    $sourceItem = $sourceData['item'] ?? null;
+    $sourceId = $sourceData['id'] ?? $itemId;
+    $sourceLabel = $sourceData['title'] ?? sprintf('Item #%d', $sourceId);
+    $sourceLink = null;
+    $sourceThumb = $sourceData['thumb_url'] ?? null;
+    $siteItemUrl = function ($id) use ($siteSlug) {
+        if ($siteSlug === '') {
+            return null;
+        }
+        try {
+            return $this->url('site/resource-id', [
+                'site-slug' => $siteSlug,
+                'controller' => 'item',
+                'id' => $id,
+            ]);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    };
+    if ($sourceItem) {
+        $sourceLabel = $sourceItem->displayTitle() ?: $sourceLabel;
+        if ($siteSlug !== '') {
+            $sourceLink = $sourceItem->siteUrl($siteSlug);
+        }
+    }
+    if (!$sourceLink && !empty($sourceData['url'])) {
+        $sourceLink = $sourceData['url'];
+    }
+    if (!$sourceLink && $siteSlug !== '') {
+        $sourceLink = $siteItemUrl($sourceId);
+    }
+    ?>
+
+    <section class="similar-pieces-source">
+        <div class="source-media">
+            <?php if ($sourceItem): ?>
+                <?= $this->thumbnail($sourceItem, 'large') ?>
+            <?php elseif ($sourceThumb): ?>
+                <img src="<?= $this->escapeHtmlAttr($sourceThumb) ?>" alt="<?= $this->escapeHtmlAttr($sourceLabel) ?>" loading="lazy">
+            <?php endif; ?>
+        </div>
+        <div class="source-body">
+            <div class="source-kicker">Selected Piece</div>
+            <h2 class="source-title"><?= $this->escapeHtml($sourceLabel) ?></h2>
+            <?php if ($sourceLink): ?>
+                <a class="source-link" href="<?= $this->escapeHtmlAttr($sourceLink) ?>">View this item</a>
+            <?php else: ?>
+                <span class="source-link">View this item</span>
+            <?php endif; ?>
+        </div>
+    </section>
+<?php endif; ?>
+
+<?php if (!$error && !$results): ?>
+    <p>No similar items found.</p>
+<?php endif; ?>
+
+<?php if ($results): ?>
+    <ul class="resource-list similar-pieces-grid">
+        <?php foreach ($results as $result): ?>
+            <?php
+            $item = $result['item'];
+            $id = $result['id'];
+            $label = $result['title'] ?: sprintf('Item #%d', $id);
+            $linkUrl = null;
+            $thumbUrl = $result['thumb_url'] ?? null;
+
+            if ($item) {
+                $label = $item->displayTitle() ?: $label;
+                if ($siteSlug !== '') {
+                    $linkUrl = $item->siteUrl($siteSlug);
+                }
+            }
+            if (!$linkUrl && !empty($result['url'])) {
+                $linkUrl = $result['url'];
+            }
+            if (!$linkUrl && $siteSlug !== '') {
+                $linkUrl = $siteItemUrl($id);
+            }
+            ?>
+            <li class="item resource">
+                <?php if ($linkUrl): ?>
+                    <a href="<?= $this->escapeHtmlAttr($linkUrl) ?>" class="resource-link">
+                        <?php if ($item): ?>
+                            <?= $this->thumbnail($item, 'square') ?>
+                        <?php elseif ($thumbUrl): ?>
+                            <img src="<?= $this->escapeHtmlAttr($thumbUrl) ?>" alt="<?= $this->escapeHtmlAttr($label) ?>" class="resource-thumbnail" loading="lazy">
+                        <?php endif; ?>
+                        <span class="resource-name"><?= $this->escapeHtml($label) ?></span>
+                    </a>
+                <?php else: ?>
+                    <span class="resource-name"><?= $this->escapeHtml($label) ?></span>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>

@@ -1,0 +1,15 @@
+[Interface]
+Address = {{ base_wireguard_address }}
+ListenPort = {{ base_wireguard_port }}
+PrivateKey = {{ wireguard_private_key }}
+# PublicKey (server): {{ wireguard_public_key }}
+# Add peers below using the standard [Peer] blocks.
+
+{% for peer in base_wireguard_peers | default([]) %}
+[Peer]
+PublicKey = {{ peer.public_key }}
+AllowedIPs = {{ peer.allowed_ips if peer.allowed_ips is string else peer.allowed_ips | join(", ") }}
+{% if peer.endpoint is defined %}Endpoint = {{ peer.endpoint }}
+{% endif %}{% if peer.persistent_keepalive is defined %}PersistentKeepalive = {{ peer.persistent_keepalive }}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,18 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+- name: Restart cockpit socket
+  ansible.builtin.systemd:
+    name: cockpit.socket
+    state: restarted
+  become: true
+
+- name: Restart cockpit service
+  ansible.builtin.systemd:
+    name: cockpit.service
+    state: restarted
+  failed_when: false
+  become: true

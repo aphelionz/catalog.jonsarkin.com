@@ -1,0 +1,62 @@
+#!/bin/sh
+
+HOSTNAME=$(hostname)
+LAN_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+UPTIME_HUMAN=$(uptime -p 2>/dev/null || uptime | sed 's/.*up //')
+LOADAVG=$(awk '{print $1","$2","$3}' /proc/loadavg)
+
+# Best-effort WireGuard IP (wg0)
+WG_IP=""
+if command -v ip >/dev/null 2>&1; then
+  WG_IP=$(ip -4 addr show wg0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -n1)
+fi
+
+# Best-effort docker container count
+DOCKER_COUNT=""
+if command -v docker >/dev/null 2>&1; then
+  DOCKER_COUNT=$(docker ps -q 2>/dev/null | wc -l | tr -d ' ')
+fi
+
+# Best-effort Similar API health check (fast timeout; never block login)
+SIMILAR_HEALTH="unknown"
+SIMILAR_URL="https://similar.jonsarkin.com/healthz"
+if command -v curl >/dev/null 2>&1; then
+  if curl -fsS --max-time 1 "$SIMILAR_URL" >/dev/null 2>&1; then
+    SIMILAR_HEALTH="ok"
+  else
+    SIMILAR_HEALTH="fail"
+  fi
+fi
+
+echo "=============================================================="
+echo " Fish City Mother Brain  ::  $HOSTNAME"
+echo "=============================================================="
+echo "MB Phase : 1 (CLIP visual brain). Next: Phase 2 - life index + LAN LLM."
+echo "Catalog  : v1 LIVE (Qdrant omeaka_items + Similar API)"
+echo "Hardware : R0 DONE (no-spend validation). Next: R1 - reusable storage."
+echo "--------------------------------------------------------------"
+echo "Uptime   : $UPTIME_HUMAN"
+echo "Load     : $LOADAVG"
+[ -n "$LAN_IP" ] && echo "LAN IP   : $LAN_IP"
+[ -n "$WG_IP" ] && echo "WG IP    : $WG_IP"
+[ -n "$DOCKER_COUNT" ] && echo "Docker   : $DOCKER_COUNT containers running"
+echo "Similar  : $SIMILAR_HEALTH ($SIMILAR_URL)"
+
+# CPU temp (best-effort, first meaningful sensor line)
+if command -v sensors >/dev/null 2>&1; then
+  CPU_TEMP=$(sensors 2>/dev/null | awk '/Package id 0:|Tdie:|Tctl:|Core 0:/ {print $1" "$2" "$3; exit}')
+  [ -n "$CPU_TEMP" ] && echo "CPU      : $CPU_TEMP"
+fi
+
+# Root filesystem usage
+ROOT_FS=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 " used)"}')
+echo "RootFS   : $ROOT_FS"
+
+# SMART / Netdata services
+SMART_STATUS=$(systemctl is-active smartmontools 2>/dev/null || systemctl is-active smartd 2>/dev/null)
+
+echo "SMART    : $SMART_STATUS"
+
+echo "Quick    : uptime | htop | sensors | df -h | docker ps | journalctl -p 3 -xb"
+echo "Logs     : docker compose logs -n 200"
+echo "=============================================================="

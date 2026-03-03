@@ -1,0 +1,17 @@
+#!/bin/sh
+xset s off
+xset -dpms
+xset s noblank
+
+{% if raspi_signage_force_framebuffer %}
+xrandr --fb {{ raspi_signage_framebuffer_resolution }} || true
+{% endif %}
+
+{% if raspi_signage_force_resolution %}
+xrandr --output {{ raspi_signage_xrandr_output }} --mode {{ raspi_signage_resolution }} --rate {{ raspi_signage_refresh_hz }}{% if raspi_signage_xrandr_primary %} --primary{% endif %} || true
+{% endif %}
+
+unclutter {{ raspi_signage_unclutter_args }} &
+
+openbox-session &
+exec {{ raspi_signage_chromium_bin }} {{ raspi_signage_chromium_flags | join(' ') }} {{ raspi_signage_kiosk_url }}

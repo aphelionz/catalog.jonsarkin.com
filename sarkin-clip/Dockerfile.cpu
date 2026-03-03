@@ -1,0 +1,38 @@
+# CPU-only image for local (Mac/Linux) runs. Uses Python slim base and CPU torch.
+FROM python:3.11-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/app/.hf_cache \
+    TRANSFORMERS_CACHE=/app/.hf_cache \
+    QDRANT_URL=http://hyphae:6333 \
+    QDRANT_COLLECTION=omeka_items \
+    OPENAI_MODEL=gpt-4.1-mini \
+    SEARCH_DB_PATH=/app/search_index/index.sqlite
+
+# Minimal system deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip \
+    libgl1 libglib2.0-0 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Minimal runtime deps (CPU). Install torch/vision CPU wheels.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir \
+        torch==2.8.0 \
+        torchvision==0.23.0 \
+        open_clip_torch==3.2.0 \
+        openai==1.58.1 \
+        qdrant-client==1.16.1 \
+        pillow==10.4.0 \
+        requests==2.32.5 \
+        tqdm==4.67.1 && \
+    pip3 cache purge
+
+COPY embed_image_to_qdrant.py fetch_omeka.py image.jpg ./
+COPY clip_api /app/clip_api
+
+ENTRYPOINT ["python3", "fetch_omeka.py"]

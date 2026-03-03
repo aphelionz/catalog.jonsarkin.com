@@ -1,0 +1,75 @@
+---
+base_packages:
+  - htop
+  - iotop
+  - nvtop
+  - git
+  - curl
+  - wget
+  - tmux
+  - vim
+  - nano
+  - build-essential
+  - pkg-config
+  - cmake
+  - ca-certificates
+  - unzip
+  - logrotate
+  - sysstat
+  - lm-sensors
+  - smartmontools
+  - python3
+  - python3-venv
+  - python3-pip
+  - wireguard
+  - wireguard-tools
+  - chrony
+  - sudo
+  - openssh-server
+  - ufw
+base_fishcity_root: /opt/fishcity
+base_fishcity_owner: root
+base_fishcity_group: root
+base_fishcity_logrotate_frequency: daily
+base_fishcity_logrotate_keep: 14
+base_fishcity_logrotate_mode: "0640"
+base_hostname: hyphae
+base_timezone: UTC
+base_chrony_service: chrony
+base_primary_user: mark
+base_primary_user_uid: 1000
+base_primary_user_shell: /bin/bash
+base_docker_user: docker
+base_sshd_port: 22
+base_sshd_listen_address: 0.0.0.0
+base_sshd_listen_addresses: []
+base_sshd_address_family: inet
+base_sshd_allow_users:
+  - "{{ base_primary_user }}"
+base_sshd_service: ssh
+# Disable IPv6 via sysctl on hosts without v6 routing to reduce exposure.
+base_disable_ipv6: false
+base_ufw_default_incoming: deny
+base_ufw_default_outgoing: allow
+base_ufw_default_routed: deny
+base_ufw_logging: low
+base_ufw_ipv6: true
+base_ufw_allow_tcp_ports:
+  - 22
+  - 80
+  - 443
+base_ufw_allow_tcp_from_rules: []
+base_ufw_delete_tcp_ports: []
+base_ufw_allow_udp_ports: "{{ [base_wireguard_port] if base_wireguard_enabled else [] }}"
+
+# WireGuard
+base_wireguard_enabled: true
+base_wireguard_interface: wg0
+base_wireguard_address: 10.10.0.1/24
+base_wireguard_port: 51820
+base_wireguard_config_path: "/etc/wireguard/{{ base_wireguard_interface }}.conf"
+base_wireguard_private_key_path: /etc/wireguard/privatekey
+base_wireguard_public_key_path: /etc/wireguard/publickey
+base_wireguard_peers: []
+base_ufw_enabled: true
+base_motd_enabled: false

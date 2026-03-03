@@ -1,0 +1,13 @@
+# Ansible local artifacts
+.ansible/
+*.retry
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+
+# macOS
+.DS_Store
