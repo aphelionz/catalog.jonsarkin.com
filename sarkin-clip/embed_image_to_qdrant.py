@@ -10,7 +10,7 @@ import uuid
 import torch
 from PIL import Image
 import open_clip
-from openai import OpenAI
+import anthropic
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 
@@ -36,9 +36,9 @@ DEFAULT_OMEKA_URL = "https://catalog.jonsarkin.com/"
 DEFAULT_THUMB_URL = "https://catalog.jonsarkin.com/"
 CATALOG_VERSION = 2
 
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")  # OCR model
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20241022")  # OCR model
 OCR_CACHE_PATH = Path(".ocr_cache.json")
-OCR_PROMPT_VERSION = 2
+OCR_PROMPT_VERSION = 3  # bumped to invalidate cache for Claude re-OCR
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://hyphae:6333")
 COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "omeka_items")
@@ -117,12 +117,12 @@ def save_ocr_cache():
         OCR_CACHE_PATH.write_text(json.dumps(_ocr_cache, indent=2), encoding="utf-8")
 
 
-def ocr_with_openai(image_path: Path) -> str:
-    api_key = os.getenv("OPENAI_API_KEY")
+def ocr_with_claude(image_path: Path) -> str:
+    api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        raise RuntimeError("Set OPENAI_API_KEY in env for OpenAI OCR.")
+        raise RuntimeError("Set ANTHROPIC_API_KEY in env for Claude OCR.")
 
-    client = OpenAI(api_key=api_key)
+    client = anthropic.Anthropic(api_key=api_key)
 
     with image_path.open("rb") as f:
         b64_image = base64.b64encode(f.read()).decode("utf-8")
@@ -132,22 +132,21 @@ def ocr_with_openai(image_path: Path) -> str:
         "omit any text you are unsure about. return text only, no description."
     )
 
-    resp = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        temperature=0,
+    resp = client.messages.create(
+        model=ANTHROPIC_MODEL,
         max_tokens=800,
         messages=[
             {
                 "role": "user",
                 "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64_image}},
                     {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}},
                 ],
             }
         ],
     )
 
-    text = resp.choices[0].message.content
+    text = resp.content[0].text
     return str(text).strip() if text else ""
 
 
@@ -193,7 +192,7 @@ def embed_and_upsert(
     if cached_text and not force_ocr:
         ocr_text = cached_text
     else:
-        ocr_text = ocr_with_openai(image_path)
+        ocr_text = ocr_with_claude(image_path)
         cache[cache_key] = ocr_text
         save_ocr_cache()
     t_ocr = time.perf_counter() - t_ocr_start
@@ -280,7 +279,7 @@ def embed_and_upsert(
 
 
 if __name__ == "__main__":
-    # Allows running directly with default placeholders (set OPENAI_API_KEY first)
+    # Allows running directly with default placeholders (set ANTHROPIC_API_KEY first)
     try:
         embed_and_upsert(DEFAULT_IMAGE_PATH)
     except Exception as e:

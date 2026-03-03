@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TRANSFORMERS_CACHE=/app/.hf_cache \
     QDRANT_URL=http://hyphae:6333 \
     QDRANT_COLLECTION=omeka_items \
-    OPENAI_MODEL=gpt-4.1-mini \
+    ANTHROPIC_MODEL=claude-sonnet-4-5-20241022 \
     SEARCH_DB_PATH=/app/search_index/index.sqlite
 
 # Minimal system deps for pillow/vision
@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install --upgrade pip && \
     pip3 install --no-cache-dir \
         open_clip_torch==3.2.0 \
-        openai==1.58.1 \
+        anthropic>=0.40.0 \
         qdrant-client==1.16.1 \
         pillow==10.4.0 \
         requests==2.32.5 \

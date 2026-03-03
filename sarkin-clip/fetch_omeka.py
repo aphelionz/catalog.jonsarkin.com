@@ -2,7 +2,7 @@
 Fetch Omeka-S items and ingest each into Qdrant via embed_image_to_qdrant.embed_and_upsert.
 
 Usage:
-  OPENAI_API_KEY=... python fetch_omeka.py
+  ANTHROPIC_API_KEY=... python fetch_omeka.py
 
 Optional auth:
   export OMEKA_ID=...

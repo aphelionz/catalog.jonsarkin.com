@@ -22,7 +22,7 @@ services:
     container_name: omeka-ingest
     restart: "no"
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OMEKA_TEMPLATE_ID=${OMEKA_TEMPLATE_ID:-2}
       - INGEST_WORKERS=${INGEST_WORKERS:-3}
       - FORCE_OCR=${FORCE_OCR:-1}

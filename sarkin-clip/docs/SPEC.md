@@ -17,7 +17,7 @@
 ## Dependencies
 - Qdrant (local or remote) reachable via `QDRANT_URL`.
 - Omeka API as the source of items for ingestion.
-- `OPENAI_API_KEY` for OCR during ingest.
+- `ANTHROPIC_API_KEY` for OCR during ingest (Claude Sonnet).
 - Docker (for compose flows) and/or a Python virtualenv.
 
 ## Interfaces

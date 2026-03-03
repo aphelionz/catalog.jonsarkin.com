@@ -102,7 +102,7 @@ payload; it never mutates Qdrant or Omeka and should not be exposed directly
 to the public internet without an Omeka-side wrapper.
 
 ## Env vars / knobs
-- `OPENAI_API_KEY` (required for OCR)
+- `ANTHROPIC_API_KEY` (required for OCR via Claude)
 - `OMEKA_TEMPLATE_ID` (default 2)
 - `QDRANT_URL` (default `http://hyphae:6333`)
 - `QDRANT_COLLECTION` (default `omeka_items`)

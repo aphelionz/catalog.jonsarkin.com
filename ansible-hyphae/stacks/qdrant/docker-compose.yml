@@ -54,7 +54,7 @@ services:
     container_name: omeka-ingest
     restart: no
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OMEKA_TEMPLATE_ID=${OMEKA_TEMPLATE_ID:-2}
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION=omeka_items
