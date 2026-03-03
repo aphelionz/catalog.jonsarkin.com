@@ -16,7 +16,7 @@ services:
   omeka:
     image: giocomai/omeka-s-docker:v4.2.0
     ports:
-      - "8080:80"
+      - "8888:80"
     depends_on:
       db:
         condition: service_healthy
@@ -40,11 +40,6 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     restart: unless-stopped
 
   clip-api:
@@ -54,8 +49,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     environment:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION: omeka_items
@@ -70,8 +64,7 @@ services:
       context: ./sarkin-clip
       dockerfile: Dockerfile.cpu
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     environment:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION: omeka_items
