@@ -2,47 +2,71 @@
 /**
  * Sarkin-Jeppesen — Site-wide search results
  *
- * Structured search results in the Jeppesen index style.
+ * Bypasses the controller's hardcoded limit of 10 and performs its own
+ * paginated API query so we get 12 results per page with full pagination.
  */
 $escape    = $this->plugin('escapeHtml');
 $translate = $this->plugin('translate');
 
 $this->htmlElement('body')->appendAttribute('class', 'search-results');
 
+// Reject EXIF timestamps from auto-populated date fields
+$isArtworkDate = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '' || $str === "\xE2\x80\x94") return false;
+    if (preg_match('/^\d{4}:\d{2}:\d{2}/', $str)) return false;
+    if (preg_match('/\d{4}-\d{2}-\d{2}T/', $str)) return false;
+    return true;
+};
+
 $val = function ($resource, $term, $fallback = '') use ($escape) {
     $v = $resource->value($term, ['default' => null]);
     return $v ? $escape((string) $v) : $fallback;
 };
+
+// ── Pagination params ──
+$perPage = 12;
+$page    = max(1, (int) $this->params()->fromQuery('page', 1));
+$offset  = ($page - 1) * $perPage;
+
+// ── Own paginated API query (bypasses controller's limit:10) ──
+$siteId  = $this->currentSite()->id();
+$apiResponse = $this->api()->search('items', [
+    'fulltext_search' => $query,
+    'site_id'         => $siteId,
+    'limit'           => $perPage,
+    'offset'          => $offset,
+]);
+$items      = $apiResponse->getContent();
+$totalItems = $apiResponse->getTotalResults();
+$totalPages = (int) ceil($totalItems / $perPage);
+
+// ── Build pagination URL helper ──
+$pageUrl = function ($p) use ($query) {
+    return $this->url('site/resource', ['controller' => 'index', 'action' => 'search'], true)
+         . '?' . http_build_query(['fulltext_search' => $query, 'page' => $p]);
+};
 ?>
 
 <div class="page-title-row">
-    <h1><?php echo $translate('Search Results'); ?></h1>
+    <h1><?php echo $translate('Search Results'); ?>: <?php echo $escape($query); ?></h1>
+    <span class="subtitle"><?php echo $totalItems; ?> <?php echo $totalItems === 1 ? 'result' : 'results'; ?></span>
 </div>
-
-<?php echo $this->searchFilters(); ?>
 
 <?php $this->trigger('view.search.before'); ?>
 
-<?php if (isset($response)):
-    foreach ($response->resourceTypes() as $resourceType):
-        $resources = $response->resourceList($resourceType);
-        if (!count($resources)) continue;
-?>
-
-<h2 style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.06em; margin-top: 2rem; border-bottom: 2px solid #000; padding-bottom: 8px;">
-    <?php echo $escape($this->translate(ucfirst($resourceType))); ?>
-</h2>
-
+<?php if (count($items)): ?>
 <ul class="chart-grid">
-    <?php foreach ($resources as $resource):
-        $title   = $resource->displayTitle() ?: 'Untitled';
-        $catId   = $val($resource, 'dcterms:identifier');
-        $date    = $val($resource, 'dcterms:date');
-        $primaryMedia = method_exists($resource, 'primaryMedia') ? $resource->primaryMedia() : null;
+    <?php foreach ($items as $item):
+        $title   = $item->displayTitle() ?: 'Untitled';
+        $dateRaw = $val($item, 'dcterms:date', '') ?: $val($item, 'schema:dateCreated', '');
+        $date    = $isArtworkDate($dateRaw) ? $dateRaw : '';
+        $catId   = $val($item, 'dcterms:identifier');
+        $primaryMedia = $item->primaryMedia();
         $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
     ?>
     <li class="chart-card">
-        <a href="<?php echo $escape($resource->url()); ?>">
+        <a href="<?php echo $escape($item->url()); ?>">
             <div class="card-image">
                 <?php if ($thumbUrl): ?>
                     <img src="<?php echo $escape($thumbUrl); ?>"
@@ -70,11 +94,20 @@ $val = function ($resource, $term, $fallback = '') use ($escape) {
     <?php endforeach; ?>
 </ul>
 
-<?php
-    endforeach;
-endif;
-?>
+<?php if ($totalPages > 1): ?>
+<nav class="pagination" aria-label="<?php echo $translate('Pagination'); ?>">
+    <?php if ($page > 1): ?>
+        <a href="<?php echo $escape($pageUrl($page - 1)); ?>">&larr; Prev</a>
+    <?php endif; ?>
+    <span>Page <?php echo $page; ?> of <?php echo $totalPages; ?></span>
+    <?php if ($page < $totalPages): ?>
+        <a href="<?php echo $escape($pageUrl($page + 1)); ?>">Next &rarr;</a>
+    <?php endif; ?>
+</nav>
+<?php endif; ?>
+
+<?php else: ?>
+    <p><?php echo $translate('No items found.'); ?></p>
+<?php endif; ?>
 
 <?php $this->trigger('view.search.after'); ?>
-
-<?php echo $this->pagination(); ?>

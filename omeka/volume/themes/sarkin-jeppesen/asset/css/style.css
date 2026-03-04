@@ -151,6 +151,9 @@ abbr[title] {
 
 .site-header {
   margin-bottom: var(--gutter);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .site-title-link {
@@ -163,6 +166,51 @@ abbr[title] {
 }
 
 .site-title-link:hover { color: var(--primary); text-decoration: none; }
+
+/* ---------- Site Search (header) ---------- */
+
+.site-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.site-search input[type="text"] {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  border: none;
+  border-bottom: 1px solid var(--primary);
+  background: transparent;
+  padding: 2px 0;
+  width: 120px;
+  transition: width 0.2s ease;
+  outline: none;
+  color: var(--primary);
+}
+
+.site-search input[type="text"]::placeholder {
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.65rem;
+}
+
+.site-search input[type="text"]:focus {
+  width: 180px;
+}
+
+.site-search button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+}
+
+.site-search button:hover { color: var(--secondary); }
 
 /* ---------- Site Navigation ---------- */
 

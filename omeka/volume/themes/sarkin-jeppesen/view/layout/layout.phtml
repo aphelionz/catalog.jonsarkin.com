@@ -49,6 +49,12 @@ $footerText = $this->themeSetting('footer_text')
             <a href="<?php echo $escape($site->url()); ?>" class="site-title-link">
                 <?php echo $escape($site->title()); ?>
             </a>
+            <form class="site-search" action="<?php echo $this->url('site/resource', ['controller' => 'index', 'action' => 'search'], true); ?>">
+                <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" />
+                <button type="submit" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </form>
         </header>
 
         <nav class="site-nav" aria-label="<?php echo $this->translate('Primary navigation'); ?>">
