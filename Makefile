@@ -1,4 +1,4 @@
-.PHONY: local down logs ingest enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry
+.PHONY: local down logs ingest enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry ensure-api-key
 
 # Production host (matches omeka/ansible/inventory.ini)
 PROD_HOST  := omeka.us-east1-b.folkloric-rite-468520-r2
@@ -39,7 +39,7 @@ enrich-apply: ## Re-apply cached enrichment results to Omeka (no API cost)
 deploy: ## Push code (modules/themes) to production
 	ansible-playbook -i omeka/ansible/inventory.ini omeka/ansible/deploy.yml
 
-pull: pull-db pull-files pull-modules pull-themes ## Pull database, files, modules, and themes from production
+pull: pull-db ensure-api-key pull-files pull-modules pull-themes ## Pull database, files, modules, and themes from production
 
 pull-db: ## Pull production database into local MariaDB
 	@echo "Dumping production database..."
@@ -111,16 +111,20 @@ restore-db: ## Restore local MariaDB from a backup file (usage: make restore-db 
 	@echo "Restore complete. Item count:"
 	@docker compose exec -T db mariadb -uomeka -pomeka omeka \
 		-e "SELECT COUNT(*) AS items FROM item;"
+	@$(MAKE) --no-print-directory ensure-api-key
 
-push-schema: ## Push local custom vocabs, resource templates, and faceted browse config to production
+push-schema: ## Push local schema, site pages, and config to production
 	@echo "Exporting local schema tables..."
 	@{ \
 		echo "DELETE FROM resource_template_property WHERE resource_template_id = 2;"; \
+		echo "DELETE FROM site_page_block;"; \
+		echo "DELETE FROM site_page;"; \
 		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
 			--replace --no-create-info --skip-extended-insert \
 			custom_vocab resource_template resource_template_property \
 			faceted_browse_page faceted_browse_category \
-			faceted_browse_facet faceted_browse_column; \
+			faceted_browse_facet faceted_browse_column \
+			site site_page site_page_block site_setting; \
 	} > /tmp/omeka-schema-export.sql
 	@echo "Pushing to production..."
 	cat /tmp/omeka-schema-export.sql | ssh $(PROD_USER)@$(PROD_HOST) '\
@@ -139,11 +143,20 @@ push-schema: ## Push local custom vocabs, resource templates, and faceted browse
 		DB_HOST=$$(grep "^host" database.ini | sed "s/.*= *//; s/\"//g") && \
 		mariadb -u"$$DB_USER" -p"$$DB_PASS" -h"$$DB_HOST" "$$DB_NAME" \
 			-e "SELECT COUNT(*) AS custom_vocabs FROM custom_vocab; \
-			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2;"'
-	@echo "Done. Expected: 5 custom_vocabs, 25 template_2_props."
+			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2; \
+			    SELECT COUNT(*) AS site_pages FROM site_page;"'
+	@echo "Done. Expected: 5 custom_vocabs, 25 template_2_props, 5 site_pages."
 
 backfill-dry: ## Preview backfill changes without writing
 	python3 scripts/backfill_defaults.py --dry-run
 
 backfill: ## Backfill default metadata values (only fills empty fields)
 	python3 scripts/backfill_defaults.py
+
+ensure-api-key: ## Create local-only API key (safe to re-run; never use on prod)
+	@HASH=$$(docker compose exec -T omeka php -r "echo password_hash('sarkin2024', PASSWORD_BCRYPT);") && \
+	docker compose exec -T db mariadb -uomeka -pomeka omeka -e " \
+		INSERT INTO api_key (id, owner_id, label, credential_hash, created) \
+		VALUES ('catalog_api', 1, 'Local development key', '$$HASH', NOW()) \
+		ON DUPLICATE KEY UPDATE credential_hash = '$$HASH';"
+	@echo "Local API key ensured (catalog_api)."
