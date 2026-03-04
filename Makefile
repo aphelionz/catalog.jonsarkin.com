@@ -1,9 +1,10 @@
-.PHONY: local down logs ingest enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect doctor pull pull-db pull-files pull-modules pull-themes deploy
+.PHONY: local down logs ingest enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry
 
 # Production host (matches omeka/ansible/inventory.ini)
 PROD_HOST  := omeka.us-east1-b.folkloric-rite-468520-r2
 PROD_USER  := mark
 OMEKA_ROOT := /var/www/omeka-s
+BACKUP_DIR := backups
 
 local: ## Start the catalog stack (omeka + qdrant + clip-api)
 	docker compose up -d
@@ -31,6 +32,9 @@ enrich-batch-status: ## Check status of pending enrichment batches
 
 enrich-batch-collect: ## Collect batch results and apply to Omeka
 	python3 scripts/enrich_metadata.py --batch-collect
+
+enrich-apply: ## Re-apply cached enrichment results to Omeka (no API cost)
+	python3 scripts/enrich_metadata.py --apply-cache
 
 deploy: ## Push code (modules/themes) to production
 	ansible-playbook -i omeka/ansible/inventory.ini omeka/ansible/deploy.yml
@@ -81,3 +85,65 @@ doctor: ## Check local dev prerequisites
 	@(! lsof -i :8000 -sTCP:LISTEN >/dev/null 2>&1) && echo "  ✓ port 8000 available" || echo "  ✗ port 8000 in use"
 	@(! lsof -i :6333 -sTCP:LISTEN >/dev/null 2>&1) && echo "  ✓ port 6333 available" || echo "  ✗ port 6333 in use"
 	@echo "Done."
+
+doctor-catalog: ## Check catalog items for completeness issues
+	python3 scripts/doctor_catalog.py
+
+backup-db: ## Dump local MariaDB to a timestamped .sql.gz file
+	@mkdir -p $(BACKUP_DIR)
+	@echo "Backing up local database..."
+	docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
+		| gzip > $(BACKUP_DIR)/omeka-$$(date +%Y%m%d-%H%M%S).sql.gz
+	@echo "Backup saved:"
+	@ls -lh $(BACKUP_DIR)/*.sql.gz | tail -1
+
+restore-db: ## Restore local MariaDB from a backup file (usage: make restore-db BACKUP=backups/omeka-XXX.sql.gz)
+	@if [ -z "$(BACKUP)" ]; then \
+		echo "Usage: make restore-db BACKUP=backups/omeka-XXX.sql.gz"; \
+		echo ""; \
+		echo "Available backups:"; \
+		ls -lht $(BACKUP_DIR)/*.sql.gz 2>/dev/null || echo "  (none)"; \
+		exit 1; \
+	fi
+	@test -f "$(BACKUP)" || (echo "File not found: $(BACKUP)" && exit 1)
+	@echo "Restoring from $(BACKUP)..."
+	gunzip -c "$(BACKUP)" | docker compose exec -T db mariadb -uomeka -pomeka omeka
+	@echo "Restore complete. Item count:"
+	@docker compose exec -T db mariadb -uomeka -pomeka omeka \
+		-e "SELECT COUNT(*) AS items FROM item;"
+
+push-schema: ## Push local custom vocabs, resource templates, and faceted browse config to production
+	@echo "Exporting local schema tables..."
+	@{ \
+		echo "DELETE FROM resource_template_property WHERE resource_template_id = 2;"; \
+		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
+			--replace --no-create-info --skip-extended-insert \
+			custom_vocab resource_template resource_template_property \
+			faceted_browse_page faceted_browse_category \
+			faceted_browse_facet faceted_browse_column; \
+	} > /tmp/omeka-schema-export.sql
+	@echo "Pushing to production..."
+	cat /tmp/omeka-schema-export.sql | ssh $(PROD_USER)@$(PROD_HOST) '\
+		cd $(OMEKA_ROOT)/config && \
+		DB_USER=$$(grep "^user" database.ini | sed "s/.*= *//; s/\"//g") && \
+		DB_PASS=$$(grep "^password" database.ini | sed "s/.*= *//; s/\"//g") && \
+		DB_NAME=$$(grep "^dbname" database.ini | sed "s/.*= *//; s/\"//g") && \
+		DB_HOST=$$(grep "^host" database.ini | sed "s/.*= *//; s/\"//g") && \
+		mariadb -u"$$DB_USER" -p"$$DB_PASS" -h"$$DB_HOST" "$$DB_NAME"'
+	@echo "Verifying production schema..."
+	@ssh $(PROD_USER)@$(PROD_HOST) '\
+		cd $(OMEKA_ROOT)/config && \
+		DB_USER=$$(grep "^user" database.ini | sed "s/.*= *//; s/\"//g") && \
+		DB_PASS=$$(grep "^password" database.ini | sed "s/.*= *//; s/\"//g") && \
+		DB_NAME=$$(grep "^dbname" database.ini | sed "s/.*= *//; s/\"//g") && \
+		DB_HOST=$$(grep "^host" database.ini | sed "s/.*= *//; s/\"//g") && \
+		mariadb -u"$$DB_USER" -p"$$DB_PASS" -h"$$DB_HOST" "$$DB_NAME" \
+			-e "SELECT COUNT(*) AS custom_vocabs FROM custom_vocab; \
+			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2;"'
+	@echo "Done. Expected: 5 custom_vocabs, 25 template_2_props."
+
+backfill-dry: ## Preview backfill changes without writing
+	python3 scripts/backfill_defaults.py --dry-run
+
+backfill: ## Backfill default metadata values (only fills empty fields)
+	python3 scripts/backfill_defaults.py
