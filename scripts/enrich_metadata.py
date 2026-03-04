@@ -85,6 +85,7 @@ BATCH_MAX_ITEMS = 500   # Items per batch (keeps payload well under 256 MB)
 IMAGE_MAX_DIM = 1024    # Max dimension for batch mode (px)
 IMAGE_QUALITY = 85      # JPEG quality for batch mode
 DOWNLOAD_WORKERS = 20   # Parallel image downloads for batch mode
+APPLY_WORKERS = 10      # Parallel PATCH requests for apply-cache
 
 # ── Property IDs (from Omeka S) ───────────────────────────────────────────
 
@@ -108,6 +109,7 @@ PROP = {
     "schema:itemCondition":        1579,
     "schema:creditText":           1343,
     "schema:creator":               921,
+    "schema:box":                  1424,
     "bibo:owner":                    72,
     "bibo:annotates":                57,
     "bibo:content":                  91,
@@ -232,6 +234,9 @@ def download_and_encode_image(url: str, max_dim: int = 0) -> Tuple[str, str]:
 
 # ── Omeka S API helpers ───────────────────────────────────────────────────
 
+_session = requests.Session()
+
+
 def omeka_auth() -> dict:
     return {"key_identity": OMEKA_KEY_ID, "key_credential": OMEKA_KEY_CRED}
 
@@ -239,14 +244,14 @@ def omeka_auth() -> dict:
 def omeka_get(endpoint: str, params: dict = None) -> Any:
     url = f"{OMEKA_BASE}/api/{endpoint}"
     p = {**(params or {}), **omeka_auth()}
-    resp = requests.get(url, params=p, timeout=30)
+    resp = _session.get(url, params=p, timeout=30)
     resp.raise_for_status()
     return resp.json(), resp.headers
 
 
 def omeka_patch(item_id: int, payload: dict) -> dict:
     url = f"{OMEKA_BASE}/api/items/{item_id}"
-    resp = requests.patch(
+    resp = _session.patch(
         url,
         params=omeka_auth(),
         json=payload,
@@ -262,7 +267,7 @@ def get_item(item_id: int) -> dict:
     return data
 
 
-def get_items_page(page: int, per_page: int = 100) -> Tuple[list, int]:
+def get_items_page(page: int, per_page: int = 500) -> Tuple[list, int]:
     """Fetch a page of items filtered by resource template."""
     data, headers = omeka_get("items", {
         "resource_template_id": RESOURCE_TEMPLATE_ID,
@@ -830,53 +835,8 @@ def batch_collect(dry_run: bool, force: bool = False) -> None:
         print("\nNo new results to apply.")
         return
 
-    print(f"\n{'='*60}")
-    print(f"  Applying {total_succeeded} results to Omeka")
-    if dry_run:
-        print(f"  (DRY RUN — no changes will be written)")
-    print(f"{'='*60}")
-
-    # Gather all item IDs that have cached results
-    applied = 0
-    for key, enrichment in cache.items():
-        if ":" not in key:
-            continue
-        item_id_str, version = key.rsplit(":", 1)
-        if version != str(ANALYSIS_PROMPT_VERSION):
-            continue
-
-        item_id = int(item_id_str)
-        try:
-            item = get_item(item_id)
-        except Exception as e:
-            print(f"  Item {item_id}: Could not fetch — {e}")
-            continue
-
-        # Check if this item still needs enrichment
-        if not needs_enrichment(item):
-            continue
-
-        changes = show_diff(item, enrichment, item_id)
-        if changes == 0:
-            continue
-
-        if dry_run:
-            print(f"  (dry run — no changes written)")
-            continue
-
-        # Re-fetch and apply
-        item = get_item(item_id)
-        payload = build_patch_payload(item, enrichment)
-        try:
-            omeka_patch(item_id, payload)
-            identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
-            print(f"  [{identifier}] Updated successfully")
-            applied += 1
-            total_applied += 1
-        except requests.HTTPError as e:
-            print(f"  Item {item_id}: PATCH failed — {e}")
-            if e.response is not None:
-                print(f"    Response: {e.response.text[:500]}")
+    applied = apply_from_cache(cache, dry_run)
+    total_applied += applied
 
     print(f"\n{'='*60}")
     print(f"  Summary")
@@ -886,6 +846,90 @@ def batch_collect(dry_run: bool, force: bool = False) -> None:
     print(f"  Applied to Omeka:   {total_applied}")
     if dry_run:
         print(f"  (dry run — nothing was written)")
+
+
+def _apply_one(item_id: int, enrichment: dict, dry_run: bool,
+               print_lock: threading.Lock) -> Tuple[int, int]:
+    """Worker: fetch item, diff, PATCH. Returns (applied, skipped)."""
+    try:
+        item = get_item(item_id)
+    except Exception as e:
+        with print_lock:
+            print(f"  Item {item_id}: Could not fetch — {e}")
+        return (0, 0)
+
+    if not needs_enrichment(item):
+        return (0, 1)
+
+    with print_lock:
+        changes = show_diff(item, enrichment, item_id)
+    if changes == 0:
+        return (0, 1)
+
+    if dry_run:
+        with print_lock:
+            print(f"  (dry run — no changes written)")
+        return (0, 0)
+
+    payload = build_patch_payload(item, enrichment)
+    try:
+        omeka_patch(item_id, payload)
+        identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
+        with print_lock:
+            print(f"  [{identifier}] Updated successfully")
+        return (1, 0)
+    except requests.HTTPError as e:
+        with print_lock:
+            print(f"  Item {item_id}: PATCH failed — {e}")
+            if e.response is not None:
+                print(f"    Response: {e.response.text[:500]}")
+        return (0, 0)
+
+
+def apply_from_cache(cache: dict | None = None, dry_run: bool = False) -> int:
+    """Apply cached enrichment results to Omeka. No Claude API calls.
+
+    Uses parallel workers for speed (~10x faster than sequential).
+    Returns number of items successfully updated.
+    """
+    if cache is None:
+        cache = load_cache()
+
+    entries = [
+        (key, enrichment)
+        for key, enrichment in cache.items()
+        if ":" in key and key.rsplit(":", 1)[1] == str(ANALYSIS_PROMPT_VERSION)
+    ]
+
+    if not entries:
+        print("No cached results to apply.")
+        return 0
+
+    print(f"\n{'='*60}")
+    print(f"  Applying up to {len(entries)} cached results to Omeka")
+    if dry_run:
+        print(f"  (DRY RUN — no changes will be written)")
+    print(f"{'='*60}")
+
+    applied = 0
+    skipped = 0
+    print_lock = threading.Lock()
+
+    with ThreadPoolExecutor(max_workers=APPLY_WORKERS) as pool:
+        futures = {}
+        for key, enrichment in entries:
+            item_id_str, _ = key.rsplit(":", 1)
+            item_id = int(item_id_str)
+            futures[pool.submit(_apply_one, item_id, enrichment,
+                                dry_run, print_lock)] = item_id
+
+        for future in as_completed(futures):
+            a, s = future.result()
+            applied += a
+            skipped += s
+
+    print(f"\n  Applied: {applied}, Skipped: {skipped}")
+    return applied
 
 
 # ── Cache ─────────────────────────────────────────────────────────────────
@@ -1120,6 +1164,10 @@ Examples:
   python scripts/enrich_metadata.py --batch-collect
   python scripts/enrich_metadata.py --batch-collect --dry-run
 
+  # Apply cached results after a DB wipe (no API key needed)
+  python scripts/enrich_metadata.py --apply-cache
+  python scripts/enrich_metadata.py --apply-cache --dry-run
+
   # Model selection
   python scripts/enrich_metadata.py --model haiku --batch
   python scripts/enrich_metadata.py --model opus  --item-id 6886
@@ -1136,6 +1184,8 @@ Examples:
                       help="Check status of pending batches")
     mode.add_argument("--batch-collect", action="store_true",
                       help="Collect batch results and apply to Omeka")
+    mode.add_argument("--apply-cache", action="store_true",
+                      help="Apply cached results to Omeka (no Claude API call)")
 
     # Options
     parser.add_argument("--dry-run", action="store_true",
@@ -1152,6 +1202,11 @@ Examples:
 
     args = parser.parse_args()
     model = MODEL_ALIASES[args.model]
+
+    # ── Apply from cache (no API key needed) ──
+    if args.apply_cache:
+        apply_from_cache(dry_run=args.dry_run)
+        return
 
     # Verify API key
     if not os.getenv("ANTHROPIC_API_KEY"):
