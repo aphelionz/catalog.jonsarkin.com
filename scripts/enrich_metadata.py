@@ -43,7 +43,9 @@ import io
 import json
 import os
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -76,6 +78,7 @@ CREATOR_ITEM_ID = 3        # Jon Sarkin Person item
 BATCH_MAX_ITEMS = 1000  # Conservative limit per batch
 IMAGE_MAX_DIM = 1024    # Max dimension for batch mode (px)
 IMAGE_QUALITY = 85      # JPEG quality for batch mode
+DOWNLOAD_WORKERS = 20   # Parallel image downloads for batch mode
 
 # ── Property IDs (from Omeka S) ───────────────────────────────────────────
 
@@ -435,49 +438,85 @@ def batch_submit(candidates: list, model: str, force: bool) -> list:
     cache = load_cache()
     BATCH_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Build requests, skipping items already cached (unless --force)
-    batch_requests = []
+    # Filter out already-cached items (unless --force)
+    to_download = []
     skipped_cached = 0
+    skipped_no_media = 0
 
-    for i, item in enumerate(candidates):
+    for item in candidates:
         item_id = item["o:id"]
-        identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
         cache_key = f"{item_id}:{ANALYSIS_PROMPT_VERSION}"
-
         if cache.get(cache_key) and not force:
             skipped_cached += 1
             continue
-
-        # Get image URL
         image_url = get_primary_media_url(item)
         if not image_url:
+            identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
             print(f"  [{identifier}] No media — skipping")
+            skipped_no_media += 1
             continue
-
-        print(f"  [{i+1}/{len(candidates)}] Downloading {identifier}...")
-        try:
-            b64_image, media_type = download_and_encode_image(image_url, max_dim=IMAGE_MAX_DIM)
-        except Exception as e:
-            print(f"  [{identifier}] Download failed: {e}")
-            continue
-
-        batch_requests.append(Request(
-            custom_id=str(item_id),
-            params=MessageCreateParamsNonStreaming(
-                model=model,
-                max_tokens=2000,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64_image}},
-                        {"type": "text", "text": ANALYSIS_PROMPT},
-                    ],
-                }],
-            ),
-        ))
+        to_download.append((item, image_url))
 
     if skipped_cached:
-        print(f"\n  Skipped {skipped_cached} items (already cached). Use --force to re-analyze.")
+        print(f"  Skipped {skipped_cached} items (already cached). Use --force to re-analyze.")
+    if skipped_no_media:
+        print(f"  Skipped {skipped_no_media} items (no media).")
+
+    # Download and resize images in parallel
+    batch_requests = []
+    download_errors = 0
+    counter_lock = threading.Lock()
+    counter = [0]  # mutable counter for threads
+
+    def _download_one(item_and_url):
+        """Download + resize a single image. Returns (item_id, b64, media_type) or None."""
+        item, url = item_and_url
+        item_id = item["o:id"]
+        identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
+        try:
+            b64_image, media_type = download_and_encode_image(url, max_dim=IMAGE_MAX_DIM)
+            with counter_lock:
+                counter[0] += 1
+                n = counter[0]
+            print(f"  [{n}/{len(to_download)}] Downloaded {identifier}")
+            return (item_id, b64_image, media_type)
+        except Exception as e:
+            with counter_lock:
+                counter[0] += 1
+                n = counter[0]
+            print(f"  [{n}/{len(to_download)}] FAILED {identifier}: {e}")
+            return None
+
+    if to_download:
+        workers = min(DOWNLOAD_WORKERS, len(to_download))
+        print(f"\nDownloading {len(to_download)} images ({workers} parallel workers)...")
+        t_start = time.perf_counter()
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(_download_one, pair): pair for pair in to_download}
+            for future in as_completed(futures):
+                result = future.result()
+                if result is None:
+                    download_errors += 1
+                    continue
+                item_id, b64_image, media_type = result
+                batch_requests.append(Request(
+                    custom_id=str(item_id),
+                    params=MessageCreateParamsNonStreaming(
+                        model=model,
+                        max_tokens=2000,
+                        messages=[{
+                            "role": "user",
+                            "content": [
+                                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64_image}},
+                                {"type": "text", "text": ANALYSIS_PROMPT},
+                            ],
+                        }],
+                    ),
+                ))
+
+        elapsed = time.perf_counter() - t_start
+        print(f"  Done: {len(batch_requests)} downloaded, {download_errors} failed ({elapsed:.1f}s)")
 
     if not batch_requests:
         print("\nNo requests to submit.")
