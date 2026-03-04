@@ -22,6 +22,9 @@ search_index/
 scripts/.enrich_cache.json
 scripts/.enrich_batches/
 
+# Database backups
+backups/
+
 # macOS
 .DS_Store
 
