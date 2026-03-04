@@ -29,7 +29,7 @@ Claude analysis results are cached in `scripts/.enrich_cache.json`. After the
 first enrichment run, subsequent DB wipes + re-applies cost nothing — use
 `make enrich-apply` to re-apply from cache without calling the Claude API.
 
-Only `make enrich-batch` (step 9) costs money. Steps 1–8 and 11–12 are free.
+Only `make enrich-batch` (step 12) costs money. Steps 1–10 and 13–15 are free.
 
 ## Pipeline
 
@@ -82,7 +82,43 @@ docker compose exec -T db mariadb -uomeka -pomeka omeka \
   -e "SELECT COUNT(*) AS items FROM item;"
 ```
 
-### Step 4 — Re-apply cached enrichments
+### Step 4 — Run database migration (if needed)
+
+After pulling a production database, the local Omeka S version may be newer
+than what production runs. Omeka will show an "Update database" maintenance
+page and the API will return HTML redirects instead of JSON.
+
+Visit `http://localhost:8888` — if you see the "Update database" screen, click
+the button to run the migration. Verify the API is back:
+
+```bash
+curl -s "http://localhost:8888/api/items?per_page=1" | python3 -c "import sys,json; json.load(sys.stdin); print('API OK')"
+```
+
+If this prints `API OK`, proceed. If not, check the Omeka logs with
+`docker compose logs omeka`.
+
+### Step 5 — Ensure local API key
+
+`make pull` now runs this automatically, but if you restored from backup or
+the key is missing for any reason:
+
+```bash
+make ensure-api-key
+```
+
+This inserts a local-only API key (`catalog_api` / `sarkin2024`) into the
+database with write permissions for user 1 (Catalog Admin). It is idempotent
+and safe to re-run. **Never create write-enabled API keys on production.**
+
+Verify:
+
+```bash
+curl -s "http://localhost:8888/api/items?key_identity=catalog_api&key_credential=sarkin2024&per_page=1" \
+  | python3 -c "import sys,json; json.load(sys.stdin); print('API OK')"
+```
+
+### Step 6 — Re-apply cached enrichments
 
 Apply any previously cached Claude results to the fresh database. This is
 free (no API call) and fast. Skip this step only on the very first run when
@@ -94,7 +130,7 @@ make enrich-apply
 
 Verify: output shows applied count. Items with no cached results are skipped.
 
-### Step 5 — Doctor-catalog (baseline)
+### Step 7 — Doctor-catalog (baseline)
 
 ```bash
 make doctor-catalog
@@ -107,7 +143,7 @@ missing-field counts and percentage coverage. Optionally save to a file:
 make doctor-catalog 2>/dev/null > reports/doctor-pre.txt
 ```
 
-### Step 6 — Backfill defaults (preview)
+### Step 8 — Backfill defaults (preview)
 
 ```bash
 make backfill-dry
@@ -126,7 +162,7 @@ Review the output. The backfill script fills these defaults only when missing:
 | Box | Copies title |
 | Identifier | Generates temp ID `JS-{year}-T{item_id}` |
 
-### Step 7 — Backfill defaults (apply)
+### Step 9 — Backfill defaults (apply)
 
 ```bash
 make backfill
@@ -134,17 +170,17 @@ make backfill
 
 Verify: output shows patched count with zero failures.
 
-### Step 8 — Doctor-catalog (post-backfill)
+### Step 10 — Doctor-catalog (post-backfill)
 
 ```bash
 make doctor-catalog
 ```
 
-Compare to Step 5. Location, Creator, Work Type, Support, Owner, Height,
+Compare to Step 7. Location, Creator, Work Type, Support, Owner, Height,
 Width, Box, and Catalog Number gaps should be reduced. Remaining gaps are
 fields that need Claude analysis: Title, Medium, Signature, Motifs, Date.
 
-### Step 9 — Enrichment preview
+### Step 11 — Enrichment preview
 
 > **Always preview before submitting a batch.**
 
@@ -160,7 +196,7 @@ The analysis prompt is defined in `scripts/enrich_metadata.py` at line 141
 medium, support, work_type, motifs, and condition_notes. See
 `docs/metadata-mapping.md` for how these map to Omeka properties.
 
-### Step 10 — Submit enrichment batch
+### Step 12 — Submit enrichment batch
 
 > **Requires user approval.** Calls the Claude API. Costs real money.
 
@@ -180,7 +216,7 @@ The script downloads images (20 parallel workers), resizes to 1024px max,
 and submits in chunks of 500 to the Anthropic Batch API. Batch metadata is
 saved to `scripts/.enrich_batches/`.
 
-### Step 11 — Monitor and collect results
+### Step 13 — Monitor and collect results
 
 Check batch status (no API cost, can repeat):
 
@@ -204,17 +240,17 @@ make enrich-batch-collect
 
 Verify: output shows applied count with acceptable error count.
 
-### Step 12 — Doctor-catalog (post-enrichment)
+### Step 14 — Doctor-catalog (post-enrichment)
 
 ```bash
 make doctor-catalog
 ```
 
-Compare to Step 8. Title, Medium, Signature, Motifs, and Date gaps should
+Compare to Step 10. Title, Medium, Signature, Motifs, and Date gaps should
 be significantly reduced. Items that still lack a Title likely had no legible
 text. Items missing Date were unsigned.
 
-### Step 13 — Re-ingest into Qdrant
+### Step 15 — Re-ingest into Qdrant
 
 Rebuild the search index so it reflects newly enriched metadata and
 transcriptions.
