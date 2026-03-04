@@ -177,6 +177,11 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <?php if ($identifier): ?>
                 <div class="catalog-id"><?php echo $identifier; ?></div>
             <?php endif; ?>
+            <div class="icon-actions">
+                <button type="button" class="pill-button" id="copy-citation">[cite]</button>
+                <button type="button" class="pill-button" onclick="window.print();">[print]</button>
+                <button type="button" class="pill-button" data-action="share">[share]</button>
+            </div>
             <h1 id="record-title"><?php echo $escape(strtoupper($title)); ?></h1>
         </div>
     </header>
@@ -185,37 +190,27 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     <section class="record-metadata" aria-labelledby="object-metadata-heading">
         <h2 id="object-metadata-heading" class="sr-only"><?php echo $translate('Object metadata'); ?></h2>
         <div class="metadata-top">
-            <div class="panel">
+            <div class="metadata-fields">
+                <?php if ($medium): ?>
                 <dl>
-                    <?php if ($medium): ?>
-                        <dt>Medium</dt><dd><?php echo $medium; ?></dd>
-                    <?php endif; ?>
-                    <?php if ($surface): ?>
-                        <dt>Support</dt><dd><?php echo $surface; ?></dd>
-                    <?php endif; ?>
-                    <?php if ($owner): ?>
-                        <dt>Owner / Custody</dt><dd><?php echo $owner; ?></dd>
-                    <?php elseif (!empty($provenanceVals)): ?>
-                        <dt>Owner / Custody</dt><dd><?php echo $provenanceVals[0]; ?></dd>
-                    <?php endif; ?>
-                    <?php if ($condition): ?>
-                        <dt>Condition</dt><dd><?php echo $condition; ?></dd>
-                    <?php endif; ?>
+                    <dt>Medium</dt><dd><?php echo $medium; ?></dd>
                 </dl>
-            </div>
-            <div class="icon-actions">
-                <button type="button" class="icon-button" aria-label="<?php echo $translate('Print'); ?>" onclick="window.print();">
-                    <img src="<?php echo $this->assetUrl('img/icons/printer.svg'); ?>" alt="" />
-                </button>
-                <button type="button" class="icon-button" aria-label="<?php echo $translate('Share'); ?>" data-action="share">
-                    <img src="<?php echo $this->assetUrl('img/icons/share.svg'); ?>" alt="" />
-                </button>
+                <?php endif; ?>
+                <?php if ($surface): ?>
+                <dl>
+                    <dt>Support</dt><dd><?php echo $surface; ?></dd>
+                </dl>
+                <?php endif; ?>
+                <?php if ($condition): ?>
+                <dl>
+                    <dt>Condition</dt><dd><?php echo $condition; ?></dd>
+                </dl>
+                <?php endif; ?>
             </div>
         </div>
 
         <nav class="metadata-bottom" aria-label="<?php echo $translate('Artwork actions'); ?>">
             <ul>
-                <li><button type="button" id="copy-citation" aria-label="<?php echo $translate('Copy citation'); ?>">CITE</button></li>
                 <li><a href="#">REQUEST CONDITION REPORT</a></li>
                 <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>">RIGHTS &amp; REPRODUCTION</a></li>
                 <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>">BOOK PRIVATE VIEWING</a></li>
@@ -278,8 +273,19 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                     <p class="care"><strong>Display &amp; care:</strong> <?php echo $displayCare; ?></p>
                 <?php endif; ?>
 
-                <section class="documentation" aria-labelledby="documentation-heading">
-                    <h3 id="documentation-heading"><?php echo $translate('Documentation and provenance'); ?></h3>
+                <section class="documentation">
+
+                    <?php if ($owner): ?>
+                    <section aria-labelledby="owner-heading">
+                        <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
+                        <p><?php echo $owner; ?></p>
+                    </section>
+                    <?php elseif (!empty($provenanceVals)): ?>
+                    <section aria-labelledby="owner-heading">
+                        <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
+                        <p><?php echo $provenanceVals[0]; ?></p>
+                    </section>
+                    <?php endif; ?>
 
                     <?php if (!empty($inscriptions)): ?>
                     <section aria-labelledby="inscriptions-heading">

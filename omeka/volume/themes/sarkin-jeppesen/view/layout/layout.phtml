@@ -62,7 +62,10 @@ $footerText = $this->themeSetting('footer_text')
         </main>
 
         <footer class="site-footer">
-            <p><?php echo $footerText; ?></p>
+            <div class="footer-line">
+                <p><?php echo $footerText; ?></p>
+                <a href="<?php echo $this->url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'rights']); ?>">Rights &amp; Reproduction</a>
+            </div>
         </footer>
     </div>
 

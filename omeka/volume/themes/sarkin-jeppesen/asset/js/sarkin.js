@@ -32,8 +32,8 @@
             citation += '. Accessed ' + accessed + '. ' + url + '.';
 
             navigator.clipboard.writeText(citation).then(function () {
-                citeBtn.textContent = 'COPIED';
-                setTimeout(function () { citeBtn.textContent = 'CITE'; }, 1200);
+                citeBtn.textContent = '[copied]';
+                setTimeout(function () { citeBtn.textContent = '[cite]'; }, 1200);
             });
         });
     }
