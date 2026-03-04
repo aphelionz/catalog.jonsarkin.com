@@ -37,6 +37,11 @@ Environment variables:
 """
 from __future__ import annotations
 
+# Force unbuffered stdout so print() output appears immediately,
+# even when running under make or piped through other processes.
+import sys
+sys.stdout.reconfigure(line_buffering=True)
+
 import argparse
 import base64
 import io
@@ -60,9 +65,9 @@ OMEKA_KEY_ID = os.getenv("OMEKA_KEY_IDENTITY", "catalog_api")
 OMEKA_KEY_CRED = os.getenv("OMEKA_KEY_CREDENTIAL", "sarkin2024")
 
 MODEL_ALIASES = {
-    "haiku":  "claude-haiku-4-5-20241022",
-    "sonnet": "claude-sonnet-4-5-20241022",
-    "opus":   "claude-opus-4-5-20250131",
+    "haiku":  "claude-haiku-4-5-20251001",
+    "sonnet": "claude-sonnet-4-5-20250929",
+    "opus":   "claude-opus-4-5-20251101",
 }
 DEFAULT_MODEL_ALIAS = "sonnet"
 
@@ -72,10 +77,10 @@ BATCH_DIR = Path("scripts/.enrich_batches")
 RESOURCE_TEMPLATE_ID = 2   # "Artwork (Jon Sarkin)"
 CREATOR_ITEM_ID = 3        # Jon Sarkin Person item
 
-# Batch API: 256 MB max request body. We resize images to keep each request
-# small. At 1024px max dimension + JPEG q85, each image is ~150 KB base64.
-# With overhead, ~200 KB per request → ~1200 items per batch.
-BATCH_MAX_ITEMS = 1000  # Conservative limit per batch
+# Batch API: 256 MB max request body. Each image at 1024px + JPEG q85 is
+# ~150 KB raw → ~200 KB base64 → ~250 KB with JSON overhead per request.
+# 500 items × 250 KB ≈ 125 MB per batch (safe margin under 256 MB limit).
+BATCH_MAX_ITEMS = 500   # Items per batch (keeps payload well under 256 MB)
 IMAGE_MAX_DIM = 1024    # Max dimension for batch mode (px)
 IMAGE_QUALITY = 85      # JPEG quality for batch mode
 DOWNLOAD_WORKERS = 20   # Parallel image downloads for batch mode
@@ -144,8 +149,10 @@ Be precise and conservative — only report what you can clearly see.
 
   "transcription": "Complete transcription of ALL visible text in the artwork.
                      Preserve line breaks, capitalization, and punctuation.
-                     Include title text, marginal text, labels, repeated words —
-                     everything legible. Omit text you cannot read clearly.
+                     Include title text, marginal text, labels — everything
+                     legible. For repeated words/phrases, transcribe once then
+                     note the count (e.g. 'AUM ×47'). Do NOT write out every
+                     repetition. Omit text you cannot read clearly.
                      Return null if no text is visible.",
 
   "signature": "Describe the signature using this format:
@@ -185,7 +192,7 @@ Be precise and conservative — only report what you can clearly see.
 
 Return ONLY valid JSON. No markdown fences, no explanation."""
 
-ANALYSIS_PROMPT_VERSION = 1  # Bump to invalidate cache
+ANALYSIS_PROMPT_VERSION = 2  # Bump to invalidate cache
 
 
 # ── Image helpers ─────────────────────────────────────────────────────────
@@ -309,6 +316,19 @@ def resource_value(property_id: int, resource_id: int) -> dict:
     return {"type": "resource:item", "property_id": property_id, "value_resource_id": resource_id}
 
 
+def _clean_value(v: dict) -> dict:
+    """Strip read-only fields from a property value for PATCH.
+
+    Omeka S API responses include fields like @id, @type, property_label,
+    is_public etc. that can cause 422 errors when sent back in a PATCH.
+    Keep only the fields Omeka S accepts on write.
+    """
+    # Write-safe keys for Omeka S property values
+    WRITE_KEYS = {"type", "property_id", "@value", "@id", "@language",
+                  "o:label", "value_resource_id", "uri", "o:is_public"}
+    return {k: v[k] for k in WRITE_KEYS if k in v}
+
+
 def build_patch_payload(item: dict, enrichment: dict) -> dict:
     """
     Build a PATCH payload that merges enrichment into existing item data.
@@ -321,10 +341,13 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
 
     for key, val in item.items():
         if ":" in key and isinstance(val, list):
-            payload[key] = val
+            payload[key] = [_clean_value(v) for v in val if isinstance(v, dict)]
 
-    for sys_key in ["o:resource_template", "o:resource_class", "o:item_set",
-                     "o:media", "o:is_public"]:
+    # Include system keys EXCEPT o:resource_template — sending it triggers
+    # template validation (e.g. requiring Catalog Number) which fails on
+    # items missing required fields. Omitting it preserves the existing
+    # template without re-validating.
+    for sys_key in ["o:resource_class", "o:item_set", "o:media", "o:is_public"]:
         if sys_key in item:
             payload[sys_key] = item[sys_key]
 
@@ -344,6 +367,20 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
         if existing:
             return
         payload[term] = [literal_value(PROP[term], v) for v in values]
+
+    # Ensure dcterms:identifier exists (required by template).
+    # Generate a temporary catalog number if missing, using the enrichment
+    # date when available. Format: JS-{year}-T{item_id} (T = temporary).
+    has_identifier = any(
+        v.get("@value", "").strip() for v in payload.get("dcterms:identifier", [])
+    )
+    if not has_identifier:
+        item_id = item["o:id"]
+        year = enrichment.get("date", "")[:4] if enrichment.get("date") else "0000"
+        if not year.isdigit():
+            year = "0000"
+        temp_id = f"JS-{year}-T{item_id}"
+        payload["dcterms:identifier"] = [literal_value(PROP["dcterms:identifier"], temp_id)]
 
     # Title: only set if currently empty/Untitled
     current_title = extract_value(item, "dcterms:title")
@@ -393,7 +430,7 @@ def analyze_artwork(image_url: str, model: str) -> dict:
 
     response = client.messages.create(
         model=model,
-        max_tokens=2000,
+        max_tokens=4096,
         messages=[{
             "role": "user",
             "content": [
@@ -403,6 +440,47 @@ def analyze_artwork(image_url: str, model: str) -> dict:
         }],
     )
     return _parse_claude_response(response.content[0].text)
+
+
+def _repair_truncated_json(text: str) -> Optional[dict]:
+    """Attempt to repair JSON truncated by max_tokens.
+
+    When Claude hits the token limit, the JSON is cut off mid-value.
+    Strategy: close any open strings, arrays, and objects to make it parseable.
+    We may lose the last field but salvage everything before it.
+    """
+    # Strip trailing incomplete escape sequences
+    text = text.rstrip("\\")
+    # Close any open string
+    if text.count('"') % 2 == 1:
+        text += '"'
+    # Close open brackets/braces from inside out
+    stack = []
+    in_string = False
+    escape = False
+    for ch in text:
+        if escape:
+            escape = False
+            continue
+        if ch == "\\":
+            escape = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch in ("{", "["):
+            stack.append("}" if ch == "{" else "]")
+        elif ch in ("}", "]"):
+            if stack:
+                stack.pop()
+    # Close everything that's still open
+    text += "".join(reversed(stack))
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
 
 
 def _parse_claude_response(raw_text: str) -> dict:
@@ -415,6 +493,11 @@ def _parse_claude_response(raw_text: str) -> dict:
     try:
         return json.loads(raw_text)
     except json.JSONDecodeError as e:
+        # Attempt to salvage truncated JSON (from hitting max_tokens)
+        repaired = _repair_truncated_json(raw_text)
+        if repaired:
+            print(f"  WARNING: Repaired truncated JSON (max_tokens likely hit)")
+            return repaired
         print(f"  WARNING: Invalid JSON from Claude: {e}")
         print(f"  Raw: {raw_text[:300]}")
         return {}
@@ -438,10 +521,9 @@ def batch_submit(candidates: list, model: str, force: bool) -> list:
     cache = load_cache()
     BATCH_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Filter out already-cached items (unless --force)
-    to_download = []
+    # Quick filter: skip cached items (no HTTP needed)
+    to_process = []
     skipped_cached = 0
-    skipped_no_media = 0
 
     for item in candidates:
         item_id = item["o:id"]
@@ -449,51 +531,52 @@ def batch_submit(candidates: list, model: str, force: bool) -> list:
         if cache.get(cache_key) and not force:
             skipped_cached += 1
             continue
-        image_url = get_primary_media_url(item)
-        if not image_url:
-            identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
-            print(f"  [{identifier}] No media — skipping")
-            skipped_no_media += 1
+        # Only check that the item has media refs — don't resolve URLs yet
+        if not item.get("o:media"):
             continue
-        to_download.append((item, image_url))
+        to_process.append(item)
 
     if skipped_cached:
         print(f"  Skipped {skipped_cached} items (already cached). Use --force to re-analyze.")
-    if skipped_no_media:
-        print(f"  Skipped {skipped_no_media} items (no media).")
 
-    # Download and resize images in parallel
+    # Resolve media URLs + download + resize images in parallel
     batch_requests = []
     download_errors = 0
+    no_media = 0
     counter_lock = threading.Lock()
-    counter = [0]  # mutable counter for threads
+    counters = {"done": 0, "no_media": 0}
 
-    def _download_one(item_and_url):
-        """Download + resize a single image. Returns (item_id, b64, media_type) or None."""
-        item, url = item_and_url
+    def _download_one(item):
+        """Resolve media URL, download, and resize. Returns (item_id, b64, media_type) or None."""
         item_id = item["o:id"]
         identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
         try:
-            b64_image, media_type = download_and_encode_image(url, max_dim=IMAGE_MAX_DIM)
+            image_url = get_primary_media_url(item)
+            if not image_url:
+                with counter_lock:
+                    counters["done"] += 1
+                    counters["no_media"] += 1
+                return None
+            b64_image, media_type = download_and_encode_image(image_url, max_dim=IMAGE_MAX_DIM)
             with counter_lock:
-                counter[0] += 1
-                n = counter[0]
-            print(f"  [{n}/{len(to_download)}] Downloaded {identifier}")
+                counters["done"] += 1
+                n = counters["done"]
+            print(f"  [{n}/{len(to_process)}] Downloaded {identifier}")
             return (item_id, b64_image, media_type)
         except Exception as e:
             with counter_lock:
-                counter[0] += 1
-                n = counter[0]
-            print(f"  [{n}/{len(to_download)}] FAILED {identifier}: {e}")
+                counters["done"] += 1
+                n = counters["done"]
+            print(f"  [{n}/{len(to_process)}] FAILED {identifier}: {e}")
             return None
 
-    if to_download:
-        workers = min(DOWNLOAD_WORKERS, len(to_download))
-        print(f"\nDownloading {len(to_download)} images ({workers} parallel workers)...")
+    if to_process:
+        workers = min(DOWNLOAD_WORKERS, len(to_process))
+        print(f"\nDownloading {len(to_process)} images ({workers} parallel workers)...")
         t_start = time.perf_counter()
 
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = {pool.submit(_download_one, pair): pair for pair in to_download}
+            futures = {pool.submit(_download_one, item): item for item in to_process}
             for future in as_completed(futures):
                 result = future.result()
                 if result is None:
@@ -504,7 +587,7 @@ def batch_submit(candidates: list, model: str, force: bool) -> list:
                     custom_id=str(item_id),
                     params=MessageCreateParamsNonStreaming(
                         model=model,
-                        max_tokens=2000,
+                        max_tokens=4096,
                         messages=[{
                             "role": "user",
                             "content": [
@@ -515,8 +598,9 @@ def batch_submit(candidates: list, model: str, force: bool) -> list:
                     ),
                 ))
 
+        no_media = counters["no_media"]
         elapsed = time.perf_counter() - t_start
-        print(f"  Done: {len(batch_requests)} downloaded, {download_errors} failed ({elapsed:.1f}s)")
+        print(f"  Done: {len(batch_requests)} downloaded, {download_errors - no_media} failed, {no_media} no media ({elapsed:.1f}s)")
 
     if not batch_requests:
         print("\nNo requests to submit.")
@@ -527,28 +611,40 @@ def batch_submit(candidates: list, model: str, force: bool) -> list:
     chunks = [batch_requests[i:i + BATCH_MAX_ITEMS]
               for i in range(0, len(batch_requests), BATCH_MAX_ITEMS)]
 
+    # Track custom_ids per chunk index for metadata (extract before submit
+    # since Request objects may be consumed/modified by the SDK)
+    chunk_item_ids = []
+    for chunk in chunks:
+        ids = []
+        for r in chunk:
+            cid = getattr(r, "custom_id", None) or (r.get("custom_id") if isinstance(r, dict) else None)
+            if cid is not None:
+                ids.append(int(cid))
+        chunk_item_ids.append(ids)
+
     for chunk_idx, chunk in enumerate(chunks):
         print(f"\nSubmitting batch {chunk_idx + 1}/{len(chunks)} ({len(chunk)} requests, model={model})...")
         try:
             batch = client.messages.batches.create(requests=chunk)
-            batch_ids.append(batch.id)
-            print(f"  Batch ID: {batch.id}")
-            print(f"  Status:   {batch.processing_status}")
-
-            # Save batch metadata
-            meta = {
-                "batch_id": batch.id,
-                "model": model,
-                "item_count": len(chunk),
-                "item_ids": [int(r.custom_id) for r in chunk],
-                "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                "status": batch.processing_status,
-            }
-            meta_path = BATCH_DIR / f"{batch.id}.json"
-            meta_path.write_text(json.dumps(meta, indent=2))
-
         except Exception as e:
             print(f"  ERROR submitting batch: {e}")
+            continue
+
+        batch_ids.append(batch.id)
+        print(f"  Batch ID: {batch.id}")
+        print(f"  Status:   {batch.processing_status}")
+
+        # Save batch metadata
+        meta = {
+            "batch_id": batch.id,
+            "model": model,
+            "item_count": len(chunk),
+            "item_ids": chunk_item_ids[chunk_idx],
+            "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "status": batch.processing_status,
+        }
+        meta_path = BATCH_DIR / f"{batch.id}.json"
+        meta_path.write_text(json.dumps(meta, indent=2))
 
     print(f"\n{'='*60}")
     print(f"  Submitted {len(batch_ids)} batch(es)")
@@ -604,7 +700,7 @@ def batch_status() -> None:
             print(f"\n  {batch_id}: ERROR checking status — {e}")
 
 
-def batch_collect(dry_run: bool) -> None:
+def batch_collect(dry_run: bool, force: bool = False) -> None:
     """Collect results from completed batches, cache them, and apply to Omeka."""
     client = anthropic.Anthropic()
     cache = load_cache()
@@ -627,8 +723,8 @@ def batch_collect(dry_run: bool) -> None:
         batch_id = meta["batch_id"]
 
         # Check if already collected
-        if meta.get("collected"):
-            print(f"\n  {batch_id}: Already collected. Skipping.")
+        if meta.get("collected") and not force:
+            print(f"\n  {batch_id}: Already collected. Skipping. (use --force to re-collect)")
             continue
 
         # Check status
@@ -669,7 +765,7 @@ def batch_collect(dry_run: bool) -> None:
             elif result.result.type == "errored":
                 errors += 1
                 err = result.result.error
-                print(f"  Item {item_id}: Error — {err.type}: {err.message}")
+                print(f"  Item {item_id}: Error — {err}")
 
             elif result.result.type == "expired":
                 errors += 1
@@ -743,6 +839,8 @@ def batch_collect(dry_run: bool) -> None:
             total_applied += 1
         except requests.HTTPError as e:
             print(f"  Item {item_id}: PATCH failed — {e}")
+            if e.response is not None:
+                print(f"    Response: {e.response.text[:500]}")
 
     print(f"\n{'='*60}")
     print(f"  Summary")
@@ -997,7 +1095,7 @@ Examples:
 
     # ── Batch collect ──
     if args.batch_collect:
-        batch_collect(args.dry_run)
+        batch_collect(args.dry_run, force=args.force)
         return
 
     # ── Batch submit ──

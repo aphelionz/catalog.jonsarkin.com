@@ -23,8 +23,8 @@ enrich: ## Enrich items with Claude OCR + metadata (writes to Omeka)
 enrich-dry: ## Preview enrichment changes without writing
 	python3 scripts/enrich_metadata.py --dry-run
 
-enrich-batch: ## Submit all items to Claude Batch API (50% cheaper)
-	python3 scripts/enrich_metadata.py --batch
+enrich-batch: ## Submit all items to Claude Batch API (50% cheaper, haiku default)
+	python3 scripts/enrich_metadata.py --batch --model haiku
 
 enrich-batch-status: ## Check status of pending enrichment batches
 	python3 scripts/enrich_metadata.py --batch-status
