@@ -36,7 +36,7 @@ DEFAULT_OMEKA_URL = "https://catalog.jonsarkin.com/"
 DEFAULT_THUMB_URL = "https://catalog.jonsarkin.com/"
 CATALOG_VERSION = 2
 
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20241022")  # OCR model
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")  # OCR model
 OCR_CACHE_PATH = Path(".ocr_cache.json")
 OCR_PROMPT_VERSION = 3  # bumped to invalidate cache for Claude re-OCR
 
@@ -191,10 +191,16 @@ def embed_and_upsert(
     t_ocr_start = time.perf_counter()
     if cached_text and not force_ocr:
         ocr_text = cached_text
+    elif os.getenv("ANTHROPIC_API_KEY"):
+        try:
+            ocr_text = ocr_with_claude(image_path)
+            cache[cache_key] = ocr_text
+            save_ocr_cache()
+        except Exception as e:
+            print(f"  OCR skipped (item {omeka_item_id}): {e}")
+            ocr_text = ""
     else:
-        ocr_text = ocr_with_claude(image_path)
-        cache[cache_key] = ocr_text
-        save_ocr_cache()
+        ocr_text = ""
     t_ocr = time.perf_counter() - t_ocr_start
 
     ocr_text_raw = ocr_text or ""
