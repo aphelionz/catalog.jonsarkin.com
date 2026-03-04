@@ -403,7 +403,12 @@ abbr[title] {
   background: #fff;
 }
 
-.zoom img { transform: scale(4); }
+.zoom img {
+  max-width: none;       /* override global img { max-width:100% } */
+  position: absolute;
+  top: 0; left: 0;
+  /* width/height and position set by JS for 2× magnification */
+}
 
 /* --- Context / Documentation Section --- */
 
@@ -433,21 +438,22 @@ abbr[title] {
 
 .genres {
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  border-bottom: var(--border);
+  grid-template-columns: repeat(3, 1fr);
+  border: var(--border);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+/* Internal dividers only — outer border handled by container */
 .genres li {
-  border-right: var(--border);
   text-align: center;
   padding: var(--gutter);
   font-size: 0.85rem;
 }
-
-.genres li:last-child { border-right: none; }
+.genres li:nth-child(3n+2),
+.genres li:nth-child(3n+3) { border-left: var(--border); }
+.genres li:nth-child(n+4)  { border-top: var(--border); }
 
 .collector-details { padding: var(--gutter); }
 
@@ -1335,8 +1341,10 @@ nav.pagination {
   .biography { border-right: none; border-bottom: var(--border); }
 
   .genres { grid-template-columns: 1fr; }
-  .genres li { border-right: none; border-bottom: var(--border); }
-  .genres li:last-child { border-bottom: none; }
+  .genres li:nth-child(3n+2),
+  .genres li:nth-child(3n+3) { border-left: none; }
+  .genres li:nth-child(n+4) { border-top: none; }
+  .genres li + li { border-top: var(--border); }
 
   .supporting-media { grid-template-columns: 1fr; }
 

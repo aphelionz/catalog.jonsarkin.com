@@ -47,6 +47,7 @@ import base64
 import io
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -329,6 +330,34 @@ def _clean_value(v: dict) -> dict:
     return {k: v[k] for k in WRITE_KEYS if k in v}
 
 
+SIGNATURE_ARROWS = set("↖↑↗←→↙↓↘∅")
+
+
+def _parse_signature(raw: str) -> tuple[str, str | None]:
+    """Parse signature like '↘ JMS 17' → ('↘', '2017').
+
+    Returns (arrow_char, year_str_or_None).  The arrow is a single Unicode
+    character indicating position on the artwork.  The year (if present) is
+    normalised to four digits.
+    """
+    if not raw:
+        return ("∅", None)
+    raw = raw.strip()
+    # First character should be a directional arrow or ∅
+    arrow = raw[0] if raw and raw[0] in SIGNATURE_ARROWS else "∅"
+    # Extract year: prefer 4-digit, fall back to 2-digit
+    year = None
+    m = re.search(r'\b((?:19|20)\d{2})\b', raw)
+    if m:
+        year = m.group(1)
+    else:
+        m = re.search(r'\b(\d{2})\b', raw)
+        if m:
+            yy = int(m.group(1))
+            year = f"20{m.group(1)}" if yy < 50 else f"19{m.group(1)}"
+    return (arrow, year)
+
+
 def build_patch_payload(item: dict, enrichment: dict) -> dict:
     """
     Build a PATCH payload that merges enrichment into existing item data.
@@ -388,17 +417,24 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
         payload["dcterms:title"] = [literal_value(PROP["dcterms:title"], enrichment["title"])]
 
     set_if_empty("bibo:content", enrichment.get("transcription"))
-    set_if_empty("schema:distinguishingSign", enrichment.get("signature"))
 
+    # Signature → always store as single arrow character; year feeds into date
+    sig_arrow, sig_year = _parse_signature(enrichment.get("signature", ""))
+    payload["schema:distinguishingSign"] = [literal_value(PROP["schema:distinguishingSign"], sig_arrow)]
+
+    # Date: force-set from enrichment or signature year
     date_val = enrichment.get("date")
     if date_val and "T" not in date_val and ":" not in date_val:
-        set_if_empty("dcterms:date", date_val)
+        payload["dcterms:date"] = [literal_value(PROP["dcterms:date"], date_val)]
+    elif sig_year:
+        payload["dcterms:date"] = [literal_value(PROP["dcterms:date"], sig_year)]
 
     set_if_empty("dcterms:medium", enrichment.get("medium"))
 
-    support = enrichment.get("support")
-    if support and support in SUPPORTS:
-        set_if_empty("schema:artworkSurface", support)
+    # Hardcoded defaults — always overwrite (not set_if_empty)
+    payload["schema:artworkSurface"] = [literal_value(PROP["schema:artworkSurface"], "Album Sleeve")]
+    payload["schema:height"] = [literal_value(PROP["schema:height"], "12.5")]
+    payload["schema:width"] = [literal_value(PROP["schema:width"], "12.5")]
 
     work_type = enrichment.get("work_type")
     if work_type and work_type in WORK_TYPES:
@@ -415,8 +451,8 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
     if not has_creator:
         payload["schema:creator"] = [resource_value(PROP["schema:creator"], CREATOR_ITEM_ID)]
 
-    set_if_empty("bibo:owner", "The Jon Sarkin Estate")
-    set_if_empty("dcterms:format", "\u2205")
+    payload["bibo:owner"] = [literal_value(PROP["bibo:owner"], "The Jon Sarkin Estate")]
+    payload["dcterms:format"] = [literal_value(PROP["dcterms:format"], "∅")]
 
     return payload
 
@@ -881,10 +917,7 @@ def show_diff(item: dict, enrichment: dict, item_id: int) -> int:
     fields = [
         ("Title",         "dcterms:title",              "title"),
         ("Transcription", "bibo:content",               "transcription"),
-        ("Signature",     "schema:distinguishingSign",  "signature"),
-        ("Date",          "dcterms:date",               "date"),
         ("Medium",        "dcterms:medium",             "medium"),
-        ("Support",       "schema:artworkSurface",      "support"),
         ("Work Type",     "dcterms:type",               "work_type"),
     ]
 
@@ -909,11 +942,36 @@ def show_diff(item: dict, enrichment: dict, item_id: int) -> int:
         print(f"  + Motifs: {', '.join(proposed_motifs)}")
         changes += 1
 
+    # Signature reformatting: old "↘ JMS 17" → "↘"
+    cur_sig = extract_value(item, "schema:distinguishingSign") or ""
+    if not (len(cur_sig) == 1 and cur_sig in SIGNATURE_ARROWS):
+        sig_arrow, _ = _parse_signature(enrichment.get("signature", ""))
+        print(f"  ~ Signature: {cur_sig!r} → {sig_arrow}")
+        changes += 1
+
+    # Date: enrichment date or signature year
+    cur_date = extract_value(item, "dcterms:date") or ""
+    _, sig_year_diff = _parse_signature(enrichment.get("signature", ""))
+    effective_date = enrichment.get("date") or sig_year_diff
+    if effective_date and cur_date != effective_date:
+        if cur_date:
+            print(f"  ~ Date: {cur_date} → {effective_date}")
+        else:
+            print(f"  + Date: {effective_date}")
+        changes += 1
+
+    # Hardcoded defaults
+    if extract_value(item, "schema:artworkSurface") != "Album Sleeve":
+        print(f"  + Support: Album Sleeve")
+        changes += 1
+    if not extract_value(item, "schema:height"):
+        print(f"  + Dimensions: 12.5 × 12.5")
+        changes += 1
     if not extract_value(item, "bibo:owner"):
         print(f"  + Owner: The Jon Sarkin Estate")
         changes += 1
     if not extract_value(item, "dcterms:format"):
-        print(f"  + Framed: \u2205")
+        print(f"  + Framed: ∅")
         changes += 1
 
     if changes == 0:
@@ -929,10 +987,22 @@ def needs_enrichment(item: dict) -> bool:
     if not item.get("o:media"):
         return False
     has_transcription = bool(extract_value(item, "bibo:content"))
-    has_signature = bool(extract_value(item, "schema:distinguishingSign"))
     has_medium = bool(extract_value(item, "dcterms:medium"))
     has_motifs = bool(extract_all_values(item, "dcterms:subject"))
-    return not (has_transcription and has_signature and has_medium and has_motifs)
+    # Signature must be a single arrow character (not old "↘ JMS 17" format)
+    sig = extract_value(item, "schema:distinguishingSign") or ""
+    has_clean_signature = len(sig) == 1 and sig in SIGNATURE_ARROWS
+    # Hardcoded defaults must be present
+    has_dimensions = bool(extract_value(item, "schema:height")) and bool(extract_value(item, "schema:width"))
+    has_support = extract_value(item, "schema:artworkSurface") == "Album Sleeve"
+    has_owner = bool(extract_value(item, "bibo:owner"))
+    has_framed = bool(extract_value(item, "dcterms:format"))
+    # Note: date is NOT checked here — needs_enrichment() can't see the
+    # enrichment data to know if a date is available. Date is handled in
+    # show_diff() and build_patch_payload() instead.
+    return not (has_transcription and has_clean_signature and has_medium
+                and has_motifs and has_dimensions and has_support
+                and has_owner and has_framed)
 
 
 # ── Candidate fetching ───────────────────────────────────────────────────

@@ -57,18 +57,29 @@
         });
     }
 
-    // ── Zoom follow cursor ──
+    // ── Zoom follow cursor (2× magnification) ──
     var zoom = document.querySelector('.zoom');
     var media = document.querySelector('.record-media');
     if (zoom && media) {
         var zoomImg = zoom.querySelector('img');
-        media.addEventListener('mousemove', function (e) {
-            var rect = media.getBoundingClientRect();
-            var x = (e.clientX - rect.left) / rect.width;
-            var y = (e.clientY - rect.top) / rect.height;
-            if (zoomImg) {
-                zoomImg.style.transformOrigin = (x * 100) + '% ' + (y * 100) + '%';
-            }
-        });
+        var mainImg = media.querySelector('img');
+        var ZOOM = 2;
+        var CIRCLE = 200;
+
+        if (mainImg && zoomImg) {
+            media.addEventListener('mousemove', function (e) {
+                var rect = media.getBoundingClientRect();
+                var x = (e.clientX - rect.left) / rect.width;   // 0–1
+                var y = (e.clientY - rect.top) / rect.height;   // 0–1
+                // Render image at 2× main image size for true magnification
+                var imgW = mainImg.offsetWidth * ZOOM;
+                var imgH = mainImg.offsetHeight * ZOOM;
+                zoomImg.style.width = imgW + 'px';
+                zoomImg.style.height = imgH + 'px';
+                // Centre the cursor point in the circle
+                zoomImg.style.left = -(x * imgW - CIRCLE / 2) + 'px';
+                zoomImg.style.top = -(y * imgH - CIRCLE / 2) + 'px';
+            });
+        }
     }
 }());
