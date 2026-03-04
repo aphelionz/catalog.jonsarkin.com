@@ -18,6 +18,10 @@ venv/
 .search_index.sqlite
 search_index/
 
+# Enrichment pipeline cache + batch state
+scripts/.enrich_cache.json
+scripts/.enrich_batches/
+
 # macOS
 .DS_Store
 
@@ -27,3 +31,24 @@ search_index/
 
 # Pytest
 .pytest_cache/
+
+# Pulled production media (large, binary)
+omeka/volume/files/
+
+# Third-party Omeka modules
+omeka/volume/modules/BulkEdit/
+omeka/volume/modules/BulkExport/
+omeka/volume/modules/BulkImport/
+omeka/volume/modules/BulkImportFiles/
+omeka/volume/modules/CSSEditor/
+omeka/volume/modules/CSVImport/
+omeka/volume/modules/Common/
+omeka/volume/modules/CustomVocab/
+omeka/volume/modules/EasyAdmin/
+omeka/volume/modules/FacetedBrowse/
+omeka/volume/modules/Log/
+
+# Third-party Omeka themes
+omeka/volume/themes/default/
+omeka/volume/themes/freedom/
+omeka/volume/themes/lively/

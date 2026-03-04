@@ -1,0 +1,122 @@
+<?php
+/**
+ * Sarkin-Jeppesen — Item browse (chart card grid)
+ *
+ * Displays items as a grid of approach-chart-style cards,
+ * inspired by Jeppesen terminal procedure index pages.
+ */
+$escape    = $this->plugin('escapeHtml');
+$translate = $this->plugin('translate');
+
+$this->htmlElement('body')->appendAttribute('class', 'item browse');
+
+$layoutSetting = $this->themeSetting('browse_layout') ?: 'grid';
+$isGrid = ($layoutSetting === 'grid');
+
+// Property helper
+$val = function ($item, $term, $fallback = "\xE2\x80\x94") use ($escape) {
+    $v = $item->value($term, ['default' => null]);
+    return $v ? $escape((string) $v) : $fallback;
+};
+
+// Reject EXIF timestamps and MIME types from auto-populated fields
+$isArtworkDate = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '' || $str === "\xE2\x80\x94") return false;
+    if (preg_match('/^\d{4}:\d{2}:\d{2}/', $str)) return false;
+    if (preg_match('/\d{4}-\d{2}-\d{2}T/', $str)) return false;
+    return true;
+};
+$isNotMime = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '' || $str === "\xE2\x80\x94") return false;
+    if (preg_match('#^[\w-]+/[\w.+-]+$#', $str)) return false;
+    return true;
+};
+?>
+
+<div class="page-title-row">
+    <h1><?php echo $translate('Index of Works'); ?></h1>
+    <span class="subtitle"><?php echo $escape($this->paginationInfo ?? ''); ?></span>
+</div>
+
+<?php echo $this->searchFilters(); ?>
+
+<div class="browse-controls">
+    <?php echo $this->browse()->renderSortSelector('items'); ?>
+    <span class="advanced-search-link">
+        <?php echo $this->hyperlink($translate('Advanced search'), $this->url(
+            'site/resource',
+            ['controller' => 'item', 'action' => 'search'],
+            true
+        )); ?>
+    </span>
+</div>
+
+<?php $this->trigger('view.browse.before'); ?>
+
+<?php if (count($items)): ?>
+<ul class="chart-grid<?php echo $isGrid ? '' : ' list-view'; ?>">
+    <?php foreach ($items as $item):
+        $title   = $item->displayTitle() ?: 'Untitled';
+        $dateRaw = $val($item, 'dcterms:date', '') ?: $val($item, 'schema:dateCreated', '');
+        $date    = $isArtworkDate($dateRaw) ? $dateRaw : '';
+        $catId   = $val($item, 'dcterms:identifier', '');
+        $mediumRaw = $val($item, 'dcterms:medium', '');
+        $medium  = $isNotMime($mediumRaw) ? $mediumRaw : '';
+        $height  = $val($item, 'schema:height', '');
+        $width   = $val($item, 'schema:width', '');
+        $extent  = $val($item, 'dcterms:extent', '');
+        // Build dimensions from height × width, or fall back to extent
+        if ($height && $width) {
+            $dims = $height . ' × ' . $width;
+        } elseif ($extent) {
+            $dims = $extent;
+        } else {
+            $dims = '';
+        }
+
+        $primaryMedia = $item->primaryMedia();
+        $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
+    ?>
+    <li class="chart-card">
+        <a href="<?php echo $escape($item->url()); ?>">
+            <div class="card-image">
+                <?php if ($thumbUrl): ?>
+                    <img src="<?php echo $escape($thumbUrl); ?>"
+                         alt="<?php echo $escape($title); ?>"
+                         loading="lazy" />
+                <?php else: ?>
+                    <div class="card-image-placeholder">No image</div>
+                <?php endif; ?>
+            </div>
+            <div class="card-facts">
+                <div class="card-fact">
+                    <div class="card-fact-label">Year</div>
+                    <div class="card-fact-value"><?php echo $date; ?></div>
+                </div>
+                <div class="card-fact">
+                    <div class="card-fact-label">Size</div>
+                    <div class="card-fact-value"><?php echo $dims ?: '—'; ?></div>
+                </div>
+            </div>
+            <div class="card-info">
+                <?php if ($catId): ?>
+                    <div class="card-id"><?php echo $catId; ?></div>
+                <?php endif; ?>
+                <div class="card-title"><?php echo $escape($title); ?></div>
+                <?php if ($medium): ?>
+                    <div class="card-medium"><?php echo $medium; ?></div>
+                <?php endif; ?>
+            </div>
+        </a>
+    </li>
+    <?php endforeach; ?>
+</ul>
+<?php else: ?>
+    <p><?php echo $translate('No items found.'); ?></p>
+<?php endif; ?>
+
+<?php $this->trigger('view.browse.after'); ?>
+
+<?php echo $this->pagination(); ?>

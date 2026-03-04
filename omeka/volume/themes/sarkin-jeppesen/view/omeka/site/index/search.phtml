@@ -1,0 +1,80 @@
+<?php
+/**
+ * Sarkin-Jeppesen — Site-wide search results
+ *
+ * Structured search results in the Jeppesen index style.
+ */
+$escape    = $this->plugin('escapeHtml');
+$translate = $this->plugin('translate');
+
+$this->htmlElement('body')->appendAttribute('class', 'search-results');
+
+$val = function ($resource, $term, $fallback = '') use ($escape) {
+    $v = $resource->value($term, ['default' => null]);
+    return $v ? $escape((string) $v) : $fallback;
+};
+?>
+
+<div class="page-title-row">
+    <h1><?php echo $translate('Search Results'); ?></h1>
+</div>
+
+<?php echo $this->searchFilters(); ?>
+
+<?php $this->trigger('view.search.before'); ?>
+
+<?php if (isset($response)):
+    foreach ($response->resourceTypes() as $resourceType):
+        $resources = $response->resourceList($resourceType);
+        if (!count($resources)) continue;
+?>
+
+<h2 style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.06em; margin-top: 2rem; border-bottom: 2px solid #000; padding-bottom: 8px;">
+    <?php echo $escape($this->translate(ucfirst($resourceType))); ?>
+</h2>
+
+<ul class="chart-grid">
+    <?php foreach ($resources as $resource):
+        $title   = $resource->displayTitle() ?: 'Untitled';
+        $catId   = $val($resource, 'dcterms:identifier');
+        $date    = $val($resource, 'dcterms:date');
+        $primaryMedia = method_exists($resource, 'primaryMedia') ? $resource->primaryMedia() : null;
+        $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
+    ?>
+    <li class="chart-card">
+        <a href="<?php echo $escape($resource->url()); ?>">
+            <div class="card-image">
+                <?php if ($thumbUrl): ?>
+                    <img src="<?php echo $escape($thumbUrl); ?>"
+                         alt="<?php echo $escape($title); ?>"
+                         loading="lazy" />
+                <?php else: ?>
+                    <div class="card-image-placeholder">No image</div>
+                <?php endif; ?>
+            </div>
+            <div class="card-facts">
+                <div class="card-fact">
+                    <div class="card-fact-label">Year</div>
+                    <div class="card-fact-value"><?php echo $date ?: '—'; ?></div>
+                </div>
+                <div class="card-fact">
+                    <div class="card-fact-label">ID</div>
+                    <div class="card-fact-value"><?php echo $catId ?: '—'; ?></div>
+                </div>
+            </div>
+            <div class="card-info">
+                <div class="card-title"><?php echo $escape($title); ?></div>
+            </div>
+        </a>
+    </li>
+    <?php endforeach; ?>
+</ul>
+
+<?php
+    endforeach;
+endif;
+?>
+
+<?php $this->trigger('view.search.after'); ?>
+
+<?php echo $this->pagination(); ?>

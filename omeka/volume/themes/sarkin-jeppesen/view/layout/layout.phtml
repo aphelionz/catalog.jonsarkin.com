@@ -1,0 +1,71 @@
+<?php
+/**
+ * Sarkin-Jeppesen — Master layout
+ * Jeppesen manual-inspired wrapper for the Jon Sarkin Catalog Raisonne.
+ */
+$escape = $this->plugin('escapeHtml');
+$site   = $this->site;
+
+$this->htmlElement('html')->setAttribute('lang', $this->lang());
+$this->headMeta()->setCharset('utf-8');
+$this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1');
+$this->headTitle($site->title())->setSeparator(' · ');
+
+// Theme assets
+$this->headLink()->prependStylesheet($this->assetUrl('css/style.css'));
+// Omeka core icons (needed for admin bar)
+$this->headLink()->appendStylesheet($this->assetUrl('css/iconfonts.css', 'Omeka'));
+
+// jQuery + Omeka core
+$this->headScript()->prependFile($this->assetUrl('vendor/jquery/jquery.min.js', 'Omeka'));
+$this->headScript()->prependFile($this->assetUrl('js/global.js', 'Omeka'));
+$this->jsTranslate();
+
+// Theme JS (loaded at end of body)
+$this->inlineScript()->appendFile($this->assetUrl('js/sarkin.js'));
+
+$this->trigger('view.layout');
+
+$footerText = $this->themeSetting('footer_text')
+    ?: '&copy; ' . date('Y') . ', The Jon Sarkin Estate / Artists Rights Society (ARS), New York. All rights reserved.';
+?>
+<!DOCTYPE html>
+<?php echo $this->htmlElement('html'); ?>
+<head>
+    <?php echo $this->headMeta(); ?>
+    <?php echo $this->headTitle(); ?>
+    <?php echo $this->headLink(); ?>
+    <?php echo $this->headStyle(); ?>
+    <?php echo $this->headScript(); ?>
+</head>
+
+<?php echo $this->htmlElement('body'); ?>
+    <a id="skipnav" href="#content" class="sr-only"><?php echo $this->translate('Skip to main content'); ?></a>
+
+    <?php echo $this->userBar(); ?>
+
+    <div class="site-wrapper">
+        <header class="site-header">
+            <a href="<?php echo $escape($site->url()); ?>" class="site-title-link">
+                <?php echo $escape($site->title()); ?>
+            </a>
+        </header>
+
+        <nav class="site-nav" aria-label="<?php echo $this->translate('Primary navigation'); ?>">
+            <?php echo $site->publicNav()->menu()->renderMenu(null, [
+                'maxDepth' => 0,
+            ]); ?>
+        </nav>
+
+        <main id="content" role="main">
+            <?php echo $this->content; ?>
+        </main>
+
+        <footer class="site-footer">
+            <p><?php echo $footerText; ?></p>
+        </footer>
+    </div>
+
+    <?php echo $this->inlineScript(); ?>
+</body>
+</html>

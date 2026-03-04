@@ -1,0 +1,4 @@
+# Dependencies for scripts/enrich_metadata.py
+anthropic>=0.40.0
+requests>=2.31.0
+Pillow>=10.0.0

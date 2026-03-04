@@ -1,0 +1,371 @@
+<?php
+/**
+ * Sarkin-Jeppesen — Item detail (record page)
+ *
+ * Properties mapped per docs/metadata-mapping.md
+ * No fallbacks — empty fields are omitted entirely.
+ */
+$escape    = $this->plugin('escapeHtml');
+$translate = $this->plugin('translate');
+
+$this->htmlElement('body')->appendAttribute('class', 'item show');
+
+// ── Property helpers ──
+// Single value — returns escaped string or empty string
+$val = function ($term) use ($item, $escape) {
+    $v = $item->value($term, ['default' => null]);
+    return $v ? $escape(trim((string) $v)) : '';
+};
+
+// All values for a repeatable property
+$allVals = function ($term) use ($item, $escape) {
+    $values = $item->value($term, ['all' => true, 'default' => []]);
+    $result = [];
+    foreach ($values as $v) {
+        $str = trim((string) $v);
+        if ($str !== '') $result[] = $escape($str);
+    }
+    return $result;
+};
+
+// Reject EXIF timestamps — e.g. "2026:03:02 11:47:51"
+$isArtworkDate = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '') return false;
+    if (preg_match('/^\d{4}:\d{2}:\d{2}/', $str)) return false;   // EXIF
+    if (preg_match('/\d{4}-\d{2}-\d{2}T/', $str)) return false;   // ISO datetime
+    return true;
+};
+
+// Reject MIME types — e.g. "image/jpeg"
+$isNotMime = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '') return false;
+    if (preg_match('#^[\w-]+/[\w.+-]+$#', $str)) return false;
+    return true;
+};
+
+// ── Identity ──
+// Use dcterms:title directly — displayTitle() returns the catalog number
+// because the resource template sets dcterms:identifier as the title property.
+$titleVal   = $item->value('dcterms:title', ['default' => null]);
+$title      = $titleVal ? trim((string) $titleVal) : 'Untitled';
+$dateRaw    = $val('dcterms:date') ?: $val('schema:dateCreated');
+$date       = ($dateRaw && $isArtworkDate($dateRaw)) ? $dateRaw : '';
+$creator    = $val('dcterms:creator') ?: $val('schema:creator');
+$identifier = $val('dcterms:identifier');
+$type       = $val('dcterms:type');
+
+// ── Physical ──
+$mediumRaw  = $val('dcterms:medium');
+$medium     = ($mediumRaw && $isNotMime($mediumRaw)) ? $mediumRaw : '';
+$formatRaw  = $val('dcterms:format');
+$format     = ($formatRaw && $isNotMime($formatRaw)) ? $formatRaw : '';
+$surface    = $val('schema:artworkSurface');
+$height     = $val('schema:height');
+$width      = $val('schema:width');
+$signed     = $val('schema:distinguishingSign');
+$condition  = $val('schema:itemCondition');
+$extent     = $val('dcterms:extent');
+
+// Build dimensions string
+if ($height && $width) {
+    $dimensions = $height . ' × ' . $width;
+} elseif ($extent) {
+    $dimensions = $extent;
+} else {
+    $dimensions = '';
+}
+
+// No medium→format fallback: format (framing) and medium are distinct fields
+
+// ── Custody & Rights ──
+$owner      = $val('bibo:owner');
+$spatial    = $val('dcterms:spatial');
+$rights     = $val('dcterms:rights');
+$creditText = $val('schema:creditText');
+
+// Provenance (repeatable)
+$provenanceVals = $allVals('dcterms:provenance');
+
+// ── Documentation ──
+$inscriptions    = $allVals('bibo:annotates');
+$transcription   = $val('bibo:content');
+$exhibitions     = $allVals('bibo:presentedAt');
+$bibliography    = $allVals('dcterms:bibliographicCitation');
+$description     = $val('dcterms:description');
+
+// ── Collector layer ──
+$motifs          = $allVals('dcterms:subject');
+$displayCare     = $val('curation:note');
+
+// ── Media ──
+$primaryMedia = $item->primaryMedia();
+$allMedia     = $item->media();
+$imageUrl     = $primaryMedia ? $primaryMedia->originalUrl() : '';
+
+$extraMedia = [];
+foreach ($allMedia as $m) {
+    if ($primaryMedia && $m->id() === $primaryMedia->id()) continue;
+    $extraMedia[] = $m;
+}
+
+// ── Schema.org JSON-LD ──
+$jsonLd = [
+    '@context' => 'https://schema.org',
+    '@type'    => 'VisualArtwork',
+    'name'     => $title,
+];
+if ($identifier) $jsonLd['identifier'] = strip_tags($identifier);
+$jsonLd['creator'] = [
+    '@type'     => 'Person',
+    'name'      => $creator ?: 'Jon Sarkin',
+    'birthDate' => '1953',
+    'deathDate' => '2024',
+];
+if ($date)       $jsonLd['dateCreated'] = strip_tags($date);
+if ($medium)     $jsonLd['artMedium'] = strip_tags($medium);
+if ($surface)    $jsonLd['artworkSurface'] = strip_tags($surface);
+if ($type)       $jsonLd['artform'] = strip_tags($type);
+if ($height)     $jsonLd['height'] = strip_tags($height);
+if ($width)      $jsonLd['width'] = strip_tags($width);
+if ($imageUrl)   $jsonLd['image'] = $imageUrl;
+$jsonLd['copyrightHolder'] = ['@type' => 'Organization', 'name' => 'The Jon Sarkin Estate'];
+if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
+if ($spatial)    $jsonLd['locationCreated'] = ['@type' => 'Place', 'name' => strip_tags($spatial)];
+$jsonLd['isPartOf'] = [
+    '@type' => 'CreativeWork',
+    'name'  => 'Jon Sarkin: Catalog Raisonné',
+    'url'   => 'https://catalog.jonsarkin.com',
+];
+$jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
+?>
+
+<script type="application/ld+json"><?php echo json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE); ?></script>
+
+<?php $this->trigger('view.show.before'); ?>
+
+<article aria-labelledby="record-title">
+
+    <!-- ═══ RECORD HEADER ═══ -->
+    <header class="record-header">
+        <div>
+            <div class="record-facts">
+                <?php if ($date): ?>
+                <div class="fact year">
+                    <dl><dt>Year</dt><dd><?php echo $date; ?></dd></dl>
+                </div>
+                <?php endif; ?>
+                <?php if ($dimensions): ?>
+                <div class="fact">
+                    <dl><dt>Dimensions</dt><dd><?php echo $dimensions; ?></dd></dl>
+                </div>
+                <?php endif; ?>
+                <?php if ($signed): ?>
+                <div class="fact">
+                    <dl><dt>Signed</dt><dd><?php echo $signed; ?></dd></dl>
+                </div>
+                <?php endif; ?>
+                <?php if ($format): ?>
+                <div class="fact">
+                    <dl><dt>Framed</dt><dd><?php echo $format; ?></dd></dl>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="record-header-right">
+            <?php if ($identifier): ?>
+                <div class="catalog-id"><?php echo $identifier; ?></div>
+            <?php endif; ?>
+            <h1 id="record-title"><?php echo $escape(strtoupper($title)); ?></h1>
+        </div>
+    </header>
+
+    <!-- ═══ METADATA BAR ═══ -->
+    <section class="record-metadata" aria-labelledby="object-metadata-heading">
+        <h2 id="object-metadata-heading" class="sr-only"><?php echo $translate('Object metadata'); ?></h2>
+        <div class="metadata-top">
+            <div class="panel">
+                <dl>
+                    <?php if ($medium): ?>
+                        <dt>Medium</dt><dd><?php echo $medium; ?></dd>
+                    <?php endif; ?>
+                    <?php if ($surface): ?>
+                        <dt>Support</dt><dd><?php echo $surface; ?></dd>
+                    <?php endif; ?>
+                    <?php if ($owner): ?>
+                        <dt>Owner / Custody</dt><dd><?php echo $owner; ?></dd>
+                    <?php elseif (!empty($provenanceVals)): ?>
+                        <dt>Owner / Custody</dt><dd><?php echo $provenanceVals[0]; ?></dd>
+                    <?php endif; ?>
+                    <?php if ($condition): ?>
+                        <dt>Condition</dt><dd><?php echo $condition; ?></dd>
+                    <?php endif; ?>
+                </dl>
+            </div>
+            <div class="icon-actions">
+                <button type="button" class="icon-button" aria-label="<?php echo $translate('Print'); ?>" onclick="window.print();">
+                    <img src="<?php echo $this->assetUrl('img/icons/printer.svg'); ?>" alt="" />
+                </button>
+                <button type="button" class="icon-button" aria-label="<?php echo $translate('Share'); ?>" data-action="share">
+                    <img src="<?php echo $this->assetUrl('img/icons/share.svg'); ?>" alt="" />
+                </button>
+            </div>
+        </div>
+
+        <nav class="metadata-bottom" aria-label="<?php echo $translate('Artwork actions'); ?>">
+            <ul>
+                <li><button type="button" id="copy-citation" aria-label="<?php echo $translate('Copy citation'); ?>">CITE</button></li>
+                <li><a href="#">REQUEST CONDITION REPORT</a></li>
+                <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>">RIGHTS &amp; REPRODUCTION</a></li>
+                <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>">BOOK PRIVATE VIEWING</a></li>
+                <li><a href="<?php echo $this->url('site/resource', ['controller' => 'item', 'action' => 'browse', 'site-slug' => $this->currentSite()->slug()]); ?>">VIEW SIMILAR</a></li>
+            </ul>
+        </nav>
+    </section>
+
+    <!-- ═══ ARTWORK MEDIA ═══ -->
+    <section class="record-media" aria-labelledby="artwork-media-heading">
+        <h2 id="artwork-media-heading" class="sr-only"><?php echo $translate('Artwork media'); ?></h2>
+        <figure class="artwork-figure">
+            <?php if ($primaryMedia): ?>
+                <img src="<?php echo $escape($imageUrl); ?>"
+                     alt="<?php echo $escape(($creator ?: 'Jon Sarkin') . ", $title" . ($date ? ", $date" : '')); ?>" />
+            <?php endif; ?>
+        </figure>
+        <?php if ($primaryMedia): ?>
+            <div class="zoom" aria-hidden="true">
+                <img src="<?php echo $escape($imageUrl); ?>" alt="" />
+            </div>
+        <?php endif; ?>
+    </section>
+
+    <!-- ═══ CONTEXT / DOCUMENTATION SECTION ═══ -->
+    <section class="record-value" aria-labelledby="collector-context-heading">
+        <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
+
+        <?php
+        // Fetch artist bio from the Jon Sarkin Person item (id:3)
+        $creatorBio = '';
+        try {
+            $creatorItem = $this->api()->read('items', 3)->getContent();
+            $bioVal = $creatorItem->value('dcterms:description', ['default' => null]);
+            if ($bioVal) $creatorBio = $escape(trim((string) $bioVal));
+        } catch (\Exception $e) { /* item not found or no access */ }
+        ?>
+        <?php if ($creatorBio || $description): ?>
+        <div class="biography">
+            <?php if ($creatorBio): ?>
+                <p><?php echo $creatorBio; ?></p>
+            <?php endif; ?>
+            <?php if ($description): ?>
+                <p><?php echo $description; ?></p>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <div class="collector-column">
+            <?php if (!empty($motifs)): ?>
+                <ul class="genres" aria-label="<?php echo $translate('Motifs and subjects'); ?>">
+                    <?php foreach ($motifs as $motif): ?>
+                        <li><?php echo $motif; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
+            <div class="collector-details">
+                <?php if ($displayCare): ?>
+                    <p class="care"><strong>Display &amp; care:</strong> <?php echo $displayCare; ?></p>
+                <?php endif; ?>
+
+                <section class="documentation" aria-labelledby="documentation-heading">
+                    <h3 id="documentation-heading"><?php echo $translate('Documentation and provenance'); ?></h3>
+
+                    <?php if (!empty($inscriptions)): ?>
+                    <section aria-labelledby="inscriptions-heading">
+                        <h4 id="inscriptions-heading"><?php echo $translate('Inscriptions'); ?></h4>
+                        <dl>
+                            <?php foreach ($inscriptions as $insc): ?>
+                                <dt>Inscription</dt><dd><?php echo $insc; ?></dd>
+                            <?php endforeach; ?>
+                        </dl>
+                    </section>
+                    <?php endif; ?>
+
+                    <?php if ($transcription): ?>
+                    <section aria-labelledby="transcription-heading">
+                        <h4 id="transcription-heading"><?php echo $translate('Transcription'); ?></h4>
+                        <div class="transcription"><?php echo nl2br($transcription); ?></div>
+                    </section>
+                    <?php endif; ?>
+
+                    <?php if (!empty($provenanceVals)): ?>
+                    <section aria-labelledby="provenance-heading">
+                        <h4 id="provenance-heading"><?php echo $translate('Provenance / custody'); ?></h4>
+                        <ul>
+                            <?php foreach ($provenanceVals as $prov): ?>
+                                <li><?php echo $prov; ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </section>
+                    <?php endif; ?>
+
+                    <?php if (!empty($exhibitions)): ?>
+                    <section aria-labelledby="exhibitions-heading">
+                        <h4 id="exhibitions-heading"><?php echo $translate('Exhibition history'); ?></h4>
+                        <ul>
+                            <?php foreach ($exhibitions as $exh): ?>
+                                <li><?php echo $exh; ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </section>
+                    <?php endif; ?>
+
+                    <?php if (!empty($bibliography)): ?>
+                    <section aria-labelledby="bibliography-heading">
+                        <h4 id="bibliography-heading"><?php echo $translate('Bibliography'); ?></h4>
+                        <ul>
+                            <?php foreach ($bibliography as $bib): ?>
+                                <li><?php echo $bib; ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </section>
+                    <?php endif; ?>
+
+                    <?php if (!empty($extraMedia)): ?>
+                    <section aria-labelledby="verso-details-heading">
+                        <h4 id="verso-details-heading"><?php echo $translate('Verso and detail images'); ?></h4>
+                        <div class="supporting-media">
+                            <?php
+                            $slotLabels = ['Verso', 'Detail 1', 'Detail 2'];
+                            for ($i = 0; $i < min(3, count($extraMedia)); $i++):
+                                $extraM = $extraMedia[$i];
+                            ?>
+                            <figure class="supporting-slot">
+                                <img src="<?php echo $escape($extraM->thumbnailUrl('large')); ?>"
+                                     alt="<?php echo $escape("$slotLabels[$i] for " . ($creator ?: 'Jon Sarkin') . ", $title"); ?>" />
+                                <figcaption><?php echo $slotLabels[$i]; ?></figcaption>
+                            </figure>
+                            <?php endfor; ?>
+                        </div>
+                    </section>
+                    <?php endif; ?>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ RECORD FOOTER ═══ -->
+    <?php if ($creditText || $rights): ?>
+    <footer class="record-footer">
+        <?php if ($creditText): ?>
+            <div><?php echo $creditText; ?></div>
+        <?php elseif ($rights): ?>
+            <div><?php echo $rights; ?></div>
+        <?php endif; ?>
+    </footer>
+    <?php endif; ?>
+
+</article>
+
+<?php $this->trigger('view.show.after'); ?>

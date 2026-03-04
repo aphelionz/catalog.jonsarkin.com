@@ -1,0 +1,35 @@
+<?php
+/**
+ * Sarkin-Jeppesen — Item-set browse
+ *
+ * Lists collections in the Jeppesen index style —
+ * bold names, bordered entries, like a table of contents.
+ */
+$escape    = $this->plugin('escapeHtml');
+$translate = $this->plugin('translate');
+
+$this->htmlElement('body')->appendAttribute('class', 'item-set browse');
+?>
+
+<div class="page-title-row">
+    <h1><?php echo $translate('Collections'); ?></h1>
+</div>
+
+<?php $this->trigger('view.browse.before'); ?>
+
+<?php if (count($itemSets)): ?>
+<ul class="item-set-list">
+    <?php foreach ($itemSets as $itemSet): ?>
+    <li class="item-set-entry">
+        <?php echo $itemSet->link($escape($itemSet->displayTitle())); ?>
+        <span class="item-set-count">(<?php echo $itemSet->itemCount(); ?>)</span>
+    </li>
+    <?php endforeach; ?>
+</ul>
+<?php else: ?>
+    <p><?php echo $translate('No collections found.'); ?></p>
+<?php endif; ?>
+
+<?php $this->trigger('view.browse.after'); ?>
+
+<?php echo $this->pagination(); ?>

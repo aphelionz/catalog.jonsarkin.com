@@ -1,0 +1,105 @@
+<?php
+/**
+ * Sarkin-Jeppesen — FacetedBrowse browse results override
+ *
+ * Renders chart-card grid directly instead of delegating to a partial
+ * (which has Laminas path resolution issues in theme overrides).
+ */
+$headingTerm = $this->siteSetting('browse_heading_property_term');
+$bodyTerm    = $this->siteSetting('browse_body_property_term');
+$translate   = $this->plugin('translate');
+$escape      = $this->plugin('escapeHtml');
+
+$val = function ($item, $term, $fallback = "\xE2\x80\x94") use ($escape) {
+    $v = $item->value($term, ['default' => null]);
+    return $v ? $escape((string) $v) : $fallback;
+};
+
+// Reject EXIF timestamps and MIME types from auto-populated fields
+$isArtworkDate = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '' || $str === "\xE2\x80\x94") return false;
+    if (preg_match('/^\d{4}:\d{2}:\d{2}/', $str)) return false;
+    if (preg_match('/\d{4}-\d{2}-\d{2}T/', $str)) return false;
+    return true;
+};
+$isNotMime = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '' || $str === "\xE2\x80\x94") return false;
+    if (preg_match('#^[\w-]+/[\w.+-]+$#', $str)) return false;
+    return true;
+};
+?>
+<div class="browse-controls">
+    <?php echo $this->pagination(); ?>
+    <a href="#" class="permalink button" data-url="<?php echo $this->escapeHtml($this->url(null, ['action' => 'page'], ['force_canonical' => true], true)); ?>"><span class="default"><?php echo $translate('Copy permalink'); ?></span><span class="success"><?php echo $translate('Copied!'); ?></span></a>
+    <?php echo $this->sortSelector($sortings); ?>
+</div>
+
+<?php if ($items): ?>
+<ul class="chart-grid">
+    <?php foreach ($items as $item):
+        $heading = $headingTerm
+            ? $item->value($headingTerm, ['default' => $translate('[Untitled]')])
+            : $item->displayTitle();
+        $dateRaw = $val($item, 'dcterms:date', '') ?: $val($item, 'schema:dateCreated', '');
+        $date    = $isArtworkDate($dateRaw) ? $dateRaw : '';
+        $catId   = $val($item, 'dcterms:identifier', '');
+        $mediumRaw = $val($item, 'dcterms:medium', '');
+        $medium  = $isNotMime($mediumRaw) ? $mediumRaw : '';
+        $height  = $val($item, 'schema:height', '');
+        $width   = $val($item, 'schema:width', '');
+        $extent  = $val($item, 'dcterms:extent', '');
+        // Build dimensions from height × width, or fall back to extent
+        if ($height && $width) {
+            $dims = $height . ' × ' . $width;
+        } elseif ($extent) {
+            $dims = $extent;
+        } else {
+            $dims = '';
+        }
+
+        $primaryMedia = $item->primaryMedia();
+        $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
+    ?>
+    <li class="chart-card">
+        <a href="<?php echo $escape($item->url()); ?>">
+            <div class="card-image">
+                <?php if ($thumbUrl): ?>
+                    <img src="<?php echo $escape($thumbUrl); ?>"
+                         alt="<?php echo $escape($heading); ?>"
+                         loading="lazy" />
+                <?php else: ?>
+                    <div class="card-image-placeholder"><?php echo $translate('No image'); ?></div>
+                <?php endif; ?>
+            </div>
+            <div class="card-facts">
+                <div class="card-fact">
+                    <div class="card-fact-label"><?php echo $translate('Year'); ?></div>
+                    <div class="card-fact-value"><?php echo $date; ?></div>
+                </div>
+                <div class="card-fact">
+                    <div class="card-fact-label"><?php echo $translate('Size'); ?></div>
+                    <div class="card-fact-value"><?php echo $dims ?: "\xE2\x80\x94"; ?></div>
+                </div>
+            </div>
+            <div class="card-info">
+                <?php if ($catId): ?>
+                    <div class="card-id"><?php echo $catId; ?></div>
+                <?php endif; ?>
+                <div class="card-title"><?php echo $escape($heading); ?></div>
+                <?php if ($medium): ?>
+                    <div class="card-medium"><?php echo $medium; ?></div>
+                <?php endif; ?>
+            </div>
+        </a>
+    </li>
+    <?php endforeach; ?>
+</ul>
+<?php else: ?>
+<p><?php echo $translate('There are no results.'); ?></p>
+<?php endif; ?>
+
+<div class="browse-controls">
+    <?php echo $this->pagination(); ?>
+</div>
