@@ -209,6 +209,8 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <button type="button" class="pill-button" id="copy-citation">[cite]</button>
                 <button type="button" class="pill-button" onclick="window.print();">[print]</button>
                 <button type="button" class="pill-button" data-action="share">[share]</button>
+                <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>" class="pill-button">[rights]</a>
+                <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
             </div>
             <h1 id="record-title"><?php echo $escape(strtoupper($title)); ?></h1>
         </div>
@@ -244,12 +246,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             </div>
         </div>
 
-        <nav class="metadata-bottom" aria-label="<?php echo $translate('Artwork actions'); ?>">
-            <ul>
-                <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>">RIGHTS &amp; REPRODUCTION</a></li>
-                <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>">BOOK PRIVATE VIEWING</a></li>
-            </ul>
-        </nav>
     </section>
 
     <!-- ═══ ARTWORK MEDIA ═══ -->

@@ -290,6 +290,19 @@ abbr[title] {
   color: var(--secondary);
 }
 
+.estate-key {
+  font-size: 0.7rem;
+  color: var(--secondary);
+  margin: 0.3rem 0 0;
+}
+
+.estate-key code {
+  font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, monospace);
+  font-size: 0.65rem;
+  letter-spacing: 0.02em;
+  word-break: break-all;
+}
+
 /* ==========================================================================
    ITEM SHOW  (Detail / Record page — from layout.html)
    ========================================================================== */
@@ -356,7 +369,9 @@ abbr[title] {
 .record-header-right h1 { margin: 0; display: none; }
 
 .catalog-id {
-  color: var(--secondary);
+  color: var(--primary);
+  font-size: 1.3rem;
+  font-weight: 700;
 }
 
 /* --- Metadata Bar --- */
@@ -412,9 +427,10 @@ abbr[title] {
   padding: 0;
   cursor: pointer;
   font-family: var(--font);
-  font-size: 0.65rem;
-  color: var(--secondary);
+  font-size: 0.75rem;
+  color: #5c6b7a;
   letter-spacing: 0.04em;
+  text-decoration: none;
 }
 
 .pill-button:hover,
@@ -1630,7 +1646,6 @@ nav.pagination span.row-count {
 
 @media print {
   .site-nav,
-  .metadata-bottom,
   .icon-actions,
   .zoom,
   #user-bar { display: none !important; }

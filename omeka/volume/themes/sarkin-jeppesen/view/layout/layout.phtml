@@ -28,6 +28,18 @@ $this->trigger('view.layout');
 
 $footerText = $this->themeSetting('footer_text')
     ?: '&copy; ' . date('Y') . ', The Jon Sarkin Estate / Artists Rights Society (ARS), New York. All rights reserved.';
+
+// Estate public key from ShieldedRegistryAssets ceremony
+$sraPublicKey = null;
+try {
+    $sraResult = $this->setting('sra_ceremony_result');
+    if (is_string($sraResult)) {
+        $sraResult = json_decode($sraResult, true);
+    }
+    if (is_array($sraResult) && !empty($sraResult['pk_r'])) {
+        $sraPublicKey = $sraResult['pk_r'];
+    }
+} catch (\Exception $e) { /* module not installed or setting missing */ }
 ?>
 <!DOCTYPE html>
 <?php echo $this->htmlElement('html'); ?>
@@ -75,6 +87,9 @@ $footerText = $this->themeSetting('footer_text')
                     <a href="<?php echo $this->url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'contact']); ?>">Contact</a>
                 </nav>
             </div>
+            <?php if ($sraPublicKey): ?>
+            <p class="estate-key">Estate public key: <code><?php echo $escape($sraPublicKey); ?></code></p>
+            <?php endif; ?>
         </footer>
     </div>
 

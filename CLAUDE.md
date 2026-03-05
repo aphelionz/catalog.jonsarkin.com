@@ -39,6 +39,9 @@ make ingest       # one-shot: index Omeka items into Qdrant (CPU)
 - **Python:** `docker compose exec clip-api pytest` — never run pytest locally from venv
 - **PHP/theme:** reload browser at localhost:8888 — changes are live-mounted
 
+## Database
+- For data retrieval, favor making direct database calls rather than using the API
+
 ---
 
 ## Guardrails
