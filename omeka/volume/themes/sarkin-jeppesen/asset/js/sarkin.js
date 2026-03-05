@@ -68,7 +68,7 @@
         fetch(endpoint)
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
-                var results = data.results || [];
+                var results = (data.results || []).slice(0, 6);
                 if (!results.length) return;
 
                 var grid = similarSection.querySelector('.similar-grid');

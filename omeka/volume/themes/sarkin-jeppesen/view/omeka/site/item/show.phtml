@@ -276,7 +276,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             if ($bioVal) $creatorBio = $escape(trim((string) $bioVal));
         } catch (\Exception $e) { /* item not found or no access */ }
         ?>
-        <?php if ($creatorBio || $description): ?>
         <div class="biography">
             <?php if ($creatorBio): ?>
                 <p><?php echo $creatorBio; ?></p>
@@ -284,8 +283,26 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <?php if ($description): ?>
                 <p><?php echo $description; ?></p>
             <?php endif; ?>
+
+            <?php if ($owner): ?>
+            <section aria-labelledby="owner-heading">
+                <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
+                <p><?php echo $owner; ?></p>
+            </section>
+            <?php elseif (!empty($provenanceVals)): ?>
+            <section aria-labelledby="owner-heading">
+                <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
+                <p><?php echo $provenanceVals[0]; ?></p>
+            </section>
+            <?php endif; ?>
+
+            <?php if ($transcription): ?>
+            <section aria-labelledby="transcription-heading">
+                <h4 id="transcription-heading"><?php echo $translate('Transcription'); ?></h4>
+                <div class="transcription"><?php echo nl2br($transcription); ?></div>
+            </section>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
 
         <div class="collector-column">
             <?php $isAlbumPiece = in_array(strip_tags($surface), ['Album Sleeve', 'Cardboard'], true); ?>
@@ -305,24 +322,21 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 </ul>
             <?php endif; ?>
 
+            <section id="similar-pieces"
+                     data-item-id="<?php echo (int) $item->id(); ?>"
+                     data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
+                     aria-labelledby="similar-heading"
+                     hidden>
+                <h3 id="similar-heading">Similar pieces</h3>
+                <div class="similar-grid"></div>
+            </section>
+
             <div class="collector-details">
                 <?php if ($displayCare): ?>
                     <p class="care"><strong>Display &amp; care:</strong> <?php echo $displayCare; ?></p>
                 <?php endif; ?>
 
                 <section class="documentation">
-
-                    <?php if ($owner): ?>
-                    <section aria-labelledby="owner-heading">
-                        <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
-                        <p><?php echo $owner; ?></p>
-                    </section>
-                    <?php elseif (!empty($provenanceVals)): ?>
-                    <section aria-labelledby="owner-heading">
-                        <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
-                        <p><?php echo $provenanceVals[0]; ?></p>
-                    </section>
-                    <?php endif; ?>
 
                     <?php if (!empty($inscriptions)): ?>
                     <section aria-labelledby="inscriptions-heading">
@@ -332,13 +346,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                                 <dt>Inscription</dt><dd><?php echo $insc; ?></dd>
                             <?php endforeach; ?>
                         </dl>
-                    </section>
-                    <?php endif; ?>
-
-                    <?php if ($transcription): ?>
-                    <section aria-labelledby="transcription-heading">
-                        <h4 id="transcription-heading"><?php echo $translate('Transcription'); ?></h4>
-                        <div class="transcription"><?php echo nl2br($transcription); ?></div>
                     </section>
                     <?php endif; ?>
 
@@ -408,16 +415,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <?php endif; ?>
     </footer>
     <?php endif; ?>
-
-    <!-- ═══ SIMILAR PIECES ═══ -->
-    <section id="similar-pieces"
-             data-item-id="<?php echo (int) $item->id(); ?>"
-             data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
-             aria-labelledby="similar-heading"
-             hidden>
-        <h3 id="similar-heading">Similar pieces</h3>
-        <div class="similar-grid"></div>
-    </section>
 
 </article>
 
