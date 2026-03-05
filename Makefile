@@ -1,4 +1,4 @@
-.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry ensure-api-key
+.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry create-box-collections create-box-collections-dry ensure-api-key
 
 -include .env
 export
@@ -125,18 +125,32 @@ restore-db: ## Restore local MariaDB from a backup file (usage: make restore-db 
 		-e "SELECT COUNT(*) AS items FROM item;"
 	@$(MAKE) --no-print-directory ensure-api-key
 
-push-schema: ## Push local schema, site pages, and config to production
+push-schema: ## Push local schema, site pages, item sets, and config to production
 	@echo "Exporting local schema tables..."
 	@{ \
+		echo "SET FOREIGN_KEY_CHECKS = 0;"; \
 		echo "DELETE FROM resource_template_property WHERE resource_template_id = 2;"; \
 		echo "DELETE FROM site_page_block;"; \
 		echo "DELETE FROM site_page;"; \
+		echo "DELETE FROM site_item_set;"; \
+		echo "DELETE FROM value WHERE resource_id IN (SELECT id FROM item_set);"; \
+		echo "DELETE FROM item_set;"; \
+		echo "DELETE FROM resource WHERE resource_type = 'Omeka\\\\Entity\\\\ItemSet';"; \
+		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
+			--replace --no-create-info --skip-extended-insert --skip-lock-tables \
+			--where="resource_type = 'Omeka\\\\Entity\\\\ItemSet'" resource; \
+		echo "UPDATE resource SET thumbnail_id = NULL WHERE resource_type = 'Omeka\\\\\\\\Entity\\\\\\\\ItemSet';"; \
 		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
 			--replace --no-create-info --skip-extended-insert \
 			custom_vocab resource_template resource_template_property \
 			faceted_browse_page faceted_browse_category \
 			faceted_browse_facet faceted_browse_column \
-			site site_page site_page_block site_setting; \
+			site site_page site_page_block site_setting \
+			item_set site_item_set; \
+		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
+			--replace --no-create-info --skip-extended-insert --skip-lock-tables \
+			--where="resource_id IN (SELECT id FROM item_set)" value; \
+		echo "SET FOREIGN_KEY_CHECKS = 1;"; \
 	} > /tmp/omeka-schema-export.sql
 	@echo "Pushing to production..."
 	cat /tmp/omeka-schema-export.sql | ssh $(PROD_USER)@$(PROD_HOST) '\
@@ -156,8 +170,9 @@ push-schema: ## Push local schema, site pages, and config to production
 		mariadb -u"$$DB_USER" -p"$$DB_PASS" -h"$$DB_HOST" "$$DB_NAME" \
 			-e "SELECT COUNT(*) AS custom_vocabs FROM custom_vocab; \
 			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2; \
-			    SELECT COUNT(*) AS site_pages FROM site_page;"'
-	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages."
+			    SELECT COUNT(*) AS site_pages FROM site_page; \
+			    SELECT COUNT(*) AS item_sets FROM item_set;"'
+	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages, 25 item_sets."
 
 backfill-dry: ## Preview backfill changes without writing
 	python3 scripts/backfill_defaults.py --dry-run
@@ -170,6 +185,12 @@ backfill-box-motifs-dry: ## Preview box-derived motif additions
 
 backfill-box-motifs: ## Add box-derived motifs to dcterms:subject
 	python3 scripts/backfill_box_motifs.py
+
+create-box-collections-dry: ## Preview box-category item set creation
+	python3 scripts/create_box_item_sets.py --dry-run
+
+create-box-collections: ## Create item sets for box categories and assign items
+	python3 scripts/create_box_item_sets.py
 
 ensure-api-key: ## Create local-only API key (safe to re-run; never use on prod)
 	@HASH=$$(docker compose exec -T omeka php -r "echo password_hash('sarkin2024', PASSWORD_BCRYPT);") && \
