@@ -660,6 +660,9 @@ abbr[title] {
 
 .record-footer div { margin-bottom: 0.15rem; }
 
+/* Print QR code — hidden on screen, shown only in print */
+.print-qr { display: none; }
+
 /* Hide module-injected "Show Similar Pieces" link */
 .similar-pieces-link { display: none; }
 
@@ -1641,25 +1644,158 @@ nav.pagination span.row-count {
 }
 
 /* ==========================================================================
-   PRINT
+   PRINT — optimised for single-page item sheets (letter / A4)
    ========================================================================== */
 
+@page { size: letter; margin: 0.4in 0.5in; }
+
 @media print {
+
+  /* ── Variables ── */
+  :root { --gutter: 6px; --border: 1px solid #000; --border-light: 0.5pt solid #999; }
+
+  /* ── Base ── */
+  body { font-size: 9pt; }
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  a { text-decoration: none !important; color: inherit; }
+
+  /* ── Hide non-essential ── */
   .site-nav,
   .icon-actions,
   .zoom,
-  #user-bar { display: none !important; }
+  #user-bar,
+  #similar-pieces,
+  .site-search,
+  .site-footer,
+  .estate-key { display: none !important; }
 
-  body { font-size: 11pt; }
+  /* Hide the generic artist bio (first <p> in .biography) */
+  .biography > p:first-child { display: none; }
 
+  /* ── Layout wrapper ── */
   .site-wrapper {
     width: 100%;
     max-width: none;
     padding: 0;
   }
 
+  .site-header { margin-bottom: 4px; }
+
+  /* ── Record header (override responsive collapse) ── */
+  .record-header {
+    display: flex;
+    align-items: end;
+  }
+
+  .record-header-right {
+    flex: 1;
+    text-align: right;
+    order: 0;
+    margin-bottom: 0;
+  }
+
+  .record-facts {
+    display: flex;
+    gap: 0;
+  }
+
+  .record-facts > .fact {
+    padding: 4px 6px;
+    border-bottom: none;
+  }
+  .record-facts > .fact:nth-child(2) { border-right: 1px solid #000; }
+
+  .record-facts dt { font-size: 6pt; margin-bottom: 1px; }
+  .record-facts dd { font-size: 8pt; }
+  .record-facts .year dd { font-size: 9pt; }
+
+  .catalog-id { font-size: 10pt; }
+
+  /* ── Metadata bar (override responsive collapse) ── */
+  .metadata-fields {
+    flex-direction: row;
+  }
+  .metadata-fields dl { padding: 3px 6px; }
+  .metadata-fields dt { font-size: 6pt; margin-bottom: 1px; }
+  .metadata-fields dd { font-size: 8pt; }
+
+  /* ── Artwork image ── */
+  .record-media {
+    border: 1px solid #000;
+    background: none;
+    padding: 0;
+    min-height: 0;
+  }
+
+  .artwork-figure img {
+    max-height: 4in;
+    width: auto;
+    margin: 0 auto;
+  }
+
+  /* ── Context / documentation (override responsive collapse) ── */
+  .record-value {
+    grid-template-columns: 2fr 3fr;
+    grid-template-areas: "bio collector";
+  }
+
+  .biography {
+    padding: var(--gutter);
+    border-right: 1px solid #000;
+    border-bottom: none;
+  }
+  .biography p { font-size: 8pt; margin-bottom: 3px; }
+  .biography h4 { font-size: 8pt; margin-bottom: 2px; }
+
+  .genres { grid-template-columns: repeat(3, 1fr); }
+
+  .supporting-media { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .transcription { display: none; }
+  [id="transcription-heading"] { display: none; }
+
+  .print-qr {
+    display: block;
+    margin-top: auto;
+    padding-top: 6px;
+  }
+  .print-qr img { display: block; margin-bottom: 4px; }
+  .print-qr a {
+    font-size: 6pt;
+    color: var(--secondary);
+    word-break: break-all;
+  }
+
+  .collector-column { font-size: 8pt; }
+
+  /* Iconographic profile */
+  .iconographic-profile { padding: var(--gutter); }
+  .icon-profile-heading { font-size: 6pt; margin-bottom: 4px; }
+  .motif-frequency { font-size: 7pt; }
+  .motif-frequency th { font-size: 5.5pt; padding: 2px 4px 2px 0; }
+  .motif-frequency td { padding: 2px 4px 2px 0; }
+  .icon-profile-note { font-size: 6pt; }
+
+  /* Motif list (non-album pieces) */
+  .genres li { font-size: 7pt; padding: var(--gutter); }
+
+  /* Collector details */
+  .collector-details { padding: var(--gutter); }
+  .care { font-size: 7.5pt; }
+  .documentation h4 { font-size: 8pt; margin-bottom: 2px; }
+  .documentation section { margin-bottom: 4px; }
+  .documentation ul, .documentation dl { font-size: 7.5pt; margin: 0; padding-left: 1em; }
+  .documentation dd { margin-bottom: 2px; }
+
+  /* Supporting media (verso/detail) */
+  .supporting-slot img { max-height: 0.9in; width: auto; }
+  .supporting-slot figcaption { font-size: 6pt; }
+
+  /* ── Record footer ── */
+  .record-footer { font-size: 6.5pt; margin-top: 4px; }
+
+  /* ── Page-break control ── */
   .record-media { break-inside: avoid; }
   .record-value { break-inside: avoid; }
-
-  a { text-decoration: none !important; }
+  article { page-break-after: always; }
 }

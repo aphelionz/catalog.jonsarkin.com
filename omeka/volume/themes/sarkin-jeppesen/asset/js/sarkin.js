@@ -216,4 +216,24 @@
             });
         }
     }
+
+    // ── PRINT QR CODE: render QR for the current item URL ──
+    // Deferred to ensure qrcode library is fully initialised.
+    $(function () {
+        var qrEl = document.getElementById('item-qr');
+        if (qrEl && typeof qrcode === 'function') {
+            var qrLink = qrEl.parentElement.querySelector('a');
+            if (qrLink) {
+                var qr = qrcode(0, 'M');
+                qr.addData(qrLink.href);
+                qr.make();
+                var img = document.createElement('img');
+                img.src = qr.createDataURL(4, 0);
+                img.alt = 'QR code linking to this catalog entry';
+                img.width = 120;
+                img.height = 120;
+                qrEl.parentElement.replaceChild(img, qrEl);
+            }
+        }
+    });
 }());

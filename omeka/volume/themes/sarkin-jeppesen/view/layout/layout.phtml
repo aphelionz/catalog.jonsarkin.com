@@ -12,7 +12,7 @@ $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1')
 $this->headTitle($site->title())->setSeparator(' · ');
 
 // Theme assets
-$this->headLink()->prependStylesheet($this->assetUrl('css/style.css'));
+$this->headLink()->prependStylesheet($this->assetUrl('css/style.css'), 'all');
 // Omeka core icons (needed for admin bar)
 $this->headLink()->appendStylesheet($this->assetUrl('css/iconfonts.css', 'Omeka'));
 
@@ -22,6 +22,7 @@ $this->headScript()->prependFile($this->assetUrl('js/global.js', 'Omeka'));
 $this->jsTranslate();
 
 // Theme JS (loaded at end of body)
+$this->inlineScript()->appendFile($this->assetUrl('js/qrcode.min.js'));
 $this->inlineScript()->appendFile($this->assetUrl('js/sarkin.js'));
 
 $this->trigger('view.layout');

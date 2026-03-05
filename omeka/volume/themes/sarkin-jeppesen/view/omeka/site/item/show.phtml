@@ -303,12 +303,18 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <div class="transcription"><?php echo nl2br($transcription); ?></div>
             </section>
             <?php endif; ?>
+
+            <?php $itemUrl = $this->serverUrl(true); ?>
+            <div class="print-qr" aria-hidden="true">
+                <div id="item-qr"></div>
+                <a href="<?php echo $escape($itemUrl); ?>"><?php echo $escape($itemUrl); ?></a>
+            </div>
         </div>
 
         <div class="collector-column">
             <?php $isAlbumPiece = in_array(strip_tags($surface), ['Album Sleeve', 'Cardboard'], true); ?>
 
-            <?php if ($isAlbumPiece && !empty($motifs)): ?>
+            <?php if (!empty($motifs)): ?>
             <div id="iconographic-profile"
                  data-item-id="<?php echo (int) $item->id(); ?>"
                  data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
