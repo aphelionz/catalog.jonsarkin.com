@@ -1,4 +1,4 @@
-.PHONY: local down logs ingest enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry ensure-api-key
+.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry ensure-api-key
 
 -include .env
 export
@@ -18,8 +18,14 @@ down: ## Stop and remove containers
 logs: ## Tail logs from all services
 	docker compose logs -f
 
-ingest: ## Run a one-shot ingest from Omeka into Qdrant (CPU)
+ingest: ## Incremental ingest: only new/updated items into Qdrant (CPU)
 	docker compose run --rm ingest
+
+ingest-full: ## Full re-ingest: reprocess all items into Qdrant (CPU)
+	docker compose run --rm ingest --force
+
+ingest-dry: ## Preview what incremental ingest would process
+	docker compose run --rm ingest --dry-run
 
 enrich: ## Enrich items with Claude OCR + metadata (writes to Omeka)
 	python3 scripts/enrich_metadata.py

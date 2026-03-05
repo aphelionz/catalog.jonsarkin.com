@@ -2,7 +2,9 @@
 Fetch Omeka-S items and ingest each into Qdrant via embed_image_to_qdrant.embed_and_upsert.
 
 Usage:
-  ANTHROPIC_API_KEY=... python fetch_omeka.py
+  ANTHROPIC_API_KEY=... python fetch_omeka.py          # incremental (default)
+  ANTHROPIC_API_KEY=... python fetch_omeka.py --force   # full re-ingest
+  ANTHROPIC_API_KEY=... python fetch_omeka.py --dry-run  # preview only
 
 Optional auth:
   export OMEKA_ID=...
@@ -17,15 +19,19 @@ Notes:
   - Maps basic fields: title, description, subjects, year (from dcterms:date or created year).
   - Uses a temporary image file per item.
   - Parallelized with a thread pool; set INGEST_WORKERS (default 3) to tune.
+  - Incremental by default: compares Omeka o:modified against Qdrant updated_at
+    to skip unchanged items. Use --force for a full re-ingest.
 """
 import json
 import os
 import tempfile
 from pathlib import Path
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
 
 import requests
+from qdrant_client import QdrantClient
 
 from embed_image_to_qdrant import embed_and_upsert
 
@@ -39,6 +45,9 @@ MEDIA_CACHE_DIR = Path(".omeka_media_cache")
 MEDIA_CACHE_DIR.mkdir(exist_ok=True)
 MAX_WORKERS = int(os.getenv("INGEST_WORKERS", "3"))
 ENV_FORCE_OCR = os.getenv("FORCE_OCR", "1") == "1"
+
+QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant:6333")
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "omeka_items")
 
 KEYS = {}
 if os.getenv("OMEKA_ID") and os.getenv("OMEKA_KEY"):
@@ -148,6 +157,74 @@ def fetch_items_page(page: int, per_page: int, tpl_id: int):
     return items, total
 
 
+def parse_omeka_modified(item):
+    """Extract o:modified (or o:created) from an Omeka item as a Unix timestamp."""
+    raw = ""
+    for field in ("o:modified", "o:created"):
+        val = item.get(field)
+        if isinstance(val, dict):
+            raw = val.get("@value", "")
+        elif isinstance(val, str):
+            raw = val
+        if raw:
+            break
+    if not raw:
+        return 0  # unknown → always re-ingest
+    try:
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        return int(dt.timestamp())
+    except (ValueError, AttributeError):
+        return 0
+
+
+def load_qdrant_timestamps():
+    """Scroll Qdrant and return {point_id: updated_at} for all points."""
+    client = QdrantClient(url=QDRANT_URL)
+    result = {}
+    offset = None
+    batch_size = 250
+
+    while True:
+        points, next_offset = client.scroll(
+            collection_name=QDRANT_COLLECTION,
+            limit=batch_size,
+            offset=offset,
+            with_payload=["updated_at"],
+            with_vectors=False,
+        )
+        for point in points:
+            payload = point.payload or {}
+            result[point.id] = payload.get("updated_at", 0)
+
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    return result
+
+
+def classify_items(omeka_items, qdrant_timestamps):
+    """Split items into (new, updated, up_to_date) based on Qdrant state."""
+    new_items = []
+    updated_items = []
+    up_to_date_items = []
+
+    for item in omeka_items:
+        item_id = item["o:id"]
+        qdrant_ts = qdrant_timestamps.get(item_id)
+
+        if qdrant_ts is None:
+            new_items.append(item)
+        else:
+            omeka_modified = parse_omeka_modified(item)
+            if omeka_modified > qdrant_ts:
+                updated_items.append(item)
+            else:
+                up_to_date_items.append(item)
+
+    return new_items, updated_items, up_to_date_items
+
+
 def process_item(item, force_ocr=False):
     if not item.get("o:media"):
         print(f"Skip item {item['o:id']} (no media)")
@@ -211,6 +288,8 @@ def process_item_safe(item, force_ocr=False):
 def main():
     parser = argparse.ArgumentParser(description="Ingest Omeka items into Qdrant.")
     parser.add_argument("--force-ocr", action="store_true", help="Re-run OCR even if cached.")
+    parser.add_argument("--force", action="store_true", help="Full re-ingest, ignoring Qdrant state.")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be ingested without doing it.")
     args = parser.parse_args()
     force_ocr = args.force_ocr or ENV_FORCE_OCR
 
@@ -220,23 +299,61 @@ def main():
         return
     print(f"Using resource_template_id={tpl_id} for title '{TARGET_TEMPLATE_TITLE}'")
 
+    # Phase 1: Fetch all Omeka items
+    print("Fetching items from Omeka API...")
+    all_items = []
     page = 1
     per_page = 100
-    total = ingested = 0
     total_expected = None
+    while True:
+        items, header_total = fetch_items_page(page, per_page, tpl_id)
+        if total_expected is None:
+            total_expected = header_total
+        if not items:
+            break
+        all_items.extend(items)
+        print(f"  Page {page}: {len(all_items)}/{total_expected} items")
+        page += 1
+    print(f"Fetched {len(all_items)} items from Omeka")
+
+    # Phase 2: Determine what needs processing
+    if args.force:
+        print("Force mode: will re-ingest all items")
+        items_to_process = all_items
+        skipped_count = 0
+    else:
+        print("Loading Qdrant state for incremental comparison...")
+        try:
+            qdrant_timestamps = load_qdrant_timestamps()
+            print(f"Found {len(qdrant_timestamps)} existing points in Qdrant")
+        except Exception as e:
+            print(f"Warning: could not load Qdrant state ({e}). Falling back to full ingest.")
+            qdrant_timestamps = {}
+
+        new_items, updated_items, up_to_date = classify_items(all_items, qdrant_timestamps)
+        items_to_process = new_items + updated_items
+        skipped_count = len(up_to_date)
+
+        print(f"Incremental ingest: {len(new_items)} new, {len(updated_items)} updated, {skipped_count} up-to-date (skipped)")
+
+    if args.dry_run:
+        print("\n--- DRY RUN ---")
+        for item in items_to_process:
+            title = item.get("o:title", "(untitled)")
+            print(f"  Would ingest: ItemID={item['o:id']} | {title}")
+        print(f"Total: {len(items_to_process)} items would be processed, {skipped_count} skipped")
+        return
+
+    if not items_to_process:
+        print("Nothing to ingest. All items are up-to-date.")
+        return
+
+    # Phase 3: Process items
+    ingested = 0
     futures = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        while True:
-            items, header_total = fetch_items_page(page, per_page, tpl_id)
-            if total_expected is None:
-                total_expected = header_total
-            if not items:
-                break
-            print(f"Page {page}: got {len(items)} items (expected total {total_expected})")
-            for it in items:
-                total += 1
-                futures.append(pool.submit(process_item_safe, it, force_ocr))
-            page += 1
+        for item in items_to_process:
+            futures.append(pool.submit(process_item_safe, item, force_ocr))
 
         for idx, fut in enumerate(as_completed(futures), 1):
             ok = fut.result()
@@ -245,7 +362,7 @@ def main():
             if idx % 25 == 0 or idx == len(futures):
                 print(f"Progress: {idx}/{len(futures)} processed; successes={ingested}")
 
-    print(f"Done. Total items seen (filtered): {total}, attempted ingest: {ingested}, expected {total_expected}")
+    print(f"Done. Processed {len(items_to_process)} items ({ingested} succeeded), skipped {skipped_count} up-to-date items")
 
 
 if __name__ == "__main__":
