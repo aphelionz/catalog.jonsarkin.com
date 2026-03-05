@@ -47,6 +47,8 @@ $isNotMime = function ($str) {
         $catId   = $val($item, 'dcterms:identifier', '');
         $mediumRaw = $val($item, 'dcterms:medium', '');
         $medium  = $isNotMime($mediumRaw) ? $mediumRaw : '';
+        $surface = $val($item, 'schema:artworkSurface', '');
+        $mediumDisplay = $medium . ($surface ? ' on ' . strtolower($surface) : '');
         $height  = $val($item, 'schema:height', '');
         $width   = $val($item, 'schema:width', '');
         $extent  = $val($item, 'dcterms:extent', '');
@@ -88,8 +90,8 @@ $isNotMime = function ($str) {
                     <div class="card-id"><?php echo $catId; ?></div>
                 <?php endif; ?>
                 <div class="card-title"><?php echo $escape($heading); ?></div>
-                <?php if ($medium): ?>
-                    <div class="card-medium"><?php echo $medium; ?></div>
+                <?php if ($mediumDisplay): ?>
+                    <div class="card-medium"><?php echo $mediumDisplay; ?></div>
                 <?php endif; ?>
             </div>
         </a>
