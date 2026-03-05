@@ -156,10 +156,45 @@ def check_subject(item: dict) -> List[Issue]:
     return []
 
 
+EXIF_TS_RE = re.compile(r'^\d{4}:\d{2}:\d{2}\s+\d{2}:\d{2}:\d{2}$')
+ISO_TS_RE = re.compile(r'^\d{4}-\d{2}-\d{2}[T ]')
+YEAR_RE = re.compile(r'\d{4}')
+APPROX_RE = re.compile(r'^c\.\s')
+
+# Jon's art career began after his 1987 surgery; he died in 2024.
+EARLIEST_VALID_YEAR = 1989
+DEATH_YEAR = 2024
+
+
 def check_date(item: dict) -> List[Issue]:
-    if not extract_value(item, "dcterms:date"):
+    val = extract_value(item, "dcterms:date")
+    if not val:
         return [Issue("Date", "ERROR", "missing")]
-    return []
+
+    issues = []
+
+    # EXIF timestamp (e.g. "2025:11:12 09:48:13")
+    if EXIF_TS_RE.match(val):
+        return [Issue("Date", "ERROR", f"EXIF timestamp \"{val}\"")]
+
+    # ISO timestamp (e.g. "2025-11-12T09:48:13")
+    if ISO_TS_RE.match(val):
+        return [Issue("Date", "ERROR", f"ISO timestamp \"{val}\"")]
+
+    # Approximate date — warn (often means unsigned, date is a guess)
+    if APPROX_RE.match(val):
+        issues.append(Issue("Date", "WARN", f"approximate \"{val}\" — may indicate unsigned piece"))
+
+    # Extract the first four-digit year for range checks
+    m = YEAR_RE.search(val)
+    if m:
+        year = int(m.group())
+        if year < EARLIEST_VALID_YEAR:
+            issues.append(Issue("Date", "ERROR", f"pre-{EARLIEST_VALID_YEAR} \"{val}\""))
+        elif year > DEATH_YEAR:
+            issues.append(Issue("Date", "ERROR", f"posthumous \"{val}\" (Jon died {DEATH_YEAR})"))
+
+    return issues
 
 
 def check_media(item: dict) -> List[Issue]:
