@@ -35,9 +35,9 @@ Resource class: `schema:VisualArtwork` (id 225)
 | Support | `schema:artworkSurface` | 931 | CustomVocab:"Support" | No | artworkSurface | Pick from: Paper, Cardboard, Canvas, Board, Wood, Found Object, Envelope, Album Sleeve, Other |
 | Height | `schema:height` | 603 | Text | No | height | Dual unit: "12 in (30.5 cm)". Height first by convention. |
 | Width | `schema:width` | 1129 | Text | No | width | Dual unit: "12 in (30.5 cm)" |
-| Signature | `schema:distinguishingSign` | 476 | Text | No | **Signature** (alt label) | Arrow indicating location + initials/date: "↘ JMS 17", "↙ JS 05". Use `∅` for unsigned. Arrows: ↖ ↑ ↗ ← → ↙ ↓ ↘ |
+| Signature | `schema:distinguishingSign` | 476 | CustomVocab:"Signature" | No | **Signature** (alt label) | Arrow indicating location + initials/date: "↘ JMS 17", "↙ JS 05". Use `∅` for unsigned. Arrows: ↖ ↑ ↗ ← → ↙ ↓ ↘ |
 | Condition | `schema:itemCondition` | 1579 | CustomVocab:"Condition" | No | itemCondition | Pick from: Excellent, Good, Fair, Poor, Not Examined |
-| Framing | `dcterms:format` | 9 | Text | No | Format | "Framed", "Unframed", "Mounted on board" |
+| Framing | `dcterms:format` | 9 | CustomVocab:"Framed" | No | Format | Pick from: ✓, ∅ |
 
 ### Custody & Rights
 
