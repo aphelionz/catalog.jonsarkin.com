@@ -20,11 +20,10 @@ sys.stdout.reconfigure(line_buffering=True)
 
 import argparse
 import re
-from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 # Import reusable pieces from the enrichment script
 sys.path.insert(0, str(Path(__file__).parent))
@@ -47,15 +46,6 @@ class Issue:
     severity: str   # "WARN" or "ERROR"
     message: str
 
-@dataclass
-class ItemResult:
-    item_id: int
-    identifier: str
-    title: str
-    admin_url: str
-    issues: List[Issue] = field(default_factory=list)
-    has_transcription: bool = False
-
 
 # ── Check functions ──────────────────────────────────────────────────────
 
@@ -65,7 +55,7 @@ TEMP_ID_RE = re.compile(r'^JS-\d{4}-T\d+$')
 def check_title(item: dict) -> List[Issue]:
     val = extract_value(item, "dcterms:title")
     if not val or val == "Untitled":
-        return [Issue("Title", "WARN", "missing")]
+        return [Issue("Title", "ERROR", "missing")]
     return []
 
 
@@ -73,9 +63,9 @@ def check_identifier(item: dict) -> List[Issue]:
     val = extract_value(item, "dcterms:identifier")
     issues = []
     if not val:
-        issues.append(Issue("Catalog Number", "WARN", "missing"))
+        issues.append(Issue("Catalog Number", "ERROR", "missing"))
     elif TEMP_ID_RE.match(val):
-        issues.append(Issue("Catalog Number", "WARN", f"temporary placeholder ({val})"))
+        issues.append(Issue("Catalog Number", "WARN", "temporary placeholder"))
     return issues
 
 
@@ -90,7 +80,7 @@ def check_creator(item: dict) -> List[Issue]:
 def check_work_type(item: dict) -> List[Issue]:
     val = extract_value(item, "dcterms:type")
     if not val:
-        return [Issue("Work Type", "WARN", "missing")]
+        return [Issue("Work Type", "ERROR", "missing")]
     if val not in WORK_TYPES:
         return [Issue("Work Type", "ERROR", f"invalid value \"{val}\"")]
     return []
@@ -98,14 +88,14 @@ def check_work_type(item: dict) -> List[Issue]:
 
 def check_medium(item: dict) -> List[Issue]:
     if not extract_value(item, "dcterms:medium"):
-        return [Issue("Medium", "WARN", "missing")]
+        return [Issue("Medium", "ERROR", "missing")]
     return []
 
 
 def check_support(item: dict) -> List[Issue]:
     val = extract_value(item, "schema:artworkSurface")
     if not val:
-        return [Issue("Support", "WARN", "missing")]
+        return [Issue("Support", "ERROR", "missing")]
     if val not in SUPPORTS:
         return [Issue("Support", "ERROR", f"invalid value \"{val}\"")]
     return []
@@ -114,7 +104,7 @@ def check_support(item: dict) -> List[Issue]:
 def check_height(item: dict) -> List[Issue]:
     val = extract_value(item, "schema:height")
     if not val:
-        return [Issue("Height", "WARN", "missing")]
+        return [Issue("Height", "ERROR", "missing")]
     try:
         float(val)
     except ValueError:
@@ -125,7 +115,7 @@ def check_height(item: dict) -> List[Issue]:
 def check_width(item: dict) -> List[Issue]:
     val = extract_value(item, "schema:width")
     if not val:
-        return [Issue("Width", "WARN", "missing")]
+        return [Issue("Width", "ERROR", "missing")]
     try:
         float(val)
     except ValueError:
@@ -136,7 +126,7 @@ def check_width(item: dict) -> List[Issue]:
 def check_signature(item: dict) -> List[Issue]:
     val = extract_value(item, "schema:distinguishingSign")
     if not val:
-        return [Issue("Signature", "WARN", "missing")]
+        return [Issue("Signature", "ERROR", "missing")]
     if not (len(val) == 1 and val in SIGNATURE_ARROWS):
         return [Issue("Signature", "ERROR", f"invalid \"{val}\" (expected single arrow)")]
     return []
@@ -144,31 +134,31 @@ def check_signature(item: dict) -> List[Issue]:
 
 def check_framing(item: dict) -> List[Issue]:
     if not extract_value(item, "dcterms:format"):
-        return [Issue("Framing", "WARN", "missing")]
+        return [Issue("Framing", "ERROR", "missing")]
     return []
 
 
 def check_owner(item: dict) -> List[Issue]:
     if not extract_value(item, "bibo:owner"):
-        return [Issue("Owner", "WARN", "missing")]
+        return [Issue("Owner", "ERROR", "missing")]
     return []
 
 
 def check_location(item: dict) -> List[Issue]:
     if not extract_value(item, "dcterms:spatial"):
-        return [Issue("Location", "WARN", "missing")]
+        return [Issue("Location", "ERROR", "missing")]
     return []
 
 
 def check_subject(item: dict) -> List[Issue]:
     if not extract_all_values(item, "dcterms:subject"):
-        return [Issue("Subject / Motif", "WARN", "missing")]
+        return [Issue("Subject / Motif", "ERROR", "missing")]
     return []
 
 
 def check_date(item: dict) -> List[Issue]:
     if not extract_value(item, "dcterms:date"):
-        return [Issue("Date", "WARN", "missing")]
+        return [Issue("Date", "ERROR", "missing")]
     return []
 
 
@@ -180,7 +170,13 @@ def check_media(item: dict) -> List[Issue]:
 
 def check_box(item: dict) -> List[Issue]:
     if not extract_value(item, "schema:box"):
-        return [Issue("Box", "WARN", "missing")]
+        return [Issue("Box", "ERROR", "missing")]
+    return []
+
+
+def check_transcription(item: dict) -> List[Issue]:
+    if not extract_value(item, "bibo:content"):
+        return [Issue("Transcription", "ERROR", "missing")]
     return []
 
 
@@ -189,6 +185,7 @@ ALL_CHECKS = [
     check_medium, check_support, check_height, check_width,
     check_signature, check_framing, check_owner, check_location,
     check_subject, check_date, check_media, check_box,
+    check_transcription,
 ]
 
 
@@ -219,20 +216,14 @@ def fetch_all_items(limit: int = 0) -> list:
 
 # ── Report ───────────────────────────────────────────────────────────────
 
-FIELD_ORDER = [
-    "Title", "Catalog Number", "Creator", "Work Type", "Medium",
-    "Support", "Height", "Width", "Signature", "Framing", "Owner",
-    "Location", "Subject / Motif", "Date", "Media", "Box",
-]
-
 SEP = "=" * 64
 THIN_SEP = "-" * 55
 
 
-def print_report(results: List[ItemResult], total_items: int,
-                 field_counts: Counter, temp_id_count: int):
+def print_report(findings: dict, total_items: int, items_with_issues: int,
+                 total_issues: int, *, show_warnings: bool = False):
+    """Print report grouped by finding, with admin URLs listed under each."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    total_issues = sum(len(r.issues) for r in results)
 
     print(SEP)
     print("  Jon Sarkin Catalog \u2014 Doctor Report")
@@ -241,42 +232,43 @@ def print_report(results: List[ItemResult], total_items: int,
     print(SEP)
     print()
     print(f"  Total items scanned:  {total_items:>6,}")
-    print(f"  Items with issues:    {len(results):>6,}")
+    print(f"  Items with issues:    {items_with_issues:>6,}")
     print(f"  Total issues found:   {total_issues:>6,}")
-    print()
 
-    # ── Per-item details ──
-    print(SEP)
-    print("  ITEMS WITH ISSUES")
-    print(SEP)
+    # Split findings by severity
+    errors = {k: v for k, v in findings.items() if k.startswith("ERROR")}
+    warns = {k: v for k, v in findings.items() if k.startswith("WARN")}
 
-    for r in results:
-        title_part = f"  \"{r.title}\"" if r.title else "  (no title)"
+    if errors:
         print()
-        print(f"  {r.identifier}{title_part}")
-        print(f"  {r.admin_url}")
-        print(f"  {THIN_SEP}")
-        for issue in r.issues:
-            print(f"  {issue.severity:<7}{issue.field} \u2014 {issue.message}")
-        tx = "present" if r.has_transcription else "absent"
-        print(f"  (transcription: {tx})")
+        print(SEP)
+        print("  ERRORS")
+        print(SEP)
+        for key, urls in errors.items():
+            print()
+            print(f"  [{key}]")
+            print(f"  {THIN_SEP}")
+            for url in urls:
+                print(f"  {url}")
+            print(f"  ({len(urls)} items)")
 
-    # ── Field summary ──
-    print()
-    print(SEP)
-    print("  FIELD SUMMARY")
-    print(SEP)
-    print()
-    print(f"  {'Field':<24}{'Missing':>8}    {'% of total':>10}")
-    print(f"  {THIN_SEP}")
+    if warns and show_warnings:
+        print()
+        print(SEP)
+        print("  WARNINGS")
+        print(SEP)
+        for key, urls in warns.items():
+            print()
+            print(f"  [{key}]")
+            print(f"  {THIN_SEP}")
+            for url in urls:
+                print(f"  {url}")
+            print(f"  ({len(urls)} items)")
+    elif warns:
+        total_warns = sum(len(v) for v in warns.values())
+        print()
+        print(f"  ({total_warns} warnings hidden — use --warn to show)")
 
-    for f in FIELD_ORDER:
-        count = field_counts.get(f, 0)
-        pct = (count / total_items * 100) if total_items else 0
-        print(f"  {f:<24}{count:>8,}    {pct:>9.1f}%")
-
-    print()
-    print(f"  Temporary catalog numbers:  {temp_id_count:,}")
     print()
     print(SEP)
 
@@ -288,45 +280,34 @@ def main():
         description="Check catalog items for completeness issues.")
     parser.add_argument("--limit", type=int, default=0,
                         help="Only check the first N items (0 = all)")
+    parser.add_argument("--warn", action="store_true",
+                        help="Include warnings in the report (default: errors only)")
     args = parser.parse_args()
 
     items = fetch_all_items(args.limit)
 
-    results: List[ItemResult] = []
-    field_counts: Counter = Counter()
-    temp_id_count = 0
+    # findings: "SEVERITY Field — message" → [admin_url, ...]
+    findings: dict[str, list[str]] = {}
+    items_with_issues = 0
+    total_issues = 0
 
     for item in items:
         item_id = item["o:id"]
-        identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
-        title = extract_value(item, "dcterms:title") or ""
-        admin_url = f"{OMEKA_BASE}/admin/item/{item_id}"
-        has_tx = bool(extract_value(item, "bibo:content"))
+        admin_url = f"{OMEKA_BASE}/admin/item/{item_id}/edit"
 
         issues: List[Issue] = []
         for check in ALL_CHECKS:
             issues.extend(check(item))
 
-        # Count missing fields
-        for issue in issues:
-            if "missing" in issue.message or "no resource" in issue.message or "no media" in issue.message:
-                field_counts[issue.field] += 1
-
-        # Count temporary IDs
-        if any(i.field == "Catalog Number" and "placeholder" in i.message for i in issues):
-            temp_id_count += 1
-
         if issues:
-            results.append(ItemResult(
-                item_id=item_id,
-                identifier=identifier,
-                title=title if title != "Untitled" else "",
-                admin_url=admin_url,
-                issues=issues,
-                has_transcription=has_tx,
-            ))
+            items_with_issues += 1
+            total_issues += len(issues)
+            for issue in issues:
+                key = f"{issue.severity} {issue.field} \u2014 {issue.message}"
+                findings.setdefault(key, []).append(admin_url)
 
-    print_report(results, len(items), field_counts, temp_id_count)
+    print_report(findings, len(items), items_with_issues, total_issues,
+                 show_warnings=args.warn)
 
 
 if __name__ == "__main__":
