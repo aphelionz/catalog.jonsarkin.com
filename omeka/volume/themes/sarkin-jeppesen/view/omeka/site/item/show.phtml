@@ -234,15 +234,20 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                     <dt>Condition</dt><dd><?php echo $condition; ?></dd>
                 </dl>
                 <?php endif; ?>
+                <?php
+                $ownerDisplay = $owner ?: (!empty($provenanceVals) ? $provenanceVals[0] : '');
+                if ($ownerDisplay): ?>
+                <dl>
+                    <dt>Owner</dt><dd><?php echo $ownerDisplay; ?></dd>
+                </dl>
+                <?php endif; ?>
             </div>
         </div>
 
         <nav class="metadata-bottom" aria-label="<?php echo $translate('Artwork actions'); ?>">
             <ul>
-                <li><a href="#">REQUEST CONDITION REPORT</a></li>
                 <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>">RIGHTS &amp; REPRODUCTION</a></li>
                 <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>">BOOK PRIVATE VIEWING</a></li>
-                <li><a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>">VIEW SIMILAR</a></li>
             </ul>
         </nav>
     </section>
@@ -329,6 +334,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                      hidden>
                 <h3 id="similar-heading">Similar pieces</h3>
                 <div class="similar-grid"></div>
+                <a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>" class="similar-more">View all</a>
             </section>
 
             <div class="collector-details">

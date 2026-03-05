@@ -426,7 +426,7 @@ abbr[title] {
 
 .metadata-bottom ul {
   display: grid;
-  grid-template-columns: repeat(4, auto);
+  grid-template-columns: repeat(2, 1fr);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -691,6 +691,16 @@ abbr[title] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.similar-more {
+  display: block;
+  margin-top: var(--gutter);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--secondary);
 }
 
 /* ==========================================================================
@@ -1412,9 +1422,78 @@ abbr[title] {
   text-decoration: none;
 }
 
-/* Omeka pagination structure */
+/* Omeka nav.pagination (input + prev/next + row-count) */
 nav.pagination {
+  display: flex;
+  align-items: center;
+}
+
+nav.pagination form {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+nav.pagination .page-input-top {
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: 4ch;
   text-align: center;
+  border: var(--border-light);
+  padding: 4px;
+}
+
+nav.pagination span.page-count {
+  display: inline;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 var(--gutter);
+  border-right: none;
+  white-space: nowrap;
+}
+
+nav.pagination .pagination-buttons {
+  display: flex;
+  align-items: center;
+  border-left: var(--border);
+}
+
+nav.pagination .pagination-buttons .previous,
+nav.pagination .pagination-buttons .next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px var(--gutter);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-right: none;
+}
+
+nav.pagination .pagination-buttons .previous.inactive,
+nav.pagination .pagination-buttons .next.inactive {
+  opacity: 0.3;
+  cursor: default;
+}
+
+nav.pagination .pagination-buttons .previous::before { content: "‹"; }
+nav.pagination .pagination-buttons .next::before { content: "›"; }
+
+nav.pagination span.row-count {
+  display: inline;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 var(--gutter);
+  border-left: var(--border);
+  border-right: none;
+  white-space: nowrap;
 }
 
 .pagination-nav,
