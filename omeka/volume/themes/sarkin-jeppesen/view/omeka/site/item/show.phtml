@@ -52,7 +52,15 @@ $titleVal   = $item->value('dcterms:title', ['default' => null]);
 $title      = $titleVal ? trim((string) $titleVal) : 'Untitled';
 $dateRaw    = $val('dcterms:date') ?: $val('schema:dateCreated');
 $date       = ($dateRaw && $isArtworkDate($dateRaw)) ? $dateRaw : '';
-$creator    = $val('dcterms:creator') ?: $val('schema:creator');
+// Creator may be a linked resource (URI) — resolve to display title
+$creatorVal = $item->value('dcterms:creator', ['default' => null])
+           ?: $item->value('schema:creator', ['default' => null]);
+if ($creatorVal) {
+    $vr = $creatorVal->valueResource();
+    $creator = $vr ? $escape($vr->displayTitle()) : $escape(trim((string) $creatorVal));
+} else {
+    $creator = '';
+}
 $identifier = $val('dcterms:identifier');
 $type       = $val('dcterms:type');
 
@@ -109,6 +117,26 @@ foreach ($allMedia as $m) {
     if ($primaryMedia && $m->id() === $primaryMedia->id()) continue;
     $extraMedia[] = $m;
 }
+
+// ── SEO: title, meta description, Open Graph, Twitter Card, canonical ──
+$this->headTitle($title . ' — Jon Sarkin');
+
+$metaDesc = ($creator ?: 'Jon Sarkin') . ', ' . $title
+    . ($date ? " ($date)" : '')
+    . ($medium ? ". $medium" : '')
+    . '. From the Jon Sarkin Catalog Raisonné.';
+$this->headMeta()->appendName('description', strip_tags($metaDesc));
+
+$this->headMeta()->appendProperty('og:title', strip_tags($title) . ' — ' . ($creator ?: 'Jon Sarkin'));
+$this->headMeta()->appendProperty('og:description', strip_tags($metaDesc));
+$this->headMeta()->appendProperty('og:type', 'article');
+$this->headMeta()->appendProperty('og:url', $this->serverUrl(true));
+if ($imageUrl) {
+    $this->headMeta()->appendProperty('og:image', $imageUrl);
+}
+$this->headMeta()->appendName('twitter:card', 'summary_large_image');
+
+$this->headLink(['rel' => 'canonical', 'href' => $this->serverUrl(true)]);
 
 // ── Schema.org JSON-LD ──
 $jsonLd = [
