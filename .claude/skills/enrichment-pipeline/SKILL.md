@@ -5,8 +5,8 @@ description: Run the enrichment pipeline to pull production data, backfill defau
 
 # Enrichment Pipeline
 
-Run this pipeline to pull new items from production, fill in missing metadata,
-and enrich the catalog with Claude-powered OCR and motif detection.
+Pull new items from production, fill in missing metadata, and enrich the
+catalog with Claude-powered OCR and motif detection.
 
 **Core safety principle:** Every script only fills empty fields — existing
 values are never overwritten. You can manually curate any field and the
@@ -20,16 +20,18 @@ IDs, and controlled vocabularies.
 ## Prerequisites
 
 - Docker running (`docker compose version`)
-- `ANTHROPIC_API_KEY` set in environment (only for steps 9–10; not needed for apply-cache)
+- `ANTHROPIC_API_KEY` set in `.env` (sourced automatically; only needed for step 5)
 - SSH access to production host (for pull steps)
 
 ## Cost model
 
-Claude analysis results are cached in `scripts/.enrich_cache.json`. After the
-first enrichment run, subsequent DB wipes + re-applies cost nothing — use
-`make enrich-apply` to re-apply from cache without calling the Claude API.
+Claude analysis results are cached in `scripts/.enrich_cache.json`. Only
+`make enrich-batch` (step 5) costs money. All other steps are free.
 
-Only `make enrich-batch` (step 12) costs money. Steps 1–10 and 13–15 are free.
+| Model | Flag | Batch cost (~200 items) |
+|-------|------|------------------------|
+| Haiku | `--model haiku` | ~$0.50 |
+| Sonnet | `--model sonnet` | ~$1.50 |
 
 ## Pipeline
 
@@ -47,176 +49,56 @@ docker compose ps
 
 Wait for Omeka to respond at `http://localhost:8888`.
 
-### Step 2 — Backup local database
+### Step 2 — Pull new items from production
 
-Safety net before the pull overwrites the local DB.
-
-```bash
-make backup-db
-```
-
-Verify: a non-zero `.sql.gz` file appears in `backups/`.
-
-To restore from a backup:
-```bash
-make restore-db BACKUP=backups/omeka-XXX.sql.gz
-```
-
-### Step 3 — Pull production data
-
-> **Requires user approval.** Touches production server and overwrites the
-> local database.
+> **Requires user approval.** Touches production server.
 
 ```bash
-make pull
+make pull-new
 ```
 
-This runs `pull-db`, `pull-files`, `pull-modules`, and `pull-themes` via rsync.
-New items added on production come down with the database. Files are additive
-(rsync only downloads new/changed files).
+This incrementally syncs only items with IDs greater than the local max.
+It exports targeted rows from `resource`, `item`, `media`, and `value`
+tables, then rsyncs media files (additive). No local data is overwritten.
 
-Verify the item count:
+Output shows how many new items were pulled and the ID range.
+
+If zero new items, you can skip the rest of the pipeline.
+
+### Step 3 — Backfill defaults
 
 ```bash
-docker compose exec -T db mariadb -uomeka -pomeka omeka \
-  -e "SELECT COUNT(*) AS items FROM item;"
+make backfill-dry    # preview first
+make backfill        # apply
 ```
 
-### Step 4 — Run database migration (if needed)
-
-After pulling a production database, the local Omeka S version may be newer
-than what production runs. Omeka will show an "Update database" maintenance
-page and the API will return HTML redirects instead of JSON.
-
-Visit `http://localhost:8888` — if you see the "Update database" screen, click
-the button to run the migration. Verify the API is back:
-
-```bash
-curl -s "http://localhost:8888/api/items?per_page=1" | python3 -c "import sys,json; json.load(sys.stdin); print('API OK')"
-```
-
-If this prints `API OK`, proceed. If not, check the Omeka logs with
-`docker compose logs omeka`.
-
-### Step 5 — Ensure local API key
-
-`make pull` now runs this automatically, but if you restored from backup or
-the key is missing for any reason:
-
-```bash
-make ensure-api-key
-```
-
-This inserts a local-only API key (`catalog_api` / `sarkin2024`) into the
-database with write permissions for user 1 (Catalog Admin). It is idempotent
-and safe to re-run. **Never create write-enabled API keys on production.**
-
-Verify:
-
-```bash
-curl -s "http://localhost:8888/api/items?key_identity=catalog_api&key_credential=sarkin2024&per_page=1" \
-  | python3 -c "import sys,json; json.load(sys.stdin); print('API OK')"
-```
-
-### Step 6 — Re-apply cached enrichments
-
-Apply any previously cached Claude results to the fresh database. This is
-free (no API call) and fast. Skip this step only on the very first run when
-no cache exists yet.
-
-```bash
-make enrich-apply
-```
-
-Verify: output shows applied count. Items with no cached results are skipped.
-
-### Step 7 — Doctor-catalog (baseline)
-
-```bash
-make doctor-catalog
-```
-
-Review the Field Summary table. This is the "before" snapshot — note the
-missing-field counts and percentage coverage. Optionally save to a file:
-
-```bash
-make doctor-catalog 2>/dev/null > reports/doctor-pre.txt
-```
-
-### Step 8 — Backfill defaults (preview)
-
-```bash
-make backfill-dry
-```
-
-Review the output. The backfill script fills these defaults only when missing:
-
-| Field | Default Value |
-|-------|---------------|
-| Location | Gloucester, MA |
-| Creator | Jon Sarkin (resource link to item 3) |
-| Work Type | Drawing |
-| Support | Album Sleeve |
-| Owner | The Jon Sarkin Estate |
-| Height/Width | 12.5 (when support is Album Sleeve) |
-| Box | Copies title |
-| Identifier | Generates temp ID `JS-{year}-T{item_id}` |
-
-### Step 9 — Backfill defaults (apply)
-
-```bash
-make backfill
-```
+Only touches empty fields on new items. Fills: Location, Creator, Work Type,
+Support, Owner, Height/Width, Box, and temp Catalog Number.
 
 Verify: output shows patched count with zero failures.
 
-### Step 10 — Doctor-catalog (post-backfill)
+### Step 4 — Doctor-catalog (pre-enrichment baseline)
 
 ```bash
 make doctor-catalog
 ```
 
-Compare to Step 7. Location, Creator, Work Type, Support, Owner, Height,
-Width, Box, and Catalog Number gaps should be reduced. Remaining gaps are
-fields that need Claude analysis: Title, Medium, Signature, Motifs, Date.
+Review the Field Summary. Remaining gaps (Medium, Signature, Motifs, Date)
+are fields that need Claude analysis.
 
-### Step 11 — Enrichment preview
-
-> **Always preview before submitting a batch.**
-
-```bash
-make enrich-dry
-```
-
-Review which items need enrichment and what changes Claude would make.
-Uses cached results from `scripts/.enrich_cache.json` when available.
-
-The analysis prompt is defined in `scripts/enrich_metadata.py` at line 141
-(`ANALYSIS_PROMPT`). Claude extracts: title, transcription, signature, date,
-medium, support, work_type, motifs, and condition_notes. See
-`docs/metadata-mapping.md` for how these map to Omeka properties.
-
-### Step 12 — Submit enrichment batch
+### Step 5 — Submit enrichment batch
 
 > **Requires user approval.** Calls the Claude API. Costs real money.
 
-| Model | Flag | Batch cost (~3,400 items) |
-|-------|------|--------------------------|
-| Haiku | `--model haiku` | ~$7 |
-| Sonnet | `--model sonnet` | ~$21 |
-| Opus | `--model opus` | ~$42 |
-
 ```bash
 make enrich-batch                # defaults to haiku
-# or for a specific model:
-python3 scripts/enrich_metadata.py --batch --model sonnet
 ```
 
-The script downloads images (20 parallel workers), resizes to 1024px max,
-and submits in chunks of 500 to the Anthropic Batch API. Batch metadata is
-saved to `scripts/.enrich_batches/`.
+The script only processes items without cached results, so only new items
+are sent to Claude. Images are downloaded, resized to 1024px max, and
+submitted in chunks of 500 to the Anthropic Batch API.
 
-### Step 13 — Monitor and collect results
+### Step 6 — Monitor and collect results
 
 Check batch status (no API cost, can repeat):
 
@@ -240,17 +122,16 @@ make enrich-batch-collect
 
 Verify: output shows applied count with acceptable error count.
 
-### Step 14 — Doctor-catalog (post-enrichment)
+### Step 7 — Doctor-catalog (post-enrichment)
 
 ```bash
 make doctor-catalog
 ```
 
-Compare to Step 10. Title, Medium, Signature, Motifs, and Date gaps should
-be significantly reduced. Items that still lack a Title likely had no legible
-text. Items missing Date were unsigned.
+Compare to Step 4. Medium, Signature, Motifs, and Date gaps should be
+reduced for the new items.
 
-### Step 15 — Re-ingest into Qdrant
+### Step 8 — Re-ingest into Qdrant
 
 Rebuild the search index so it reflects newly enriched metadata and
 transcriptions.
@@ -264,17 +145,33 @@ Verify: test search at `http://localhost:8888` or check collection size at
 
 ---
 
+## Full reset (disaster recovery)
+
+If the local DB is corrupted or you need a clean slate, use the legacy
+full-pull workflow:
+
+```bash
+make backup-db           # safety net
+make push-schema         # preserve local schema changes
+make pull                # full DB wipe + replace from prod
+# Visit localhost:8888 — run DB migration if prompted
+make ensure-api-key      # re-insert local API key
+make enrich-apply        # re-apply cached enrichments (free)
+make backfill            # re-apply defaults
+```
+
+Then continue from Step 5 above.
+
 ## Guardrails
 
 | Command | Risk | Always do first |
 |---------|------|-----------------|
-| `make push-schema` | Writes schema to prod (safe to re-run) | Verify local schema is correct |
-| `make pull` | Touches prod, overwrites local DB | `make backup-db` |
-| `make enrich-apply` | Writes to Omeka (free, no API) | `--dry-run` preview |
+| `make pull-new` | Reads from prod (additive) | — |
+| `make pull` | Overwrites local DB | `make backup-db` |
+| `make push-schema` | Writes schema to prod | Verify local schema |
 | `make backfill` | Writes to Omeka | `make backfill-dry` |
 | `make enrich-batch` | Claude API cost | `make enrich-dry` |
 | `make enrich-batch-collect` | Writes to Omeka | `--dry-run` preview |
-| `make enrich` (real-time) | Claude API cost | `make enrich-dry` |
 
 Never expose `ANTHROPIC_API_KEY` or Omeka API credentials in output or commits.
 
@@ -284,11 +181,11 @@ Never expose `ANTHROPIC_API_KEY` or Omeka API credentials in output or commits.
   re-submit with `make enrich-batch`.
 - **Stale cache:** Delete `scripts/.enrich_cache.json` or use `--force` to
   re-analyze. Changing the prompt in `scripts/enrich_metadata.py` requires
-  bumping `ANALYSIS_PROMPT_VERSION` (line 197) to auto-invalidate.
+  bumping `ANALYSIS_PROMPT_VERSION` to auto-invalidate.
 - **PATCH failures (422):** Usually resource template validation. The script
   omits `o:resource_template` from payloads to avoid this. Check the error
   response body.
 - **Restore from backup:** `make restore-db BACKUP=backups/omeka-XXX.sql.gz`
-- **Schema out of sync:** If you modify custom vocabs or the resource template
-  locally, run `make push-schema` before the next `make pull` so production
-  has the same schema. This is idempotent and safe to re-run.
+- **Schema out of sync:** Run `make push-schema` before `make pull` so
+  production has the same schema. Idempotent and safe to re-run. Not needed
+  for `make pull-new` (incremental sync preserves local schema).

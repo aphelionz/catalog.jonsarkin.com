@@ -1,4 +1,7 @@
-.PHONY: local down logs ingest enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry ensure-api-key
+.PHONY: local down logs ingest enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry ensure-api-key
+
+-include .env
+export
 
 # Production host (matches omeka/ansible/inventory.ini)
 PROD_HOST  := omeka.us-east1-b.folkloric-rite-468520-r2
@@ -39,7 +42,10 @@ enrich-apply: ## Re-apply cached enrichment results to Omeka (no API cost)
 deploy: ## Push code (modules/themes) to production
 	ansible-playbook -i omeka/ansible/inventory.ini omeka/ansible/deploy.yml
 
-pull: pull-db ensure-api-key pull-files pull-modules pull-themes ## Pull database, files, modules, and themes from production
+pull-new: ## Pull only new items from production (additive, no DB wipe)
+	bash scripts/pull_new_items.sh
+
+pull: pull-db ensure-api-key pull-files pull-modules pull-themes ## Full pull: wipe + replace local DB from production
 
 pull-db: ## Pull production database into local MariaDB
 	@echo "Dumping production database..."
