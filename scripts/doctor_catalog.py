@@ -175,24 +175,24 @@ def check_date(item: dict) -> List[Issue]:
 
     # EXIF timestamp (e.g. "2025:11:12 09:48:13")
     if EXIF_TS_RE.match(val):
-        return [Issue("Date", "ERROR", f"EXIF timestamp \"{val}\"")]
+        return [Issue("Date", "ERROR", "EXIF timestamp")]
 
     # ISO timestamp (e.g. "2025-11-12T09:48:13")
     if ISO_TS_RE.match(val):
-        return [Issue("Date", "ERROR", f"ISO timestamp \"{val}\"")]
+        return [Issue("Date", "ERROR", "ISO timestamp")]
 
     # Approximate date — warn (often means unsigned, date is a guess)
     if APPROX_RE.match(val):
-        issues.append(Issue("Date", "WARN", f"approximate \"{val}\" — may indicate unsigned piece"))
+        issues.append(Issue("Date", "WARN", "approximate — may indicate unsigned piece"))
 
     # Extract the first four-digit year for range checks
     m = YEAR_RE.search(val)
     if m:
         year = int(m.group())
         if year < EARLIEST_VALID_YEAR:
-            issues.append(Issue("Date", "ERROR", f"pre-{EARLIEST_VALID_YEAR} \"{val}\""))
+            issues.append(Issue("Date", "ERROR", f"pre-{EARLIEST_VALID_YEAR}"))
         elif year > DEATH_YEAR:
-            issues.append(Issue("Date", "ERROR", f"posthumous \"{val}\" (Jon died {DEATH_YEAR})"))
+            issues.append(Issue("Date", "ERROR", f"posthumous (Jon died {DEATH_YEAR})"))
 
     return issues
 
