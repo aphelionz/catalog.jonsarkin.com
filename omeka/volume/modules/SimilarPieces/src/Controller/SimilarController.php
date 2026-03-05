@@ -164,6 +164,76 @@ class SimilarController extends AbstractActionController
         return $response;
     }
 
+    public function iconographyAction()
+    {
+        $itemId = (int) $this->params()->fromRoute('item_id', 0);
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        if ($itemId <= 0) {
+            $response->setStatusCode(404);
+            $response->setContent(json_encode(['error' => 'Invalid item ID']));
+            return $response;
+        }
+
+        try {
+            $baseUrl = rtrim((string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com'), '/');
+            $url = sprintf('%s/v1/omeka/items/%d/iconography', $baseUrl, $itemId);
+
+            $client = clone $this->httpClient;
+            $client->resetParameters(true);
+            $client->setUri($url);
+            $client->setMethod('GET');
+            $client->setHeaders(['Accept' => 'application/json']);
+            $client->setOptions(['timeout' => 3]);
+
+            $apiResponse = $client->send();
+            $response->setStatusCode($apiResponse->getStatusCode());
+            $response->setContent($apiResponse->getBody());
+        } catch (Throwable $e) {
+            $this->logError(sprintf('Iconography error for item %d: %s', $itemId, $e->getMessage()), $e);
+            $response->setStatusCode(502);
+            $response->setContent(json_encode(['error' => 'Iconography service unavailable']));
+        }
+
+        return $response;
+    }
+
+    public function iconographyBatchAction()
+    {
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        $ids = trim((string) $this->params()->fromQuery('ids', ''));
+        if ($ids === '') {
+            $response->setStatusCode(400);
+            $response->setContent(json_encode(['error' => 'ids parameter is required']));
+            return $response;
+        }
+
+        try {
+            $baseUrl = rtrim((string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com'), '/');
+            $url = $baseUrl . '/v1/omeka/items/iconography/batch?ids=' . urlencode($ids);
+
+            $client = clone $this->httpClient;
+            $client->resetParameters(true);
+            $client->setUri($url);
+            $client->setMethod('GET');
+            $client->setHeaders(['Accept' => 'application/json']);
+            $client->setOptions(['timeout' => 5]);
+
+            $apiResponse = $client->send();
+            $response->setStatusCode($apiResponse->getStatusCode());
+            $response->setContent($apiResponse->getBody());
+        } catch (Throwable $e) {
+            $this->logError(sprintf('Iconography batch error: %s', $e->getMessage()), $e);
+            $response->setStatusCode(502);
+            $response->setContent(json_encode(['error' => 'Iconography service unavailable']));
+        }
+
+        return $response;
+    }
+
     private function fetchHealthStatus(): string
     {
         $baseUrl = (string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com');

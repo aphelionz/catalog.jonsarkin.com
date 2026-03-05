@@ -33,6 +33,31 @@ return [
                     ],
                 ],
             ],
+            'iconography' => [
+                'type' => Segment::class,
+                'options' => [
+                    'route' => '/iconography/:item_id/json',
+                    'constraints' => [
+                        'item_id' => '\\d+',
+                    ],
+                    'defaults' => [
+                        '__NAMESPACE__' => 'SimilarPieces\\Controller',
+                        'controller' => Controller\SimilarController::class,
+                        'action' => 'iconography',
+                    ],
+                ],
+            ],
+            'iconography-batch' => [
+                'type' => 'Literal',
+                'options' => [
+                    'route' => '/iconography/batch/json',
+                    'defaults' => [
+                        '__NAMESPACE__' => 'SimilarPieces\\Controller',
+                        'controller' => Controller\SimilarController::class,
+                        'action' => 'iconographyBatch',
+                    ],
+                ],
+            ],
             'similar-search' => [
                 'type' => Segment::class,
                 'options' => [

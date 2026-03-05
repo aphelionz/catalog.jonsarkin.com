@@ -70,7 +70,10 @@ $footerText = $this->themeSetting('footer_text')
         <footer class="site-footer">
             <div class="footer-line">
                 <p><?php echo $footerText; ?></p>
-                <a href="<?php echo $this->url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'rights']); ?>">Rights &amp; Reproduction</a>
+                <nav class="footer-links" aria-label="Footer">
+                    <a href="<?php echo $this->url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'rights']); ?>">Rights &amp; Reproduction</a>
+                    <a href="<?php echo $this->url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'contact']); ?>">Contact</a>
+                </nav>
             </div>
         </footer>
     </div>

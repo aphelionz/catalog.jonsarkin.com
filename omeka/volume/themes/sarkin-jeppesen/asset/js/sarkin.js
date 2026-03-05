@@ -95,6 +95,102 @@
             .catch(function () { /* service down — section stays hidden */ });
     }
 
+    // ── Iconographic profile (async, detail page) ──
+    var iconSection = document.getElementById('iconographic-profile');
+    if (iconSection) {
+        var iconItemId = iconSection.getAttribute('data-item-id');
+        var iconSite = iconSection.getAttribute('data-site');
+        var iconEndpoint = '/iconography/' + iconItemId + '/json';
+
+        fetch(iconEndpoint)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                if (!data.motifs || !data.motifs.length) return;
+
+                var html = '<h4 class="icon-profile-heading">Iconographic Profile</h4>';
+                html += '<table class="motif-frequency">';
+                html += '<thead><tr>';
+                html += '<th>Motif</th>';
+                html += '<th>Corpus Frequency</th>';
+                html += '<th>% of Works</th>';
+                html += '</tr></thead>';
+                html += '<tbody>';
+
+                var corpusSize = data.corpus_size || 0;
+                var formatted = corpusSize.toLocaleString();
+
+                var browseBase = '/s/' + (iconSite || 'main') + '/item'
+                    + '?property%5B0%5D%5Bproperty%5D=dcterms%3Asubject'
+                    + '&property%5B0%5D%5Btype%5D=eq&property%5B0%5D%5Btext%5D=';
+
+                data.motifs.forEach(function (m) {
+                    var href = browseBase + encodeURIComponent(m.motif);
+                    html += '<tr>';
+                    html += '<td><a href="' + href + '">' + m.motif + '</a></td>';
+                    html += '<td>' + m.corpus_frequency.toLocaleString() + ' of ' + formatted + '</td>';
+                    html += '<td>' + m.corpus_percentage.toFixed(1) + '%</td>';
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                html += '<p class="icon-profile-note">';
+                html += 'Based on motif distribution across ' + formatted + ' cataloged works.';
+                html += '</p>';
+
+                iconSection.innerHTML = html;
+                iconSection.removeAttribute('hidden');
+            })
+            .catch(function () { /* service down — section stays hidden */ });
+    }
+
+    // ── Iconographic badges (async, browse page) ──
+    var cards = document.querySelectorAll('.chart-card[data-item-id]');
+    if (cards.length) {
+        var cardIds = [];
+        cards.forEach(function (card) {
+            var id = card.getAttribute('data-item-id');
+            if (id) cardIds.push(id);
+        });
+
+        if (cardIds.length) {
+            var batchEndpoint = '/iconography/batch/json?ids=' + cardIds.join(',');
+            fetch(batchEndpoint)
+                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                .then(function (data) {
+                    var items = data.items || [];
+                    var classMap = {};
+                    var labels = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
+                    items.forEach(function (item) {
+                        classMap[String(item.omeka_item_id)] = item.class_number;
+                    });
+
+                    cards.forEach(function (card) {
+                        var id = card.getAttribute('data-item-id');
+                        var cls = classMap[id];
+                        if (!cls) return;
+
+                        var factsEl = card.querySelector('.card-facts');
+                        if (!factsEl) return;
+
+                        factsEl.style.gridTemplateColumns = '1fr 1fr auto';
+
+                        var badge = document.createElement('div');
+                        badge.className = 'card-fact card-class-badge';
+                        var label = document.createElement('div');
+                        label.className = 'card-fact-label';
+                        label.textContent = '\u00A0';
+                        badge.appendChild(label);
+                        var value = document.createElement('div');
+                        value.className = 'card-fact-value';
+                        value.textContent = labels[cls] || '';
+                        badge.appendChild(value);
+                        factsEl.appendChild(badge);
+                    });
+                })
+                .catch(function () { /* service down — no badges */ });
+        }
+    }
+
     // ── Zoom follow cursor (2× magnification) ──
     var zoom = document.querySelector('.zoom');
     var media = document.querySelector('.record-media');

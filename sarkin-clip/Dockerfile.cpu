@@ -29,10 +29,11 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         qdrant-client==1.16.1 \
         pillow==10.4.0 \
         requests==2.32.5 \
-        tqdm==4.67.1 && \
+        tqdm==4.67.1 \
+        pymysql==1.1.1 && \
     pip3 cache purge
 
-COPY embed_image_to_qdrant.py fetch_omeka.py image.jpg ./
+COPY embed_image_to_qdrant.py fetch_omeka.py rarity_index.py image.jpg ./
 COPY clip_api /app/clip_api
 
 ENTRYPOINT ["python3", "fetch_omeka.py"]

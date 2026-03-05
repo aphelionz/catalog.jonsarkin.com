@@ -108,8 +108,32 @@ Animals
 Names/Words
 Maps
 Numbers
+Desert
+Comic
+Portraits
+Ladies
+Creature
+Pop Culture
+Super Artist
+Boat
+Cardboard Artist
+Ocean
+Tree
+Vehicle
+Building
+Spiral/Mouth
+Nipple
+Brancusi
+Skull
+Window
+MRI
+Heart
+CBM
+Pencil
 ```
-*(Expand as corpus analysis reveals more recurring motifs)*
+*Visual motifs (Eyes–Numbers) are detected by Claude during enrichment.
+Box categories (Desert–Pencil) are derived from the physical box field (`schema:box`)
+via `scripts/backfill_box_motifs.py`.*
 
 ### Condition
 ```

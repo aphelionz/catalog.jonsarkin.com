@@ -38,3 +38,29 @@ class SearchResponse(BaseModel):
     preproc_version: int
     embed_model: Optional[str] = None
     results: List[SearchResult]
+
+
+# ── Iconographic profile ──
+
+
+class MotifDetail(BaseModel):
+    motif: str
+    corpus_frequency: int
+    corpus_percentage: float
+
+
+class IconographyResponse(BaseModel):
+    omeka_item_id: Union[int, str]
+    score: float
+    class_number: int
+    motifs: List[MotifDetail]
+    corpus_size: int
+
+
+class IconographyBatchItem(BaseModel):
+    omeka_item_id: Union[int, str]
+    class_number: int
+
+
+class IconographyBatchResponse(BaseModel):
+    items: List[IconographyBatchItem]

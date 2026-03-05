@@ -280,6 +280,16 @@ abbr[title] {
   align-items: baseline;
 }
 
+.footer-links {
+  display: flex;
+  gap: calc(var(--gutter) * 1.5);
+}
+
+.footer-links a {
+  font-size: 0.8rem;
+  color: var(--secondary);
+}
+
 /* ==========================================================================
    ITEM SHOW  (Detail / Record page — from layout.html)
    ========================================================================== */
@@ -521,6 +531,70 @@ abbr[title] {
 .genres li:nth-child(3n+2),
 .genres li:nth-child(3n+3) { border-left: var(--border-light); }
 .genres li:nth-child(n+4)  { border-top: var(--border-light); }
+
+/* Iconographic profile */
+
+.iconographic-profile {
+  border-top: var(--border-light);
+  padding: var(--gutter);
+}
+
+.icon-profile-heading {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 var(--gutter) 0;
+  color: var(--secondary);
+}
+
+.motif-frequency {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-bottom: var(--gutter);
+}
+
+.motif-frequency th {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  padding: 4px var(--gutter) 4px 0;
+  border-bottom: var(--border);
+  color: var(--secondary);
+}
+
+.motif-frequency td {
+  padding: 4px var(--gutter) 4px 0;
+  border-bottom: var(--border-light);
+}
+
+.motif-frequency tr:last-child td { border-bottom: none; }
+.motif-frequency td:first-child { font-weight: 600; }
+.motif-frequency td:nth-child(2),
+.motif-frequency td:nth-child(3),
+.motif-frequency th:nth-child(2),
+.motif-frequency th:nth-child(3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.icon-profile-note {
+  font-size: 0.7rem;
+  color: var(--secondary);
+  margin: var(--gutter) 0 0;
+  letter-spacing: 0.02em;
+}
+
+/* Browse card class badge */
+
+.card-class-badge {
+  font-variant-numeric: tabular-nums;
+  border-left: var(--border);
+  padding: 6px 10px;
+}
 
 .collector-details { padding: var(--gutter); }
 
@@ -1458,11 +1532,16 @@ nav.pagination {
   .chart-grid { grid-template-columns: 1fr 1fr; }
 
   .zoom { display: none; }
+
+  .site-nav ul { flex-direction: column; }
+  .site-nav li { border-right: none; border-bottom: var(--border); }
+  .site-nav li:last-child { border-bottom: none; }
 }
 
 @media (max-width: 480px) {
   .chart-grid { grid-template-columns: 1fr; }
   .record-facts { grid-template-columns: 1fr 1fr; }
+  .site-nav a { font-size: 0.65rem; padding: 8px var(--gutter); }
 }
 
 /* ==========================================================================

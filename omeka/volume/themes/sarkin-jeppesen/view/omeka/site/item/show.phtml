@@ -288,10 +288,19 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <?php endif; ?>
 
         <div class="collector-column">
-            <?php if (!empty($motifs)): ?>
+            <?php $isAlbumPiece = in_array(strip_tags($surface), ['Album Sleeve', 'Cardboard'], true); ?>
+
+            <?php if ($isAlbumPiece && !empty($motifs)): ?>
+            <div id="iconographic-profile"
+                 data-item-id="<?php echo (int) $item->id(); ?>"
+                 data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
+                 class="iconographic-profile"
+                 hidden>
+            </div>
+            <?php elseif (!empty($motifs)): ?>
                 <ul class="genres" aria-label="<?php echo $translate('Motifs and subjects'); ?>">
                     <?php foreach ($motifs as $motif): ?>
-                        <li><?php echo $motif; ?></li>
+                        <li><a href="<?php echo $escape($this->url('site/resource', ['site-slug' => $this->currentSite()->slug(), 'controller' => 'item', 'action' => 'browse']) . '?property%5B0%5D%5Bproperty%5D=dcterms%3Asubject&property%5B0%5D%5Btype%5D=eq&property%5B0%5D%5Btext%5D=' . urlencode(strip_tags($motif))); ?>"><?php echo $motif; ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>

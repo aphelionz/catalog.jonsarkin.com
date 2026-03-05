@@ -157,13 +157,19 @@ push-schema: ## Push local schema, site pages, and config to production
 			-e "SELECT COUNT(*) AS custom_vocabs FROM custom_vocab; \
 			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2; \
 			    SELECT COUNT(*) AS site_pages FROM site_page;"'
-	@echo "Done. Expected: 5 custom_vocabs, 25 template_2_props, 5 site_pages."
+	@echo "Done. Expected: 5 custom_vocabs, 25 template_2_props, 8 site_pages."
 
 backfill-dry: ## Preview backfill changes without writing
 	python3 scripts/backfill_defaults.py --dry-run
 
 backfill: ## Backfill default metadata values (only fills empty fields)
 	python3 scripts/backfill_defaults.py
+
+backfill-box-motifs-dry: ## Preview box-derived motif additions
+	python3 scripts/backfill_box_motifs.py --dry-run
+
+backfill-box-motifs: ## Add box-derived motifs to dcterms:subject
+	python3 scripts/backfill_box_motifs.py
 
 ensure-api-key: ## Create local-only API key (safe to re-run; never use on prod)
 	@HASH=$$(docker compose exec -T omeka php -r "echo password_hash('sarkin2024', PASSWORD_BCRYPT);") && \

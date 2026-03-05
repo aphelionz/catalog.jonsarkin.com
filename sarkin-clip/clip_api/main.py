@@ -8,7 +8,16 @@ from fastapi import FastAPI, HTTPException
 
 from clip_api import embeddings
 from clip_api.config import Settings, load_settings
-from clip_api.models import MatchItem, SearchResponse, SearchResult, SimilarResponse
+from clip_api.models import (
+    IconographyBatchItem,
+    IconographyBatchResponse,
+    IconographyResponse,
+    MatchItem,
+    MotifDetail,
+    SearchResponse,
+    SearchResult,
+    SimilarResponse,
+)
 from clip_api.preprocess import PREPROC_VERSION, compose_text_blob, extract_tags_text, tokenize
 from clip_api.qdrant import QdrantError, QdrantUnavailable, close_client, extract_error_message, request_json
 from clip_api.search_index import SearchIndexError, SearchIndexUnavailable, search as search_index
@@ -669,6 +678,95 @@ def search_items(
         preproc_version=PREPROC_VERSION,
         embed_model=embeddings.EMBED_MODEL,
     )
+
+
+@app.get(
+    "/v1/omeka/items/{omeka_id}/iconography",
+    response_model=IconographyResponse,
+)
+def item_iconography(omeka_id: str) -> IconographyResponse:
+    settings = _settings()
+    point_id = _parse_point_id(omeka_id)
+
+    try:
+        point = _get_point(settings, point_id, with_payload=True, with_vector=False)
+    except QdrantUnavailable as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except QdrantError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    if point is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    payload = point.get("payload") or {}
+    rarity_score = payload.get("rarity_score")
+    if rarity_score is None:
+        raise HTTPException(status_code=404, detail="Iconographic data not available")
+
+    motif_details_raw = payload.get("rarity_motif_details") or []
+    motifs = [
+        MotifDetail(
+            motif=d["motif"],
+            corpus_frequency=d["corpus_frequency"],
+            corpus_percentage=d["corpus_percentage"],
+        )
+        for d in motif_details_raw
+    ]
+
+    return IconographyResponse(
+        omeka_item_id=payload.get("omeka_item_id", point_id),
+        score=float(rarity_score),
+        class_number=int(payload.get("rarity_class_number", 1)),
+        motifs=motifs,
+        corpus_size=int(payload.get("rarity_corpus_size", 0)),
+    )
+
+
+@app.get(
+    "/v1/omeka/items/iconography/batch",
+    response_model=IconographyBatchResponse,
+)
+def items_iconography_batch(ids: str = "") -> IconographyBatchResponse:
+    if not ids.strip():
+        raise HTTPException(status_code=400, detail="ids parameter is required")
+
+    try:
+        id_list = [_parse_point_id(i.strip()) for i in ids.split(",") if i.strip()]
+    except Exception:
+        raise HTTPException(status_code=400, detail="ids must be comma-separated integers")
+
+    if len(id_list) > 100:
+        raise HTTPException(status_code=400, detail="Maximum 100 ids per batch request")
+
+    settings = _settings()
+    url = f"{settings.qdrant_url}/collections/{settings.qdrant_collection}/points"
+    body = {
+        "ids": id_list,
+        "with_payload": ["omeka_item_id", "rarity_class_number"],
+        "with_vector": False,
+    }
+
+    try:
+        response = request_json("POST", url, headers=_headers(settings), json=body)
+    except QdrantUnavailable as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    if not response.is_success:
+        message = extract_error_message(response)
+        raise HTTPException(status_code=502, detail=message)
+
+    items = []
+    for point in response.json().get("result") or []:
+        payload = point.get("payload") or {}
+        class_number = payload.get("rarity_class_number")
+        if class_number is None:
+            continue
+        items.append(IconographyBatchItem(
+            omeka_item_id=payload.get("omeka_item_id", point.get("id")),
+            class_number=int(class_number),
+        ))
+
+    return IconographyBatchResponse(items=items)
 
 
 if __name__ == "__main__":
