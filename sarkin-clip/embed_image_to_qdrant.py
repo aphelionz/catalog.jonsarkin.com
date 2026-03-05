@@ -1,16 +1,12 @@
 import sys
-import base64
 import os
 from pathlib import Path
 import time
 import threading
-import json
-import uuid
 
 import torch
 from PIL import Image
 import open_clip
-import anthropic
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 
@@ -36,10 +32,6 @@ DEFAULT_OMEKA_URL = "https://catalog.jonsarkin.com/"
 DEFAULT_THUMB_URL = "https://catalog.jonsarkin.com/"
 CATALOG_VERSION = 2
 
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")  # OCR model
-OCR_CACHE_PATH = Path(".ocr_cache.json")
-OCR_PROMPT_VERSION = 3  # bumped to invalidate cache for Claude re-OCR
-
 QDRANT_URL = os.getenv("QDRANT_URL", "http://hyphae:6333")
 COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "omeka_items")
 
@@ -55,27 +47,6 @@ os.environ.setdefault("TRANSFORMERS_CACHE", os.environ["HF_HOME"])
 _model_cache = None
 _model_lock = threading.Lock()
 _encode_lock = threading.Lock()
-_ocr_cache_lock = threading.Lock()
-_ocr_cache = None
-
-
-def _normalize_text(text: str) -> str:
-    cleaned = "".join(ch.lower() if ch.isalnum() else " " for ch in text)
-    return " ".join(cleaned.split())
-
-
-def _dedupe_tokens(text: str, max_repeats: int = 2) -> str:
-    if not text:
-        return ""
-    tokens = text.split()
-    counts = {}
-    kept = []
-    for token in tokens:
-        count = counts.get(token, 0)
-        if count < max_repeats:
-            kept.append(token)
-        counts[token] = count + 1
-    return " ".join(kept)
 
 
 def get_clip():
@@ -95,61 +66,6 @@ def get_clip():
         return _model_cache
 
 
-def load_ocr_cache():
-    global _ocr_cache
-    with _ocr_cache_lock:
-        if _ocr_cache is not None:
-            return _ocr_cache
-        if OCR_CACHE_PATH.exists():
-            try:
-                _ocr_cache = json.loads(OCR_CACHE_PATH.read_text())
-            except Exception:
-                _ocr_cache = {}
-        else:
-            _ocr_cache = {}
-        return _ocr_cache
-
-
-def save_ocr_cache():
-    with _ocr_cache_lock:
-        if _ocr_cache is None:
-            return
-        OCR_CACHE_PATH.write_text(json.dumps(_ocr_cache, indent=2), encoding="utf-8")
-
-
-def ocr_with_claude(image_path: Path) -> str:
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise RuntimeError("Set ANTHROPIC_API_KEY in env for Claude OCR.")
-
-    client = anthropic.Anthropic(api_key=api_key)
-
-    with image_path.open("rb") as f:
-        b64_image = base64.b64encode(f.read()).decode("utf-8")
-
-    prompt = (
-        "transcribe only the clearly legible text. preserve line breaks, punctuation, and casing. "
-        "omit any text you are unsure about. return text only, no description."
-    )
-
-    resp = client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=800,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64_image}},
-                    {"type": "text", "text": prompt},
-                ],
-            }
-        ],
-    )
-
-    text = resp.content[0].text
-    return str(text).strip() if text else ""
-
-
 def embed_and_upsert(
     image_path: Path,
     omeka_item_id: int = DEFAULT_OMEKA_ITEM_ID,
@@ -162,7 +78,6 @@ def embed_and_upsert(
     dominant_color: str = DEFAULT_DOMINANT_COLOR,
     omeka_url: str = DEFAULT_OMEKA_URL,
     thumb_url: str = DEFAULT_THUMB_URL,
-    force_ocr: bool = True,
 ):
     subjects = subjects if subjects is not None else DEFAULT_SUBJECTS
     curator_notes = curator_notes if curator_notes is not None else DEFAULT_CURATOR_NOTES
@@ -184,28 +99,10 @@ def embed_and_upsert(
         visual_vec = image_features[0].cpu().tolist()  # 512-dim
     t_img = time.perf_counter() - t_img_start
 
-    cache = load_ocr_cache()
-    cache_key = f"{omeka_item_id}:{OCR_PROMPT_VERSION}"
-    cached_text = cache.get(cache_key)
-
-    t_ocr_start = time.perf_counter()
-    if cached_text and not force_ocr:
-        ocr_text = cached_text
-    elif os.getenv("ANTHROPIC_API_KEY"):
-        try:
-            ocr_text = ocr_with_claude(image_path)
-            cache[cache_key] = ocr_text
-            save_ocr_cache()
-        except Exception as e:
-            print(f"  OCR skipped (item {omeka_item_id}): {e}")
-            ocr_text = ""
-    else:
-        ocr_text = ""
-    t_ocr = time.perf_counter() - t_ocr_start
-
-    ocr_text_raw = ocr_text or ""
-    ocr_text_norm = _normalize_text(ocr_text_raw)
-    ocr_text_dedup = _dedupe_tokens(ocr_text_norm)
+    # OCR fields are populated by the enrichment pipeline (make enrich-batch),
+    # not during ingest.  Keep empty placeholders for schema compatibility.
+    ocr_text_raw = ""
+    ocr_text_norm = ""
 
     text_blob_sections = [
         f"Title: {title}",
@@ -216,8 +113,6 @@ def embed_and_upsert(
         text_blob_sections.append(f"Year: {year}")
     if collection:
         text_blob_sections.append(f"Collection: {collection}")
-    if ocr_text_dedup:
-        text_blob_sections.append(f"OCR Text: {ocr_text_dedup}")
     if curator_notes:
         text_blob_sections.append(f"Curator Notes: {', '.join(curator_notes)}")
 
@@ -280,12 +175,12 @@ def embed_and_upsert(
     )
     t_total = time.perf_counter() - t_total_start
     print(
-        f"Upserted point into Qdrant: {point.id} | timing (s) ocr={t_ocr:.2f} clip_image={t_img:.2f} clip_text={t_txt:.2f} total={t_total:.2f}"
+        f"Upserted point into Qdrant: {point.id} | timing (s) clip_image={t_img:.2f} clip_text={t_txt:.2f} total={t_total:.2f}"
     )
 
 
 if __name__ == "__main__":
-    # Allows running directly with default placeholders (set ANTHROPIC_API_KEY first)
+    # Allows running directly with default placeholders
     try:
         embed_and_upsert(DEFAULT_IMAGE_PATH)
     except Exception as e:

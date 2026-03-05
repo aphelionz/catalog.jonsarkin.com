@@ -68,11 +68,9 @@ services:
     environment:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION: omeka_items
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       INGEST_WORKERS: 3
     volumes:
       - ./sarkin-clip/.hf_cache:/app/.hf_cache
-      - ./sarkin-clip/.ocr_cache.json:/app/.ocr_cache.json
     profiles:
       - ingest
 

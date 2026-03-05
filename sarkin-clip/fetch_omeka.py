@@ -44,7 +44,6 @@ DEFAULT_TEMPLATE_ID = 2  # catalog v1: Artwork (Jon Sarkin)
 MEDIA_CACHE_DIR = Path(".omeka_media_cache")
 MEDIA_CACHE_DIR.mkdir(exist_ok=True)
 MAX_WORKERS = int(os.getenv("INGEST_WORKERS", "3"))
-ENV_FORCE_OCR = os.getenv("FORCE_OCR", "1") == "1"
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant:6333")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "omeka_items")
@@ -225,7 +224,7 @@ def classify_items(omeka_items, qdrant_timestamps):
     return new_items, updated_items, up_to_date_items
 
 
-def process_item(item, force_ocr=False):
+def process_item(item):
     if not item.get("o:media"):
         print(f"Skip item {item['o:id']} (no media)")
         return
@@ -267,7 +266,6 @@ def process_item(item, force_ocr=False):
         dominant_color="unknown",
         omeka_url=omeka_url,
         thumb_url=img_url,
-        force_ocr=force_ocr,
     )
 
     try:
@@ -276,9 +274,9 @@ def process_item(item, force_ocr=False):
         pass
 
 
-def process_item_safe(item, force_ocr=False):
+def process_item_safe(item):
     try:
-        process_item(item, force_ocr=force_ocr)
+        process_item(item)
         return True
     except Exception as e:
         print(f"Error ingesting item {item.get('o:id')}: {e}")
@@ -287,11 +285,9 @@ def process_item_safe(item, force_ocr=False):
 
 def main():
     parser = argparse.ArgumentParser(description="Ingest Omeka items into Qdrant.")
-    parser.add_argument("--force-ocr", action="store_true", help="Re-run OCR even if cached.")
     parser.add_argument("--force", action="store_true", help="Full re-ingest, ignoring Qdrant state.")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be ingested without doing it.")
     args = parser.parse_args()
-    force_ocr = args.force_ocr or ENV_FORCE_OCR
 
     tpl_id = find_template_id_by_title(TARGET_TEMPLATE_TITLE)
     if tpl_id is None:
@@ -353,7 +349,7 @@ def main():
     futures = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         for item in items_to_process:
-            futures.append(pool.submit(process_item_safe, item, force_ocr))
+            futures.append(pool.submit(process_item_safe, item))
 
         for idx, fut in enumerate(as_completed(futures), 1):
             ok = fut.result()
