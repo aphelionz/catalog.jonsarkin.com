@@ -125,7 +125,7 @@ WORK_TYPES = [
 ]
 
 SUPPORTS = [
-    "Paper", "Cardboard", "Canvas", "Board", "Wood",
+    "Paper", "Cardboard", "Cardboard album sleeve", "Canvas", "Board", "Wood",
     "Found Object", "Envelope", "Album Sleeve", "Other",
 ]
 
