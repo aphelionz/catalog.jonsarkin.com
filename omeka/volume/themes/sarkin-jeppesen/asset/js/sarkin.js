@@ -57,6 +57,44 @@
         });
     }
 
+    // ── Similar pieces (async) ──
+    var similarSection = document.getElementById('similar-pieces');
+    if (similarSection) {
+        var itemId = similarSection.getAttribute('data-item-id');
+        var site = similarSection.getAttribute('data-site');
+        var endpoint = '/similar/' + itemId + '/json';
+        if (site) endpoint += '?site=' + encodeURIComponent(site);
+
+        fetch(endpoint)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                var results = data.results || [];
+                if (!results.length) return;
+
+                var grid = similarSection.querySelector('.similar-grid');
+                results.forEach(function (item) {
+                    var a = document.createElement('a');
+                    a.href = item.url || '#';
+                    a.className = 'similar-card';
+
+                    var img = document.createElement('img');
+                    img.src = item.thumbnail;
+                    img.alt = item.title;
+                    img.loading = 'lazy';
+                    a.appendChild(img);
+
+                    var span = document.createElement('span');
+                    span.textContent = item.title;
+                    a.appendChild(span);
+
+                    grid.appendChild(a);
+                });
+
+                similarSection.removeAttribute('hidden');
+            })
+            .catch(function () { /* service down — section stays hidden */ });
+    }
+
     // ── Zoom follow cursor (2× magnification) ──
     var zoom = document.querySelector('.zoom');
     var media = document.querySelector('.record-media');

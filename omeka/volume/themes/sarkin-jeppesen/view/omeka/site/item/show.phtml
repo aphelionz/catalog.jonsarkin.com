@@ -214,7 +214,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <li><a href="#">REQUEST CONDITION REPORT</a></li>
                 <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>">RIGHTS &amp; REPRODUCTION</a></li>
                 <li><a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>">BOOK PRIVATE VIEWING</a></li>
-                <li><a href="<?php echo $this->url('site/resource', ['controller' => 'item', 'action' => 'browse', 'site-slug' => $this->currentSite()->slug()]); ?>">VIEW SIMILAR</a></li>
+                <li><a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>">VIEW SIMILAR</a></li>
             </ul>
         </nav>
     </section>
@@ -371,6 +371,16 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <?php endif; ?>
     </footer>
     <?php endif; ?>
+
+    <!-- ═══ SIMILAR PIECES ═══ -->
+    <section id="similar-pieces"
+             data-item-id="<?php echo (int) $item->id(); ?>"
+             data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
+             aria-labelledby="similar-heading"
+             hidden>
+        <h3 id="similar-heading">Similar pieces</h3>
+        <div class="similar-grid"></div>
+    </section>
 
 </article>
 

@@ -98,6 +98,72 @@ class SimilarController extends AbstractActionController
         return $view;
     }
 
+    public function jsonAction()
+    {
+        $itemId = (int) $this->params()->fromRoute('item_id', 0);
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        if ($itemId <= 0) {
+            $response->setStatusCode(404);
+            $response->setContent(json_encode(['error' => 'Invalid item ID']));
+            return $response;
+        }
+
+        $siteSlug = trim((string) $this->params()->fromQuery('site', ''));
+
+        try {
+            $payload = $this->fetchSimilarPayload($itemId, 12);
+            $parsed = $this->normalizeSimilarPayload($payload);
+            $rawResults = $parsed['results'];
+
+            $ids = array_column($rawResults, 'id');
+            $ids = array_values(array_unique(array_filter($ids)));
+            $itemsById = $this->fetchItemsById($ids);
+
+            $results = [];
+            foreach ($rawResults as $entry) {
+                $id = $entry['id'];
+                $item = $itemsById[$id] ?? null;
+
+                $url = null;
+                $thumbnail = null;
+                $title = $entry['title'] ?? null;
+
+                if ($item) {
+                    $url = $siteSlug ? $item->siteUrl($siteSlug) : $item->url();
+                    $title = $title ?: $item->displayTitle();
+                    $pm = $item->primaryMedia();
+                    if ($pm) {
+                        $thumbnail = $pm->thumbnailUrl('medium');
+                    }
+                }
+
+                $url = $url ?: $entry['url'];
+                $thumbnail = $thumbnail ?: $entry['thumb_url'];
+
+                if (!$thumbnail) {
+                    continue;
+                }
+
+                $results[] = [
+                    'id' => $id,
+                    'title' => $title ?: 'Untitled',
+                    'url' => $url,
+                    'thumbnail' => $thumbnail,
+                ];
+            }
+
+            $response->setContent(json_encode(['results' => $results]));
+        } catch (Throwable $e) {
+            $this->logError(sprintf('SimilarPieces JSON error for item %d: %s', $itemId, $e->getMessage()), $e);
+            $response->setStatusCode(502);
+            $response->setContent(json_encode(['error' => 'Similarity service unavailable']));
+        }
+
+        return $response;
+    }
+
     private function fetchHealthStatus(): string
     {
         $baseUrl = (string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com');
@@ -151,11 +217,14 @@ class SimilarController extends AbstractActionController
         }
     }
 
-    private function fetchSimilarPayload(int $itemId): array
+    private function fetchSimilarPayload(int $itemId, ?int $limit = null): array
     {
         $baseUrl = (string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com');
         $baseUrl = rtrim($baseUrl, '/');
         $url = sprintf('%s/v1/omeka/items/%d/similar', $baseUrl, $itemId);
+        if ($limit !== null) {
+            $url .= '?limit=' . $limit;
+        }
 
         $timeout = (int) ($this->config['timeout'] ?? 3);
         $timeout = max(1, min(10, $timeout));

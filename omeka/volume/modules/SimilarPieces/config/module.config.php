@@ -20,6 +20,18 @@ return [
                         'action' => 'index',
                     ],
                 ],
+                'may_terminate' => true,
+                'child_routes' => [
+                    'json' => [
+                        'type' => 'Literal',
+                        'options' => [
+                            'route' => '/json',
+                            'defaults' => [
+                                'action' => 'json',
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'similar-search' => [
                 'type' => Segment::class,

@@ -127,54 +127,8 @@ class Module extends AbstractModule
 
     public function appendSimilarLink(Event $event): void
     {
-        $view = $event->getTarget();
-        if (!$view instanceof PhpRenderer) {
-            return;
-        }
-
-        $moduleConfig = $this->getModuleConfig();
-        if (array_key_exists('enable_item_link', $moduleConfig) && !$moduleConfig['enable_item_link']) {
-            return;
-        }
-
-        $vars = $view->vars();
-        if (!$vars->offsetExists('item')) {
-            return;
-        }
-
-        $item = $vars->offsetGet('item');
-        if (!$item) {
-            return;
-        }
-
-        if (!$this->isServiceHealthy()) {
-            return;
-        }
-
-        $siteSlug = '';
-        if (method_exists($view, 'currentSite')) {
-            $site = $view->currentSite();
-            if ($site) {
-                $siteSlug = (string) $site->slug();
-            }
-        }
-
-        $query = [];
-        if ($siteSlug !== '') {
-            $query['site'] = $siteSlug;
-        }
-
-        $url = $view->url(
-            'similar-pieces',
-            ['item_id' => $item->id()],
-            ['query' => $query]
-        );
-
-        echo sprintf(
-            '<div class="similar-pieces-link"><a href="%s">%s</a></div>',
-            $view->escapeHtmlAttr($url),
-            $view->escapeHtml('Show Similar Pieces')
-        );
+        // Similar pieces are now rendered inline on the item page via JS.
+        // This hook is retained as a no-op so existing event wiring doesn't break.
     }
 
     private function getModuleConfig(): array
