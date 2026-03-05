@@ -78,7 +78,7 @@ $extent     = $val('dcterms:extent');
 
 // Build dimensions string
 if ($height && $width) {
-    $dimensions = $height . ' × ' . $width;
+    $dimensions = $height . '″ × ' . $width . '″';
 } elseif ($extent) {
     $dimensions = $extent;
 } else {
@@ -285,17 +285,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <p><?php echo $description; ?></p>
             <?php endif; ?>
 
-            <?php if ($owner): ?>
-            <section aria-labelledby="owner-heading">
-                <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
-                <p><?php echo $owner; ?></p>
-            </section>
-            <?php elseif (!empty($provenanceVals)): ?>
-            <section aria-labelledby="owner-heading">
-                <h4 id="owner-heading"><?php echo $translate('Owner / Custody'); ?></h4>
-                <p><?php echo $provenanceVals[0]; ?></p>
-            </section>
-            <?php endif; ?>
 
             <?php if ($transcription): ?>
             <section aria-labelledby="transcription-heading">
