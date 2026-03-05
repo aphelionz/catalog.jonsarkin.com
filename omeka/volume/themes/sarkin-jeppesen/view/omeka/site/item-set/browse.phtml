@@ -19,10 +19,24 @@ $this->htmlElement('body')->appendAttribute('class', 'item-set browse');
 
 <?php if (count($itemSets)): ?>
 <ul class="item-set-list">
-    <?php foreach ($itemSets as $itemSet): ?>
+    <?php foreach ($itemSets as $itemSet):
+        $thumb = $itemSet->thumbnail();
+        $thumbUrl = $thumb ? $thumb->assetUrl() : null;
+    ?>
     <li class="item-set-entry">
-        <?php echo $itemSet->link($escape($itemSet->displayTitle())); ?>
-        <span class="item-set-count">(<?php echo $itemSet->itemCount(); ?>)</span>
+        <a href="<?php echo $escape($itemSet->siteUrl()); ?>">
+            <?php if ($thumbUrl): ?>
+                <img src="<?php echo $escape($thumbUrl); ?>"
+                     alt="<?php echo $escape($itemSet->displayTitle()); ?>"
+                     loading="lazy" />
+            <?php else: ?>
+                <span class="item-set-placeholder"></span>
+            <?php endif; ?>
+            <span class="item-set-label">
+                <span class="item-set-title"><?php echo $escape($itemSet->displayTitle()); ?></span>
+                <span class="item-set-count"><?php echo $itemSet->itemCount(); ?> works</span>
+            </span>
+        </a>
     </li>
     <?php endforeach; ?>
 </ul>
