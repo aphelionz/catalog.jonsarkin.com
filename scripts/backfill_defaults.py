@@ -72,6 +72,10 @@ def compute_changes(item: dict) -> dict:
     if is_empty(item, "bibo:owner"):
         changes["bibo:owner"] = literal_value(PROP["bibo:owner"], "The Jon Sarkin Estate")
 
+    # Framed
+    if is_empty(item, "dcterms:format"):
+        changes["dcterms:format"] = literal_value(PROP["dcterms:format"], "∅")
+
     # Height/Width — set to 12.5 if support is Album Sleeve and dimensions missing
     support = extract_value(item, "schema:artworkSurface")
     if not support:

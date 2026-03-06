@@ -72,7 +72,6 @@ CACHE_PATH = Path("scripts/.enrich_cache.json")
 BATCH_DIR = Path("scripts/.enrich_batches")
 
 RESOURCE_TEMPLATE_ID = 2   # "Artwork (Jon Sarkin)"
-CREATOR_ITEM_ID = 3        # Jon Sarkin Person item
 
 # Batch API: 256 MB max request body. Each image at 1024px + JPEG q85 is
 # ~150 KB raw → ~200 KB base64 → ~250 KB with JSON overhead per request.
@@ -395,20 +394,6 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
             return
         payload[term] = [literal_value(PROP[term], v) for v in values]
 
-    # Ensure dcterms:identifier exists (required by template).
-    # Generate a temporary catalog number if missing, using the enrichment
-    # date when available. Format: JS-{year}-T{item_id} (T = temporary).
-    has_identifier = any(
-        v.get("@value", "").strip() for v in payload.get("dcterms:identifier", [])
-    )
-    if not has_identifier:
-        item_id = item["o:id"]
-        year = enrichment.get("date", "")[:4] if enrichment.get("date") else "0000"
-        if not year.isdigit():
-            year = "0000"
-        temp_id = f"JS-{year}-T{item_id}"
-        payload["dcterms:identifier"] = [literal_value(PROP["dcterms:identifier"], temp_id)]
-
     set_if_empty("bibo:content", enrichment.get("transcription"))
 
     # Signature → store as single arrow character; year feeds into date
@@ -424,11 +409,6 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
 
     set_if_empty("dcterms:medium", enrichment.get("medium"))
 
-    # Hardcoded defaults — only set if empty
-    set_if_empty("schema:artworkSurface", "Album Sleeve")
-    set_if_empty("schema:height", "12.5")
-    set_if_empty("schema:width", "12.5")
-
     work_type = enrichment.get("work_type")
     if work_type and work_type in WORK_TYPES:
         set_if_empty("dcterms:type", work_type)
@@ -436,16 +416,6 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
     motifs = enrichment.get("motifs", [])
     valid_motifs = [m for m in motifs if m in MOTIFS]
     set_repeatable_if_empty("dcterms:subject", valid_motifs)
-
-    has_creator = any(
-        v.get("value_resource_id") == CREATOR_ITEM_ID
-        for v in payload.get("schema:creator", [])
-    )
-    if not has_creator:
-        payload["schema:creator"] = [resource_value(PROP["schema:creator"], CREATOR_ITEM_ID)]
-
-    set_if_empty("bibo:owner", "The Jon Sarkin Estate")
-    set_if_empty("dcterms:format", "∅")
 
     return payload
 
@@ -988,20 +958,6 @@ def show_diff(item: dict, enrichment: dict, item_id: int) -> int:
             print(f"  + Date: {effective_date}")
             changes += 1
 
-    # Hardcoded defaults — only if empty
-    if not extract_value(item, "schema:artworkSurface"):
-        print(f"  + Support: Album Sleeve")
-        changes += 1
-    if not extract_value(item, "schema:height"):
-        print(f"  + Dimensions: 12.5 × 12.5")
-        changes += 1
-    if not extract_value(item, "bibo:owner"):
-        print(f"  + Owner: The Jon Sarkin Estate")
-        changes += 1
-    if not extract_value(item, "dcterms:format"):
-        print(f"  + Framed: ∅")
-        changes += 1
-
     if changes == 0:
         print(f"  (no changes needed)")
 
@@ -1017,20 +973,9 @@ def needs_enrichment(item: dict) -> bool:
     has_transcription = bool(extract_value(item, "bibo:content"))
     has_medium = bool(extract_value(item, "dcterms:medium"))
     has_motifs = bool(extract_all_values(item, "dcterms:subject"))
-    # Signature must be a single arrow character (not old "↘ JMS 17" format)
-    sig = extract_value(item, "schema:distinguishingSign") or ""
-    has_clean_signature = len(sig) == 1 and sig in SIGNATURE_ARROWS
-    # Hardcoded defaults must be present
-    has_dimensions = bool(extract_value(item, "schema:height")) and bool(extract_value(item, "schema:width"))
-    has_support = extract_value(item, "schema:artworkSurface") == "Album Sleeve"
-    has_owner = bool(extract_value(item, "bibo:owner"))
-    has_framed = bool(extract_value(item, "dcterms:format"))
-    # Note: date is NOT checked here — needs_enrichment() can't see the
-    # enrichment data to know if a date is available. Date is handled in
-    # show_diff() and build_patch_payload() instead.
-    return not (has_transcription and has_clean_signature and has_medium
-                and has_motifs and has_dimensions and has_support
-                and has_owner and has_framed)
+    has_signature = bool(extract_value(item, "schema:distinguishingSign"))
+    return not (has_transcription and has_signature and has_medium
+                and has_motifs)
 
 
 # ── Candidate fetching ───────────────────────────────────────────────────
