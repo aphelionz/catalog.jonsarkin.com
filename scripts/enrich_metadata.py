@@ -411,23 +411,23 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
 
     set_if_empty("bibo:content", enrichment.get("transcription"))
 
-    # Signature → always store as single arrow character; year feeds into date
+    # Signature → store as single arrow character; year feeds into date
     sig_arrow, sig_year = _parse_signature(enrichment.get("signature", ""))
-    payload["schema:distinguishingSign"] = [literal_value(PROP["schema:distinguishingSign"], sig_arrow)]
+    set_if_empty("schema:distinguishingSign", sig_arrow)
 
-    # Date: force-set from enrichment or signature year
+    # Date: set from enrichment or signature year (only if empty)
     date_val = enrichment.get("date")
     if date_val and "T" not in date_val and ":" not in date_val:
-        payload["dcterms:date"] = [literal_value(PROP["dcterms:date"], date_val)]
+        set_if_empty("dcterms:date", date_val)
     elif sig_year:
-        payload["dcterms:date"] = [literal_value(PROP["dcterms:date"], sig_year)]
+        set_if_empty("dcterms:date", sig_year)
 
     set_if_empty("dcterms:medium", enrichment.get("medium"))
 
-    # Hardcoded defaults — always overwrite (not set_if_empty)
-    payload["schema:artworkSurface"] = [literal_value(PROP["schema:artworkSurface"], "Album Sleeve")]
-    payload["schema:height"] = [literal_value(PROP["schema:height"], "12.5")]
-    payload["schema:width"] = [literal_value(PROP["schema:width"], "12.5")]
+    # Hardcoded defaults — only set if empty
+    set_if_empty("schema:artworkSurface", "Album Sleeve")
+    set_if_empty("schema:height", "12.5")
+    set_if_empty("schema:width", "12.5")
 
     work_type = enrichment.get("work_type")
     if work_type and work_type in WORK_TYPES:
@@ -444,8 +444,8 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
     if not has_creator:
         payload["schema:creator"] = [resource_value(PROP["schema:creator"], CREATOR_ITEM_ID)]
 
-    payload["bibo:owner"] = [literal_value(PROP["bibo:owner"], "The Jon Sarkin Estate")]
-    payload["dcterms:format"] = [literal_value(PROP["dcterms:format"], "∅")]
+    set_if_empty("bibo:owner", "The Jon Sarkin Estate")
+    set_if_empty("dcterms:format", "∅")
 
     return payload
 
@@ -971,26 +971,25 @@ def show_diff(item: dict, enrichment: dict, item_id: int) -> int:
         print(f"  + Motifs: {', '.join(proposed_motifs)}")
         changes += 1
 
-    # Signature reformatting: old "↘ JMS 17" → "↘"
+    # Signature — only if empty
     cur_sig = extract_value(item, "schema:distinguishingSign") or ""
-    if not (len(cur_sig) == 1 and cur_sig in SIGNATURE_ARROWS):
+    if not cur_sig.strip():
         sig_arrow, _ = _parse_signature(enrichment.get("signature", ""))
-        print(f"  ~ Signature: {cur_sig!r} → {sig_arrow}")
-        changes += 1
+        if sig_arrow:
+            print(f"  + Signature: {sig_arrow}")
+            changes += 1
 
-    # Date: enrichment date or signature year
+    # Date — only if empty
     cur_date = extract_value(item, "dcterms:date") or ""
-    _, sig_year_diff = _parse_signature(enrichment.get("signature", ""))
-    effective_date = enrichment.get("date") or sig_year_diff
-    if effective_date and cur_date != effective_date:
-        if cur_date:
-            print(f"  ~ Date: {cur_date} → {effective_date}")
-        else:
+    if not cur_date.strip():
+        _, sig_year_diff = _parse_signature(enrichment.get("signature", ""))
+        effective_date = enrichment.get("date") or sig_year_diff
+        if effective_date:
             print(f"  + Date: {effective_date}")
-        changes += 1
+            changes += 1
 
-    # Hardcoded defaults
-    if extract_value(item, "schema:artworkSurface") != "Album Sleeve":
+    # Hardcoded defaults — only if empty
+    if not extract_value(item, "schema:artworkSurface"):
         print(f"  + Support: Album Sleeve")
         changes += 1
     if not extract_value(item, "schema:height"):
