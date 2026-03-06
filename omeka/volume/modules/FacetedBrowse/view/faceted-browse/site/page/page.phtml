@@ -1,0 +1,49 @@
+<?php
+$this->headLink()->appendStylesheet($this->assetUrl('css/site/page.css', 'FacetedBrowse'));
+$this->headScript()->appendFile($this->assetUrl('js/faceted-browse.js', 'FacetedBrowse'));
+$this->headScript()->appendFile($this->assetUrl('js/site/page.js', 'FacetedBrowse'));
+$this->headLink()->appendStylesheet($this->assetUrl('vendor/tablesaw/tablesaw.css', 'FacetedBrowse'));
+$this->headScript()->appendFile($this->assetUrl('vendor/tablesaw/tablesaw.jquery.js', 'FacetedBrowse'));
+$this->facetedBrowse()->prepareFacets();
+
+$this->htmlElement('body')->appendAttribute('class', 'faceted-browse-page resource browse');
+$this->pageTitle($page->title(), 2);
+
+$categories = $page->categories();
+$categoryId = null;
+if (1 === count($categories)) {
+    $category = current($categories);
+    $categoryId = $category->id();
+}
+?>
+<div id="container"
+    data-url-categories="<?php echo $this->escapeHtml($this->url(null, ['action' => 'categories'], true)); ?>"
+    data-url-facets="<?php echo $this->escapeHtml($this->url(null, ['action' => 'facets'], true)); ?>"
+    data-url-browse="<?php echo $this->escapeHtml($this->url(null, ['action' => 'browse'], true)); ?>"
+    data-category-id="<?php echo $this->escapeHtml($categoryId); ?>">
+    <button id="section-sidebar-modal-toggle" type="button"><?php echo $this->translate('Filters'); ?></button>
+    <div id="section-sidebar" class="mobile modal-panel" aria-describedby="facet-modal-description" aria-label="<?php echo $this->translate('Filters'); ?>"></div>
+    <div id="section-content"></div>
+</div>
+
+<script>
+const container = $('#container');
+
+// Handle expand list button (show more)
+container.on('click', '.select-list-expand', function(e) {
+    e.preventDefault();
+    const thisButton = $(this);
+    const selectList = thisButton.closest('.facet').find('.select-list');
+    selectList.addClass('expanded');
+    FacetedBrowse.updateSelectList(selectList);
+});
+
+// Handle collapse list button (show less)
+container.on('click', '.select-list-collapse', function(e) {
+    e.preventDefault();
+    const thisButton = $(this);
+    const selectList = thisButton.closest('.facet').find('.select-list');
+    selectList.removeClass('expanded');
+    FacetedBrowse.updateSelectList(selectList);
+});
+</script>

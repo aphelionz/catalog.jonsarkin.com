@@ -1,0 +1,282 @@
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.faceted-browse-page #container {
+    margin: 1em 0;
+}
+
+.faceted-browse-page #section-content table {
+    width:100%;
+}
+
+.block-facetedBrowsePreview table img + .resource-name, 
+.faceted-browse-page #section-content table img + .resource-name {
+    max-width: calc(100% - 4rem);
+    min-width: 6rem;
+}
+
+.block-facetedBrowsePreview table .resource-link,
+.faceted-browse-page #section-content table .resource-link {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.block-facetedBrowsePreview table .resource-link img,
+.faceted-browse-page #section-content table .resource-link img {
+    max-height: 3rem;
+    margin: 0 .5rem 0 0;
+}
+
+#categories,
+.facet ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#categories-return {
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+#categories li {
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    margin-bottom: .5rem;
+    padding-bottom: .5rem;
+}
+
+#categories li:last-child {
+    border-bottom-color: transparent;
+}
+
+.facet label {
+    display: flex;
+}
+
+.facet label input {
+    margin: 0 .25rem 0 0;
+}
+
+.resource-name {
+    font-weight: bold;
+}
+
+.categories-container,
+.facets-container,
+.facet {
+    border: 0;
+    padding: 0;
+}
+
+.categories-container legend,
+.facets-container legend {
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: .5rem;
+}
+
+.category,
+.facet {
+    margin-bottom: 1rem;
+}
+
+.facet legend {
+    font-size: 1.25rem;
+}
+
+.permalink-label {
+    display: inline-flex;
+    align-items: center;
+}
+
+input[type="text"].permalink {
+    margin: 0 0 0 .5rem;
+}
+
+#section-sidebar {
+    width: 30%;
+    padding-right: .5rem;
+}
+
+#section-content {
+    width: 70%;
+    padding-left: .5rem;
+}
+
+#container {
+    display: flex;
+}
+
+.browse-controls {
+    justify-content: space-between;
+}
+
+.faceted-browse-page .browse-controls > * {
+    margin-bottom: 1rem;
+}
+
+.button.permalink .default:after {
+    content: "\f328";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 500;
+    margin-left: .25rem;
+    cursor: pointer;
+    opacity: 1;
+}
+
+.button.permalink {
+    position: relative;
+}
+
+.button.permalink .success {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+.button.permalink .success.active {
+    display: block;
+}
+
+.button.permalink .default.inactive {
+    opacity: 0;
+}
+
+#section-content.loading {
+    overflow: hidden;
+    position: relative;
+}
+
+#section-content.loading * {
+    display: none;
+}
+
+#section-content.loading:before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f1ce";
+    position: absolute;
+    top: .75em;
+    left: calc(50% - .6em);
+    font-size: 4em;
+    animation: fa-spin 1s infinite linear;
+    text-align: center;
+}
+
+/* Results */
+/* ======= */
+
+.modal-panel.open {
+    overflow: scroll;
+}
+
+
+@media print, screen and (min-width: 40em) {
+    #section-sidebar-modal-toggle,
+    #section-sidebar-modal-close {
+        display: none !important;
+    }
+}
+
+#section-sidebar button.close-button {
+    background-color: transparent;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.close-glyph:before {
+    content: "\f00d";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+}
+
+.faceted-results ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#helper-text-expand-collapse {
+    margin-bottom: .5rem;
+    display: inline-block;
+}
+
+#helper-text-expand-collapse:after {
+    display: inline-block;
+    width: 1rem;
+    text-align: center;
+}
+
+#helper-text {
+    padding: 0 0 0 1rem;
+    margin: 0 0 1rem;
+    background-color: transparent;
+}
+
+#helper-text > *:first-child {
+    margin-top: 0;
+}
+
+#helper-text > *:last-child {
+    margin-bottom: 0;
+}
+
+@media print, screen and (max-width: 39.9988em) {
+    .faceted-browse-page #container {
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
+
+    .faceted-browse-page #section-sidebar,
+    .faceted-browse-page #section-content {
+        width: 100%;
+    }
+
+    .faceted-browse-page #section-sidebar {
+        display: none;
+    }
+
+
+    .faceted-browse-page #section-sidebar.open {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 1rem;
+        background-color: #fff;
+        z-index: 999;
+    }
+
+    .faceted-browse-page .tablesaw td {
+        border-color: transparent;
+        max-width: 50%;
+    }
+
+    .faceted-browse-page .tablesaw tr {
+        overflow: hidden;
+        padding: .5rem 0;
+    }
+
+    .faceted-browse-page .tablesaw .resource-link {
+        display: flex;
+        align-items: center;
+    }
+
+    .faceted-browse-page .tablesaw-cell-content .resource-link img {
+        margin: 0 .5rem 0 0;
+        max-height: 3rem;
+    }
+}

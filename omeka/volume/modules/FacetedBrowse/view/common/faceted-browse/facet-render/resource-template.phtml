@@ -1,0 +1,21 @@
+<?php if ($singleSelect): ?>
+<?php echo $this->formElement($singleSelect); ?>
+<?php else: ?>
+<ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_resource_templates')); ?>">
+    <?php $index = 0; ?>
+    <?php foreach ($templates as $template): ?>
+    <li class="select-list-item" data-index="<?php echo $this->escapeHtml($index++); ?>">
+        <label>
+            <input
+                class="resource-template"
+                type="<?php echo ('multiple_list' === $facet->data('select_type')) ? 'checkbox' : 'radio'; ?>"
+                name="<?php echo sprintf('resource_template_%s', $facet->id()); ?>"
+                data-template-id="<?php echo $this->escapeHtml($template->id()); ?>">
+                <?php echo $template->label(); ?>
+        </label>
+    </li>
+    <?php endforeach; ?>
+</ul>
+<a href="#" class="select-list-expand" style="display: none;"><?php echo $this->translate('See more'); ?> <span class="select-list-hidden-count"></span></a>
+<a href="#" class="select-list-collapse" style="display: none;"><?php echo $this->translate('See less'); ?></a>
+<?php endif; ?>

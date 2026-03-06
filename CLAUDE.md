@@ -12,6 +12,7 @@ Catalog raisonné for artist Jon Sarkin (catalog.jonsarkin.com). A monorepo comb
 ## Directory map
 - `omeka/` — Omeka S backend: themes, modules, config, Ansible deploy
   - `omeka/volume/themes/sarkin-jeppesen/` — custom theme (the only one we edit)
+  - `omeka/volume/modules/FacetedBrowse/` — forked faceted browse module (customized controller + GROUP BY counts)
   - `omeka/volume/modules/SimilarPieces/` — custom similarity UI module
 - `sarkin-clip/` — Python CLIP service: FastAPI app, embeddings, tests
   - `sarkin-clip/clip_api/` — FastAPI application code
@@ -51,7 +52,7 @@ make ingest       # one-shot: index Omeka items into Qdrant (CPU)
 - `make deploy`, `make pull`, or anything touching production data
 - Modifying Docker Compose files
 - Modifying Ansible/deploy configurations
-- Installing third-party Omeka modules (only edit sarkin-jeppesen theme and SimilarPieces)
+- Installing third-party Omeka modules (only edit sarkin-jeppesen theme, FacetedBrowse, and SimilarPieces)
 
 ### Credentials
 - Never include Omeka API credentials or `ANTHROPIC_API_KEY` in commits or output
