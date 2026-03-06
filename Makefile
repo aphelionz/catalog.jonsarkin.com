@@ -192,6 +192,9 @@ create-box-collections-dry: ## Preview box-category item set creation
 create-box-collections: ## Create item sets for box categories and assign items
 	python3 scripts/create_box_item_sets.py
 
+editor: ## Launch rapid-fire metadata editor (localhost:9000)
+	python3 tools/rapid-editor/serve.py
+
 ensure-api-key: ## Create local-only API key (safe to re-run; never use on prod)
 	@HASH=$$(docker compose exec -T omeka php -r "echo password_hash('sarkin2024', PASSWORD_BCRYPT);") && \
 	docker compose exec -T db mariadb -uomeka -pomeka omeka -e " \

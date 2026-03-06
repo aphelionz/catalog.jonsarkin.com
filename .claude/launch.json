@@ -6,6 +6,12 @@
       "runtimeExecutable": "docker",
       "runtimeArgs": ["compose", "up"],
       "port": 8888
+    },
+    {
+      "name": "editor",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["tools/rapid-editor/serve.py"],
+      "port": 9000
     }
   ]
 }
