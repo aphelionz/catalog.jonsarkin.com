@@ -5,6 +5,16 @@
 (function () {
     'use strict';
 
+    // ── Mobile nav toggle ──
+    var navToggle = document.querySelector('.nav-toggle');
+    var siteNav   = document.getElementById('site-nav');
+    if (navToggle && siteNav) {
+        navToggle.addEventListener('click', function () {
+            var open = siteNav.classList.toggle('open');
+            navToggle.setAttribute('aria-expanded', open);
+        });
+    }
+
     // ── CITE button: copy Chicago-style citation ──
     var citeBtn = document.getElementById('copy-citation');
     if (citeBtn) {
