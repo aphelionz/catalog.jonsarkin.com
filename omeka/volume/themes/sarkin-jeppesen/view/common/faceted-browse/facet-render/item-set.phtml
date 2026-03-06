@@ -1,0 +1,60 @@
+<?php
+/**
+ * Sarkin-Jeppesen — ItemSet facet render override
+ *
+ * Hides item sets with 0 matching items, displays counts,
+ * and marks selected sets server-side from URL params.
+ */
+$counts = $this->placeholder('facetCounts')->getValue() ?: [];
+$myCounts = $counts[$facet->id()] ?? [];
+
+$activeFilters = $this->placeholder('activeFilters')->getValue() ?: [];
+$activeSetIds = array_map('strval', $activeFilters['item_set_id'] ?? []);
+?>
+<?php if ($singleSelect): ?>
+<?php
+$filteredOptions = [];
+foreach ($itemSets as $itemSet) {
+    $count = $myCounts[$itemSet->id()] ?? 0;
+    if ($count > 0) {
+        $filteredOptions[] = [
+            'value' => $itemSet->id(),
+            'label' => sprintf('%s (%d)', $itemSet->title(), $count),
+            'attributes' => [],
+        ];
+    }
+}
+if ($filteredOptions) {
+    $singleSelect->setValueOptions($filteredOptions);
+    if ($activeSetIds) {
+        $singleSelect->setValue($activeSetIds[0]);
+    }
+    echo $this->formElement($singleSelect);
+}
+?>
+<?php else: ?>
+<ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_item_sets')); ?>">
+    <?php $index = 0; ?>
+    <?php foreach ($itemSets as $itemSet): ?>
+    <?php
+    $count = $myCounts[$itemSet->id()] ?? 0;
+    if ($count === 0) continue;
+    $selected = in_array((string)$itemSet->id(), $activeSetIds);
+    ?>
+    <li class="select-list-item" data-index="<?php echo $this->escapeHtml($index++); ?>">
+        <label>
+            <input
+                class="item-set<?php echo $selected ? ' selected' : ''; ?>"
+                type="<?php echo ('multiple_list' === $facet->data('select_type')) ? 'checkbox' : 'radio'; ?>"
+                name="<?php echo sprintf('item_set_%s', $facet->id()); ?>"
+                data-item-set-id="<?php echo $this->escapeHtml($itemSet->id()); ?>"
+                <?php echo $selected ? 'checked' : ''; ?>>
+                <?php echo $itemSet->title(); ?>
+                <span class="facet-count">(<?php echo $count; ?>)</span>
+        </label>
+    </li>
+    <?php endforeach; ?>
+</ul>
+<a href="#" class="select-list-expand" style="display: none;"><?php echo $this->translate('See more'); ?> <span class="select-list-hidden-count"></span></a>
+<a href="#" class="select-list-collapse" style="display: none;"><?php echo $this->translate('See less'); ?></a>
+<?php endif; ?>

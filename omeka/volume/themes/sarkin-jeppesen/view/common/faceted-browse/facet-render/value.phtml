@@ -1,0 +1,110 @@
+<?php
+/**
+ * Sarkin-Jeppesen — Value facet render override
+ *
+ * Hides values with 0 matching items, displays counts, and marks
+ * selected values server-side from URL params.
+ */
+$counts = $this->placeholder('facetCounts')->getValue() ?: [];
+$myCounts = $counts[$facet->id()] ?? [];
+
+$activeFilters = $this->placeholder('activeFilters')->getValue() ?: [];
+$activeProps = is_array($activeFilters['property'] ?? null) ? $activeFilters['property'] : [];
+
+// Helper: check if a value is selected in the current URL params
+$isValueSelected = function ($propertyId, $dataValue, $queryType) use ($activeProps) {
+    foreach ($activeProps as $propFilter) {
+        if (!isset($propFilter['property'])) continue;
+        if ((string)$propFilter['property'] !== (string)$propertyId) continue;
+        if (in_array($queryType, ['ex', 'nex'])) {
+            return true;
+        }
+        if (isset($propFilter['text']) && (string)$propFilter['text'] === (string)$dataValue) {
+            return true;
+        }
+    }
+    return false;
+};
+?>
+<?php if ($textInput): ?>
+<?php
+// Restore text input value from URL params
+foreach ($activeProps as $propFilter) {
+    if (isset($propFilter['property']) && (string)$propFilter['property'] === (string)$facet->data('property_id') && isset($propFilter['text'])) {
+        $textInput->setValue($propFilter['text']);
+        break;
+    }
+}
+?>
+<?php echo $this->formElement($textInput); ?>
+<?php elseif ($singleSelect): ?>
+<?php
+// Filter options by count and restore selected value
+$filteredOptions = [];
+foreach ($values as $key => $value) {
+    $count = $myCounts[$key] ?? 0;
+    if ($count === 0) continue;
+    $dataPropertyId = $facet->data('property_id');
+    $dataValue = $key;
+    if (in_array($facet->data('query_type'), ['ex', 'nex'])) {
+        $dataPropertyId = $key;
+    }
+    $filteredOptions[] = [
+        'value' => $key,
+        'label' => sprintf('%s (%d)', $value, $count),
+        'attributes' => [
+            'data-property-id' => $dataPropertyId,
+            'data-value' => $dataValue,
+        ],
+    ];
+}
+if ($filteredOptions) {
+    $singleSelect->setValueOptions($filteredOptions);
+    // Restore selection from URL params
+    foreach ($activeProps as $propFilter) {
+        if (isset($propFilter['property']) && (string)$propFilter['property'] === (string)$facet->data('property_id') && isset($propFilter['text'])) {
+            $singleSelect->setValue($propFilter['text']);
+            break;
+        }
+    }
+    echo $this->formElement($singleSelect);
+}
+?>
+<?php else: ?>
+<ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_values')); ?>">
+    <?php
+    $index = 0;
+    foreach ($values as $key => $value):
+    ?>
+    <?php
+    $count = $myCounts[$key] ?? 0;
+    if ($count === 0) continue;
+
+    $dataPropertyId = $facet->data('property_id');
+    $dataValue = $key;
+    if (in_array($facet->data('query_type'), ['ex', 'nex'])) {
+        $dataPropertyId = $key;
+    }
+
+    $selected = $isValueSelected($dataPropertyId, $dataValue, $facet->data('query_type'));
+    ?>
+    <li class="select-list-item" data-index="<?php echo $this->escapeHtml($index++); ?>">
+        <label>
+            <input
+                class="value<?php echo $selected ? ' selected' : ''; ?>"
+                type="<?php echo ('multiple_list' === $facet->data('select_type')) ? 'checkbox' : 'radio'; ?>"
+                name="<?php echo sprintf('value_%s', $facet->id()); ?>"
+                data-property-id="<?php echo $this->escapeHtml($dataPropertyId); ?>"
+                data-value="<?php echo $this->escapeHtml($dataValue); ?>"
+                <?php echo $selected ? 'checked' : ''; ?>>
+                <?php echo $this->escapeHtml($value); ?>
+                <span class="facet-count">(<?php echo $count; ?>)</span>
+        </label>
+    </li>
+    <?php
+    endforeach;
+    ?>
+</ul>
+<a href="#" class="select-list-expand" style="display: none;"><?php echo $this->translate('See more'); ?> <span class="select-list-hidden-count"></span></a>
+<a href="#" class="select-list-collapse" style="display: none;"><?php echo $this->translate('See less'); ?></a>
+<?php endif; ?>

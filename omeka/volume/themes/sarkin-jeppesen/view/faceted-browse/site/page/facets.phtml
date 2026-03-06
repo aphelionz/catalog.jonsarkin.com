@@ -1,0 +1,52 @@
+<?php
+/**
+ * Sarkin-Jeppesen — FacetedBrowse facets override (legacy AJAX fallback)
+ *
+ * This template is kept for backward compatibility with the facetsAction()
+ * endpoint. The primary rendering path is now server-side in page.phtml,
+ * which sets the facetCounts placeholder before rendering facets inline.
+ *
+ * If accessed via AJAX (legacy), counts will be empty (no computation here).
+ */
+
+// Counts are set by page.phtml via placeholder; if accessed via AJAX they'll be empty
+$facetCounts = $this->placeholder('facetCounts')->getValue() ?: [];
+?>
+<button id="section-sidebar-modal-close" class="close-button" aria-label="<?php echo $this->escapeHtml($this->translate('Close')); ?>" aria-labelledby="section-sidebar-modal-close section-sidebar" type="button">
+  <span aria-hidden="true" class="close-glyph"></span>
+</button>
+<div class="sr-only" id="facet-modal-description">
+    This is a dialog window which overlays the main content of the page. Pressing the Close Modal button at the top right of the modal will close the modal and bring you back to where you were on the page.
+</div>
+<?php echo $this->hyperlink($this->translate('Back'), [], ['id' => 'categories-return', 'class' => 'button']); ?>
+<fieldset class="facets-container">
+    <legend><?php echo $category->name(); ?></legend>
+    <?php
+    $categoryOptions = [
+        'value_facet_mode' => $category->valueFacetMode(),
+    ];
+    ?>
+    <div id="facets"
+        data-category-id="<?php echo $this->escapeHtml($category->id()); ?>"
+        data-category-options="<?php echo $this->escapeHtml(json_encode($categoryOptions)); ?>">
+        <?php foreach ($category->facets() as $facet): ?>
+        <?php if ($this->facetedBrowse()->facetIsKnown($facet)): ?>
+        <?php
+        $selectType = $facet->data('select_type') ?? '';
+        $isTextFacet = in_array($selectType, ['text_input']);
+        $myFacetCounts = $facetCounts[$facet->id()] ?? [];
+        $hasVisibleValues = $isTextFacet || !empty(array_filter($myFacetCounts));
+        ?>
+        <?php if ($hasVisibleValues): ?>
+        <fieldset class="facet"
+            data-facet-id="<?php echo $this->escapeHtml($facet->id()); ?>"
+            data-facet-type="<?php echo $this->escapeHtml($facet->type()); ?>"
+            data-facet-data="<?php echo $this->escapeHtml(json_encode($facet->data())); ?>">
+            <legend><?php echo $facet->name(); ?></legend>
+            <?php echo $this->facetedBrowse()->renderFacet($facet); ?>
+        </fieldset>
+        <?php endif; ?>
+        <?php endif; ?>
+        <?php endforeach; ?>
+    </div>
+</fieldset>

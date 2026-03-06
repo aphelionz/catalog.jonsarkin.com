@@ -2,54 +2,441 @@
 /**
  * Sarkin-Jeppesen — FacetedBrowse page override
  *
- * Identical to the module's page.phtml but WITHOUT the module's CSS.
- * We handle all styling in the theme's style.css instead.
+ * Renders facets and browse results entirely server-side (no AJAX).
+ * Facet counts are computed in PageController::pageAction() using
+ * optimized GROUP BY queries. Clicking a facet navigates with URL
+ * params, triggering a full page reload with updated counts.
  */
 
-// JS only — no module CSS
+// Core FacetedBrowse object (for updateSelectList)
 $this->headScript()->appendFile($this->assetUrl('js/faceted-browse.js', 'FacetedBrowse'));
-$this->headScript()->appendFile($this->assetUrl('js/site/page.js', 'FacetedBrowse'));
-$this->headScript()->appendFile($this->assetUrl('vendor/tablesaw/tablesaw.jquery.js', 'FacetedBrowse'));
-$this->facetedBrowse()->prepareFacets();
 
 $this->htmlElement('body')->appendAttribute('class', 'faceted-browse-page resource browse');
 $this->pageTitle($page->title(), 2);
 
-$categories = $page->categories();
-$categoryId = null;
-if (1 === count($categories)) {
-    $category = current($categories);
-    $categoryId = $category->id();
-}
+$escape    = $this->plugin('escapeHtml');
+$translate = $this->plugin('translate');
+
+// Set placeholders for facet render templates
+$this->placeholder('facetCounts')->set($facetCounts);
+$this->placeholder('activeFilters')->set($activeFilters);
+
+// ── Browse result helpers (same as browse.phtml) ──
+$headingTerm = $this->siteSetting('browse_heading_property_term');
+$bodyTerm    = $this->siteSetting('browse_body_property_term');
+
+$val = function ($item, $term, $fallback = "\xE2\x80\x94") use ($escape) {
+    $v = $item->value($term, ['default' => null]);
+    return $v ? $escape((string) $v) : $fallback;
+};
+$isArtworkDate = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '' || $str === "\xE2\x80\x94") return false;
+    if (preg_match('/^\d{4}:\d{2}:\d{2}/', $str)) return false;
+    if (preg_match('/\d{4}-\d{2}-\d{2}T/', $str)) return false;
+    return true;
+};
+$isNotMime = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '' || $str === "\xE2\x80\x94") return false;
+    if (preg_match('#^[\w-]+/[\w.+-]+$#', $str)) return false;
+    return true;
+};
 ?>
-<div id="container"
-    data-url-categories="<?php echo $this->escapeHtml($this->url(null, ['action' => 'categories'], true)); ?>"
-    data-url-facets="<?php echo $this->escapeHtml($this->url(null, ['action' => 'facets'], true)); ?>"
-    data-url-browse="<?php echo $this->escapeHtml($this->url(null, ['action' => 'browse'], true)); ?>"
-    data-category-id="<?php echo $this->escapeHtml($categoryId); ?>">
-    <button id="section-sidebar-modal-toggle" type="button"><?php echo $this->translate('Filters'); ?></button>
-    <div id="section-sidebar" class="mobile modal-panel" aria-describedby="facet-modal-description" aria-label="<?php echo $this->translate('Filters'); ?>"></div>
-    <div id="section-content"></div>
+<div id="container" data-category-id="<?php echo $escape($categoryId); ?>">
+    <button id="section-sidebar-modal-toggle" type="button"><?php echo $translate('Filters'); ?></button>
+
+    <?php // ── SIDEBAR: Facets ── ?>
+    <div id="section-sidebar" class="mobile modal-panel" aria-describedby="facet-modal-description" aria-label="<?php echo $translate('Filters'); ?>">
+    <?php if ($category): ?>
+        <button id="section-sidebar-modal-close" class="close-button" aria-label="<?php echo $escape($translate('Close')); ?>" type="button">
+            <span aria-hidden="true" class="close-glyph"></span>
+        </button>
+        <div class="sr-only" id="facet-modal-description">
+            This is a dialog window which overlays the main content of the page. Pressing the Close Modal button at the top right of the modal will close the modal and bring you back to where you were on the page.
+        </div>
+        <fieldset class="facets-container">
+            <legend><?php echo $category->name(); ?></legend>
+            <?php
+            $categoryOptions = [
+                'value_facet_mode' => $category->valueFacetMode(),
+            ];
+            ?>
+            <div id="facets"
+                data-category-id="<?php echo $escape($category->id()); ?>"
+                data-category-options="<?php echo $escape(json_encode($categoryOptions)); ?>">
+                <?php foreach ($category->facets() as $facet): ?>
+                <?php if ($this->facetedBrowse()->facetIsKnown($facet)): ?>
+                <?php
+                $selectType = $facet->data('select_type') ?? '';
+                $isTextFacet = in_array($selectType, ['text_input']);
+                $myFacetCounts = $facetCounts[$facet->id()] ?? [];
+                $hasVisibleValues = $isTextFacet || !empty(array_filter($myFacetCounts));
+                ?>
+                <?php if ($hasVisibleValues): ?>
+                <fieldset class="facet"
+                    data-facet-id="<?php echo $escape($facet->id()); ?>"
+                    data-facet-type="<?php echo $escape($facet->type()); ?>"
+                    data-facet-data="<?php echo $escape(json_encode($facet->data())); ?>">
+                    <legend><?php echo $facet->name(); ?></legend>
+                    <?php echo $this->facetedBrowse()->renderFacet($facet); ?>
+                </fieldset>
+                <?php endif; ?>
+                <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </fieldset>
+    <?php elseif (count($categories) > 1): ?>
+        <?php // Multi-category: show category list ?>
+        <ul class="categories">
+            <?php foreach ($categories as $cat): ?>
+            <li>
+                <a class="category" href="?faceted_browse_category_id=<?php echo $escape($cat->id()); ?>">
+                    <?php echo $escape($cat->name()); ?>
+                </a>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+    </div>
+
+    <?php // ── CONTENT: Browse results ── ?>
+    <div id="section-content">
+    <?php if ($category): ?>
+        <div class="browse-controls">
+            <?php echo $this->pagination(); ?>
+            <a href="#" class="permalink button"><span class="default"><?php echo $translate('Copy permalink'); ?></span><span class="success"><?php echo $translate('Copied!'); ?></span></a>
+            <?php echo $this->sortSelector($sortings); ?>
+        </div>
+
+        <?php if ($items): ?>
+        <ul class="chart-grid">
+            <?php foreach ($items as $item):
+                $heading = $headingTerm
+                    ? $item->value($headingTerm, ['default' => $translate('[Untitled]')])
+                    : $item->displayTitle();
+                $dateRaw = $val($item, 'dcterms:date', '') ?: $val($item, 'schema:dateCreated', '');
+                $date    = $isArtworkDate($dateRaw) ? $dateRaw : '';
+                $catId   = $val($item, 'dcterms:identifier', '');
+                $mediumRaw = $val($item, 'dcterms:medium', '');
+                $medium  = $isNotMime($mediumRaw) ? $mediumRaw : '';
+                $surface = $val($item, 'schema:artworkSurface', '');
+                $mediumDisplay = $medium . ($surface ? ' on ' . strtolower($surface) : '');
+                $height  = $val($item, 'schema:height', '');
+                $width   = $val($item, 'schema:width', '');
+                $extent  = $val($item, 'dcterms:extent', '');
+                if ($height && $width) {
+                    $dims = $height . ' × ' . $width;
+                } elseif ($extent) {
+                    $dims = $extent;
+                } else {
+                    $dims = '';
+                }
+                $primaryMedia = $item->primaryMedia();
+                $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
+            ?>
+            <li class="chart-card">
+                <a href="<?php echo $escape($item->url()); ?>">
+                    <div class="card-image">
+                        <?php if ($thumbUrl): ?>
+                            <img src="<?php echo $escape($thumbUrl); ?>"
+                                 alt="<?php echo $escape($heading); ?>"
+                                 loading="lazy" />
+                        <?php else: ?>
+                            <div class="card-image-placeholder"><?php echo $translate('No image'); ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="card-facts">
+                        <div class="card-fact">
+                            <div class="card-fact-label"><?php echo $translate('Year'); ?></div>
+                            <div class="card-fact-value"><?php echo $date; ?></div>
+                        </div>
+                        <div class="card-fact">
+                            <div class="card-fact-label"><?php echo $translate('Size'); ?></div>
+                            <div class="card-fact-value"><?php echo $dims ?: "\xE2\x80\x94"; ?></div>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <?php if ($catId): ?>
+                            <div class="card-id"><?php echo $catId; ?></div>
+                        <?php endif; ?>
+                        <div class="card-title"><?php echo $escape($heading); ?></div>
+                        <?php if ($mediumDisplay): ?>
+                            <div class="card-medium"><?php echo $mediumDisplay; ?></div>
+                        <?php endif; ?>
+                    </div>
+                </a>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+        <?php else: ?>
+        <p><?php echo $translate('There are no results.'); ?></p>
+        <?php endif; ?>
+
+        <div class="browse-controls">
+            <?php echo $this->pagination(); ?>
+        </div>
+    <?php endif; ?>
+    </div>
 </div>
 
 <script>
-const container = $('#container');
+$(document).ready(function() {
 
-// Handle expand list button (show more)
+const container = $('#container');
+const sectionSidebar = $('#section-sidebar');
+const sectionContent = $('#section-content');
+const categoryId = container.data('categoryId');
+
+// ── Build URL from all current facet selections and navigate ──
+function navigateWithSelections(extraParams) {
+    const params = new URLSearchParams();
+
+    // Resource class
+    sectionSidebar.find('input.resource-class.selected').each(function() {
+        params.append('resource_class_id[]', $(this).data('classId'));
+    });
+    sectionSidebar.find('select.resource-class').each(function() {
+        const val = $(this).val();
+        if (val) params.append('resource_class_id[]', val);
+    });
+
+    // Item set
+    sectionSidebar.find('input.item-set.selected').each(function() {
+        params.append('item_set_id[]', $(this).data('itemSetId'));
+    });
+    sectionSidebar.find('select.item-set').each(function() {
+        const val = $(this).val();
+        if (val) params.append('item_set_id[]', val);
+    });
+
+    // Value facets (property params)
+    let propIndex = 0;
+    const joiner = ($('#facets').data('categoryOptions') || {}).value_facet_mode === 'or' ? 'or' : 'and';
+    sectionSidebar.find('.facet[data-facet-type="value"]').each(function() {
+        const facet = $(this);
+        const fd = facet.data('facetData');
+
+        if (fd.select_type === 'text_input') {
+            const input = facet.find('input.value');
+            const text = input.val();
+            if (text) {
+                params.append('property[' + propIndex + '][joiner]', joiner);
+                params.append('property[' + propIndex + '][property]', input.data('propertyId'));
+                params.append('property[' + propIndex + '][type]', fd.query_type);
+                params.append('property[' + propIndex + '][text]', text);
+                propIndex++;
+            }
+            return;
+        }
+
+        if (fd.select_type === 'single_select') {
+            const opt = facet.find('select.value option:selected');
+            const text = opt.data('value');
+            if (text) {
+                params.append('property[' + propIndex + '][joiner]', joiner);
+                params.append('property[' + propIndex + '][property]', opt.data('propertyId'));
+                params.append('property[' + propIndex + '][type]', fd.query_type);
+                params.append('property[' + propIndex + '][text]', text);
+                propIndex++;
+            }
+            return;
+        }
+
+        // Checkboxes / radios
+        facet.find('input.value.selected').each(function() {
+            const prop = $(this).data('propertyId');
+            const text = $(this).data('value');
+            params.append('property[' + propIndex + '][joiner]', joiner);
+            params.append('property[' + propIndex + '][property]', prop);
+            params.append('property[' + propIndex + '][type]', fd.query_type);
+            if (!['ex', 'nex'].includes(fd.query_type)) {
+                params.append('property[' + propIndex + '][text]', text);
+            }
+            propIndex++;
+        });
+    });
+
+    // Resource template
+    sectionSidebar.find('input.resource-template.selected').each(function() {
+        params.append('resource_template_id[]', $(this).data('templateId'));
+    });
+
+    // Full-text search
+    sectionSidebar.find('input.full-text').each(function() {
+        const text = $(this).val();
+        if (text) params.set('fulltext_search', text);
+    });
+
+    // Extra params (sort, page override)
+    const currentParams = new URLSearchParams(window.location.search);
+    if (extraParams) {
+        for (const [k, v] of Object.entries(extraParams)) {
+            params.set(k, v);
+        }
+    }
+
+    // Preserve sort from current URL unless overridden
+    if (!params.has('sort_by') && currentParams.get('sort_by')) {
+        params.set('sort_by', currentParams.get('sort_by'));
+    }
+    if (!params.has('sort_order') && currentParams.get('sort_order')) {
+        params.set('sort_order', currentParams.get('sort_order'));
+    }
+
+    params.set('faceted_browse_category_id', categoryId);
+    window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+// ── Update truncated select lists on load ──
+sectionSidebar.find('.select-list').each(function() {
+    FacetedBrowse.updateSelectList($(this));
+});
+
+// ── Facet interaction: checkbox / radio ──
+function handleFacetClick(e, inputSelector) {
+    const thisInput = $(e.target).closest(inputSelector);
+    if (!thisInput.length) return;
+    const facet = thisInput.closest('.facet');
+    const fd = facet.data('facetData');
+
+    if (fd.select_type === 'single_list') {
+        facet.find(inputSelector).not(thisInput).removeClass('selected');
+        thisInput.prop('checked', !thisInput.hasClass('selected'));
+    }
+    thisInput.toggleClass('selected');
+    navigateWithSelections();
+}
+
+container.on('click', 'input.resource-class', function(e) { handleFacetClick(e, 'input.resource-class'); });
+container.on('click', 'input.item-set', function(e) { handleFacetClick(e, 'input.item-set'); });
+container.on('click', 'input.resource-template', function(e) { handleFacetClick(e, 'input.resource-template'); });
+container.on('click', 'input.value[type="checkbox"], input.value[type="radio"]', function(e) { handleFacetClick(e, 'input.value'); });
+
+// Dropdowns
+container.on('change', 'select.resource-class, select.item-set, select.value', function() {
+    navigateWithSelections();
+});
+
+// Text input (debounced)
+let textTimer;
+container.on('keyup', 'input.value[type="text"], input.full-text', function() {
+    clearTimeout(textTimer);
+    textTimer = setTimeout(navigateWithSelections, 500);
+});
+
+// ── Category click (multi-category pages) ──
+container.on('click', '.category', function(e) {
+    e.preventDefault();
+    const catId = $(this).data('categoryId');
+    window.location.href = window.location.pathname + '?faceted_browse_category_id=' + catId;
+});
+
+// ── Pagination ──
+container.on('click', '.next, .previous', function(e) {
+    e.preventDefault();
+    if ($(this).hasClass('inactive')) return;
+    try {
+        const href = new URL($(this).prop('href'), window.location.origin);
+        const pageNum = href.searchParams.get('page');
+        if (pageNum) {
+            navigateWithSelections({page: pageNum});
+        }
+    } catch(err) {
+        window.location.href = $(this).prop('href');
+    }
+});
+
+container.on('submit', '.pagination form', function(e) {
+    e.preventDefault();
+    const pageNum = $(this).find('input[name="page"]').val();
+    if (pageNum) {
+        navigateWithSelections({page: pageNum});
+    }
+});
+
+// ── Sort ──
+container.on('submit', 'form.sorting', function(e) {
+    e.preventDefault();
+    const sortBy = $(this).find('select[name="sort_by"]').val();
+    const sortOrder = $(this).find('select[name="sort_order"]').val();
+    const extras = {};
+    if (sortBy) extras.sort_by = sortBy;
+    if (sortOrder) extras.sort_order = sortOrder;
+    navigateWithSelections(extras);
+});
+
+// ── Permalink ──
+container.on('click', '.permalink', function(e) {
+    e.preventDefault();
+    const permalink = window.location.href;
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(permalink).then(showCopySuccess);
+    } else {
+        const tmp = $('<input>');
+        $('body').append(tmp);
+        tmp.val(permalink).select();
+        document.execCommand('copy');
+        tmp.remove();
+        showCopySuccess();
+    }
+});
+
+function showCopySuccess() {
+    $('.permalink .success').addClass('active').show();
+    $('.permalink .default').addClass('inactive');
+    setTimeout(function() {
+        $('.permalink .success').fadeOut(1000, function() {
+            $(this).removeClass('active');
+            $('.permalink .default').removeClass('inactive');
+        });
+    }, 1500);
+}
+
+// ── Expand / collapse list ──
 container.on('click', '.select-list-expand', function(e) {
     e.preventDefault();
-    const thisButton = $(this);
-    const selectList = thisButton.closest('.facet').find('.select-list');
+    const selectList = $(this).closest('.facet').find('.select-list');
     selectList.addClass('expanded');
     FacetedBrowse.updateSelectList(selectList);
 });
 
-// Handle collapse list button (show less)
 container.on('click', '.select-list-collapse', function(e) {
     e.preventDefault();
-    const thisButton = $(this);
-    const selectList = thisButton.closest('.facet').find('.select-list');
+    const selectList = $(this).closest('.facet').find('.select-list');
     selectList.removeClass('expanded');
     FacetedBrowse.updateSelectList(selectList);
+});
+
+// ── Mobile modal ──
+const modalToggleButton = $('#section-sidebar-modal-toggle');
+const mediaQuery = window.matchMedia('(min-width: 896px)');
+
+function handleTabletChange(e) {
+    modalToggleButton.attr('aria-expanded', 'false');
+    sectionContent.attr('aria-hidden', 'true').removeClass('open');
+    if (e.matches) {
+        sectionSidebar.attr('aria-hidden', 'false');
+    }
+}
+
+container.on('click', '#section-sidebar-modal-toggle', function() {
+    sectionSidebar.toggleClass('open');
+    if (modalToggleButton.attr('aria-expanded') == 'true') {
+        modalToggleButton.attr('aria-expanded', 'false');
+        sectionSidebar.attr('aria-hidden', 'true');
+    } else {
+        modalToggleButton.attr('aria-expanded', 'true');
+        sectionSidebar.attr('aria-hidden', 'false');
+    }
+});
+
+sectionSidebar.on('click', '.close-button', function() {
+    modalToggleButton.trigger('click').trigger('focus');
+});
+
+mediaQuery.addListener(handleTabletChange);
+handleTabletChange(mediaQuery);
+
 });
 </script>

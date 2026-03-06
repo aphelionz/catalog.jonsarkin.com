@@ -1,0 +1,60 @@
+<?php
+/**
+ * Sarkin-Jeppesen — ResourceClass facet render override
+ *
+ * Hides resource classes with 0 matching items, displays counts,
+ * and marks selected classes server-side from URL params.
+ */
+$counts = $this->placeholder('facetCounts')->getValue() ?: [];
+$myCounts = $counts[$facet->id()] ?? [];
+
+$activeFilters = $this->placeholder('activeFilters')->getValue() ?: [];
+$activeClassIds = array_map('strval', $activeFilters['resource_class_id'] ?? []);
+?>
+<?php if ($singleSelect): ?>
+<?php
+$filteredOptions = [];
+foreach ($classes as $class) {
+    $count = $myCounts[$class->id()] ?? 0;
+    if ($count > 0) {
+        $filteredOptions[] = [
+            'value' => $class->id(),
+            'label' => sprintf('%s (%d)', $class->label(), $count),
+            'attributes' => [],
+        ];
+    }
+}
+if ($filteredOptions) {
+    $singleSelect->setValueOptions($filteredOptions);
+    if ($activeClassIds) {
+        $singleSelect->setValue($activeClassIds[0]);
+    }
+    echo $this->formElement($singleSelect);
+}
+?>
+<?php else: ?>
+<ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_resource_classes')); ?>">
+    <?php $index = 0; ?>
+    <?php foreach ($classes as $class): ?>
+    <?php
+    $count = $myCounts[$class->id()] ?? 0;
+    if ($count === 0) continue;
+    $selected = in_array((string)$class->id(), $activeClassIds);
+    ?>
+    <li class="select-list-item" data-index="<?php echo $this->escapeHtml($index++); ?>">
+        <label>
+            <input
+                class="resource-class<?php echo $selected ? ' selected' : ''; ?>"
+                type="<?php echo ('multiple_list' === $facet->data('select_type')) ? 'checkbox' : 'radio'; ?>"
+                name="<?php echo sprintf('resource_class_%s', $facet->id()); ?>"
+                data-class-id="<?php echo $this->escapeHtml($class->id()); ?>"
+                <?php echo $selected ? 'checked' : ''; ?>>
+                <?php echo $class->label(); ?>
+                <span class="facet-count">(<?php echo $count; ?>)</span>
+        </label>
+    </li>
+    <?php endforeach; ?>
+</ul>
+<a href="#" class="select-list-expand" style="display: none;"><?php echo $this->translate('See more'); ?> <span class="select-list-hidden-count"></span></a>
+<a href="#" class="select-list-collapse" style="display: none;"><?php echo $this->translate('See less'); ?></a>
+<?php endif; ?>
