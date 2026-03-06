@@ -124,7 +124,7 @@ def build_payload(item: dict, changes: dict) -> dict:
     else:
         payload["o:resource_class"] = {"o:id": RESOURCE_CLASS_ID}
 
-    for sys_key in ["o:item_set", "o:media", "o:is_public"]:
+    for sys_key in ["o:item_set", "o:media", "o:is_public", "o:site"]:
         if sys_key in item:
             payload[sys_key] = item[sys_key]
 

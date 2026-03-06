@@ -364,15 +364,17 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
     """
     payload = {}
 
+    # Copy vocabulary properties (skip Omeka system keys o:* — those are
+    # handled explicitly below to avoid _clean_value mangling them)
     for key, val in item.items():
-        if ":" in key and isinstance(val, list):
+        if ":" in key and not key.startswith("o:") and isinstance(val, list):
             payload[key] = [_clean_value(v) for v in val if isinstance(v, dict)]
 
     # Include system keys EXCEPT o:resource_template — sending it triggers
     # template validation (e.g. requiring Catalog Number) which fails on
     # items missing required fields. Omitting it preserves the existing
     # template without re-validating.
-    for sys_key in ["o:resource_class", "o:item_set", "o:media", "o:is_public"]:
+    for sys_key in ["o:resource_class", "o:item_set", "o:media", "o:is_public", "o:site"]:
         if sys_key in item:
             payload[sys_key] = item[sys_key]
 
