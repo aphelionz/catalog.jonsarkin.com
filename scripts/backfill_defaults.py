@@ -32,6 +32,7 @@ from enrich_metadata import (
 # ── Configuration ────────────────────────────────────────────────────────
 
 CREATOR_ITEM_ID = 3   # Jon Sarkin Person item
+RESOURCE_CLASS_ID = 225  # schema:VisualArtwork
 PATCH_WORKERS = 10
 
 
@@ -87,6 +88,14 @@ def compute_changes(item: dict) -> dict:
         if title:
             changes["schema:box"] = literal_value(PROP["schema:box"], title)
 
+    # Resource class (schema:VisualArtwork) — sentinel so build_payload runs
+    if not item.get("o:resource_class"):
+        changes["_resource_class"] = True
+
+    # Resource template — sentinel so build_payload runs
+    if not item.get("o:resource_template"):
+        changes["_resource_template"] = True
+
     return changes
 
 
@@ -99,8 +108,23 @@ def build_payload(item: dict, changes: dict) -> dict:
         if ":" in key and not key.startswith("o:") and isinstance(val, list):
             payload[key] = [_clean_value(v) for v in val if isinstance(v, dict)]
 
-    # Omit o:resource_template to avoid template validation
-    for sys_key in ["o:resource_class", "o:item_set", "o:media", "o:is_public"]:
+    # Set resource template + class if missing
+    if item.get("o:resource_template"):
+        payload["o:resource_template"] = {"o:id": RESOURCE_TEMPLATE_ID}
+    else:
+        # New items from prod lack a template; assign it now.
+        # Template requires a title — use the existing o:title.
+        payload["o:resource_template"] = {"o:id": RESOURCE_TEMPLATE_ID}
+        title = item.get("o:title", f"Untitled-{item['o:id']}")
+        if "dcterms:title" not in payload or not payload["dcterms:title"]:
+            payload["dcterms:title"] = [literal_value(PROP["dcterms:title"], title)]
+
+    if item.get("o:resource_class"):
+        payload["o:resource_class"] = item["o:resource_class"]
+    else:
+        payload["o:resource_class"] = {"o:id": RESOURCE_CLASS_ID}
+
+    for sys_key in ["o:item_set", "o:media", "o:is_public"]:
         if sys_key in item:
             payload[sys_key] = item[sys_key]
 
@@ -115,9 +139,10 @@ def build_payload(item: dict, changes: dict) -> dict:
         temp_id = f"JS-{year}-T{item_id}"
         payload["dcterms:identifier"] = [literal_value(PROP["dcterms:identifier"], temp_id)]
 
-    # Apply changes
+    # Apply changes (skip internal sentinel keys starting with _)
     for term, value_dict in changes.items():
-        payload[term] = [value_dict]
+        if not term.startswith("_"):
+            payload[term] = [value_dict]
 
     return payload
 
@@ -160,7 +185,7 @@ def main():
         for item, changes in work:
             item_id = item["o:id"]
             identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
-            labels = [term.split(":")[-1] for term in changes]
+            labels = [term.lstrip("_").split(":")[-1] for term in changes]
             print(f"  [{identifier}] would set: {', '.join(labels)}")
         print(f"\nDone. Would patch: {len(work)}")
         return
@@ -174,7 +199,7 @@ def main():
     def patch_one(item, changes):
         item_id = item["o:id"]
         identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
-        labels = [term.split(":")[-1] for term in changes]
+        labels = [term.lstrip("_").split(":")[-1] for term in changes]
         payload = build_payload(item, changes)
         omeka_patch(item_id, payload)
         with lock:
