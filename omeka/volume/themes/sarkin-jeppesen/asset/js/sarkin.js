@@ -22,24 +22,19 @@
             if (!navigator.clipboard || !navigator.clipboard.writeText) return;
 
             // Build citation from visible record data
-            var title   = document.getElementById('record-title');
-            var catId   = document.querySelector('.catalog-id');
-            var year    = document.querySelector('.record-facts .year dd');
+            var catEl    = document.getElementById('record-title');
+            var year     = document.querySelector('.record-facts .year dd');
 
-            var titleText = title ? title.textContent.trim() : 'Untitled';
-            // Title case the uppercase title
-            titleText = titleText.charAt(0).toUpperCase() + titleText.slice(1).toLowerCase();
-
+            var idText    = catEl ? catEl.textContent.trim() : '';
             var yearText  = year ? year.textContent.trim() : '';
-            var idText    = catId ? catId.textContent.trim().replace('#', '') : '';
             var accessed  = new Date().toISOString().slice(0, 10);
             var url       = window.location.href;
 
-            var citation = 'Sarkin, Jon. ' + titleText + '.';
+            var citation = 'Sarkin, Jon.';
+            if (idText) citation += ' ' + idText + '.';
             if (yearText && yearText !== '\u2014') citation += ' ' + yearText + '.';
-            citation += ' The Jon Sarkin Catalog';
-            if (idText && idText !== '\u2014') citation += ', cat. no. ' + idText;
-            citation += '. Accessed ' + accessed + '. ' + url + '.';
+            citation += ' The Jon Sarkin Catalog.';
+            citation += ' Accessed ' + accessed + '. ' + url + '.';
 
             navigator.clipboard.writeText(citation).then(function () {
                 citeBtn.textContent = '[copied]';
@@ -53,9 +48,8 @@
     if (shareBtn) {
         shareBtn.addEventListener('click', function () {
             if (navigator.share) {
-                var title = document.getElementById('record-title');
                 navigator.share({
-                    title: title ? title.textContent.trim() : document.title,
+                    title: document.title,
                     url: window.location.href
                 });
             } else {

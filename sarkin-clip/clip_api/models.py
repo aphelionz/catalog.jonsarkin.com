@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 
 class ItemPayload(BaseModel):
     omeka_item_id: Union[int, str] = Field(..., description="Omeka item id")
-    title: Optional[str] = None
     omeka_url: Optional[str] = None
     thumb_url: Optional[str] = None
     catalog_version: Optional[int] = None
@@ -24,7 +23,6 @@ class SimilarResponse(BaseModel):
 
 class SearchResult(BaseModel):
     omeka_item_id: Union[int, str] = Field(..., description="Omeka item id")
-    title: Optional[str] = None
     omeka_url: Optional[str] = None
     thumb_url: Optional[str] = None
     score: float

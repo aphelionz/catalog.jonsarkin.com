@@ -21,7 +21,6 @@ os.environ["HF_HUB_CACHE"] = str(HF_CACHE)
 # --- defaults / config (overridden by caller) ---
 DEFAULT_IMAGE_PATH = Path("image.jpg")  # adjust if needed
 DEFAULT_OMEKA_ITEM_ID = 1
-DEFAULT_TITLE = "Test image"
 DEFAULT_OMEKA_DESCRIPTION = "Placeholder Omeka description for the item."
 DEFAULT_COLLECTION = "debug"
 DEFAULT_YEAR = 2025
@@ -69,7 +68,6 @@ def get_clip():
 def embed_and_upsert(
     image_path: Path,
     omeka_item_id: int = DEFAULT_OMEKA_ITEM_ID,
-    title: str = DEFAULT_TITLE,
     omeka_description: str = DEFAULT_OMEKA_DESCRIPTION,
     collection: str = DEFAULT_COLLECTION,
     year: int = DEFAULT_YEAR,
@@ -105,7 +103,6 @@ def embed_and_upsert(
     ocr_text_norm = ""
 
     text_blob_sections = [
-        f"Title: {title}",
         f"Description: {omeka_description}",
         f"Subjects / Tags / Themes: {', '.join(subjects)}",
     ]
@@ -136,7 +133,6 @@ def embed_and_upsert(
         },
         payload={
             "omeka_item_id": omeka_item_id,
-            "title": title,
             "omeka_description": omeka_description,
             "collection": collection,
             "year": year,
@@ -160,7 +156,6 @@ def embed_and_upsert(
         {
             "omeka_item_id": omeka_item_id,
             "catalog_version": CATALOG_VERSION,
-            "title": title,
             "omeka_url": omeka_url,
             "thumb_url": thumb_url,
             "omeka_description": omeka_description,

@@ -46,10 +46,6 @@ $isNotMime = function ($str) {
 };
 
 // ── Identity ──
-// Use dcterms:title directly — displayTitle() returns the catalog number
-// because the resource template sets dcterms:identifier as the title property.
-$titleVal   = $item->value('dcterms:title', ['default' => null]);
-$title      = $titleVal ? trim((string) $titleVal) : 'Untitled';
 $dateRaw    = $val('dcterms:date') ?: $val('schema:dateCreated');
 $date       = ($dateRaw && $isArtworkDate($dateRaw)) ? $dateRaw : '';
 // Creator may be a linked resource (URI) — resolve to display title
@@ -87,6 +83,12 @@ if ($height && $width) {
 
 // No medium→format fallback: format (framing) and medium are distinct fields
 
+// All works are untitled — build display labels from catalog number + medium + date
+$pageLabel = $identifier ?: ('Item #' . $item->id());
+$pageLabelLong = $pageLabel;
+if ($medium) $pageLabelLong .= ' · ' . strip_tags($medium);
+if ($date)   $pageLabelLong .= ', ' . strip_tags($date);
+
 // ── Custody & Rights ──
 $owner      = $val('bibo:owner');
 $spatial    = $val('dcterms:spatial');
@@ -119,15 +121,15 @@ foreach ($allMedia as $m) {
 }
 
 // ── SEO: title, meta description, Open Graph, Twitter Card, canonical ──
-$this->headTitle($title . ' — Jon Sarkin');
+$this->headTitle(strip_tags($pageLabelLong) . ' — Jon Sarkin');
 
-$metaDesc = ($creator ?: 'Jon Sarkin') . ', ' . $title
-    . ($date ? " ($date)" : '')
+$metaDesc = ($creator ?: 'Jon Sarkin') . '. ' . strip_tags($pageLabel)
     . ($medium ? ". $medium" : '')
+    . ($date ? " ($date)" : '')
     . '. From the Jon Sarkin Catalog Raisonné.';
 $this->headMeta()->appendName('description', strip_tags($metaDesc));
 
-$this->headMeta()->appendProperty('og:title', strip_tags($title) . ' — ' . ($creator ?: 'Jon Sarkin'));
+$this->headMeta()->appendProperty('og:title', strip_tags($pageLabelLong) . ' — ' . ($creator ?: 'Jon Sarkin'));
 $this->headMeta()->appendProperty('og:description', strip_tags($metaDesc));
 $this->headMeta()->appendProperty('og:type', 'article');
 $this->headMeta()->appendProperty('og:url', $this->serverUrl(true));
@@ -142,7 +144,7 @@ $this->headLink(['rel' => 'canonical', 'href' => $this->serverUrl(true)]);
 $jsonLd = [
     '@context' => 'https://schema.org',
     '@type'    => 'VisualArtwork',
-    'name'     => $title,
+    'name'     => strip_tags($pageLabel),
 ];
 if ($identifier) $jsonLd['identifier'] = strip_tags($identifier);
 $jsonLd['creator'] = [
@@ -212,7 +214,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>" class="pill-button">[rights]</a>
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
             </div>
-            <h1 id="record-title"><?php echo $escape(strtoupper($title)); ?></h1>
+            <h1 id="record-title"><?php echo $escape($pageLabel); ?></h1>
         </div>
     </header>
 
@@ -254,7 +256,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <figure class="artwork-figure">
             <?php if ($primaryMedia): ?>
                 <img src="<?php echo $escape($imageUrl); ?>"
-                     alt="<?php echo $escape(($creator ?: 'Jon Sarkin') . ", $title" . ($date ? ", $date" : '')); ?>" />
+                     alt="<?php echo $escape(($creator ?: 'Jon Sarkin') . ", $pageLabel" . ($date ? ", $date" : '')); ?>" />
             <?php endif; ?>
         </figure>
         <?php if ($primaryMedia): ?>
@@ -390,7 +392,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                             ?>
                             <figure class="supporting-slot">
                                 <img src="<?php echo $escape($extraM->thumbnailUrl('large')); ?>"
-                                     alt="<?php echo $escape("$slotLabels[$i] for " . ($creator ?: 'Jon Sarkin') . ", $title"); ?>" />
+                                     alt="<?php echo $escape("$slotLabels[$i] for " . ($creator ?: 'Jon Sarkin') . ", $pageLabel"); ?>" />
                                 <figcaption><?php echo $slotLabels[$i]; ?></figcaption>
                             </figure>
                             <?php endfor; ?>

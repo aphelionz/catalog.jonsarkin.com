@@ -120,8 +120,7 @@ def qdrant_fixture(qdrant_container: str) -> None:
             },
             "payload": {
                 "omeka_item_id": 1,
-                "title": "One",
-                "omeka_url": "https://example.com/items/1",
+                                "omeka_url": "https://example.com/items/1",
                 "thumb_url": "https://example.com/thumbs/1.jpg",
                 "catalog_version": 2,
                 "text_blob": "classic rock poster with handwritten notes",
@@ -136,8 +135,7 @@ def qdrant_fixture(qdrant_container: str) -> None:
             },
             "payload": {
                 "omeka_item_id": 2,
-                "title": "Two",
-                "omeka_url": "https://example.com/items/2",
+                                "omeka_url": "https://example.com/items/2",
                 "thumb_url": "https://example.com/thumbs/2.jpg",
                 "catalog_version": 2,
                 "text_blob": "psychedelic handwriting and doodles",
@@ -152,8 +150,7 @@ def qdrant_fixture(qdrant_container: str) -> None:
             },
             "payload": {
                 "omeka_item_id": 3,
-                "title": "Three",
-                "omeka_url": "https://example.com/items/3",
+                                "omeka_url": "https://example.com/items/3",
                 "thumb_url": "https://example.com/thumbs/3.jpg",
                 "catalog_version": 1,
                 "text_blob": "abstract scribbles",
@@ -186,8 +183,7 @@ def search_index_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
         {
             "omeka_item_id": 1,
             "catalog_version": 2,
-            "title": "One",
-            "omeka_url": "https://example.com/items/1",
+                        "omeka_url": "https://example.com/items/1",
             "thumb_url": "https://example.com/thumbs/1.jpg",
             "omeka_description": "classic rock poster with handwritten notes",
             "subjects": "classic rock",
@@ -198,8 +194,7 @@ def search_index_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
         {
             "omeka_item_id": 2,
             "catalog_version": 2,
-            "title": "Two",
-            "omeka_url": "https://example.com/items/2",
+                        "omeka_url": "https://example.com/items/2",
             "thumb_url": "https://example.com/thumbs/2.jpg",
             "omeka_description": "psychedelic handwriting and doodles",
             "subjects": "psychedelic",
@@ -210,8 +205,7 @@ def search_index_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
         {
             "omeka_item_id": 3,
             "catalog_version": 1,
-            "title": "Three",
-            "omeka_url": "https://example.com/items/3",
+                        "omeka_url": "https://example.com/items/3",
             "thumb_url": "https://example.com/thumbs/3.jpg",
             "omeka_description": "abstract scribbles",
             "subjects": "",

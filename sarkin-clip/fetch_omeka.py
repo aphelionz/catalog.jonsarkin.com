@@ -12,11 +12,11 @@ Optional auth:
 
 Catalog v2 rule:
   - Only ingest items whose resource template title is "Artwork (Jon Sarkin)" (configurable via OMEKA_TEMPLATE_TITLE).
-  - Log (print) Title and Image URL for ingested items (identifier logged only if present).
+  - Log (print) Identifier and Image URL for ingested items.
 
 Notes:
   - Downloads the primary media image for each item (skips items with no media).
-  - Maps basic fields: title, description, subjects, year (from dcterms:date or created year).
+  - Maps basic fields: description, subjects, year (from dcterms:date or created year).
   - Uses a temporary image file per item.
   - Parallelized with a thread pool; set INGEST_WORKERS (default 3) to tune.
   - Incremental by default: compares Omeka o:modified against Qdrant updated_at
@@ -243,7 +243,6 @@ def process_item(item):
         download_image(img_url, Path(tmp.name))
         image_path = Path(tmp.name)
 
-    title = item.get("o:title", "")
     identifier = first_value(item, "dcterms:identifier")
     desc = "\n".join(list_values(item, "dcterms:description"))
     subjects = list_values(item, "dcterms:subject")
@@ -251,13 +250,11 @@ def process_item(item):
     omeka_url = f"{BASE}/s/main/item/{item['o:id']}"
 
     # Log required fields
-    id_part = f" | Identifier={identifier}" if identifier else ""
-    print(f"Ingesting ItemID={item['o:id']} | Title={title}{id_part} | Image={img_url}")
+    print(f"Ingesting ItemID={item['o:id']} | Identifier={identifier or '(none)'} | Image={img_url}")
 
     embed_and_upsert(
         image_path=image_path,
         omeka_item_id=item["o:id"],
-        title=title,
         omeka_description=desc,
         collection="omeka",
         year=year,
@@ -335,8 +332,8 @@ def main():
     if args.dry_run:
         print("\n--- DRY RUN ---")
         for item in items_to_process:
-            title = item.get("o:title", "(untitled)")
-            print(f"  Would ingest: ItemID={item['o:id']} | {title}")
+            ident = first_value(item, "dcterms:identifier") or f"item-{item['o:id']}"
+            print(f"  Would ingest: ItemID={item['o:id']} | {ident}")
         print(f"Total: {len(items_to_process)} items would be processed, {skipped_count} skipped")
         return
 

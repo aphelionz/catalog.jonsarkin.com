@@ -93,14 +93,13 @@ def _payload_value(payload: Dict[str, Any], keys: Iterable[str]) -> str:
 
 
 def compose_text_blob(payload: Dict[str, Any], *, ocr_char_limit: int = OCR_MAX_CHARS) -> str:
-    title = _payload_value(payload, ["title"])
     description = _payload_value(payload, ["omeka_description", "description"])
     curator_notes = _payload_value(payload, ["curator_notes", "curator_note"])
     tags = _payload_value(payload, ["subjects", "tags", "subject", "tag"])
     ocr_raw = _payload_value(payload, ["ocr_text_raw", "ocr_text"])
     ocr_text = sanitize_ocr(ocr_raw, max_chars=ocr_char_limit)
 
-    parts = list(_iter_values([title, description, curator_notes, tags, ocr_text]))
+    parts = list(_iter_values([description, curator_notes, tags, ocr_text]))
     if not parts:
         fallback = _payload_value(payload, ["text_blob"])
         if fallback:

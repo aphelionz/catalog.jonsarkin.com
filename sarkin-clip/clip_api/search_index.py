@@ -15,7 +15,6 @@ TOKENIZE = "unicode61 remove_diacritics 2"
 _COLUMNS = [
     ("omeka_item_id", "UNINDEXED"),
     ("catalog_version", "UNINDEXED"),
-    ("title", ""),
     ("omeka_url", "UNINDEXED"),
     ("thumb_url", "UNINDEXED"),
     ("description", ""),
@@ -42,7 +41,6 @@ class SearchIndexUnavailable(SearchIndexError):
 @dataclass(frozen=True)
 class SearchRow:
     omeka_item_id: int
-    title: Optional[str]
     omeka_url: Optional[str]
     thumb_url: Optional[str]
     score: float
@@ -91,7 +89,6 @@ def upsert_document(payload: Dict[str, Optional[str]], *, db_path: Optional[Path
     row_values = {
         "omeka_item_id": int(omeka_item_id),
         "catalog_version": catalog_version,
-        "title": payload.get("title") or "",
         "omeka_url": payload.get("omeka_url") or "",
         "thumb_url": payload.get("thumb_url") or "",
         "description": payload.get("omeka_description") or payload.get("description") or "",
@@ -151,7 +148,7 @@ def search(
     params.extend([limit, offset])
 
     sql = (
-        f"SELECT omeka_item_id, title, omeka_url, thumb_url, "
+        f"SELECT omeka_item_id, omeka_url, thumb_url, "
         f"bm25({TABLE_NAME}) as score, "
         f"snippet({TABLE_NAME}, {TEXT_BLOB_COL_INDEX}, '', '', '...', 12) as snippet "
         f"FROM {TABLE_NAME} WHERE {' AND '.join(where_clauses)} "
@@ -171,7 +168,6 @@ def search(
         results.append(
             SearchRow(
                 omeka_item_id=int(row["omeka_item_id"]),
-                title=row["title"] or None,
                 omeka_url=row["omeka_url"] or None,
                 thumb_url=row["thumb_url"] or None,
                 score=float(row["score"] or 0.0),

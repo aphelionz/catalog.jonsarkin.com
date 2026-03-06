@@ -24,10 +24,9 @@ from clip_api.search_index import SearchIndexError, SearchIndexUnavailable, sear
 
 app = FastAPI(title="clip-api", version="1.0")
 
-ALLOWED_PAYLOAD_FIELDS = {"omeka_item_id", "title", "omeka_url", "thumb_url", "catalog_version"}
+ALLOWED_PAYLOAD_FIELDS = {"omeka_item_id", "omeka_url", "thumb_url", "catalog_version"}
 SEARCH_PAYLOAD_FIELDS = {
     "omeka_item_id",
-    "title",
     "omeka_url",
     "thumb_url",
     "text_blob",
@@ -48,7 +47,6 @@ TEXT_SEARCH_LIMIT_DEFAULT = 10
 TEXT_SEARCH_LIMIT_MAX = 50
 TEXT_SNIPPET_LIMIT = 240
 SEARCH_MODES = {"semantic", "exact", "hybrid"}
-TITLE_MATCH_BOOST = 0.2
 TAG_MATCH_BOOST = 0.1
 BLOB_MATCH_BOOST = 0.03
 
@@ -149,7 +147,6 @@ def _build_item_payload(payload: Dict[str, Any], point_id: Any) -> Dict[str, Any
         omeka_item_id = point_id
     return {
         "omeka_item_id": omeka_item_id,
-        "title": payload.get("title"),
         "omeka_url": payload.get("omeka_url"),
         "thumb_url": payload.get("thumb_url"),
         "catalog_version": _normalize_catalog_version(payload.get("catalog_version")),
@@ -228,7 +225,6 @@ def _recommend(
     url = f"{settings.qdrant_url}/collections/{settings.qdrant_collection}/points/recommend"
     payload_fields = [
         "omeka_item_id",
-        "title",
         "omeka_url",
         "thumb_url",
         "catalog_version",
@@ -327,20 +323,17 @@ def _combine_results(
     semantic_weight = max(0.0, min(1.0, semantic_weight))
     lexical_weight = max(0.0, min(1.0, 1.0 - semantic_weight))
 
-    def add_item(item_id: Any, *, title: Optional[str], omeka_url: Optional[str], thumb_url: Optional[str], snippet: Optional[str]) -> None:
+    def add_item(item_id: Any, *, omeka_url: Optional[str], thumb_url: Optional[str], snippet: Optional[str]) -> None:
         entry = combined.setdefault(
             item_id,
             {
                 "omeka_item_id": item_id,
-                "title": title,
                 "omeka_url": omeka_url,
                 "thumb_url": thumb_url,
                 "snippet": snippet,
                 "score": 0.0,
             },
         )
-        if entry.get("title") is None and title:
-            entry["title"] = title
         if entry.get("omeka_url") is None and omeka_url:
             entry["omeka_url"] = omeka_url
         if entry.get("thumb_url") is None and thumb_url:
@@ -351,7 +344,7 @@ def _combine_results(
     for rank, item in enumerate(semantic_results):
         item_id = item.omeka_item_id
         score = semantic_weight / (rrf_k + rank + 1)
-        add_item(item_id, title=item.title, omeka_url=item.omeka_url, thumb_url=item.thumb_url, snippet=item.snippet)
+        add_item(item_id, omeka_url=item.omeka_url, thumb_url=item.thumb_url, snippet=item.snippet)
         combined[item_id]["score"] += score
 
     for rank, item in enumerate(lexical_results):
@@ -359,7 +352,6 @@ def _combine_results(
         score = lexical_weight / (rrf_k + rank + 1)
         add_item(
             item_id,
-            title=item.get("title"),
             omeka_url=item.get("omeka_url"),
             thumb_url=item.get("thumb_url"),
             snippet=item.get("snippet"),
@@ -377,7 +369,6 @@ def _combine_results(
         results.append(
             SearchResult(
                 omeka_item_id=entry["omeka_item_id"],
-                title=entry.get("title"),
                 omeka_url=entry.get("omeka_url"),
                 thumb_url=entry.get("thumb_url"),
                 score=float(entry["score"] / max_score),
@@ -390,7 +381,6 @@ def _combine_results(
 @dataclass(frozen=True)
 class _SemanticCandidate:
     result: SearchResult
-    title_tokens: set[str]
     tag_tokens: set[str]
     blob_tokens: set[str]
     score: float
@@ -411,8 +401,6 @@ def _apply_hybrid_boost(
     scored: list[tuple[float, int, SearchResult]] = []
     for idx, candidate in enumerate(candidates):
         boost = 0.0
-        if query_tokens & candidate.title_tokens:
-            boost += TITLE_MATCH_BOOST
         if query_tokens & candidate.tag_tokens:
             boost += TAG_MATCH_BOOST
         if query_tokens & candidate.blob_tokens:
@@ -589,15 +577,12 @@ def search_items(
             payload = item.get("payload") or {}
             omeka_item_id = _normalize_id(payload.get("omeka_item_id", item.get("id")))
             text_blob = compose_text_blob(payload)
-            title_text = payload.get("title") or ""
             tags_text = extract_tags_text(payload)
-            title_tokens = tokenize(title_text)
             tag_tokens = tokenize(tags_text)
-            blob_tokens = tokenize(text_blob) - title_tokens - tag_tokens
+            blob_tokens = tokenize(text_blob) - tag_tokens
             score = float(item.get("score") or 0.0)
             result = SearchResult(
                 omeka_item_id=omeka_item_id,
-                title=payload.get("title"),
                 omeka_url=payload.get("omeka_url"),
                 thumb_url=payload.get("thumb_url"),
                 score=score,
@@ -606,7 +591,6 @@ def search_items(
             semantic_candidates.append(
                 _SemanticCandidate(
                     result=result,
-                    title_tokens=title_tokens,
                     tag_tokens=tag_tokens,
                     blob_tokens=blob_tokens,
                     score=score,
@@ -625,7 +609,6 @@ def search_items(
             lexical_results = [
                 {
                     "omeka_item_id": row.omeka_item_id,
-                    "title": row.title,
                     "omeka_url": row.omeka_url,
                     "thumb_url": row.thumb_url,
                     "score": row.score,
@@ -652,7 +635,6 @@ def search_items(
         results = [
             SearchResult(
                 omeka_item_id=item["omeka_item_id"],
-                title=item.get("title"),
                 omeka_url=item.get("omeka_url"),
                 thumb_url=item.get("thumb_url"),
                 score=1.0 if idx == 0 else max(0.0, 1.0 - (idx / max(1, len(lexical_results)))),

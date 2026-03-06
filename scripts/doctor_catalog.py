@@ -52,13 +52,6 @@ class Issue:
 TEMP_ID_RE = re.compile(r'^JS-\d{4}-T\d+$')
 
 
-def check_title(item: dict) -> List[Issue]:
-    val = extract_value(item, "dcterms:title")
-    if not val or val == "Untitled":
-        return [Issue("Title", "ERROR", "missing")]
-    return []
-
-
 def check_identifier(item: dict) -> List[Issue]:
     val = extract_value(item, "dcterms:identifier")
     issues = []
@@ -216,7 +209,7 @@ def check_transcription(item: dict) -> List[Issue]:
 
 
 ALL_CHECKS = [
-    check_title, check_identifier, check_creator, check_work_type,
+    check_identifier, check_creator, check_work_type,
     check_medium, check_support, check_height, check_width,
     check_signature, check_framing, check_owner, check_location,
     check_subject, check_date, check_media, check_box,

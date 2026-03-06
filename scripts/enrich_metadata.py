@@ -5,10 +5,6 @@ enrich_metadata.py — Automated OCR + metadata enrichment for Jon Sarkin catalo
 Sends artwork images to Claude for structured analysis, then writes enriched
 metadata back to Omeka S via API. Supports both real-time and Batch API modes.
 
-Title strategy (Hybrid #5):
-  - If Claude finds prominent text in the artwork, it suggests a title.
-  - Otherwise, the item keeps its catalog number as the display identifier.
-
 CRITICAL: Omeka S PATCH replaces the ENTIRE property set. This script always
 reads all existing properties before writing, merging new values into the
 existing set to prevent data loss.
@@ -145,11 +141,6 @@ Analyze this artwork image and return a JSON object with the following fields.
 Be precise and conservative — only report what you can clearly see.
 
 {
-  "title": "A short, evocative title derived from the most prominent text or
-            visual motif in the piece. 3-6 words max. If there is prominent
-            legible text, use it or adapt it as the title. If the piece has no
-            legible text or dominant identifiable subject, return null.",
-
   "transcription": "Complete transcription of ALL visible text in the artwork.
                      Preserve line breaks, capitalization, and punctuation.
                      Include title text, marginal text, labels — everything
@@ -415,11 +406,6 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
             year = "0000"
         temp_id = f"JS-{year}-T{item_id}"
         payload["dcterms:identifier"] = [literal_value(PROP["dcterms:identifier"], temp_id)]
-
-    # Title: only set if currently empty/Untitled
-    current_title = extract_value(item, "dcterms:title")
-    if enrichment.get("title") and (not current_title or current_title == "Untitled"):
-        payload["dcterms:title"] = [literal_value(PROP["dcterms:title"], enrichment["title"])]
 
     set_if_empty("bibo:content", enrichment.get("transcription"))
 
@@ -952,14 +938,13 @@ def save_cache(cache: dict):
 
 def show_diff(item: dict, enrichment: dict, item_id: int) -> int:
     """Print a human-readable diff of what would change. Returns change count."""
-    current_title = extract_value(item, "dcterms:title") or "(empty)"
+    identifier = extract_value(item, "dcterms:identifier") or f"item-{item_id}"
 
     print(f"\n{'='*60}")
-    print(f"  Item {item_id}: {current_title}")
+    print(f"  Item {item_id}: {identifier}")
     print(f"{'='*60}")
 
     fields = [
-        ("Title",         "dcterms:title",              "title"),
         ("Transcription", "bibo:content",               "transcription"),
         ("Medium",        "dcterms:medium",             "medium"),
         ("Work Type",     "dcterms:type",               "work_type"),
@@ -971,8 +956,6 @@ def show_diff(item: dict, enrichment: dict, item_id: int) -> int:
         proposed = enrichment.get(key)
 
         if not proposed:
-            continue
-        if key == "title" and current and current != "Untitled":
             continue
         if current:
             continue
