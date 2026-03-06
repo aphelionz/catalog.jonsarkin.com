@@ -19,6 +19,7 @@
     <div class="nav-right">
       <div class="filter-buttons">
         <button class="filter-btn active" data-filter="issues">Issues <span id="count-issues"></span></button>
+        <button class="filter-btn" data-filter="dates">Dates <span id="count-dates"></span></button>
         <button class="filter-btn" data-filter="all">All <span id="count-all"></span></button>
         <button class="filter-btn" data-filter="box">By Box</button>
       </div>
@@ -52,21 +53,14 @@
 
       <form id="editor-form" autocomplete="off">
         <!-- Focused fields -->
-        <label for="f-title">Title</label>
-        <input type="text" id="f-title" data-term="dcterms:title">
+        <label>Date</label>
+        <div id="date-pills" class="date-pills" data-term="dcterms:date"></div>
+        <input type="text" id="f-date" data-term="dcterms:date" placeholder="Custom date (e.g. c. 2005)">
 
-        <div class="row-2">
-          <div>
-            <label for="f-date">Date</label>
-            <input type="text" id="f-date" data-term="dcterms:date" placeholder="e.g. 2005">
-          </div>
-          <div>
-            <label for="f-type">Type</label>
-            <select id="f-type" data-term="dcterms:type">
-              <option value="">—</option>
-            </select>
-          </div>
-        </div>
+        <label for="f-type">Type</label>
+        <select id="f-type" data-term="dcterms:type">
+          <option value="">—</option>
+        </select>
 
         <label for="f-medium">Medium</label>
         <input type="text" id="f-medium" data-term="dcterms:medium" placeholder="e.g. Marker on paper">
@@ -112,6 +106,9 @@
 
         <label>Motifs</label>
         <div id="motif-chips" class="chip-group" data-term="dcterms:subject"></div>
+
+        <label>Transcription</label>
+        <div id="transcription-pills" class="transcription-pills"></div>
 
         <!-- Collapsible "More" section -->
         <details id="more-fields">

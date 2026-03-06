@@ -135,6 +135,40 @@ textarea { resize: vertical; }
 
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
+/* ── Date pills ──────────────────────────────────────────────────── */
+.date-pills {
+  display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 4px;
+}
+.date-pill {
+  padding: 4px 7px; font-size: 13px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border); border-radius: 3px;
+  cursor: pointer; user-select: none;
+  background: #fff; color: var(--fg);
+  transition: all 0.1s; line-height: 1;
+  min-width: 28px; text-align: center;
+}
+.date-pill:hover { background: #eee; }
+.date-pill.active { background: #111; color: #fff; border-color: #111; }
+.date-pill.decade-start { margin-left: 4px; }
+.date-pill.date-unknown { font-size: 11px; color: #999; }
+.date-pill.date-unknown.active { color: #fff; }
+
+#f-date { font-size: 12px; padding: 4px 6px; }
+
+/* ── Transcription pills ─────────────────────────────────────────── */
+.transcription-pills {
+  display: flex; gap: 4px; margin-bottom: 4px;
+}
+.transcription-pill {
+  padding: 4px 10px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 3px;
+  cursor: pointer; user-select: none;
+  background: #fff; color: var(--fg);
+  transition: all 0.1s;
+}
+.transcription-pill:hover { background: #eee; }
+.transcription-pill.active { background: #111; color: #fff; border-color: #111; }
+
 /* ── Signature grid ──────────────────────────────────────────────── */
 .sig-grid {
   display: grid; grid-template-columns: repeat(3, 40px); gap: 3px;
@@ -168,7 +202,6 @@ textarea { resize: vertical; }
   border-radius: 10px; font-weight: 600;
 }
 .badge-error { background: var(--danger); color: #fff; }
-.badge-warn { background: var(--warn); color: #fff; }
 
 /* ── Action buttons ──────────────────────────────────────────────── */
 .actions {

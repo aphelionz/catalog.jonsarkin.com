@@ -13,7 +13,6 @@ const CREATOR_ITEM_ID = 3;
 
 // Property IDs (from enrich_metadata.py)
 const PROP = {
-  'dcterms:title':                  1,
   'dcterms:identifier':            10,
   'dcterms:date':                   7,
   'dcterms:type':                   8,
@@ -46,6 +45,7 @@ const SUPPORTS = ['Paper', 'Cardboard', 'Cardboard album sleeve', 'Canvas', 'Boa
 const MOTIFS = ['Eyes', 'Fish', 'Faces', 'Hands', 'Text Fragments', 'Grids', 'Circles', 'Patterns', 'Animals', 'Names/Words', 'Maps', 'Numbers'];
 const CONDITIONS = ['Excellent', 'Good', 'Fair', 'Poor', 'Not Examined'];
 const SIGNATURE_ARROWS = ['↖', '↑', '↗', '←', '∅', '→', '↙', '↓', '↘'];
+const DATE_YEARS = Array.from({ length: 2024 - 1987 + 1 }, (_, i) => String(1987 + i));
 
 // Write-safe keys for PATCH (from enrich_metadata.py:_clean_value)
 const WRITE_KEYS = new Set([
@@ -70,7 +70,7 @@ let currentItem = null;   // Full item JSON for the item being edited
 let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
-let filterMode = 'issues'; // 'issues' | 'all' | 'box'
+let filterMode = 'issues'; // 'issues' | 'dates' | 'all' | 'box'
 let boxFilter = '';
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
@@ -87,6 +87,7 @@ function cacheDom() {
   dom.queueStatus = $('#queue-status');
   dom.itemLink = $('#item-link');
   dom.countIssues = $('#count-issues');
+  dom.countDates = $('#count-dates');
   dom.countAll = $('#count-all');
   dom.boxSelect = $('#box-select');
   dom.progressFill = $('#progress-fill');
@@ -177,16 +178,9 @@ function extractAllValues(item, term) {
 function validateItem(item) {
   const issues = [];
 
-  const title = extractValue(item, 'dcterms:title');
-  if (!title || title === 'Untitled') {
-    issues.push({ field: 'Title', level: 'error', msg: 'missing' });
-  }
-
   const id = extractValue(item, 'dcterms:identifier');
   if (!id) {
     issues.push({ field: 'Catalog #', level: 'error', msg: 'missing' });
-  } else if (TEMP_ID_RE.test(id)) {
-    issues.push({ field: 'Catalog #', level: 'warn', msg: 'temporary' });
   }
 
   const type = extractValue(item, 'dcterms:type');
@@ -238,9 +232,7 @@ function validateItem(item) {
         if (y < EARLIEST_YEAR) issues.push({ field: 'Date', level: 'error', msg: `pre-${EARLIEST_YEAR}` });
         else if (y > DEATH_YEAR) issues.push({ field: 'Date', level: 'error', msg: 'posthumous' });
       }
-      if (/^c\.\s/.test(date)) {
-        issues.push({ field: 'Date', level: 'warn', msg: 'approximate' });
-      }
+      // Approximate dates (c. 2005) are acceptable — no warning
     }
   }
 
@@ -271,11 +263,28 @@ function validateItem(item) {
 
 // ── Queue management ────────────────────────────────────────────────────────
 
+function hasBadDate(item) {
+  const d = extractValue(item, 'dcterms:date');
+  if (!d) return true;
+  if (EXIF_TS_RE.test(d) || ISO_TS_RE.test(d)) return true;
+  // Flag out-of-range years (pre-career or future)
+  const m = d.match(YEAR_RE);
+  if (m) {
+    const y = parseInt(m[0], 10);
+    if (y < EARLIEST_YEAR || y > DEATH_YEAR) return true;
+  }
+  return false;
+}
+
 function buildQueue() {
   if (filterMode === 'issues') {
     queue = allItems
       .filter(it => it._issues.some(i => i.level === 'error'))
       .sort((a, b) => b._issues.length - a._issues.length);
+  } else if (filterMode === 'dates') {
+    queue = allItems
+      .filter(hasBadDate)
+      .sort((a, b) => a._identifier.localeCompare(b._identifier));
   } else if (filterMode === 'box') {
     queue = boxFilter
       ? allItems.filter(it => it._box === boxFilter).sort((a, b) => a._identifier.localeCompare(b._identifier))
@@ -289,10 +298,12 @@ function buildQueue() {
 function updateNav() {
   const issueCount = allItems.filter(it => it._issues.some(i => i.level === 'error')).length;
   dom.countIssues.textContent = `(${issueCount})`;
+  dom.countDates.textContent = `(${allItems.filter(hasBadDate).length})`;
   dom.countAll.textContent = `(${allItems.length})`;
 
   if (!queue.length) {
-    dom.queueStatus.textContent = filterMode === 'issues' ? 'No issues found!' : 'No items';
+    const emptyMsg = { issues: 'No issues found!', dates: 'All dates fixed!' };
+    dom.queueStatus.textContent = emptyMsg[filterMode] || 'No items';
     dom.itemLink.textContent = '';
     dom.itemLink.href = '#';
     dom.progressFill.style.width = '0';
@@ -345,7 +356,7 @@ function populateForm(item) {
   // Text/select fields
   for (const el of $$('[data-term]')) {
     const term = el.dataset.term;
-    if (el.closest('.sig-grid') || el.closest('.chip-group')) continue;
+    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills')) continue;
 
     if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
       // For repeatable fields (provenance, inscriptions), join with newline
@@ -366,6 +377,18 @@ function populateForm(item) {
       }
       el.value = val;
     }
+  }
+
+  // Date pills
+  const dateVal = extractValue(item, 'dcterms:date');
+  for (const pill of $$('.date-pill')) {
+    pill.classList.toggle('active', pill.dataset.val === dateVal);
+  }
+
+  // Transcription pills
+  const transVal = extractValue(item, 'bibo:content');
+  for (const pill of $$('.transcription-pill')) {
+    pill.classList.toggle('active', pill.dataset.val === transVal);
   }
 
   // Signature grid
@@ -399,7 +422,8 @@ function captureFormState() {
   // Text/select fields
   for (const el of $$('[data-term]')) {
     const term = el.dataset.term;
-    if (el.closest('.sig-grid') || el.closest('.chip-group')) continue;
+    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills')) continue;
+    if (el.tagName !== 'INPUT' && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA') continue;
     state[term] = el.value;
   }
 
@@ -461,7 +485,7 @@ function buildPayload(item, formState) {
 
   // 3. Overwrite edited literal fields
   const literalFields = [
-    'dcterms:title', 'dcterms:date', 'dcterms:type', 'dcterms:medium',
+    'dcterms:date', 'dcterms:type', 'dcterms:medium',
     'schema:artworkSurface', 'schema:height', 'schema:width',
     'schema:distinguishingSign', 'schema:itemCondition',
     'dcterms:identifier', 'dcterms:description', 'dcterms:format',
@@ -670,6 +694,78 @@ function setupSelects() {
   }
 }
 
+function setupDatePills() {
+  const container = $('#date-pills');
+  const dateInput = $('#f-date');
+
+  function makePill(value, label, extraClass) {
+    const pill = document.createElement('span');
+    pill.className = 'date-pill' + (extraClass ? ' ' + extraClass : '');
+    pill.textContent = label;
+    pill.dataset.val = value;
+    pill.addEventListener('click', () => {
+      const wasActive = pill.classList.contains('active');
+      for (const p of $$('.date-pill')) p.classList.remove('active');
+      if (!wasActive) {
+        pill.classList.add('active');
+        dateInput.value = value;
+      } else {
+        dateInput.value = '';
+      }
+      updateDirtyState();
+      // Auto save + next on date pill click
+      saveAndNext();
+    });
+    container.appendChild(pill);
+  }
+
+  // Unknown date pill — proper art catalog convention for "during his career"
+  makePill('c. 1989–2024', 'c. 1989–2024', 'date-unknown');
+
+  // Year pills with short labels ('87, '88, ... '24)
+  for (const year of DATE_YEARS) {
+    const label = '\u2019' + year.slice(2); // '87, '88, etc.
+    const extra = year.endsWith('0') ? 'decade-start' : '';
+    makePill(year, label, extra);
+  }
+  // Typing in the text input clears the pill selection
+  dateInput.addEventListener('input', () => {
+    const val = dateInput.value.trim();
+    for (const p of $$('.date-pill')) {
+      p.classList.toggle('active', p.dataset.val === val);
+    }
+    updateDirtyState();
+  });
+}
+
+function setupTranscriptionPills() {
+  const container = $('#transcription-pills');
+  const textarea = $('#f-transcription');
+  const pills = [
+    { value: '∅', label: 'No text' },
+    { value: '[Needs enrichment]', label: 'Needs enrichment' },
+  ];
+  for (const { value, label } of pills) {
+    const pill = document.createElement('span');
+    pill.className = 'transcription-pill';
+    pill.textContent = label;
+    pill.dataset.val = value;
+    pill.addEventListener('click', () => {
+      const wasActive = pill.classList.contains('active');
+      for (const p of $$('.transcription-pill')) p.classList.remove('active');
+      if (!wasActive) {
+        pill.classList.add('active');
+        textarea.value = value;
+      } else {
+        textarea.value = '';
+      }
+      updateDirtyState();
+      saveAndNext();
+    });
+    container.appendChild(pill);
+  }
+}
+
 function setupMotifChips() {
   const container = $('#motif-chips');
   for (const motif of MOTIFS) {
@@ -780,6 +876,8 @@ function showToast(msg, isError = false) {
 async function init() {
   cacheDom();
   setupSelects();
+  setupDatePills();
+  setupTranscriptionPills();
   setupMotifChips();
   setupSignatureGrid();
   setupButtons();

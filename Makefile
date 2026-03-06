@@ -192,7 +192,7 @@ create-box-collections-dry: ## Preview box-category item set creation
 create-box-collections: ## Create item sets for box categories and assign items
 	python3 scripts/create_box_item_sets.py
 
-editor: ## Launch rapid-fire metadata editor (localhost:9000)
+editor: ## Launch rapid-fire metadata editor standalone (localhost:9000, no Docker)
 	python3 tools/rapid-editor/serve.py
 
 ensure-api-key: ## Create local-only API key (safe to re-run; never use on prod)
