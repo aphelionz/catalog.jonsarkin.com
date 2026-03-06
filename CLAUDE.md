@@ -41,6 +41,7 @@ make ingest       # one-shot: index Omeka items into Qdrant (CPU)
 
 ## Database
 - For data retrieval, favor making direct database calls rather than using the API
+- See [docs/omeka-invariants.md](docs/omeka-invariants.md) for Omeka data model, property IDs, API patterns, and theme conventions
 
 ---
 
