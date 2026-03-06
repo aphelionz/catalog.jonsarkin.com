@@ -206,9 +206,14 @@ Never expose `ANTHROPIC_API_KEY` or Omeka API credentials in output or commits.
 - **Stale cache:** Delete `scripts/.enrich_cache.json` or use `--force` to
   re-analyze. Changing the prompt in `scripts/enrich_metadata.py` requires
   bumping `ANALYSIS_PROMPT_VERSION` to auto-invalidate.
-- **PATCH failures (422):** Usually resource template validation. The script
-  omits `o:resource_template` from payloads to avoid this. Check the error
-  response body.
+- **PATCH failures (422):** Usually resource template validation. Check the
+  error response body.
+- **Items vanish from catalog after enrichment:** PATCH payloads must preserve
+  `o:site` verbatim. If `o:site` is missing or mangled (e.g. passed through
+  `_clean_value`), Omeka clears the `item_site` table and items disappear
+  from the public site. Both `enrich_metadata.py` and `backfill_defaults.py`
+  now copy `o:site` as-is. If this happens, repopulate `item_site` from the
+  `resource` table via SQL.
 - **Restore from backup:** `make restore-db BACKUP=backups/omeka-XXX.sql.gz`
 - **Schema out of sync:** Run `make push-schema` before `make pull` so
   production has the same schema. Idempotent and safe to re-run. Not needed
