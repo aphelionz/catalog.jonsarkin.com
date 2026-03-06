@@ -221,6 +221,18 @@
         }
     }
 
+    // ── Home page: live catalog count ──
+    var countEl = document.querySelector('[data-live-count]');
+    if (countEl) {
+        fetch('/api/items?per_page=1')
+            .then(function (r) {
+                if (!r.ok) return;
+                var total = r.headers.get('Omeka-S-Total-Results');
+                if (total) countEl.textContent = parseInt(total, 10).toLocaleString();
+            })
+            .catch(function () { /* keep fallback */ });
+    }
+
     // ── PRINT QR CODE: render QR for the current item URL ──
     // Deferred to ensure qrcode library is fully initialised.
     $(function () {
