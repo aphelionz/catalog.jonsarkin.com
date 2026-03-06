@@ -35,7 +35,7 @@ from qdrant_client import QdrantClient
 
 from embed_image_to_qdrant import embed_and_upsert
 
-BASE = "https://catalog.jonsarkin.com"
+BASE = os.getenv("OMEKA_BASE_URL", "https://catalog.jonsarkin.com").rstrip("/")
 ITEMS_URL = f"{BASE}/api/items"
 TEMPLATES_URL = f"{BASE}/api/resource_templates"
 TARGET_TEMPLATE_TITLE = os.getenv("OMEKA_TEMPLATE_TITLE", "Artwork (Jon Sarkin)")
@@ -284,6 +284,7 @@ def main():
     parser = argparse.ArgumentParser(description="Ingest Omeka items into Qdrant.")
     parser.add_argument("--force", action="store_true", help="Full re-ingest, ignoring Qdrant state.")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be ingested without doing it.")
+    parser.add_argument("--min-id", type=int, default=0, help="Only process items with o:id >= this value.")
     args = parser.parse_args()
 
     tpl_id = find_template_id_by_title(TARGET_TEMPLATE_TITLE)
@@ -308,6 +309,11 @@ def main():
         print(f"  Page {page}: {len(all_items)}/{total_expected} items")
         page += 1
     print(f"Fetched {len(all_items)} items from Omeka")
+
+    if args.min_id:
+        before = len(all_items)
+        all_items = [i for i in all_items if i["o:id"] >= args.min_id]
+        print(f"Filtered to {len(all_items)} items with o:id >= {args.min_id} (skipped {before - len(all_items)})")
 
     # Phase 2: Determine what needs processing
     if args.force:

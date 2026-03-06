@@ -65,6 +65,25 @@ Output shows how many new items were pulled and the ID range.
 
 If zero new items, you can skip the rest of the pipeline.
 
+### Step 2b — Assign resource template to new items
+
+Items pulled from production typically lack a resource template. Both
+`backfill` and `ingest` filter by `resource_template_id=2`, so new items
+are invisible to the pipeline until the template is assigned.
+
+Assign template + title (required by the template) to all items missing one:
+
+```python
+# Quick check — if this returns items, they need the template:
+curl -s 'http://localhost:8888/api/items?sort_by=id&sort_order=desc&per_page=50' \
+  | python3 -c "import sys,json; [print(i['o:id'],i['o:title']) for i in json.load(sys.stdin) if not i.get('o:resource_template')]"
+```
+
+Use the Omeka API to PATCH each item with
+`o:resource_template: {o:id: 2}` and a `dcterms:title` value (copy from
+`o:title`). The backfill script's `omeka_patch` + `literal_value` helpers
+work well for this.
+
 ### Step 3 — Backfill defaults
 
 ```bash
@@ -134,10 +153,12 @@ reduced for the new items.
 ### Step 8 — Re-ingest into Qdrant
 
 Rebuild the search index so it reflects newly enriched metadata and
-transcriptions.
+transcriptions. Use `--min-id` to scope to just the new items (avoids
+re-embedding the entire catalog when timestamps have drifted):
 
 ```bash
-make ingest
+make ingest-dry                                          # preview
+docker compose run --rm ingest --min-id <first-new-id>   # targeted ingest
 ```
 
 Verify: test search at `http://localhost:8888` or check collection size at
@@ -177,6 +198,9 @@ Never expose `ANTHROPIC_API_KEY` or Omeka API credentials in output or commits.
 
 ## Troubleshooting
 
+- **Backfill reports 0 items to patch after pull-new:** New items from prod
+  lack a resource template, so `get_items_page` (which filters by template)
+  never returns them. Run Step 2b to assign the template first.
 - **Batch stuck:** Check `make enrich-batch-status`. If expired (24h timeout),
   re-submit with `make enrich-batch`.
 - **Stale cache:** Delete `scripts/.enrich_cache.json` or use `--force` to

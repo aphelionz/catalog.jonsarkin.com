@@ -80,6 +80,7 @@ services:
     depends_on:
       - qdrant
     environment:
+      OMEKA_BASE_URL: http://omeka:80
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION: omeka_items
       INGEST_WORKERS: 3
