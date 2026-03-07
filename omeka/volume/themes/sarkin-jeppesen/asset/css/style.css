@@ -8,12 +8,12 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  --primary:   #000;
+  --primary:   #161a2b;
   --secondary: #777;
   --bg:        #f3f3f3;
   --surface:   #fff;
   --gutter:    10px;
-  --border:    2px solid #000;
+  --border:    2px solid #161a2b;
   --border-light: 1px solid #ccc;
   --max-width: 920px;
   --font:      'Jost', 'Helvetica Neue', Arial, sans-serif;
@@ -228,7 +228,7 @@ abbr[title] {
 }
 
 .site-nav li {
-  border-right: var(--border);
+  border-right: 2px solid #252a3b;
   flex: 1 1 auto;
 }
 
@@ -243,19 +243,20 @@ abbr[title] {
   font-weight: 600;
   letter-spacing: 0.06em;
   padding: var(--gutter) calc(var(--gutter) * 1.5);
-  color: inherit;
+  background: var(--primary);
+  color: var(--surface);
   transition: background 0.15s;
 }
 
 .site-nav a:hover,
 .site-nav a:focus-visible {
-  background: var(--bg);
+  background: #252a3b;
   text-decoration: none;
 }
 
 .site-nav .active > a {
-  background: var(--primary);
-  color: var(--surface);
+  background: var(--surface);
+  color: var(--primary);
 }
 
 /* Mobile nav toggle — hidden on desktop */
@@ -584,7 +585,6 @@ abbr[title] {
 /* Iconographic profile */
 
 .iconographic-profile {
-  padding: var(--gutter);
 }
 
 .icon-profile-heading {
@@ -646,10 +646,16 @@ abbr[title] {
 /* Lexical profile */
 
 .lexical-profile {
+  padding-top: var(--gutter);
+  position: relative;
+}
+.lexical-profile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--gutter));
+  right: calc(-1 * var(--gutter));
   border-top: var(--border);
-  margin-left: calc(-1 * var(--gutter));
-  margin-right: calc(-1 * var(--gutter));
-  padding: var(--gutter);
 }
 
 .lex-profile-heading {
@@ -1375,7 +1381,7 @@ abbr[title] {
   cursor: pointer;
 }
 
-.faceted-browse-page .sorting button[type="submit"]:hover { background: #333; }
+.faceted-browse-page .sorting button[type="submit"]:hover { background: #252a3b; }
 
 /* --- Loading spinner --- */
 
@@ -1526,7 +1532,7 @@ abbr[title] {
   cursor: pointer;
 }
 
-.search-form button:hover { background: #333; }
+.search-form button:hover { background: #252a3b; }
 
 .search-filters {
   font-size: 0.75rem;
@@ -1564,6 +1570,8 @@ abbr[title] {
    HOME PAGE
    ========================================================================== */
 
+/* ---------- Masthead (hero) ---------- */
+
 .home-masthead {
   text-align: center;
   border: var(--border);
@@ -1571,7 +1579,7 @@ abbr[title] {
   margin-bottom: calc(var(--gutter) * 3);
 }
 
-.home-masthead .home-title {
+.home-masthead h1 {
   font-size: 2rem;
   text-transform: uppercase;
   letter-spacing: 0.10em;
@@ -1593,6 +1601,61 @@ abbr[title] {
   color: var(--secondary);
   margin: 0.75rem 0 0;
 }
+
+/* ---------- Intro row (portrait + text) ---------- */
+
+.intro-row {
+  display: flex;
+  gap: calc(var(--gutter) * 3);
+  margin-bottom: calc(var(--gutter) * 3);
+}
+
+.portrait-area {
+  flex: 0 0 280px;
+  background: var(--bg);
+  border: var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  text-align: center;
+  padding: var(--gutter);
+}
+
+.ph-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary);
+}
+
+.ph-note {
+  font-size: 0.65rem;
+  color: var(--secondary);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.intro-text {
+  flex: 1;
+}
+
+.intro-text p {
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.bio-link {
+  font-size: 0.85rem;
+  text-decoration: none;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.bio-link:hover { text-decoration: underline; }
+
+/* ---------- Stats / Institutions (3-col grid) ---------- */
 
 .home-stats {
   display: grid;
@@ -1622,6 +1685,141 @@ abbr[title] {
   font-weight: 700;
 }
 
+/* Institution row — reuses .home-stats grid, smaller text */
+.institution-row .home-stat {
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.institution-row .home-stat strong {
+  display: block;
+  font-size: 0.85rem;
+}
+
+/* ---------- Section headings ---------- */
+
+.section-heading {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: var(--border);
+  padding-bottom: var(--gutter);
+  margin: calc(var(--gutter) * 3) 0 calc(var(--gutter) * 2);
+}
+
+/* ---------- Scholarly quote ---------- */
+
+.scholarly-quote {
+  border: var(--border);
+  padding: calc(var(--gutter) * 2.5);
+  margin-bottom: calc(var(--gutter) * 2);
+}
+
+.page .block .scholarly-quote blockquote {
+  border-left: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--primary);
+}
+
+.attribution {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--secondary);
+}
+
+.attribution strong {
+  color: var(--primary);
+}
+
+/* ---------- Body text ---------- */
+
+.body-text p {
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+/* ---------- Studio image ---------- */
+
+.studio-image {
+  background: var(--bg);
+  border: var(--border);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: calc(var(--gutter) * 3) 0;
+}
+
+.studio-image .ph-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary);
+}
+
+/* ---------- Collections (two-column) ---------- */
+
+.collections-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--gutter) * 3);
+  margin: calc(var(--gutter) * 2) 0;
+}
+
+.collection-col h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.collection-col p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0 0 0.5rem;
+}
+
+.col-image-area {
+  background: var(--bg);
+  border: var(--border);
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary);
+}
+
+/* ---------- Boltflash CTA ---------- */
+
+.boltflash-cta {
+  border: var(--border-light);
+  padding: calc(var(--gutter) * 1.5);
+}
+
+.boltflash-cta p {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+/* ---------- Acknowledgments ---------- */
+
+.acknowledgments p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--secondary);
+  margin: 0;
+}
+
+/* ---------- Page blockquote (non-home) ---------- */
+
 .page .block blockquote {
   border-left: 3px solid var(--primary);
   margin: 1rem 0;
@@ -1630,9 +1828,14 @@ abbr[title] {
   color: var(--secondary);
 }
 
+/* ---------- Home responsive ---------- */
+
 @media (max-width: 640px) {
   .home-masthead { padding: calc(var(--gutter) * 3) var(--gutter); }
-  .home-masthead .home-title { font-size: 1.5rem; }
+  .home-masthead h1 { font-size: 1.5rem; }
+
+  .intro-row { flex-direction: column; }
+  .portrait-area { flex: none; min-height: 240px; }
 
   .home-stats { grid-template-columns: 1fr; }
   .home-stat {
@@ -1640,6 +1843,8 @@ abbr[title] {
     border-bottom: var(--border);
   }
   .home-stat:last-child { border-bottom: none; }
+
+  .collections-two-col { grid-template-columns: 1fr; }
 }
 
 /* ==========================================================================
@@ -1875,7 +2080,7 @@ nav.pagination span.row-count {
   .site-nav { display: none; }
   .site-nav.open { display: block; }
   .site-nav ul { flex-direction: column; }
-  .site-nav li { border-right: none; border-bottom: var(--border); }
+  .site-nav li { border-right: none; border-bottom: 2px solid #252a3b; }
   .site-nav li:last-child { border-bottom: none; }
 }
 
