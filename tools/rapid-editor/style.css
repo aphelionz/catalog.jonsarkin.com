@@ -53,6 +53,59 @@ body {
 .filter-btn.active { background: #555; color: #fff; }
 .filter-btn span { font-weight: 700; }
 
+/* ── Split Issues button ─────────────────────────────────────────── */
+.filter-split {
+  display: flex;
+  position: relative;
+}
+.filter-split .filter-btn {
+  border-radius: 3px 0 0 3px;
+}
+.filter-caret {
+  background: #333; color: #ccc; border: none;
+  border-left: 1px solid #444;
+  padding: 4px 6px; cursor: pointer; font-size: 11px;
+  border-radius: 0 3px 3px 0;
+  line-height: 1;
+}
+.filter-caret:hover { background: #444; }
+.filter-split:has(.filter-btn.active) .filter-caret { background: #555; color: #fff; }
+.filter-caret.open { background: #555; color: #fff; }
+
+/* ── Sprint dropdown menu ────────────────────────────────────────── */
+.sprint-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 6px;
+  min-width: 180px;
+  padding: 4px 0;
+  z-index: 110;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.sprint-menu-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.sprint-menu-item:hover { background: #333; color: #fff; }
+.sprint-menu-item .sprint-menu-count {
+  color: #888;
+  font-variant-numeric: tabular-nums;
+}
+.sprint-menu-item.active { color: var(--accent); font-weight: 600; }
+
 #box-select {
   background: #333; color: #fff; border: 1px solid #555;
   font-size: 11px; padding: 3px 6px; border-radius: 3px;
@@ -405,12 +458,222 @@ textarea { resize: vertical; }
   margin-bottom: 16px;
 }
 
+/* ==========================================================================
+   Sprint Mode — field-specific card editing
+   ========================================================================== */
+
+#sprint-panel {
+  position: fixed;
+  top: var(--nav-h);
+  left: 0; right: 0; bottom: 0;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+#sprint-progress {
+  position: absolute;
+  top: 12px; left: 16px; right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #888;
+  font-size: 13px;
+}
+#sprint-field-label {
+  font-weight: 600;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+#sprint-count { font-variant-numeric: tabular-nums; }
+#sprint-undo { margin-left: auto; font-size: 11px; padding: 4px 10px; }
+
+#sprint-stage {
+  position: relative;
+  width: min(420px, 90vw);
+  height: min(560px, 65vh);
+  margin-bottom: 60px;
+}
+
+#sprint-actions {
+  position: absolute;
+  bottom: 24px;
+  display: flex;
+  gap: 16px;
+}
+
+/* ── Sprint card input zone ─────────────────────────────────────────── */
+.card-input {
+  padding: 10px 16px 14px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.card-input-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Pills inside card */
+.card-input .sprint-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.card-input .sprint-pill {
+  padding: 5px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  background: #f8f8f8;
+  color: var(--fg);
+  transition: all 0.1s;
+  font-family: inherit;
+}
+.card-input .sprint-pill:hover { background: #eee; border-color: #bbb; }
+.card-input .sprint-pill.active { background: #111; color: #fff; border-color: #111; }
+
+/* Grid inside card (signature) */
+.card-input .sprint-grid {
+  display: grid;
+  gap: 3px;
+  justify-content: center;
+}
+.card-input .sprint-grid button {
+  width: 44px; height: 44px;
+  font-size: 20px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f8f8f8;
+  color: var(--fg);
+  transition: all 0.1s;
+  font-family: inherit;
+}
+.card-input .sprint-grid button:hover { background: #eee; }
+.card-input .sprint-grid button.active { background: #111; color: #fff; border-color: #111; }
+
+/* Chips inside card (motifs) */
+.card-input .sprint-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.card-input .sprint-chip {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  background: #f0f0f0;
+  color: var(--fg);
+  transition: all 0.1s;
+  font-family: inherit;
+}
+.card-input .sprint-chip:hover { background: #ddd; }
+.card-input .sprint-chip.active { background: #111; color: #fff; border-color: #111; }
+
+/* Text input inside card */
+.card-input .sprint-text {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  background: #fff;
+}
+.card-input .sprint-text:focus { outline: none; border-color: #999; }
+
+/* Dimensions (dual input) inside card */
+.card-input .sprint-dims {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.card-input .sprint-dims input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  text-align: center;
+}
+.card-input .sprint-dims input:focus { outline: none; border-color: #999; }
+.card-input .sprint-dims .dims-x {
+  color: #999;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Save button inside card (for text/chips) */
+.card-input .sprint-save {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.card-input .sprint-save:hover { background: var(--accent-hover); }
+
+/* Existing value badge */
+.card-input .sprint-current {
+  font-size: 11px;
+  color: #c0392b;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+/* Sprint completion */
+.sprint-done {
+  color: #888;
+  text-align: center;
+  padding-top: 30%;
+}
+.sprint-done h2 {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #aaa;
+  font-weight: 300;
+}
+.sprint-done p {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Back card hides input zone too */
+.curate-card.back-card .card-input {
+  visibility: hidden;
+}
+
 /* ── Responsive ────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  #card-stage {
+  #card-stage, #sprint-stage {
     width: 95vw;
     height: 65vh;
   }
-  #curate-actions { bottom: 12px; gap: 12px; }
+  #curate-actions, #sprint-actions { bottom: 12px; gap: 12px; }
   .curate-btn-pass, .curate-btn-keep { padding: 10px 24px; font-size: 14px; }
 }

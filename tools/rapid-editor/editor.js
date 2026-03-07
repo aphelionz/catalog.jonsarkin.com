@@ -17,6 +17,9 @@ const SWIPE_THRESHOLD = 100;    // px of horizontal drag to trigger action
 const ROTATION_FACTOR = 0.12;   // degrees per px of drag
 const FLY_DISTANCE = 1.5;       // viewport-width multiplier for fly-off
 
+// Sprint mode — field-specific card workflows (built after WORK_TYPES etc. are defined)
+let FIELD_SPRINTS; // initialized in initFieldSprints()
+
 // Property IDs (from enrich_metadata.py)
 const PROP = {
   'dcterms:identifier':            10,
@@ -76,7 +79,7 @@ let currentItem = null;   // Full item JSON for the item being edited
 let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
-let filterMode = 'issues'; // 'issues' | 'dates' | 'all' | 'box' | 'curate'
+let filterMode = 'issues'; // 'issues' | 'all' | 'box' | 'curate' | 'sprint'
 let boxFilter = '';
 
 // Curate state
@@ -86,6 +89,14 @@ let curateIndex = 0;
 let curateLastAction = null;  // { itemId, action: 'keep'|'pass' }
 let curateDragState = null;   // { startX, startY, currentX, currentY, cardEl, pointerId }
 let curateActing = false;     // prevent double-swipe while fly-off in progress
+
+// Sprint state
+let sprintMode = false;
+let sprintField = null;       // key into FIELD_SPRINTS
+let sprintQueue = [];
+let sprintIndex = 0;
+let sprintLastAction = null;  // { itemId, field, oldValues }
+let sprintActing = false;
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
 
@@ -101,7 +112,6 @@ function cacheDom() {
   dom.queueStatus = $('#queue-status');
   dom.itemLink = $('#item-link');
   dom.countIssues = $('#count-issues');
-  dom.countDates = $('#count-dates');
   dom.countAll = $('#count-all');
   dom.boxSelect = $('#box-select');
   dom.progressFill = $('#progress-fill');
@@ -295,10 +305,6 @@ function buildQueue() {
     queue = allItems
       .filter(it => it._issues.some(i => i.level === 'error'))
       .sort((a, b) => b._issues.length - a._issues.length);
-  } else if (filterMode === 'dates') {
-    queue = allItems
-      .filter(hasBadDate)
-      .sort((a, b) => a._identifier.localeCompare(b._identifier));
   } else if (filterMode === 'box') {
     queue = boxFilter
       ? allItems.filter(it => it._box === boxFilter).sort((a, b) => a._identifier.localeCompare(b._identifier))
@@ -312,11 +318,10 @@ function buildQueue() {
 function updateNav() {
   const issueCount = allItems.filter(it => it._issues.some(i => i.level === 'error')).length;
   dom.countIssues.textContent = `(${issueCount})`;
-  dom.countDates.textContent = `(${allItems.filter(hasBadDate).length})`;
   dom.countAll.textContent = `(${allItems.length})`;
 
   if (!queue.length) {
-    const emptyMsg = { issues: 'No issues found!', dates: 'All dates fixed!' };
+    const emptyMsg = { issues: 'No issues found!' };
     dom.queueStatus.textContent = emptyMsg[filterMode] || 'No items';
     dom.itemLink.textContent = '';
     dom.itemLink.href = '#';
@@ -677,6 +682,7 @@ function savePosition() {
       index: queueIndex,
       filter: filterMode,
       box: boxFilter,
+      sprintField: sprintField,
     }));
   } catch { /* ignore */ }
 }
@@ -686,7 +692,13 @@ function restorePosition() {
     const saved = JSON.parse(localStorage.getItem('rapid-editor') || '{}');
     if (saved.filter) filterMode = saved.filter;
     if (saved.box) boxFilter = saved.box;
+    if (saved.sprintField) sprintField = saved.sprintField;
     if (typeof saved.index === 'number') queueIndex = saved.index;
+    // Migrate old 'dates' filter to sprint mode
+    if (filterMode === 'dates') {
+      filterMode = 'sprint';
+      sprintField = 'date';
+    }
   } catch { /* ignore */ }
 }
 
@@ -833,11 +845,12 @@ function setupFilterButtons() {
         return;
       }
 
-      // Leaving curate mode — skip dirty check (no editor form to lose)
-      const wasCurate = curateMode;
+      // Leaving curate/sprint mode — skip dirty check (no editor form to lose)
+      const wasCard = curateMode || sprintMode;
       if (curateMode) exitCurateMode();
+      if (sprintMode) exitSprintMode();
 
-      if (!wasCurate && !confirmIfDirty()) return;
+      if (!wasCard && !confirmIfDirty()) return;
       for (const b of $$('.filter-btn')) b.classList.remove('active');
       btn.classList.add('active');
       filterMode = btn.dataset.filter;
@@ -881,7 +894,20 @@ function setupKeyboard() {
         e.preventDefault();
         curateUndo();
       }
-      return; // Don't process editor shortcuts in curate mode
+      return;
+    }
+
+    // Sprint mode shortcuts
+    if (sprintMode) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        sprintSkip();
+      } else if (mod && e.key === 'z') {
+        e.preventDefault();
+        sprintUndo();
+      }
+      // Don't intercept other keys — text inputs need them
+      return;
     }
 
     // Normal editor shortcuts
@@ -1344,10 +1370,751 @@ function setupCurateButtons() {
   $('#curate-undo').addEventListener('click', curateUndo);
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Sprint Mode — field-specific card editing ────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Sprint: field config ──────────────────────────────────────────────────────
+
+function initFieldSprints() {
+  const dateOptions = [
+    { value: 'c. 1989–2024', label: 'c. 1989–2024', extraClass: 'date-unknown' },
+    { value: 'c. 2000s', label: 'c. 2000s', extraClass: 'date-unknown' },
+    ...DATE_YEARS.map(y => ({
+      value: y,
+      label: '\u2019' + y.slice(2),
+      extraClass: y.endsWith('0') ? 'decade-start' : '',
+    })),
+  ];
+
+  FIELD_SPRINTS = {
+    date: {
+      label: 'Date',
+      term: 'dcterms:date',
+      filterFn: hasBadDate,
+      inputType: 'pills',
+      options: dateOptions,
+      autoAdvance: true,
+      allowCustom: true,
+      customPlaceholder: 'Custom date (e.g. c. 2005)',
+    },
+    type: {
+      label: 'Type',
+      term: 'dcterms:type',
+      filterFn: item => {
+        const v = extractValue(item, 'dcterms:type');
+        return !v || !WORK_TYPES.includes(v);
+      },
+      inputType: 'pills',
+      options: WORK_TYPES.map(t => ({ value: t, label: t })),
+      autoAdvance: true,
+    },
+    support: {
+      label: 'Support',
+      term: 'schema:artworkSurface',
+      filterFn: item => {
+        const v = extractValue(item, 'schema:artworkSurface');
+        return !v || !SUPPORTS.includes(v);
+      },
+      inputType: 'pills',
+      options: SUPPORTS.map(s => ({ value: s, label: s })),
+      autoAdvance: true,
+    },
+    condition: {
+      label: 'Condition',
+      term: 'schema:itemCondition',
+      filterFn: item => !extractValue(item, 'schema:itemCondition'),
+      inputType: 'pills',
+      options: CONDITIONS.map(c => ({ value: c, label: c })),
+      autoAdvance: true,
+    },
+    signature: {
+      label: 'Signature',
+      term: 'schema:distinguishingSign',
+      filterFn: item => {
+        const v = extractValue(item, 'schema:distinguishingSign');
+        return !v || !SIGNATURE_ARROWS.includes(v);
+      },
+      inputType: 'grid',
+      gridCols: 3,
+      options: SIGNATURE_ARROWS.map(a => ({ value: a, label: a })),
+      autoAdvance: true,
+    },
+    motifs: {
+      label: 'Motifs',
+      term: 'dcterms:subject',
+      filterFn: item => !extractAllValues(item, 'dcterms:subject').length,
+      inputType: 'chips',
+      options: MOTIFS.map(m => ({ value: m, label: m })),
+      autoAdvance: false,
+      multiSelect: true,
+    },
+    transcription: {
+      label: 'Transcription',
+      term: 'bibo:content',
+      filterFn: item => !extractValue(item, 'bibo:content'),
+      inputType: 'pills',
+      options: [
+        { value: '∅', label: 'No text' },
+        { value: '[Needs enrichment]', label: 'Needs enrichment' },
+      ],
+      autoAdvance: true,
+      allowCustom: true,
+      customPlaceholder: 'Type transcription…',
+      customInputType: 'textarea',
+    },
+    medium: {
+      label: 'Medium',
+      term: 'dcterms:medium',
+      filterFn: item => !extractValue(item, 'dcterms:medium'),
+      inputType: 'text',
+      placeholder: 'e.g. Marker on paper',
+    },
+    dimensions: {
+      label: 'Height/Width',
+      terms: ['schema:height', 'schema:width'],
+      filterFn: item => {
+        const h = extractValue(item, 'schema:height');
+        const w = extractValue(item, 'schema:width');
+        return !h || !w || isNaN(parseFloat(h)) || isNaN(parseFloat(w));
+      },
+      inputType: 'dimensions',
+    },
+    framing: {
+      label: 'Framing',
+      term: 'dcterms:format',
+      filterFn: item => !extractValue(item, 'dcterms:format'),
+      inputType: 'text',
+      placeholder: 'e.g. Unframed',
+    },
+    owner: {
+      label: 'Owner',
+      term: 'bibo:owner',
+      filterFn: item => !extractValue(item, 'bibo:owner'),
+      inputType: 'text',
+      placeholder: 'e.g. Estate of Jon Sarkin',
+    },
+    location: {
+      label: 'Location',
+      term: 'dcterms:spatial',
+      filterFn: item => !extractValue(item, 'dcterms:spatial'),
+      inputType: 'text',
+      placeholder: 'e.g. Studio, Gloucester MA',
+    },
+    box: {
+      label: 'Box',
+      term: 'schema:box',
+      filterFn: item => !extractValue(item, 'schema:box'),
+      inputType: 'text',
+      placeholder: 'e.g. BOX-A1',
+    },
+  };
+}
+
+// ── Sprint: menu ──────────────────────────────────────────────────────────────
+
+function populateSprintMenu() {
+  const menu = $('#sprint-menu');
+  menu.innerHTML = '';
+  for (const [key, config] of Object.entries(FIELD_SPRINTS)) {
+    const count = allItems.filter(config.filterFn).length;
+    if (count === 0) continue;
+    const btn = document.createElement('button');
+    btn.className = 'sprint-menu-item';
+    if (sprintMode && sprintField === key) btn.classList.add('active');
+    btn.innerHTML = `${config.label} <span class="sprint-menu-count">${count}</span>`;
+    btn.addEventListener('click', () => {
+      closeSprintMenu();
+      enterSprintMode(key);
+    });
+    menu.appendChild(btn);
+  }
+  if (!menu.children.length) {
+    menu.innerHTML = '<div class="sprint-menu-item" style="color:#666;cursor:default">All fields complete!</div>';
+  }
+}
+
+function toggleSprintMenu() {
+  const menu = $('#sprint-menu');
+  const caret = $('#sprint-caret');
+  if (!menu || !caret) return;
+  const isOpen = !menu.classList.contains('hidden');
+  if (isOpen) {
+    closeSprintMenu();
+  } else {
+    populateSprintMenu();
+    menu.classList.remove('hidden');
+    caret.classList.add('open');
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', closeSprintMenuOutside, { once: true });
+    }, 0);
+  }
+}
+
+function closeSprintMenu() {
+  $('#sprint-menu')?.classList.add('hidden');
+  $('#sprint-caret')?.classList.remove('open');
+}
+
+function closeSprintMenuOutside(e) {
+  const menu = $('#sprint-menu');
+  const caret = $('#sprint-caret');
+  if (!menu || !caret) return;
+  if (!menu.contains(e.target) && e.target !== caret) {
+    closeSprintMenu();
+  }
+}
+
+function setupSprintMenu() {
+  $('#sprint-caret')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSprintMenu();
+  });
+}
+
+// ── Sprint: mode switching ────────────────────────────────────────────────────
+
+function enterSprintMode(fieldKey) {
+  // Exit other modes first
+  if (curateMode) exitCurateMode();
+  sprintMode = true;
+  sprintField = fieldKey;
+  filterMode = 'sprint';
+
+  dom.main.classList.add('hidden');
+  $('#curate-panel').classList.add('hidden');
+  $('#sprint-panel').classList.remove('hidden');
+
+  // Update nav buttons
+  for (const b of $$('.filter-btn')) b.classList.remove('active');
+  dom.boxSelect.classList.add('hidden');
+
+  const config = FIELD_SPRINTS[fieldKey];
+  $('#sprint-field-label').textContent = config.label;
+
+  buildSprintQueue(fieldKey);
+  updateSprintProgress();
+
+  if (sprintQueue.length) {
+    renderSprintCards();
+    preloadSprintNext();
+  } else {
+    showSprintComplete();
+  }
+
+  savePosition();
+}
+
+function exitSprintMode() {
+  sprintMode = false;
+  sprintField = null;
+  $('#sprint-panel').classList.add('hidden');
+  dom.main.classList.remove('hidden');
+  clearSprintStage();
+}
+
+// ── Sprint: queue ─────────────────────────────────────────────────────────────
+
+function buildSprintQueue(fieldKey) {
+  const config = FIELD_SPRINTS[fieldKey];
+  sprintQueue = allItems.filter(config.filterFn);
+  // Sort by identifier for predictable order
+  sprintQueue.sort((a, b) => (a._identifier || '').localeCompare(b._identifier || ''));
+  sprintIndex = 0;
+}
+
+// ── Sprint: progress ──────────────────────────────────────────────────────────
+
+function updateSprintProgress() {
+  const countEl = $('#sprint-count');
+  const undoBtn = $('#sprint-undo');
+  const remaining = sprintQueue.length - sprintIndex;
+  countEl.textContent = `${sprintIndex} done · ${remaining} remaining`;
+  undoBtn.disabled = !sprintLastAction;
+
+  const pct = sprintQueue.length > 0 ? (sprintIndex / sprintQueue.length) * 100 : 0;
+  dom.progressFill.style.width = `${pct}%`;
+}
+
+// ── Sprint: card rendering ────────────────────────────────────────────────────
+
+function clearSprintStage() {
+  $('#sprint-stage').innerHTML = '';
+}
+
+function renderSprintCards() {
+  clearSprintStage();
+  if (sprintIndex + 1 < sprintQueue.length) {
+    renderSprintCard(sprintQueue[sprintIndex + 1], 1);
+  }
+  if (sprintIndex < sprintQueue.length) {
+    renderSprintCard(sprintQueue[sprintIndex], 2);
+  }
+}
+
+async function renderSprintCard(item, zIndex) {
+  const stage = $('#sprint-stage');
+  const config = FIELD_SPRINTS[sprintField];
+  const card = document.createElement('div');
+  card.className = 'curate-card'; // reuse curate card styles
+  card.dataset.itemId = item['o:id'];
+  card.style.zIndex = zIndex;
+
+  if (zIndex === 1) {
+    card.classList.add('back-card');
+    card.style.transform = 'scale(0.95)';
+    card.style.opacity = '0.5';
+    card.style.pointerEvents = 'none';
+  }
+
+  const identifier = item._identifier || `item-${item['o:id']}`;
+  const medium = extractValue(item, 'dcterms:medium');
+  const date = extractValue(item, 'dcterms:date');
+  const h = extractValue(item, 'schema:height');
+  const w = extractValue(item, 'schema:width');
+  const dims = (h && w) ? `${h}″ × ${w}″` : '';
+  const detail = [medium, dims].filter(Boolean).join(', ');
+
+  // Build existing value info for the target field
+  let currentValue = '';
+  if (config.terms) {
+    const vals = config.terms.map(t => extractValue(item, t)).filter(Boolean);
+    currentValue = vals.join(' × ');
+  } else if (config.multiSelect) {
+    currentValue = extractAllValues(item, config.term).join(', ');
+  } else {
+    currentValue = extractValue(item, config.term);
+  }
+
+  card.innerHTML = `
+    <div class="card-img-wrap">
+      <div class="card-img-loading">Loading…</div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-id">${identifier}</div>
+      ${detail ? `<div class="card-meta-detail">${detail}</div>` : ''}
+      ${date ? `<div class="card-meta-date">${date}</div>` : ''}
+    </div>
+    <div class="card-input">
+      ${currentValue ? `<div class="sprint-current">Current: ${currentValue}</div>` : ''}
+      <div class="card-input-label">${config.label}</div>
+      <div class="sprint-input-zone"></div>
+    </div>
+  `;
+
+  stage.appendChild(card);
+
+  // Render field-specific input controls (only for top card)
+  if (zIndex === 2) {
+    renderSprintInput(card, item, config);
+  }
+
+  // Load image
+  const url = await getImageUrl(item);
+  if (url) {
+    const imgWrap = card.querySelector('.card-img-wrap');
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = identifier;
+    img.onload = () => {
+      const loading = imgWrap.querySelector('.card-img-loading');
+      if (loading) loading.remove();
+    };
+    imgWrap.appendChild(img);
+  }
+}
+
+function renderSprintInput(card, item, config) {
+  const zone = card.querySelector('.sprint-input-zone');
+  const itemId = Number(card.dataset.itemId);
+
+  switch (config.inputType) {
+    case 'pills': {
+      const wrap = document.createElement('div');
+      wrap.className = 'sprint-pills';
+      for (const opt of config.options) {
+        const pill = document.createElement('button');
+        pill.className = 'sprint-pill' + (opt.extraClass ? ' ' + opt.extraClass : '');
+        pill.textContent = opt.label;
+        pill.addEventListener('click', () => {
+          if (sprintActing) return;
+          sprintSaveAndAdvance(itemId, config, opt.value);
+        });
+        wrap.appendChild(pill);
+      }
+      zone.appendChild(wrap);
+      // Custom text input for free-form entry
+      if (config.allowCustom) {
+        const inputType = config.customInputType === 'textarea' ? 'textarea' : 'input';
+        const input = document.createElement(inputType);
+        input.className = 'sprint-text';
+        input.placeholder = config.customPlaceholder || 'Custom value…';
+        input.style.marginTop = '6px';
+        if (inputType === 'textarea') input.rows = 2;
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const val = input.value.trim();
+            if (val && !sprintActing) sprintSaveAndAdvance(itemId, config, val);
+          }
+        });
+        zone.appendChild(input);
+      }
+      break;
+    }
+
+    case 'grid': {
+      const grid = document.createElement('div');
+      grid.className = 'sprint-grid';
+      grid.style.gridTemplateColumns = `repeat(${config.gridCols || 3}, 44px)`;
+      for (const opt of config.options) {
+        const btn = document.createElement('button');
+        btn.textContent = opt.label;
+        btn.addEventListener('click', () => {
+          if (sprintActing) return;
+          sprintSaveAndAdvance(itemId, config, opt.value);
+        });
+        grid.appendChild(btn);
+      }
+      zone.appendChild(grid);
+      break;
+    }
+
+    case 'chips': {
+      const chipWrap = document.createElement('div');
+      chipWrap.className = 'sprint-chips';
+      const selected = new Set(extractAllValues(item, config.term));
+      for (const opt of config.options) {
+        const chip = document.createElement('button');
+        chip.className = 'sprint-chip' + (selected.has(opt.value) ? ' active' : '');
+        chip.textContent = opt.label;
+        chip.dataset.val = opt.value;
+        chip.addEventListener('click', () => chip.classList.toggle('active'));
+        chipWrap.appendChild(chip);
+      }
+      zone.appendChild(chipWrap);
+      // Done button
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'sprint-save';
+      saveBtn.textContent = 'Save + Next →';
+      saveBtn.addEventListener('click', () => {
+        if (sprintActing) return;
+        const vals = [...chipWrap.querySelectorAll('.sprint-chip.active')].map(c => c.dataset.val);
+        sprintSaveAndAdvance(itemId, config, vals);
+      });
+      zone.appendChild(saveBtn);
+      break;
+    }
+
+    case 'text': {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'sprint-text';
+      input.placeholder = config.placeholder || '';
+      // Pre-fill with existing value
+      const existing = extractValue(item, config.term);
+      if (existing) input.value = existing;
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = input.value.trim();
+          if (val && !sprintActing) sprintSaveAndAdvance(itemId, config, val);
+        }
+      });
+      zone.appendChild(input);
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'sprint-save';
+      saveBtn.textContent = 'Save + Next →';
+      saveBtn.addEventListener('click', () => {
+        const val = input.value.trim();
+        if (val && !sprintActing) sprintSaveAndAdvance(itemId, config, val);
+      });
+      zone.appendChild(saveBtn);
+      // Auto-focus
+      setTimeout(() => input.focus(), 100);
+      break;
+    }
+
+    case 'dimensions': {
+      const wrap = document.createElement('div');
+      wrap.className = 'sprint-dims';
+      const hInput = document.createElement('input');
+      hInput.type = 'text';
+      hInput.placeholder = 'Height';
+      hInput.value = extractValue(item, 'schema:height') || '';
+      const xLabel = document.createElement('span');
+      xLabel.className = 'dims-x';
+      xLabel.textContent = '×';
+      const wInput = document.createElement('input');
+      wInput.type = 'text';
+      wInput.placeholder = 'Width';
+      wInput.value = extractValue(item, 'schema:width') || '';
+      wrap.appendChild(hInput);
+      wrap.appendChild(xLabel);
+      wrap.appendChild(wInput);
+      zone.appendChild(wrap);
+
+      const doSave = () => {
+        const h = hInput.value.trim();
+        const w = wInput.value.trim();
+        if (h && w && !sprintActing) {
+          sprintSaveAndAdvance(itemId, config, { 'schema:height': h, 'schema:width': w });
+        }
+      };
+      wInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); doSave(); } });
+      hInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); wInput.focus(); } });
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'sprint-save';
+      saveBtn.textContent = 'Save + Next →';
+      saveBtn.addEventListener('click', doSave);
+      zone.appendChild(saveBtn);
+      setTimeout(() => hInput.focus(), 100);
+      break;
+    }
+  }
+}
+
+function preloadSprintNext() {
+  const ahead = sprintIndex + 2;
+  if (ahead < sprintQueue.length) {
+    getImageUrl(sprintQueue[ahead]).then(url => {
+      if (url) { const img = new Image(); img.src = url; }
+    });
+  }
+}
+
+// ── Sprint: save + advance ────────────────────────────────────────────────────
+
+async function sprintSaveAndAdvance(itemId, config, value) {
+  sprintActing = true;
+
+  // Fly off the top card
+  const stage = $('#sprint-stage');
+  let topCard = null;
+  for (const c of stage.querySelectorAll('.curate-card:not(.fly-off)')) {
+    if (!topCard || Number(c.style.zIndex) > Number(topCard.style.zIndex)) topCard = c;
+  }
+
+  // Capture old values for undo
+  const item = sprintQueue[sprintIndex];
+  let oldValues;
+  if (config.terms) {
+    oldValues = {};
+    for (const t of config.terms) oldValues[t] = extractValue(item, t);
+  } else if (config.multiSelect) {
+    oldValues = extractAllValues(item, config.term);
+  } else {
+    oldValues = extractValue(item, config.term);
+  }
+
+  // Advance index immediately (before async)
+  sprintIndex++;
+  sprintLastAction = { itemId, field: sprintField, oldValues };
+  updateSprintProgress();
+
+  // Animate card off
+  if (topCard) {
+    topCard.classList.add('fly-off');
+    const vw = window.innerWidth;
+    topCard.style.transform = `translate(${-vw * FLY_DISTANCE}px, 0) rotate(-30deg)`;
+    topCard.addEventListener('transitionend', () => {
+      topCard.remove();
+      promoteSprintBackCard();
+      sprintActing = false;
+    }, { once: true });
+  } else {
+    sprintActing = false;
+  }
+
+  // API save in background
+  try {
+    const { json: freshItem } = await apiGet(`items/${itemId}`);
+    const payload = buildCuratePayload(freshItem);
+
+    if (config.terms) {
+      // Multi-term (dimensions)
+      for (const [term, val] of Object.entries(value)) {
+        payload[term] = val ? [literalValue(term, val)] : [];
+      }
+    } else if (config.multiSelect) {
+      // Multi-value (motifs)
+      payload[config.term] = value.map(v => literalValue(config.term, v));
+    } else {
+      // Single value
+      payload[config.term] = value ? [literalValue(config.term, value)] : [];
+    }
+
+    const updated = await apiPatch(`items/${itemId}`, payload);
+
+    // Update local state
+    const idx = allItems.findIndex(it => it['o:id'] === itemId);
+    if (idx >= 0) {
+      allItems[idx] = updated;
+      allItems[idx]._issues = validateItem(updated);
+      allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
+      allItems[idx]._box = extractValue(updated, 'schema:box') || '';
+    }
+
+    showToast(`✓ ${config.label} saved`);
+  } catch (err) {
+    showToast(`Error: ${err.message}`, true);
+    console.error('Sprint save failed:', err);
+    sprintLastAction = null;
+  }
+}
+
+// ── Sprint: skip ──────────────────────────────────────────────────────────────
+
+function sprintSkip() {
+  if (sprintActing || sprintIndex >= sprintQueue.length) return;
+  sprintActing = true;
+
+  sprintIndex++;
+  sprintLastAction = null; // can't undo a skip
+  updateSprintProgress();
+
+  const stage = $('#sprint-stage');
+  let topCard = null;
+  for (const c of stage.querySelectorAll('.curate-card:not(.fly-off)')) {
+    if (!topCard || Number(c.style.zIndex) > Number(topCard.style.zIndex)) topCard = c;
+  }
+
+  if (topCard) {
+    topCard.classList.add('fly-off');
+    const vw = window.innerWidth;
+    topCard.style.transform = `translate(${-vw * FLY_DISTANCE}px, 0) rotate(-30deg)`;
+    topCard.addEventListener('transitionend', () => {
+      topCard.remove();
+      promoteSprintBackCard();
+      sprintActing = false;
+    }, { once: true });
+  } else {
+    sprintActing = false;
+    if (sprintIndex >= sprintQueue.length) showSprintComplete();
+  }
+}
+
+// ── Sprint: card promotion ────────────────────────────────────────────────────
+
+function promoteSprintBackCard() {
+  const stage = $('#sprint-stage');
+  const backCard = stage.querySelector('.curate-card');
+  if (backCard && backCard.style.zIndex === '1') {
+    backCard.classList.remove('back-card');
+    backCard.style.zIndex = 2;
+    backCard.style.pointerEvents = '';
+    backCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+    backCard.style.transform = '';
+    backCard.style.opacity = '1';
+    backCard.addEventListener('transitionend', () => {
+      backCard.style.transition = '';
+    }, { once: true });
+    // Render input controls for the newly promoted card
+    const item = sprintQueue[sprintIndex];
+    if (item) {
+      renderSprintInput(backCard, item, FIELD_SPRINTS[sprintField]);
+    }
+  }
+
+  // Render new back card
+  if (sprintIndex + 1 < sprintQueue.length) {
+    renderSprintCard(sprintQueue[sprintIndex + 1], 1);
+  }
+
+  preloadSprintNext();
+
+  if (sprintIndex >= sprintQueue.length) {
+    showSprintComplete();
+  }
+}
+
+// ── Sprint: undo ──────────────────────────────────────────────────────────────
+
+async function sprintUndo() {
+  if (!sprintLastAction || sprintActing) return;
+  const { itemId, field, oldValues } = sprintLastAction;
+  const config = FIELD_SPRINTS[field];
+
+  try {
+    const { json: freshItem } = await apiGet(`items/${itemId}`);
+    const payload = buildCuratePayload(freshItem);
+
+    if (config.terms) {
+      for (const [term, val] of Object.entries(oldValues)) {
+        payload[term] = val ? [literalValue(term, val)] : [];
+      }
+    } else if (config.multiSelect) {
+      payload[config.term] = oldValues.map(v => literalValue(config.term, v));
+    } else {
+      payload[config.term] = oldValues ? [literalValue(config.term, oldValues)] : [];
+    }
+
+    await apiPatch(`items/${itemId}`, payload);
+    showToast('Undone');
+
+    // Update local state
+    const idx = allItems.findIndex(it => it['o:id'] === itemId);
+    if (idx >= 0) {
+      const { json: updatedItem } = await apiGet(`items/${itemId}`);
+      allItems[idx] = updatedItem;
+      allItems[idx]._issues = validateItem(updatedItem);
+      allItems[idx]._identifier = extractValue(updatedItem, 'dcterms:identifier') || `item-${updatedItem['o:id']}`;
+      allItems[idx]._box = extractValue(updatedItem, 'schema:box') || '';
+    }
+  } catch (err) {
+    showToast(`Undo error: ${err.message}`, true);
+    return;
+  }
+
+  // Re-insert item at previous position
+  sprintIndex = Math.max(0, sprintIndex - 1);
+  const item = allItems.find(it => it['o:id'] === itemId);
+  if (item && sprintIndex <= sprintQueue.length) {
+    sprintQueue.splice(sprintIndex, 0, item);
+  }
+
+  sprintLastAction = null;
+  renderSprintCards();
+  updateSprintProgress();
+}
+
+// ── Sprint: completion ────────────────────────────────────────────────────────
+
+function showSprintComplete() {
+  const stage = $('#sprint-stage');
+  const config = FIELD_SPRINTS[sprintField];
+  stage.innerHTML = `
+    <div class="sprint-done">
+      <h2>Done</h2>
+      <p>${sprintIndex} items fixed · ${config.label} sprint complete</p>
+      <button class="btn btn-nav" id="sprint-restart">Start over</button>
+    </div>
+  `;
+  $('#sprint-restart').addEventListener('click', () => {
+    buildSprintQueue(sprintField);
+    if (sprintQueue.length) {
+      renderSprintCards();
+    } else {
+      showSprintComplete();
+    }
+    updateSprintProgress();
+  });
+}
+
+// ── Sprint: button wiring ─────────────────────────────────────────────────────
+
+function setupSprintButtons() {
+  $('#sprint-skip')?.addEventListener('click', sprintSkip);
+  $('#sprint-undo')?.addEventListener('click', sprintUndo);
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 
 async function init() {
   cacheDom();
+  initFieldSprints();
   setupSelects();
   setupDatePills();
   setupTranscriptionPills();
@@ -1358,6 +2125,8 @@ async function init() {
   setupFilterButtons();
   setupDirtyTracking();
   setupCurateButtons();
+  setupSprintButtons();
+  setupSprintMenu();
 
   // Restore saved position
   restorePosition();
@@ -1379,9 +2148,11 @@ async function init() {
 
   dom.loading.classList.add('hidden');
 
-  // Enter curate mode if that was the saved filter
+  // Enter the saved mode
   if (filterMode === 'curate') {
     enterCurateMode();
+  } else if (filterMode === 'sprint' && sprintField && FIELD_SPRINTS[sprintField]) {
+    enterSprintMode(sprintField);
   } else {
     buildQueue();
     updateNav();

@@ -18,8 +18,11 @@
     </div>
     <div class="nav-right">
       <div class="filter-buttons">
-        <button class="filter-btn active" data-filter="issues">Issues <span id="count-issues"></span></button>
-        <button class="filter-btn" data-filter="dates">Dates <span id="count-dates"></span></button>
+        <div class="filter-split">
+          <button class="filter-btn active" data-filter="issues">Issues <span id="count-issues"></span></button>
+          <button class="filter-caret" id="sprint-caret" title="Sprint: fix one field at a time">▾</button>
+          <div id="sprint-menu" class="sprint-menu hidden"></div>
+        </div>
         <button class="filter-btn" data-filter="all">All <span id="count-all"></span></button>
         <button class="filter-btn" data-filter="box">By Box</button>
         <button class="filter-btn" data-filter="curate">Curate</button>
@@ -179,6 +182,19 @@
     <div id="curate-actions">
       <button id="curate-pass" class="btn curate-btn-pass" title="← or swipe left">← Pass</button>
       <button id="curate-keep" class="btn curate-btn-keep" title="→ or swipe right">Keep →</button>
+    </div>
+  </section>
+
+  <!-- ── Sprint mode (field-specific card editing) ──────────────── -->
+  <section id="sprint-panel" class="hidden">
+    <div id="sprint-progress">
+      <span id="sprint-field-label"></span>
+      <span id="sprint-count"></span>
+      <button id="sprint-undo" class="btn btn-nav" disabled>Undo</button>
+    </div>
+    <div id="sprint-stage"></div>
+    <div id="sprint-actions">
+      <button id="sprint-skip" class="btn curate-btn-pass" title="← or left arrow">Skip</button>
     </div>
   </section>
 
