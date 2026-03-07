@@ -11,8 +11,7 @@ const AUTH = { key_identity: 'catalog_api', key_credential: 'sarkin2024' };
 const RESOURCE_TEMPLATE_ID = 2;
 const CREATOR_ITEM_ID = 3;
 
-// Curate mode
-const PERMANENT_COLLECTION_SET_ID = 7490;
+// Bucket / swipe mode
 const SWIPE_THRESHOLD = 100;    // px of horizontal drag to trigger action
 const ROTATION_FACTOR = 0.12;   // degrees per px of drag
 const FLY_DISTANCE = 1.5;       // viewport-width multiplier for fly-off
@@ -82,13 +81,16 @@ let saving = false;
 let filterMode = 'issues'; // 'issues' | 'all' | 'box' | 'curate' | 'sprint'
 let boxFilter = '';
 
-// Curate state
-let curateMode = false;
-let curateQueue = [];
-let curateIndex = 0;
-let curateLastAction = null;  // { itemId, action: 'keep'|'pass' }
-let curateDragState = null;   // { startX, startY, currentX, currentY, cardEl, pointerId }
-let curateActing = false;     // prevent double-swipe while fly-off in progress
+// Bucket sort state
+let bucketMode = false;
+let bucketSetup = true;        // true = showing setup screen, false = swiping
+let bucketConfig = null;       // current bucket config object
+let bucketQueue = [];
+let bucketIndex = 0;
+let bucketLastAction = null;   // { itemId, direction, oldFieldValues, addedSets }
+let bucketDragState = null;    // { startX, startY, currentX, currentY, cardEl, pointerId }
+let bucketActing = false;      // prevent double-swipe while fly-off in progress
+let availableItemSets = [];    // fetched from API at init
 
 // Sprint state
 let sprintMode = false;
@@ -168,6 +170,18 @@ async function fetchCustomVocabs() {
     }
   } catch (err) {
     console.warn('Failed to fetch custom vocabs, using defaults:', err);
+  }
+}
+
+async function fetchItemSets() {
+  try {
+    const { json } = await apiGet('item_sets', { per_page: 200 });
+    availableItemSets = json.map(s => ({
+      id: s['o:id'],
+      label: s['o:title'] || `Set ${s['o:id']}`,
+    }));
+  } catch (err) {
+    console.warn('Failed to fetch item sets:', err);
   }
 }
 
@@ -697,12 +711,18 @@ async function saveAndNext() {
 
 function savePosition() {
   try {
-    localStorage.setItem('rapid-editor', JSON.stringify({
+    const state = {
       index: queueIndex,
       filter: filterMode,
       box: boxFilter,
       sprintField: sprintField,
-    }));
+    };
+    if (filterMode === 'curate' && bucketConfig) {
+      state.bucketConfig = bucketConfig;
+      state.bucketIndex = bucketIndex;
+      state.bucketSetup = bucketSetup;
+    }
+    localStorage.setItem('rapid-editor', JSON.stringify(state));
   } catch { /* ignore */ }
 }
 
@@ -713,6 +733,11 @@ function restorePosition() {
     if (saved.box) boxFilter = saved.box;
     if (saved.sprintField) sprintField = saved.sprintField;
     if (typeof saved.index === 'number') queueIndex = saved.index;
+    if (saved.bucketConfig) {
+      bucketConfig = saved.bucketConfig;
+      bucketSetup = saved.bucketSetup !== false;
+      if (typeof saved.bucketIndex === 'number') bucketIndex = saved.bucketIndex;
+    }
     // Migrate old 'dates' filter to sprint mode
     if (filterMode === 'dates') {
       filterMode = 'sprint';
@@ -856,17 +881,17 @@ function setupBoxSelect() {
 function setupFilterButtons() {
   for (const btn of $$('.filter-btn')) {
     btn.addEventListener('click', () => {
-      // Curate mode: special handling
+      // Bucket sort mode: special handling
       if (btn.dataset.filter === 'curate') {
-        if (curateMode) return; // already in curate mode
+        if (bucketMode) return; // already in bucket mode
         if (!confirmIfDirty()) return;
-        enterCurateMode();
+        enterBucketMode();
         return;
       }
 
-      // Leaving curate/sprint mode — skip dirty check (no editor form to lose)
-      const wasCard = curateMode || sprintMode;
-      if (curateMode) exitCurateMode();
+      // Leaving bucket/sprint mode — skip dirty check (no editor form to lose)
+      const wasCard = bucketMode || sprintMode;
+      if (bucketMode) exitBucketMode();
       if (sprintMode) exitSprintMode();
 
       if (!wasCard && !confirmIfDirty()) return;
@@ -901,17 +926,17 @@ function setupKeyboard() {
   document.addEventListener('keydown', (e) => {
     const mod = e.metaKey || e.ctrlKey;
 
-    // Curate mode shortcuts
-    if (curateMode) {
+    // Bucket sort mode shortcuts
+    if (bucketMode && !bucketSetup) {
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        triggerCurateSwipe('right');
+        triggerBucketSwipe('right');
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        triggerCurateSwipe('left');
+        triggerBucketSwipe('left');
       } else if (mod && e.key === 'z') {
         e.preventDefault();
-        curateUndo();
+        bucketUndo();
       }
       return;
     }
@@ -960,30 +985,128 @@ function showToast(msg, isError = false) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ── Curate Mode — Tinder-style Permanent Collection curation ────────────────
+// ── Bucket Sort Mode — configurable two-bucket swipe sorting ─────────────────
 // ══════════════════════════════════════════════════════════════════════════════
 
-// ── Curate: queue ────────────────────────────────────────────────────────────
+// ── Bucket: sortable fields & presets ────────────────────────────────────────
 
-function buildCurateQueue() {
-  curateQueue = allItems
-    .filter(item => {
-      const sets = item['o:item_set'] || [];
-      return !sets.some(s => s['o:id'] === PERMANENT_COLLECTION_SET_ID);
-    })
-    .sort((a, b) => {
-      // Oldest modified first — touched items sink to the bottom
-      const ma = (a['o:modified'] && a['o:modified']['@value']) || '';
-      const mb = (b['o:modified'] && b['o:modified']['@value']) || '';
-      return ma.localeCompare(mb);
-    });
-  curateIndex = 0;
+const BUCKET_SORTABLE_FIELDS = [
+  { term: 'dcterms:type', label: 'Work Type' },
+  { term: 'schema:artworkSurface', label: 'Support' },
+  { term: 'schema:itemCondition', label: 'Condition' },
+  { term: 'schema:distinguishingSign', label: 'Signature' },
+  { term: 'dcterms:subject', label: 'Motif', multi: true },
+];
+
+function getVocabForField(term) {
+  const map = {
+    'dcterms:type': () => WORK_TYPES,
+    'schema:artworkSurface': () => SUPPORTS,
+    'schema:itemCondition': () => CONDITIONS,
+    'schema:distinguishingSign': () => SIGNATURE_ARROWS,
+    'dcterms:subject': () => MOTIFS,
+  };
+  return (map[term] || (() => []))();
 }
 
-// ── Curate: mode switching ───────────────────────────────────────────────────
+// Left swipe is always skip (touch o:modified, no field/set changes)
+const BUCKET_LEFT = { label: 'Skip', color: '#555', actions: [] };
 
-function enterCurateMode() {
-  curateMode = true;
+const BUILTIN_PRESETS = [
+  {
+    name: 'Curate: Permanent Collection',
+    builtin: true,
+    right: { label: 'Keep', color: '#2a7d2e', actions: [
+      { type: 'item_set', setId: 7490, setLabel: 'Permanent Collection' },
+    ]},
+    queueFilter: 'exclude_matched',
+  },
+];
+
+function loadPresets() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('bucket-presets') || '[]');
+    return [...BUILTIN_PRESETS, ...saved];
+  } catch { return [...BUILTIN_PRESETS]; }
+}
+
+function savePreset(config) {
+  const presets = loadPresets().filter(p => !p.builtin);
+  // Replace existing preset with same name, or append
+  const idx = presets.findIndex(p => p.name === config.name);
+  if (idx >= 0) presets[idx] = { ...config, builtin: false };
+  else presets.push({ ...config, builtin: false });
+  localStorage.setItem('bucket-presets', JSON.stringify(presets));
+}
+
+function deletePreset(name) {
+  const presets = loadPresets().filter(p => !p.builtin && p.name !== name);
+  localStorage.setItem('bucket-presets', JSON.stringify(presets));
+}
+
+// ── Bucket: matching helpers ─────────────────────────────────────────────────
+
+function itemMatchesBucket(item, bucket) {
+  if (!bucket.actions.length) return false; // empty bucket = "pass", never pre-matches
+  return bucket.actions.every(action => {
+    if (action.type === 'item_set') {
+      const sets = item['o:item_set'] || [];
+      return sets.some(s => s['o:id'] === action.setId);
+    }
+    if (action.type === 'field') {
+      const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === action.term);
+      if (fieldDef && fieldDef.multi) {
+        return extractAllValues(item, action.term).includes(action.value);
+      }
+      return extractValue(item, action.term) === action.value;
+    }
+    return false;
+  });
+}
+
+function describeBucket(bucket) {
+  if (!bucket.actions.length) return 'Skip';
+  return bucket.actions.map(a => {
+    if (a.type === 'item_set') return a.setLabel;
+    const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === a.term);
+    return `${fieldDef ? fieldDef.label : a.term}: ${a.value}`;
+  }).join(', ');
+}
+
+// ── Bucket: base payload builder ─────────────────────────────────────────────
+
+function buildBasePayload(item) {
+  const payload = {};
+  for (const [key, val] of Object.entries(item)) {
+    if (key.includes(':') && !key.startsWith('o:') && Array.isArray(val)) {
+      payload[key] = val.filter(v => typeof v === 'object').map(cleanValue);
+    }
+  }
+  for (const sysKey of ['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
+    if (sysKey in item) payload[sysKey] = item[sysKey];
+  }
+  return payload;
+}
+
+// ── Bucket: queue ────────────────────────────────────────────────────────────
+
+function buildBucketQueue(config) {
+  let items = allItems;
+  if (config.queueFilter === 'exclude_matched') {
+    items = items.filter(item => !itemMatchesBucket(item, config.right));
+  }
+  bucketQueue = [...items].sort((a, b) => {
+    const ma = (a['o:modified'] && a['o:modified']['@value']) || '';
+    const mb = (b['o:modified'] && b['o:modified']['@value']) || '';
+    return ma.localeCompare(mb);
+  });
+  bucketIndex = 0;
+}
+
+// ── Bucket: mode switching ───────────────────────────────────────────────────
+
+function enterBucketMode(resumeSwiping = false) {
+  bucketMode = true;
   filterMode = 'curate';
 
   dom.main.classList.add('hidden');
@@ -994,68 +1117,343 @@ function enterCurateMode() {
   }
   dom.boxSelect.classList.add('hidden');
 
-  buildCurateQueue();
-  updateCurateProgress();
-
-  if (curateQueue.length) {
-    renderCurateCards();
-    preloadCurateNext();
+  if (resumeSwiping && bucketConfig && !bucketSetup) {
+    // Resume swiping with existing config
+    startBucketSwiping(bucketConfig, true);
   } else {
-    showCurateComplete();
+    // Show setup screen
+    bucketSetup = true;
+    renderBucketSetup();
   }
 
   savePosition();
 }
 
-function exitCurateMode() {
-  curateMode = false;
+function exitBucketMode() {
+  bucketMode = false;
+  bucketSetup = true;
   $('#curate-panel').classList.add('hidden');
   dom.main.classList.remove('hidden');
   clearCardStage();
 }
 
-// ── Curate: progress ─────────────────────────────────────────────────────────
+// ── Bucket: setup screen ─────────────────────────────────────────────────────
 
-function updateCurateProgress() {
+function renderBucketSetup() {
+  const panel = $('#curate-panel');
+  // Hide swipe action buttons
+  $('#curate-actions').classList.add('hidden');
+  $('#curate-progress').classList.add('hidden');
+
+  const stage = $('#card-stage');
+  stage.style.width = '';
+  stage.style.height = '';
+
+  const presets = loadPresets();
+  const current = bucketConfig || presets[0];
+
+  stage.innerHTML = `
+    <div class="bucket-setup">
+      <div class="bucket-preset-row">
+        <select class="bucket-preset-select">
+          ${presets.map((p, i) => `<option value="${i}" ${p.name === current.name ? 'selected' : ''}>${p.name}</option>`).join('')}
+        </select>
+        <button class="btn btn-nav bucket-delete-preset">Delete</button>
+      </div>
+
+      <div class="bucket-column" data-side="right">
+        <h3>Swipe Right →</h3>
+        <div class="bucket-label-row">
+          <input type="text" class="bucket-label-input" value="${current.right.label}" placeholder="Label (e.g. Keep)">
+        </div>
+        <div class="bucket-action-list"></div>
+        <div class="bucket-add-buttons">
+          <button class="btn btn-nav bucket-add-field">+ Field value</button>
+          <button class="btn btn-nav bucket-add-set">+ Item set</button>
+        </div>
+      </div>
+
+      <div class="bucket-skip-hint">← Swipe left = skip (touch modified)</div>
+
+      <div class="bucket-queue-filter">
+        <label>
+          <input type="radio" name="bucket-queue" value="exclude_matched" ${current.queueFilter === 'exclude_matched' ? 'checked' : ''}>
+          Exclude already-sorted
+        </label>
+        <label>
+          <input type="radio" name="bucket-queue" value="all" ${current.queueFilter !== 'exclude_matched' ? 'checked' : ''}>
+          Show all items
+        </label>
+        <span class="bucket-queue-count"></span>
+      </div>
+
+      <div class="bucket-bottom-row">
+        <button class="btn btn-nav bucket-save-preset">Save Preset</button>
+        <button class="btn btn-save bucket-start">Start Sorting</button>
+      </div>
+    </div>
+  `;
+
+  // Populate existing actions for the loaded preset
+  const rightList = stage.querySelector('.bucket-column .bucket-action-list');
+  for (const action of current.right.actions) addActionRow(rightList, action);
+
+  // Wire add buttons
+  const col = stage.querySelector('.bucket-column');
+  const list = col.querySelector('.bucket-action-list');
+  col.querySelector('.bucket-add-field').addEventListener('click', () => {
+    addActionRow(list, { type: 'field', term: '', value: '' });
+    updateBucketQueueCount();
+  });
+  col.querySelector('.bucket-add-set').addEventListener('click', () => {
+    addActionRow(list, { type: 'item_set', setId: 0, setLabel: '' });
+    updateBucketQueueCount();
+  });
+
+  // Wire preset selector
+  stage.querySelector('.bucket-preset-select').addEventListener('change', (e) => {
+    const preset = presets[e.target.value];
+    if (preset) {
+      bucketConfig = JSON.parse(JSON.stringify(preset));
+      renderBucketSetup();
+    }
+  });
+
+  // Wire delete preset
+  stage.querySelector('.bucket-delete-preset').addEventListener('click', () => {
+    const config = readBucketConfig();
+    if (!config) return;
+    const preset = presets.find(p => p.name === config.name);
+    if (preset && preset.builtin) {
+      showToast('Cannot delete built-in preset', true);
+      return;
+    }
+    deletePreset(config.name);
+    bucketConfig = null;
+    renderBucketSetup();
+    showToast('Preset deleted');
+  });
+
+  // Wire save preset
+  stage.querySelector('.bucket-save-preset').addEventListener('click', () => {
+    const config = readBucketConfig();
+    if (!config) return;
+    const name = prompt('Preset name:', config.name || '');
+    if (!name) return;
+    config.name = name;
+    savePreset(config);
+    bucketConfig = config;
+    renderBucketSetup();
+    showToast('Preset saved');
+  });
+
+  // Wire start button
+  stage.querySelector('.bucket-start').addEventListener('click', () => {
+    const config = readBucketConfig();
+    if (!config) return;
+    bucketConfig = config;
+    startBucketSwiping(config);
+  });
+
+  // Wire queue filter radios
+  for (const radio of stage.querySelectorAll('input[name="bucket-queue"]')) {
+    radio.addEventListener('change', () => updateBucketQueueCount());
+  }
+
+  updateBucketQueueCount();
+}
+
+function addActionRow(listEl, action) {
+  const row = document.createElement('div');
+  row.className = 'bucket-action-row';
+
+  if (action.type === 'field') {
+    const fieldSelect = document.createElement('select');
+    fieldSelect.className = 'bucket-field-select';
+    fieldSelect.innerHTML = `<option value="">Field…</option>` +
+      BUCKET_SORTABLE_FIELDS.map(f =>
+        `<option value="${f.term}" ${f.term === action.term ? 'selected' : ''}>${f.label}</option>`
+      ).join('');
+
+    const valueSelect = document.createElement('select');
+    valueSelect.className = 'bucket-value-select';
+
+    const populateValues = (term, selectedValue) => {
+      const vocab = getVocabForField(term);
+      valueSelect.innerHTML = `<option value="">Value…</option>` +
+        vocab.map(v => `<option value="${v}" ${v === selectedValue ? 'selected' : ''}>${v}</option>`).join('');
+    };
+
+    if (action.term) populateValues(action.term, action.value);
+
+    fieldSelect.addEventListener('change', () => {
+      populateValues(fieldSelect.value, '');
+      updateBucketEmptyHints();
+      updateBucketQueueCount();
+    });
+    valueSelect.addEventListener('change', () => {
+      updateBucketQueueCount();
+    });
+
+    row.appendChild(fieldSelect);
+    row.appendChild(valueSelect);
+  } else if (action.type === 'item_set') {
+    const setSelect = document.createElement('select');
+    setSelect.className = 'bucket-set-select';
+    setSelect.innerHTML = `<option value="">Item set…</option>` +
+      availableItemSets.map(s =>
+        `<option value="${s.id}" ${s.id === action.setId ? 'selected' : ''}>${s.label}</option>`
+      ).join('');
+    setSelect.addEventListener('change', () => {
+      updateBucketQueueCount();
+    });
+    row.appendChild(setSelect);
+  }
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'bucket-action-remove';
+  removeBtn.textContent = '×';
+  removeBtn.addEventListener('click', () => {
+    row.remove();
+    updateBucketQueueCount();
+  });
+  row.appendChild(removeBtn);
+
+  listEl.appendChild(row);
+}
+
+function readBucketConfig() {
+  const stage = $('#card-stage');
+  if (!stage) return null;
+
+  const col = stage.querySelector('.bucket-column[data-side="right"]');
+  const label = col ? (col.querySelector('.bucket-label-input').value.trim() || 'Keep') : 'Keep';
+  const actions = [];
+
+  if (col) {
+    for (const row of col.querySelectorAll('.bucket-action-row')) {
+      const fieldSelect = row.querySelector('.bucket-field-select');
+      const valueSelect = row.querySelector('.bucket-value-select');
+      const setSelect = row.querySelector('.bucket-set-select');
+
+      if (fieldSelect && valueSelect && fieldSelect.value && valueSelect.value) {
+        actions.push({ type: 'field', term: fieldSelect.value, value: valueSelect.value });
+      } else if (setSelect && setSelect.value) {
+        const setId = Number(setSelect.value);
+        const setLabel = setSelect.options[setSelect.selectedIndex].text;
+        actions.push({ type: 'item_set', setId, setLabel });
+      }
+    }
+  }
+
+  const queueRadio = stage.querySelector('input[name="bucket-queue"]:checked');
+  const queueFilter = queueRadio ? queueRadio.value : 'exclude_matched';
+
+  const presetSelect = stage.querySelector('.bucket-preset-select');
+  const name = presetSelect ? presetSelect.options[presetSelect.selectedIndex].text : '';
+
+  return {
+    name,
+    left: { ...BUCKET_LEFT },
+    right: { label, color: '#2a7d2e', actions },
+    queueFilter,
+  };
+}
+
+function updateBucketQueueCount() {
+  const config = readBucketConfig();
+  if (!config) return;
+  const countEl = $('.bucket-queue-count');
+  if (!countEl) return;
+
+  let count;
+  if (config.queueFilter === 'exclude_matched') {
+    count = allItems.filter(item => !itemMatchesBucket(item, config.right)).length;
+  } else {
+    count = allItems.length;
+  }
+  countEl.textContent = `${count} items in queue`;
+}
+
+// ── Bucket: start swiping ────────────────────────────────────────────────────
+
+function startBucketSwiping(config, isResume = false) {
+  bucketSetup = false;
+  bucketConfig = config;
+
+  // Restore card-stage sizing
+  const stage = $('#card-stage');
+  stage.style.width = '';
+  stage.style.height = '';
+
+  // Show swipe UI
+  $('#curate-actions').classList.remove('hidden');
+  $('#curate-progress').classList.remove('hidden');
+
+  // Update button labels and colors — left is always Skip
+  const passBtn = $('#curate-pass');
+  const keepBtn = $('#curate-keep');
+  passBtn.textContent = `← ${BUCKET_LEFT.label}`;
+  keepBtn.textContent = `${config.right.label} →`;
+  passBtn.style.background = BUCKET_LEFT.color;
+  keepBtn.style.background = config.right.color;
+
+  // Set CSS custom properties for hint colors
+  document.documentElement.style.setProperty('--bucket-right-color', config.right.color);
+  document.documentElement.style.setProperty('--bucket-left-color', BUCKET_LEFT.color);
+
+  if (!isResume) {
+    buildBucketQueue(config);
+  }
+
+  updateBucketProgress();
+
+  if (bucketQueue.length) {
+    renderBucketCards();
+    preloadBucketNext();
+  } else {
+    showBucketComplete();
+  }
+
+  savePosition();
+}
+
+// ── Bucket: progress ─────────────────────────────────────────────────────────
+
+function updateBucketProgress() {
   const countEl = $('#curate-count');
   const undoBtn = $('#curate-undo');
-  const remaining = curateQueue.length - curateIndex;
-  const reviewed = curateIndex;
-  countEl.textContent = `${reviewed} reviewed · ${remaining} remaining`;
-  undoBtn.disabled = !curateLastAction;
+  const remaining = bucketQueue.length - bucketIndex;
+  countEl.textContent = `${bucketIndex} reviewed · ${remaining} remaining`;
+  undoBtn.disabled = !bucketLastAction;
 
-  // Update nav progress bar too
-  const pct = curateQueue.length > 0 ? (curateIndex / curateQueue.length) * 100 : 0;
+  const pct = bucketQueue.length > 0 ? (bucketIndex / bucketQueue.length) * 100 : 0;
   dom.progressFill.style.width = `${pct}%`;
 }
 
-// ── Curate: card rendering ───────────────────────────────────────────────────
+// ── Bucket: card rendering ───────────────────────────────────────────────────
 
 function clearCardStage() {
-  const stage = $('#card-stage');
-  stage.innerHTML = '';
+  $('#card-stage').innerHTML = '';
 }
 
-function renderCurateCards() {
+function renderBucketCards() {
   clearCardStage();
-  // Next card behind (if exists)
-  if (curateIndex + 1 < curateQueue.length) {
-    renderCurateCard(curateQueue[curateIndex + 1], 1);
+  if (bucketIndex + 1 < bucketQueue.length) {
+    renderBucketCard(bucketQueue[bucketIndex + 1], 1);
   }
-  // Current card on top
-  if (curateIndex < curateQueue.length) {
-    renderCurateCard(curateQueue[curateIndex], 2);
+  if (bucketIndex < bucketQueue.length) {
+    renderBucketCard(bucketQueue[bucketIndex], 2);
   }
 }
 
-async function renderCurateCard(item, zIndex) {
+async function renderBucketCard(item, zIndex) {
   const stage = $('#card-stage');
   const card = document.createElement('div');
   card.className = 'curate-card';
   card.dataset.itemId = item['o:id'];
   card.style.zIndex = zIndex;
 
-  // Back card: scaled down for depth effect, hide meta to prevent text bleed
   if (zIndex === 1) {
     card.classList.add('back-card');
     card.style.transform = 'scale(0.95)';
@@ -1071,12 +1469,13 @@ async function renderCurateCard(item, zIndex) {
   const dims = (h && w) ? `${h}″ × ${w}″` : '';
   const detail = [medium, dims].filter(Boolean).join(', ');
 
+  const editUrl = `/admin/item/${item['o:id']}/edit`;
   card.innerHTML = `
     <div class="card-img-wrap">
       <div class="card-img-loading">Loading…</div>
     </div>
     <div class="card-meta">
-      <div class="card-meta-id">${identifier}</div>
+      <div class="card-meta-id"><a href="${editUrl}" target="_blank">${identifier}</a></div>
       ${detail ? `<div class="card-meta-detail">${detail}</div>` : ''}
       ${date ? `<div class="card-meta-date">${date}</div>` : ''}
     </div>
@@ -1084,7 +1483,6 @@ async function renderCurateCard(item, zIndex) {
 
   stage.appendChild(card);
 
-  // Load image
   const url = await getImageUrl(item);
   if (url) {
     const imgWrap = card.querySelector('.card-img-wrap');
@@ -1098,34 +1496,32 @@ async function renderCurateCard(item, zIndex) {
     imgWrap.appendChild(img);
   }
 
-  // Only attach swipe handlers to the top card
   if (zIndex === 2) {
     attachSwipeHandlers(card);
   }
 }
 
-function preloadCurateNext() {
-  // Preload 2 items ahead (next is already rendered)
-  const ahead = curateIndex + 2;
-  if (ahead < curateQueue.length) {
-    getImageUrl(curateQueue[ahead]).then(url => {
+function preloadBucketNext() {
+  const ahead = bucketIndex + 2;
+  if (ahead < bucketQueue.length) {
+    getImageUrl(bucketQueue[ahead]).then(url => {
       if (url) { const img = new Image(); img.src = url; }
     });
   }
 }
 
-// ── Curate: swipe gesture system ─────────────────────────────────────────────
+// ── Bucket: swipe gesture system ─────────────────────────────────────────────
 
 function attachSwipeHandlers(cardEl) {
-  cardEl.addEventListener('pointerdown', onCuratePointerDown);
+  cardEl.addEventListener('pointerdown', onBucketPointerDown);
 }
 
-function onCuratePointerDown(e) {
-  if (curateDragState || curateActing) return;
+function onBucketPointerDown(e) {
+  if (bucketDragState || bucketActing) return;
   const card = e.currentTarget;
   card.setPointerCapture(e.pointerId);
   card.classList.add('dragging');
-  curateDragState = {
+  bucketDragState = {
     startX: e.clientX,
     startY: e.clientY,
     currentX: e.clientX,
@@ -1133,44 +1529,44 @@ function onCuratePointerDown(e) {
     cardEl: card,
     pointerId: e.pointerId,
   };
-  card.addEventListener('pointermove', onCuratePointerMove);
-  card.addEventListener('pointerup', onCuratePointerUp);
-  card.addEventListener('pointercancel', onCuratePointerUp);
+  card.addEventListener('pointermove', onBucketPointerMove);
+  card.addEventListener('pointerup', onBucketPointerUp);
+  card.addEventListener('pointercancel', onBucketPointerUp);
 }
 
-function onCuratePointerMove(e) {
-  if (!curateDragState || e.pointerId !== curateDragState.pointerId) return;
-  curateDragState.currentX = e.clientX;
-  curateDragState.currentY = e.clientY;
+function onBucketPointerMove(e) {
+  if (!bucketDragState || e.pointerId !== bucketDragState.pointerId) return;
+  bucketDragState.currentX = e.clientX;
+  bucketDragState.currentY = e.clientY;
 
-  const dx = curateDragState.currentX - curateDragState.startX;
-  const dy = (curateDragState.currentY - curateDragState.startY) * 0.3;
+  const dx = bucketDragState.currentX - bucketDragState.startX;
+  const dy = (bucketDragState.currentY - bucketDragState.startY) * 0.3;
   const rotation = dx * ROTATION_FACTOR;
 
-  curateDragState.cardEl.style.transform =
+  bucketDragState.cardEl.style.transform =
     `translate(${dx}px, ${dy}px) rotate(${rotation}deg)`;
 
-  // Green glow hint when dragging right past half-threshold
-  curateDragState.cardEl.classList.toggle('hint-right', dx > SWIPE_THRESHOLD * 0.5);
+  // Directional hint glow
+  bucketDragState.cardEl.classList.toggle('hint-right', dx > SWIPE_THRESHOLD * 0.5);
+  bucketDragState.cardEl.classList.toggle('hint-left', dx < -SWIPE_THRESHOLD * 0.5);
 }
 
-function onCuratePointerUp(e) {
-  if (!curateDragState || e.pointerId !== curateDragState.pointerId) return;
-  const card = curateDragState.cardEl;
-  card.removeEventListener('pointermove', onCuratePointerMove);
-  card.removeEventListener('pointerup', onCuratePointerUp);
-  card.removeEventListener('pointercancel', onCuratePointerUp);
-  card.classList.remove('dragging', 'hint-right');
+function onBucketPointerUp(e) {
+  if (!bucketDragState || e.pointerId !== bucketDragState.pointerId) return;
+  const card = bucketDragState.cardEl;
+  card.removeEventListener('pointermove', onBucketPointerMove);
+  card.removeEventListener('pointerup', onBucketPointerUp);
+  card.removeEventListener('pointercancel', onBucketPointerUp);
+  card.classList.remove('dragging', 'hint-right', 'hint-left');
 
-  const dx = curateDragState.currentX - curateDragState.startX;
-  curateDragState = null;
+  const dx = bucketDragState.currentX - bucketDragState.startX;
+  bucketDragState = null;
 
   if (dx > SWIPE_THRESHOLD) {
     flyOffCard(card, 'right');
   } else if (dx < -SWIPE_THRESHOLD) {
     flyOffCard(card, 'left');
   } else {
-    // Snap back
     card.classList.add('snap-back');
     card.style.transform = '';
     card.addEventListener('transitionend', () => {
@@ -1180,8 +1576,8 @@ function onCuratePointerUp(e) {
 }
 
 function flyOffCard(cardEl, direction) {
-  if (curateActing) return;
-  curateActing = true;
+  if (bucketActing) return;
+  bucketActing = true;
 
   const vw = window.innerWidth;
   const targetX = direction === 'right' ? vw * FLY_DISTANCE : -vw * FLY_DISTANCE;
@@ -1192,24 +1588,18 @@ function flyOffCard(cardEl, direction) {
 
   cardEl.addEventListener('transitionend', () => {
     cardEl.remove();
-    promoteCurateBackCard();
-    curateActing = false;
+    promoteBucketBackCard();
+    bucketActing = false;
   }, { once: true });
 
-  // Trigger the action
   const itemId = Number(cardEl.dataset.itemId);
-  if (direction === 'right') {
-    curateKeep(itemId);
-  } else {
-    curatePass(itemId);
-  }
+  const bucket = direction === 'right' ? bucketConfig.right : BUCKET_LEFT;
+  applyBucketAction(itemId, bucket, direction);
 }
 
-function triggerCurateSwipe(direction) {
-  if (curateActing) return;
+function triggerBucketSwipe(direction) {
+  if (bucketActing) return;
   const stage = $('#card-stage');
-  // Find the top card by z-index (can't use :last-child — DOM order
-  // changes after promoteCurateBackCard appends a new back card)
   let topCard = null;
   for (const c of stage.querySelectorAll('.curate-card:not(.fly-off)')) {
     if (!topCard || Number(c.style.zIndex) > Number(topCard.style.zIndex)) {
@@ -1221,7 +1611,7 @@ function triggerCurateSwipe(direction) {
   }
 }
 
-function promoteCurateBackCard() {
+function promoteBucketBackCard() {
   const stage = $('#card-stage');
   const backCard = stage.querySelector('.curate-card');
   if (backCard && backCard.style.zIndex === '1') {
@@ -1237,156 +1627,178 @@ function promoteCurateBackCard() {
     }, { once: true });
   }
 
-  // Render new back card if available
-  if (curateIndex + 1 < curateQueue.length) {
-    renderCurateCard(curateQueue[curateIndex + 1], 1);
+  if (bucketIndex + 1 < bucketQueue.length) {
+    renderBucketCard(bucketQueue[bucketIndex + 1], 1);
   }
 
-  preloadCurateNext();
+  preloadBucketNext();
 
-  if (curateIndex >= curateQueue.length) {
-    showCurateComplete();
+  if (bucketIndex >= bucketQueue.length) {
+    showBucketComplete();
   }
 }
 
-// ── Curate: API actions ──────────────────────────────────────────────────────
+// ── Bucket: API actions ──────────────────────────────────────────────────────
 
-function buildCuratePayload(item) {
-  // Same pattern as buildPayload() but with no form edits — preserve everything
-  const payload = {};
+async function applyBucketAction(itemId, bucket, direction) {
+  // Advance immediately — card is already gone
+  bucketIndex++;
+  updateBucketProgress();
 
-  for (const [key, val] of Object.entries(item)) {
-    if (key.includes(':') && !key.startsWith('o:') && Array.isArray(val)) {
-      payload[key] = val.filter(v => typeof v === 'object').map(cleanValue);
-    }
-  }
-
-  for (const sysKey of ['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
-    if (sysKey in item) payload[sysKey] = item[sysKey];
-  }
-
-  return payload;
-}
-
-async function curateKeep(itemId) {
-  // Advance immediately — card is already gone, API works in background
-  curateIndex++;
-  curateLastAction = { itemId, action: 'keep' };
-  updateCurateProgress();
+  // Capture old state for undo
+  const item = allItems.find(it => it['o:id'] === itemId);
+  const oldFieldValues = {};
+  const addedSets = [];
 
   try {
     const { json: freshItem } = await apiGet(`items/${itemId}`);
-    const payload = buildCuratePayload(freshItem);
+    const payload = buildBasePayload(freshItem);
 
-    // Append Permanent Collection set if not already present
-    const sets = payload['o:item_set'] || [];
-    if (!sets.some(s => s['o:id'] === PERMANENT_COLLECTION_SET_ID)) {
-      payload['o:item_set'] = [...sets, { 'o:id': PERMANENT_COLLECTION_SET_ID }];
+    if (bucket.actions.length === 0) {
+      // Empty bucket = just touch o:modified
+      await apiPatch(`items/${itemId}`, payload);
+      bucketLastAction = { itemId, direction, oldFieldValues: {}, addedSets: [] };
+      return;
     }
 
-    await apiPatch(`items/${itemId}`, payload);
-    showToast('✓ Added to Permanent Collection');
+    for (const action of bucket.actions) {
+      if (action.type === 'item_set') {
+        const sets = payload['o:item_set'] || [];
+        if (!sets.some(s => s['o:id'] === action.setId)) {
+          payload['o:item_set'] = [...sets, { 'o:id': action.setId }];
+          addedSets.push(action.setId);
+        }
+      } else if (action.type === 'field') {
+        const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === action.term);
+        // Save old value for undo
+        if (fieldDef && fieldDef.multi) {
+          oldFieldValues[action.term] = extractAllValues(freshItem, action.term);
+          const existing = extractAllValues(freshItem, action.term);
+          if (!existing.includes(action.value)) {
+            payload[action.term] = [
+              ...existing.map(v => literalValue(action.term, v)),
+              literalValue(action.term, action.value),
+            ];
+          }
+        } else {
+          oldFieldValues[action.term] = extractValue(freshItem, action.term);
+          payload[action.term] = [literalValue(action.term, action.value)];
+        }
+      }
+    }
+
+    const updated = await apiPatch(`items/${itemId}`, payload);
 
     // Update local state
     const idx = allItems.findIndex(it => it['o:id'] === itemId);
     if (idx >= 0) {
-      allItems[idx]['o:item_set'] = payload['o:item_set'];
+      allItems[idx] = updated;
+      allItems[idx]._issues = validateItem(updated);
+      allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
+      allItems[idx]._box = extractValue(updated, 'schema:box') || '';
     }
+
+    bucketLastAction = { itemId, direction, oldFieldValues, addedSets };
+    showToast(`✓ ${describeBucket(bucket)}`);
   } catch (err) {
     showToast(`Error: ${err.message}`, true);
-    console.error('Curate keep failed:', err);
-    curateLastAction = null;
+    console.error('Bucket action failed:', err);
+    bucketLastAction = null;
   }
 }
 
-async function curatePass(itemId) {
-  // Advance immediately — card is already gone, API works in background
-  curateIndex++;
-  curateLastAction = { itemId, action: 'pass' };
-  updateCurateProgress();
+// ── Bucket: undo ─────────────────────────────────────────────────────────────
+
+async function bucketUndo() {
+  if (!bucketLastAction || bucketActing) return;
+  const { itemId, oldFieldValues, addedSets } = bucketLastAction;
 
   try {
-    // "Touch" the item — re-save without changes to bump o:modified
     const { json: freshItem } = await apiGet(`items/${itemId}`);
-    const payload = buildCuratePayload(freshItem);
-    await apiPatch(`items/${itemId}`, payload);
-  } catch (err) {
-    showToast(`Error: ${err.message}`, true);
-    console.error('Curate pass failed:', err);
-    curateLastAction = null;
-  }
-}
+    const payload = buildBasePayload(freshItem);
 
-// ── Curate: undo ─────────────────────────────────────────────────────────────
-
-async function curateUndo() {
-  if (!curateLastAction || curateActing) return;
-  const { itemId, action } = curateLastAction;
-
-  if (action === 'keep') {
-    // Remove from Permanent Collection set
-    try {
-      const { json: freshItem } = await apiGet(`items/${itemId}`);
-      const payload = buildCuratePayload(freshItem);
+    // Reverse item set additions
+    if (addedSets.length) {
       payload['o:item_set'] = (payload['o:item_set'] || [])
-        .filter(s => s['o:id'] !== PERMANENT_COLLECTION_SET_ID);
-      await apiPatch(`items/${itemId}`, payload);
-      showToast('Undone — removed from collection');
-
-      // Update local state
-      const idx = allItems.findIndex(it => it['o:id'] === itemId);
-      if (idx >= 0) {
-        allItems[idx]['o:item_set'] = payload['o:item_set'];
-      }
-    } catch (err) {
-      showToast(`Undo error: ${err.message}`, true);
-      return;
+        .filter(s => !addedSets.includes(s['o:id']));
     }
-  } else {
+
+    // Reverse field value changes
+    for (const [term, oldVal] of Object.entries(oldFieldValues)) {
+      const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === term);
+      if (fieldDef && fieldDef.multi) {
+        payload[term] = (oldVal || []).map(v => literalValue(term, v));
+      } else {
+        payload[term] = oldVal ? [literalValue(term, oldVal)] : [];
+      }
+    }
+
+    await apiPatch(`items/${itemId}`, payload);
+
+    // Update local state
+    const idx = allItems.findIndex(it => it['o:id'] === itemId);
+    if (idx >= 0) {
+      const { json: updatedItem } = await apiGet(`items/${itemId}`);
+      allItems[idx] = updatedItem;
+      allItems[idx]._issues = validateItem(updatedItem);
+      allItems[idx]._identifier = extractValue(updatedItem, 'dcterms:identifier') || `item-${updatedItem['o:id']}`;
+      allItems[idx]._box = extractValue(updatedItem, 'schema:box') || '';
+    }
+
     showToast('Undone');
+  } catch (err) {
+    showToast(`Undo error: ${err.message}`, true);
+    return;
   }
 
   // Re-insert item at previous position
-  curateIndex = Math.max(0, curateIndex - 1);
+  bucketIndex = Math.max(0, bucketIndex - 1);
   const item = allItems.find(it => it['o:id'] === itemId);
-  if (item && curateIndex <= curateQueue.length) {
-    curateQueue.splice(curateIndex, 0, item);
+  if (item && bucketIndex <= bucketQueue.length) {
+    bucketQueue.splice(bucketIndex, 0, item);
   }
 
-  curateLastAction = null;
-  renderCurateCards();
-  updateCurateProgress();
+  bucketLastAction = null;
+  renderBucketCards();
+  updateBucketProgress();
 }
 
-// ── Curate: completion ───────────────────────────────────────────────────────
+// ── Bucket: completion ───────────────────────────────────────────────────────
 
-function showCurateComplete() {
+function showBucketComplete() {
   const stage = $('#card-stage');
-  const kept = allItems.filter(item => {
-    const sets = item['o:item_set'] || [];
-    return sets.some(s => s['o:id'] === PERMANENT_COLLECTION_SET_ID);
-  }).length;
-
   stage.innerHTML = `
     <div class="curate-done">
       <h2>Done</h2>
-      <p>${curateIndex} items reviewed · ${kept} in Permanent Collection</p>
-      <button class="btn btn-nav" id="curate-restart">Start over</button>
+      <p>${bucketIndex} items sorted</p>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="btn btn-nav" id="bucket-restart">Start over</button>
+        <button class="btn btn-nav" id="bucket-reconfigure">Change config</button>
+      </div>
     </div>
   `;
-  $('#curate-restart').addEventListener('click', () => {
-    buildCurateQueue();
-    renderCurateCards();
-    updateCurateProgress();
+  $('#bucket-restart').addEventListener('click', () => {
+    buildBucketQueue(bucketConfig);
+    if (bucketQueue.length) {
+      renderBucketCards();
+      preloadBucketNext();
+    } else {
+      showBucketComplete();
+    }
+    updateBucketProgress();
+  });
+  $('#bucket-reconfigure').addEventListener('click', () => {
+    bucketSetup = true;
+    renderBucketSetup();
   });
 }
 
-// ── Curate: button & keyboard wiring ─────────────────────────────────────────
+// ── Bucket: button wiring ────────────────────────────────────────────────────
 
-function setupCurateButtons() {
-  $('#curate-pass').addEventListener('click', () => triggerCurateSwipe('left'));
-  $('#curate-keep').addEventListener('click', () => triggerCurateSwipe('right'));
-  $('#curate-undo').addEventListener('click', curateUndo);
+function setupBucketButtons() {
+  $('#curate-pass').addEventListener('click', () => triggerBucketSwipe('left'));
+  $('#curate-keep').addEventListener('click', () => triggerBucketSwipe('right'));
+  $('#curate-undo').addEventListener('click', bucketUndo);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1596,7 +2008,7 @@ function setupSprintMenu() {
 
 function enterSprintMode(fieldKey) {
   // Exit other modes first
-  if (curateMode) exitCurateMode();
+  if (bucketMode) exitBucketMode();
   sprintMode = true;
   sprintField = fieldKey;
   filterMode = 'sprint';
@@ -1706,12 +2118,13 @@ async function renderSprintCard(item, zIndex) {
     currentValue = extractValue(item, config.term);
   }
 
+  const editUrl = `/admin/item/${item['o:id']}/edit`;
   card.innerHTML = `
     <div class="card-img-wrap">
       <div class="card-img-loading">Loading…</div>
     </div>
     <div class="card-meta">
-      <div class="card-meta-id">${identifier}</div>
+      <div class="card-meta-id"><a href="${editUrl}" target="_blank">${identifier}</a></div>
       ${detail ? `<div class="card-meta-detail">${detail}</div>` : ''}
       ${date ? `<div class="card-meta-date">${date}</div>` : ''}
     </div>
@@ -1950,7 +2363,7 @@ async function sprintSaveAndAdvance(itemId, config, value) {
   // API save in background
   try {
     const { json: freshItem } = await apiGet(`items/${itemId}`);
-    const payload = buildCuratePayload(freshItem);
+    const payload = buildBasePayload(freshItem);
 
     if (config.terms) {
       // Multi-term (dimensions)
@@ -2058,7 +2471,7 @@ async function sprintUndo() {
 
   try {
     const { json: freshItem } = await apiGet(`items/${itemId}`);
-    const payload = buildCuratePayload(freshItem);
+    const payload = buildBasePayload(freshItem);
 
     if (config.terms) {
       for (const [term, val] of Object.entries(oldValues)) {
@@ -2133,7 +2546,7 @@ function setupSprintButtons() {
 
 async function init() {
   cacheDom();
-  await fetchCustomVocabs();
+  await Promise.all([fetchCustomVocabs(), fetchItemSets()]);
   initFieldSprints();
   setupSelects();
   setupDatePills();
@@ -2144,7 +2557,7 @@ async function init() {
   setupKeyboard();
   setupFilterButtons();
   setupDirtyTracking();
-  setupCurateButtons();
+  setupBucketButtons();
   setupSprintButtons();
   setupSprintMenu();
 
@@ -2170,7 +2583,7 @@ async function init() {
 
   // Enter the saved mode
   if (filterMode === 'curate') {
-    enterCurateMode();
+    enterBucketMode(true);
   } else if (filterMode === 'sprint' && sprintField && FIELD_SPRINTS[sprintField]) {
     enterSprintMode(sprintField);
   } else {
