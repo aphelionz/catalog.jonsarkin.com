@@ -172,7 +172,7 @@ push-schema: ## Push local schema, site pages, item sets, and config to producti
 			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2; \
 			    SELECT COUNT(*) AS site_pages FROM site_page; \
 			    SELECT COUNT(*) AS item_sets FROM item_set;"'
-	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages, 25 item_sets."
+	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages, 18 item_sets."
 
 backfill-dry: ## Preview backfill changes without writing
 	python3 scripts/backfill_defaults.py --dry-run

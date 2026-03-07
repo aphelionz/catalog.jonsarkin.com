@@ -962,8 +962,8 @@ abbr[title] {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--gutter);
 }
 
@@ -972,7 +972,7 @@ abbr[title] {
 }
 
 .item-set.browse .item-set-entry a {
-  display: block;
+  display: flex;
   text-decoration: none;
   color: inherit;
 }
@@ -983,23 +983,30 @@ abbr[title] {
 
 .item-set.browse .item-set-entry img {
   display: block;
-  width: 100%;
+  width: 160px;
+  min-height: 160px;
   aspect-ratio: 1;
   object-fit: cover;
-  border-bottom: var(--border);
+  border-right: var(--border);
+  flex-shrink: 0;
 }
 
 .item-set.browse .item-set-placeholder {
   display: block;
-  width: 100%;
+  width: 160px;
+  min-height: 160px;
   aspect-ratio: 1;
   background: var(--bg);
-  border-bottom: var(--border);
+  border-right: var(--border);
+  flex-shrink: 0;
 }
 
 .item-set.browse .item-set-label {
-  display: block;
-  padding: calc(var(--gutter) * 0.75) calc(var(--gutter) * 0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(var(--gutter) * 0.75) var(--gutter);
+  min-width: 0;
 }
 
 .item-set.browse .item-set-title {
@@ -1010,11 +1017,27 @@ abbr[title] {
   font-size: 0.9rem;
 }
 
+.item-set.browse .item-set-desc {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--secondary);
+  margin-top: 0.35em;
+  line-height: 1.4;
+}
+
 .item-set.browse .item-set-count {
   display: block;
   font-size: 0.75rem;
   color: var(--secondary);
-  margin-top: 0.15em;
+  margin-top: 0.35em;
+}
+
+@media (max-width: 600px) {
+  .item-set.browse .item-set-entry img,
+  .item-set.browse .item-set-placeholder {
+    width: 100px;
+    min-height: 100px;
+  }
 }
 
 /* ==========================================================================
@@ -1105,6 +1128,12 @@ abbr[title] {
 
 .faceted-browse-page .facet label input {
   margin: 0 6px 0 0;
+}
+
+.faceted-browse-page .facet-count {
+  color: #999;
+  font-size: 0.75rem;
+  margin-left: 1px;
 }
 
 .faceted-browse-page .select-list,

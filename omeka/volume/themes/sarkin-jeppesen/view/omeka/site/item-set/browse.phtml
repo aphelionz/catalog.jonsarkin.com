@@ -4,9 +4,21 @@
  *
  * Lists collections in the Jeppesen index style —
  * bold names, bordered entries, like a table of contents.
+ *
+ * Each collection links to the faceted browse page with that
+ * item set pre-selected, rather than the default item-set show page.
  */
 $escape    = $this->plugin('escapeHtml');
 $translate = $this->plugin('translate');
+
+// FacetedBrowse IDs (from faceted_browse_* tables)
+$fbPageId     = 2;
+$fbCategoryId = 2;
+$fbFacetId    = 2;
+$fbBaseUrl = $this->url('site/faceted-browse', [
+    'site-slug' => $this->currentSite()->slug(),
+    'page-id'   => $fbPageId,
+]);
 
 $this->htmlElement('body')->appendAttribute('class', 'item-set browse');
 ?>
@@ -22,9 +34,19 @@ $this->htmlElement('body')->appendAttribute('class', 'item-set browse');
     <?php foreach ($itemSets as $itemSet):
         $thumb = $itemSet->thumbnail();
         $thumbUrl = $thumb ? $thumb->assetUrl() : null;
+        $desc = $itemSet->value('dcterms:description', ['default' => null]);
+        $state = json_encode([
+            'categoryId'   => $fbCategoryId,
+            'sortBy'       => null,
+            'sortOrder'    => null,
+            'page'         => null,
+            'facetStates'  => [(string)$fbFacetId => [$itemSet->id()]],
+            'facetQueries' => [(string)$fbFacetId => 'item_set_id[]=' . $itemSet->id()],
+        ]);
+        $href = $fbBaseUrl . '#' . rawurlencode($state);
     ?>
     <li class="item-set-entry">
-        <a href="<?php echo $escape($itemSet->siteUrl()); ?>">
+        <a href="<?php echo $escape($href); ?>">
             <?php if ($thumbUrl): ?>
                 <img src="<?php echo $escape($thumbUrl); ?>"
                      alt="<?php echo $escape($itemSet->displayTitle()); ?>"
@@ -34,6 +56,9 @@ $this->htmlElement('body')->appendAttribute('class', 'item-set browse');
             <?php endif; ?>
             <span class="item-set-label">
                 <span class="item-set-title"><?php echo $escape($itemSet->displayTitle()); ?></span>
+                <?php if ($desc): ?>
+                    <span class="item-set-desc"><?php echo $escape((string) $desc); ?></span>
+                <?php endif; ?>
                 <span class="item-set-count"><?php echo $itemSet->itemCount(); ?> works</span>
             </span>
         </a>
