@@ -95,6 +95,15 @@ $spatial    = $val('dcterms:spatial');
 $rights     = $val('dcterms:rights');
 $creditText = $val('schema:creditText');
 
+// ── Permanent Collection designation ──
+$isPermanentCollection = false;
+foreach ($item->itemSets() as $set) {
+    if ($set->displayTitle() === 'Permanent Collection') {
+        $isPermanentCollection = true;
+        break;
+    }
+}
+
 // Provenance (repeatable)
 $provenanceVals = $allVals('dcterms:provenance');
 
@@ -240,6 +249,9 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <?php endif; ?>
                 <?php
                 $ownerDisplay = $owner ?: (!empty($provenanceVals) ? $provenanceVals[0] : '');
+                if ($ownerDisplay && $isPermanentCollection) {
+                    $ownerDisplay .= ' (permanent collection)';
+                }
                 if ($ownerDisplay): ?>
                 <dl>
                     <dt>Owner</dt><dd><?php echo $ownerDisplay; ?></dd>
