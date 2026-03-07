@@ -2,6 +2,7 @@
 
 namespace SimilarPieces\Controller;
 
+use Doctrine\ORM\EntityManager;
 use Laminas\Http\Client as HttpClient;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
@@ -16,14 +17,38 @@ class SimilarController extends AbstractActionController
     private object $logger;
     private array $config;
     private bool $debug;
+    private EntityManager $entityManager;
 
-    public function __construct(HttpClient $httpClient, ApiManager $api, object $logger, array $config)
+    private const LEXICAL_CACHE_TTL = 3600; // 1 hour
+    private const LEXICAL_CACHE_FILE = '/tmp/lexical-corpus-cache.json';
+    private const LEXICAL_MAX_WORDS = 25;
+    private const LEXICAL_MIN_WORD_LENGTH = 2;
+    private const BIBO_CONTENT_PROPERTY_ID = 91;
+
+    private const STOPWORDS = [
+        'a','about','above','after','again','against','all','am','an','and','any',
+        'are','as','at','be','because','been','before','being','below','between',
+        'both','but','by','can','could','did','do','does','doing','down','during',
+        'each','few','for','from','further','get','got','had','has','have','having',
+        'he','her','here','hers','herself','him','himself','his','how','i','if',
+        'in','into','is','it','its','itself','just','let','may','me','might',
+        'more','most','my','myself','no','nor','not','now','of','off','on','once',
+        'only','or','other','our','ours','ourselves','out','over','own','same',
+        'shall','she','should','so','some','such','than','that','the','their',
+        'theirs','them','themselves','then','there','these','they','this','those',
+        'through','to','too','under','until','up','us','very','was','we','were',
+        'what','when','where','which','while','who','whom','why','will','with',
+        'would','you','your','yours','yourself','yourselves',
+    ];
+
+    public function __construct(HttpClient $httpClient, ApiManager $api, object $logger, array $config, EntityManager $entityManager)
     {
         $this->httpClient = $httpClient;
         $this->api = $api;
         $this->logger = $logger;
         $this->config = $config;
         $this->debug = !empty($config['debug']);
+        $this->entityManager = $entityManager;
     }
 
     public function indexAction()
@@ -230,6 +255,162 @@ class SimilarController extends AbstractActionController
         }
 
         return $response;
+    }
+
+    public function lexicalProfileAction()
+    {
+        $itemId = (int) $this->params()->fromRoute('item_id', 0);
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        if ($itemId <= 0) {
+            $response->setStatusCode(404);
+            $response->setContent(json_encode(['error' => 'Invalid item ID']));
+            return $response;
+        }
+
+        try {
+            // Get this item's transcription text
+            $itemText = $this->fetchItemTranscription($itemId);
+            if ($itemText === null) {
+                $response->setStatusCode(404);
+                $response->setContent(json_encode(['error' => 'No transcription for this item']));
+                return $response;
+            }
+
+            $itemWords = $this->tokenizeText($itemText);
+            if (empty($itemWords)) {
+                $response->setStatusCode(404);
+                $response->setContent(json_encode(['error' => 'No words found in transcription']));
+                return $response;
+            }
+
+            // Get or build the corpus frequency map
+            $corpus = $this->getLexicalCorpus();
+            $corpusSize = $corpus['corpus_size'];
+            $wordCounts = $corpus['word_counts'];
+
+            // Build word details sorted by rarity (lowest corpus frequency first)
+            $words = [];
+            foreach ($itemWords as $word) {
+                $freq = $wordCounts[$word] ?? 0;
+                $pct = $corpusSize > 0 ? round(($freq / $corpusSize) * 100, 1) : 0;
+                $words[] = [
+                    'word' => $word,
+                    'corpus_frequency' => $freq,
+                    'corpus_percentage' => $pct,
+                ];
+            }
+
+            usort($words, function ($a, $b) {
+                return $a['corpus_frequency'] <=> $b['corpus_frequency'];
+            });
+
+            $words = array_slice($words, 0, self::LEXICAL_MAX_WORDS);
+
+            $response->setContent(json_encode([
+                'words' => $words,
+                'corpus_size' => $corpusSize,
+                'total_unique_words' => count($itemWords),
+            ]));
+        } catch (Throwable $e) {
+            $this->logError(sprintf('Lexical profile error for item %d: %s', $itemId, $e->getMessage()), $e);
+            $response->setStatusCode(500);
+            $response->setContent(json_encode(['error' => 'Lexical profile unavailable']));
+        }
+
+        return $response;
+    }
+
+    private function fetchItemTranscription(int $itemId): ?string
+    {
+        $conn = $this->entityManager->getConnection();
+        $sql = 'SELECT v.value FROM value v WHERE v.resource_id = ? AND v.property_id = ? AND v.value IS NOT NULL LIMIT 1';
+        $result = $conn->fetchOne($sql, [$itemId, self::BIBO_CONTENT_PROPERTY_ID]);
+        if ($result === false || trim($result) === '') {
+            return null;
+        }
+        return $result;
+    }
+
+    /**
+     * @return string[] unique lowercase words (stopwords and short words filtered)
+     */
+    private function tokenizeText(string $text): array
+    {
+        $stopwords = array_flip(self::STOPWORDS);
+        preg_match_all('/[a-zA-Z]+/', strtolower($text), $matches);
+        $words = [];
+        foreach ($matches[0] as $word) {
+            if (strlen($word) < self::LEXICAL_MIN_WORD_LENGTH) {
+                continue;
+            }
+            if (isset($stopwords[$word])) {
+                continue;
+            }
+            $words[$word] = true;
+        }
+        return array_keys($words);
+    }
+
+    /**
+     * @return array{corpus_size: int, word_counts: array<string, int>}
+     */
+    private function getLexicalCorpus(): array
+    {
+        $cacheFile = self::LEXICAL_CACHE_FILE;
+
+        if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < self::LEXICAL_CACHE_TTL) {
+            $cached = json_decode(file_get_contents($cacheFile), true);
+            if (is_array($cached) && isset($cached['corpus_size'], $cached['word_counts'])) {
+                return $cached;
+            }
+        }
+
+        $corpus = $this->buildLexicalCorpus();
+
+        file_put_contents($cacheFile, json_encode($corpus), LOCK_EX);
+
+        return $corpus;
+    }
+
+    /**
+     * @return array{corpus_size: int, word_counts: array<string, int>}
+     */
+    private function buildLexicalCorpus(): array
+    {
+        $conn = $this->entityManager->getConnection();
+        $sql = 'SELECT v.resource_id, v.value
+                FROM value v
+                JOIN resource r ON r.id = v.resource_id
+                JOIN item i ON i.id = r.id
+                WHERE v.property_id = ?
+                  AND v.value IS NOT NULL
+                  AND r.resource_template_id = 2';
+        $rows = $conn->fetchAllAssociative($sql, [self::BIBO_CONTENT_PROPERTY_ID]);
+
+        $itemCount = 0;
+        $wordCounts = [];
+        $seenItems = [];
+
+        foreach ($rows as $row) {
+            $resourceId = (int) $row['resource_id'];
+            if (isset($seenItems[$resourceId])) {
+                continue;
+            }
+            $seenItems[$resourceId] = true;
+            $itemCount++;
+
+            $words = $this->tokenizeText($row['value']);
+            foreach ($words as $word) {
+                $wordCounts[$word] = ($wordCounts[$word] ?? 0) + 1;
+            }
+        }
+
+        return [
+            'corpus_size' => $itemCount,
+            'word_counts' => $wordCounts,
+        ];
     }
 
     private function fetchHealthStatus(): string

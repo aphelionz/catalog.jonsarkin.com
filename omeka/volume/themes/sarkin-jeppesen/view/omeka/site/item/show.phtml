@@ -300,22 +300,11 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <?php endif; ?>
 
 
-            <?php if ($transcription): ?>
-            <section aria-labelledby="transcription-heading">
-                <h4 id="transcription-heading"><?php echo $translate('Transcription'); ?></h4>
-                <div class="transcription"><?php echo nl2br($transcription); ?></div>
-            </section>
-            <?php endif; ?>
-
             <?php $itemUrl = $this->serverUrl(true); ?>
             <div class="print-qr" aria-hidden="true">
                 <div id="item-qr"></div>
                 <a href="<?php echo $escape($itemUrl); ?>"><?php echo $escape($itemUrl); ?></a>
             </div>
-        </div>
-
-        <div class="collector-column">
-            <?php $isAlbumPiece = in_array(strip_tags($surface), ['Album Sleeve', 'Cardboard'], true); ?>
 
             <?php if (!empty($motifs)): ?>
             <div id="iconographic-profile"
@@ -332,6 +321,19 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 </ul>
             <?php endif; ?>
 
+            <?php if ($transcription): ?>
+            <div id="lexical-profile"
+                 data-item-id="<?php echo (int) $item->id(); ?>"
+                 data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
+                 class="lexical-profile"
+                 hidden>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="collector-column">
+            <?php $isAlbumPiece = in_array(strip_tags($surface), ['Album Sleeve', 'Cardboard'], true); ?>
+
             <section id="similar-pieces"
                      data-item-id="<?php echo (int) $item->id(); ?>"
                      data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
@@ -341,6 +343,13 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <div class="similar-grid"></div>
                 <a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>" class="similar-more">View all</a>
             </section>
+
+            <?php if ($transcription): ?>
+            <section class="transcription-section" aria-labelledby="transcription-heading">
+                <h4 id="transcription-heading"><?php echo $translate('Transcription'); ?></h4>
+                <div class="transcription"><?php echo nl2br($transcription); ?></div>
+            </section>
+            <?php endif; ?>
 
             <div class="collector-details">
                 <?php if ($displayCare): ?>
@@ -414,6 +423,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 </section>
             </div>
         </div>
+
     </section>
 
     <!-- ═══ RECORD FOOTER ═══ -->

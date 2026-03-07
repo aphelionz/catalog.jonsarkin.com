@@ -569,6 +569,7 @@ abbr[title] {
   list-style: none;
   margin: 0;
   padding: 0;
+  border-top: var(--border);
 }
 
 .genres li {
@@ -583,7 +584,6 @@ abbr[title] {
 /* Iconographic profile */
 
 .iconographic-profile {
-  border-top: var(--border-light);
   padding: var(--gutter);
 }
 
@@ -593,7 +593,6 @@ abbr[title] {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin: 0 0 var(--gutter) 0;
-  color: var(--secondary);
 }
 
 .motif-frequency {
@@ -642,6 +641,76 @@ abbr[title] {
   font-variant-numeric: tabular-nums;
   border-left: var(--border);
   padding: 6px 10px;
+}
+
+/* Lexical profile */
+
+.lexical-profile {
+  border-top: var(--border);
+  margin-left: calc(-1 * var(--gutter));
+  margin-right: calc(-1 * var(--gutter));
+  padding: var(--gutter);
+}
+
+.lex-profile-heading {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 var(--gutter) 0;
+}
+
+.word-frequency {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-bottom: var(--gutter);
+}
+
+.word-frequency th {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  padding: 4px var(--gutter) 4px 0;
+  border-bottom: var(--border);
+  color: var(--secondary);
+}
+
+.word-frequency td {
+  padding: 4px var(--gutter) 4px 0;
+  border-bottom: var(--border-light);
+}
+
+.word-frequency tr:last-child td { border-bottom: none; }
+.word-frequency td:first-child { font-weight: 600; }
+.word-frequency td:nth-child(2),
+.word-frequency td:nth-child(3),
+.word-frequency th:nth-child(2),
+.word-frequency th:nth-child(3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lex-profile-note {
+  font-size: 0.7rem;
+  color: var(--secondary);
+  margin: var(--gutter) 0 0;
+  letter-spacing: 0.02em;
+}
+
+.transcription-section {
+  padding: var(--gutter);
+  border-top: var(--border);
+}
+
+.transcription-section h4 {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 var(--gutter) 0;
 }
 
 .collector-details { padding: var(--gutter); }
@@ -702,12 +771,11 @@ abbr[title] {
 
 #similar-pieces {
   padding: var(--gutter);
-  border-top: var(--border-light);
 }
 
 #similar-pieces h3 {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin: 0 0 var(--gutter);
@@ -1948,6 +2016,14 @@ nav.pagination span.row-count {
   .motif-frequency th { font-size: 5.5pt; padding: 2px 4px 2px 0; }
   .motif-frequency td { padding: 2px 4px 2px 0; }
   .icon-profile-note { font-size: 6pt; }
+
+  /* Lexical profile */
+  .lexical-profile { padding: var(--gutter); }
+  .lex-profile-heading { font-size: 6pt; margin-bottom: 4px; }
+  .word-frequency { font-size: 7pt; }
+  .word-frequency th { font-size: 5.5pt; padding: 2px 4px 2px 0; }
+  .word-frequency td { padding: 2px 4px 2px 0; }
+  .lex-profile-note { font-size: 6pt; }
 
   /* Motif list (non-album pieces) */
   .genres li { font-size: 7pt; padding: var(--gutter); }

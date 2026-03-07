@@ -147,6 +147,60 @@
             .catch(function () { /* service down — section stays hidden */ });
     }
 
+    // ── Lexical profile (async, detail page) ──
+    var lexSection = document.getElementById('lexical-profile');
+    if (lexSection) {
+        var lexItemId = lexSection.getAttribute('data-item-id');
+        var lexSite = lexSection.getAttribute('data-site');
+        var lexEndpoint = '/lexical-profile/' + lexItemId + '/json';
+
+        fetch(lexEndpoint)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                if (!data.words || !data.words.length) return;
+
+                var corpusSize = data.corpus_size || 0;
+                var formatted = corpusSize.toLocaleString();
+                var totalWords = data.total_unique_words || data.words.length;
+
+                var html = '<h4 class="lex-profile-heading">Lexical Profile</h4>';
+                html += '<table class="word-frequency">';
+                html += '<thead><tr>';
+                html += '<th>Word</th>';
+                html += '<th>Corpus Frequency</th>';
+                html += '<th>% of Works</th>';
+                html += '</tr></thead>';
+                html += '<tbody>';
+
+                var searchBase = '/s/' + (lexSite || 'main') + '/item'
+                    + '?fulltext_search=';
+
+                data.words.forEach(function (w) {
+                    var href = searchBase + encodeURIComponent(w.word);
+                    html += '<tr>';
+                    html += '<td><a href="' + href + '">' + w.word + '</a></td>';
+                    html += '<td>' + w.corpus_frequency.toLocaleString()
+                          + ' of ' + formatted + '</td>';
+                    html += '<td>' + w.corpus_percentage.toFixed(1) + '%</td>';
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                html += '<p class="lex-profile-note">';
+                if (totalWords > data.words.length) {
+                    html += 'Showing ' + data.words.length + ' rarest words'
+                          + ' (of ' + totalWords + ' unique). ';
+                }
+                html += 'Based on word distribution across '
+                      + formatted + ' cataloged works.';
+                html += '</p>';
+
+                lexSection.innerHTML = html;
+                lexSection.removeAttribute('hidden');
+            })
+            .catch(function () { /* service down — section stays hidden */ });
+    }
+
     // ── Iconographic badges (async, browse page) ──
     var cards = document.querySelectorAll('.chart-card[data-item-id]');
     if (cards.length) {

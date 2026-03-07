@@ -23,7 +23,8 @@ class SimilarControllerFactory implements FactoryInterface
             $logger = new NullLogger();
         }
         $moduleConfig = ModuleConfig::resolve($container);
+        $entityManager = $container->get('Omeka\EntityManager');
 
-        return new SimilarController($httpClient, $api, $logger, $moduleConfig);
+        return new SimilarController($httpClient, $api, $logger, $moduleConfig, $entityManager);
     }
 }

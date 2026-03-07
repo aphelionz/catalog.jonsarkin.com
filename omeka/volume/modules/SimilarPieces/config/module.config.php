@@ -58,6 +58,20 @@ return [
                     ],
                 ],
             ],
+            'lexical-profile' => [
+                'type' => Segment::class,
+                'options' => [
+                    'route' => '/lexical-profile/:item_id/json',
+                    'constraints' => [
+                        'item_id' => '\\d+',
+                    ],
+                    'defaults' => [
+                        '__NAMESPACE__' => 'SimilarPieces\\Controller',
+                        'controller' => Controller\SimilarController::class,
+                        'action' => 'lexicalProfile',
+                    ],
+                ],
+            ],
             'similar-search' => [
                 'type' => Segment::class,
                 'options' => [
