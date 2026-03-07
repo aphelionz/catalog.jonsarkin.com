@@ -48,12 +48,12 @@ const PROP = {
   'curation:note':               1710,
 };
 
-// Controlled vocabularies
-const WORK_TYPES = ['Drawing', 'Painting', 'Collage', 'Mixed Media', 'Sculpture', 'Print', 'Other'];
-const SUPPORTS = ['Paper', 'Cardboard', 'Cardboard album sleeve', 'Canvas', 'Board', 'Wood', 'Found Object', 'Envelope', 'Album Sleeve', 'Other'];
-const MOTIFS = ['Eyes', 'Fish', 'Faces', 'Hands', 'Text Fragments', 'Grids', 'Circles', 'Patterns', 'Animals', 'Names/Words', 'Maps', 'Numbers'];
-const CONDITIONS = ['Excellent', 'Good', 'Fair', 'Poor', 'Not Examined'];
-const SIGNATURE_ARROWS = ['↖', '↑', '↗', '←', '∅', '→', '↙', '↓', '↘'];
+// Controlled vocabularies — populated from Omeka custom_vocabs API at init
+let WORK_TYPES = [];
+let SUPPORTS = [];
+let MOTIFS = [];
+let CONDITIONS = [];
+let SIGNATURE_ARROWS = ['↖', '↑', '↗', '←', '∅', '→', '↙', '↓', '↘']; // layout order matters for grid
 const DATE_YEARS = Array.from({ length: 2024 - 1987 + 1 }, (_, i) => String(1987 + i));
 
 // Write-safe keys for PATCH (from enrich_metadata.py:_clean_value)
@@ -150,6 +150,25 @@ async function apiPatch(path, body) {
     throw new Error(`PATCH ${resp.status}: ${text.slice(0, 200)}`);
   }
   return resp.json();
+}
+
+async function fetchCustomVocabs() {
+  try {
+    const { json: vocabs } = await apiGet('custom_vocabs');
+    const byLabel = {};
+    for (const v of vocabs) byLabel[v['o:label']] = v['o:terms'] || [];
+    if (byLabel['Work Type']?.length) WORK_TYPES = byLabel['Work Type'];
+    if (byLabel['Support']?.length) SUPPORTS = byLabel['Support'];
+    if (byLabel['Motifs']?.length) MOTIFS = byLabel['Motifs'];
+    if (byLabel['Condition']?.length) CONDITIONS = byLabel['Condition'];
+    // Signature: keep grid layout order, but validate against vocab
+    if (byLabel['Signature']?.length) {
+      const vocabSet = new Set(byLabel['Signature']);
+      SIGNATURE_ARROWS = SIGNATURE_ARROWS.filter(a => vocabSet.has(a));
+    }
+  } catch (err) {
+    console.warn('Failed to fetch custom vocabs, using defaults:', err);
+  }
 }
 
 // ── Data loading ────────────────────────────────────────────────────────────
@@ -2114,6 +2133,7 @@ function setupSprintButtons() {
 
 async function init() {
   cacheDom();
+  await fetchCustomVocabs();
   initFieldSprints();
   setupSelects();
   setupDatePills();
