@@ -22,6 +22,7 @@
         <button class="filter-btn" data-filter="dates">Dates <span id="count-dates"></span></button>
         <button class="filter-btn" data-filter="all">All <span id="count-all"></span></button>
         <button class="filter-btn" data-filter="box">By Box</button>
+        <button class="filter-btn" data-filter="curate">Curate</button>
       </div>
       <select id="box-select" class="hidden">
         <option value="">Select box…</option>
@@ -167,6 +168,19 @@
       </form>
     </section>
   </main>
+
+  <!-- ── Curate mode ────────────────────────────────────────────────── -->
+  <section id="curate-panel" class="hidden">
+    <div id="curate-progress">
+      <span id="curate-count"></span>
+      <button id="curate-undo" class="btn btn-nav" disabled>Undo</button>
+    </div>
+    <div id="card-stage"></div>
+    <div id="curate-actions">
+      <button id="curate-pass" class="btn curate-btn-pass" title="← or swipe left">← Pass</button>
+      <button id="curate-keep" class="btn curate-btn-keep" title="→ or swipe right">Keep →</button>
+    </div>
+  </section>
 
   <!-- Toast -->
   <div id="toast" class="hidden"></div>

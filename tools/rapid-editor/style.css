@@ -248,3 +248,169 @@ textarea { resize: vertical; }
   animation: fadeout 1.5s ease 0.5s forwards;
 }
 @keyframes fadeout { to { opacity: 0; } }
+
+/* ==========================================================================
+   Curate Mode — Tinder-style swipe interface
+   ========================================================================== */
+
+#curate-panel {
+  position: fixed;
+  top: var(--nav-h);
+  left: 0; right: 0; bottom: 0;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* ── Progress bar ──────────────────────────────────────────────────── */
+#curate-progress {
+  position: absolute;
+  top: 12px; left: 16px; right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #888;
+  font-size: 13px;
+}
+#curate-count { font-variant-numeric: tabular-nums; }
+#curate-undo { margin-left: auto; font-size: 11px; padding: 4px 10px; }
+
+/* ── Card stage ────────────────────────────────────────────────────── */
+#card-stage {
+  position: relative;
+  width: min(420px, 90vw);
+  height: min(560px, 70vh);
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.curate-card {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.08s ease-out, box-shadow 0.2s;
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+}
+.curate-card.dragging {
+  cursor: grabbing;
+  transition: none;
+}
+.curate-card.fly-off {
+  transition: transform 0.35s ease-in, opacity 0.35s ease-in;
+  opacity: 0;
+  pointer-events: none;
+}
+.curate-card.snap-back {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.curate-card.back-card .card-meta {
+  visibility: hidden;
+}
+.curate-card.hint-right {
+  box-shadow: 0 0 0 3px rgba(42, 125, 46, 0.6), 0 4px 24px rgba(0,0,0,0.3);
+}
+
+/* ── Card interior ─────────────────────────────────────────────────── */
+.card-img-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #222;
+  overflow: hidden;
+  min-height: 0;
+}
+.card-img-wrap img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.card-img-loading {
+  color: #666;
+  font-size: 13px;
+}
+.card-meta {
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #eee;
+}
+.card-meta-id {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111;
+}
+.card-meta-detail,
+.card-meta-date {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ── Action buttons ────────────────────────────────────────────────── */
+#curate-actions {
+  position: absolute;
+  bottom: 24px;
+  display: flex;
+  gap: 16px;
+}
+.curate-btn-pass {
+  background: #555;
+  color: #fff;
+  padding: 12px 32px;
+  font-size: 15px;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.curate-btn-pass:hover { background: #666; }
+.curate-btn-keep {
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 32px;
+  font-size: 15px;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.curate-btn-keep:hover { background: var(--accent-hover); }
+
+/* ── Completion screen ─────────────────────────────────────────────── */
+.curate-done {
+  color: #888;
+  text-align: center;
+  padding-top: 30%;
+}
+.curate-done h2 {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #aaa;
+  font-weight: 300;
+}
+.curate-done p {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  #card-stage {
+    width: 95vw;
+    height: 65vh;
+  }
+  #curate-actions { bottom: 12px; gap: 12px; }
+  .curate-btn-pass, .curate-btn-keep { padding: 10px 24px; font-size: 14px; }
+}

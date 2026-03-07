@@ -11,6 +11,12 @@ const AUTH = { key_identity: 'catalog_api', key_credential: 'sarkin2024' };
 const RESOURCE_TEMPLATE_ID = 2;
 const CREATOR_ITEM_ID = 3;
 
+// Curate mode
+const PERMANENT_COLLECTION_SET_ID = 7490;
+const SWIPE_THRESHOLD = 100;    // px of horizontal drag to trigger action
+const ROTATION_FACTOR = 0.12;   // degrees per px of drag
+const FLY_DISTANCE = 1.5;       // viewport-width multiplier for fly-off
+
 // Property IDs (from enrich_metadata.py)
 const PROP = {
   'dcterms:identifier':            10,
@@ -70,8 +76,16 @@ let currentItem = null;   // Full item JSON for the item being edited
 let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
-let filterMode = 'issues'; // 'issues' | 'dates' | 'all' | 'box'
+let filterMode = 'issues'; // 'issues' | 'dates' | 'all' | 'box' | 'curate'
 let boxFilter = '';
+
+// Curate state
+let curateMode = false;
+let curateQueue = [];
+let curateIndex = 0;
+let curateLastAction = null;  // { itemId, action: 'keep'|'pass' }
+let curateDragState = null;   // { startX, startY, currentX, currentY, cardEl, pointerId }
+let curateActing = false;     // prevent double-swipe while fly-off in progress
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
 
@@ -479,7 +493,7 @@ function buildPayload(item, formState) {
   }
 
   // 2. Copy system keys (NOT o:resource_template — causes 422)
-  for (const sysKey of ['o:resource_class', 'o:item_set', 'o:media', 'o:is_public']) {
+  for (const sysKey of ['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
     if (sysKey in item) payload[sysKey] = item[sysKey];
   }
 
@@ -721,6 +735,7 @@ function setupDatePills() {
 
   // Unknown date pill — proper art catalog convention for "during his career"
   makePill('c. 1989–2024', 'c. 1989–2024', 'date-unknown');
+  makePill('c. 2000s', 'c. 2000s', 'date-unknown');
 
   // Year pills with short labels ('87, '88, ... '24)
   for (const year of DATE_YEARS) {
@@ -810,7 +825,19 @@ function setupBoxSelect() {
 function setupFilterButtons() {
   for (const btn of $$('.filter-btn')) {
     btn.addEventListener('click', () => {
-      if (!confirmIfDirty()) return;
+      // Curate mode: special handling
+      if (btn.dataset.filter === 'curate') {
+        if (curateMode) return; // already in curate mode
+        if (!confirmIfDirty()) return;
+        enterCurateMode();
+        return;
+      }
+
+      // Leaving curate mode — skip dirty check (no editor form to lose)
+      const wasCurate = curateMode;
+      if (curateMode) exitCurateMode();
+
+      if (!wasCurate && !confirmIfDirty()) return;
       for (const b of $$('.filter-btn')) b.classList.remove('active');
       btn.classList.add('active');
       filterMode = btn.dataset.filter;
@@ -842,6 +869,22 @@ function setupKeyboard() {
   document.addEventListener('keydown', (e) => {
     const mod = e.metaKey || e.ctrlKey;
 
+    // Curate mode shortcuts
+    if (curateMode) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        triggerCurateSwipe('right');
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        triggerCurateSwipe('left');
+      } else if (mod && e.key === 'z') {
+        e.preventDefault();
+        curateUndo();
+      }
+      return; // Don't process editor shortcuts in curate mode
+    }
+
+    // Normal editor shortcuts
     if (mod && e.key === 's') {
       e.preventDefault();
       saveCurrentItem();
@@ -871,6 +914,436 @@ function showToast(msg, isError = false) {
   setTimeout(() => dom.toast.classList.add('hidden'), 2000);
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Curate Mode — Tinder-style Permanent Collection curation ────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Curate: queue ────────────────────────────────────────────────────────────
+
+function buildCurateQueue() {
+  curateQueue = allItems
+    .filter(item => {
+      const sets = item['o:item_set'] || [];
+      return !sets.some(s => s['o:id'] === PERMANENT_COLLECTION_SET_ID);
+    })
+    .sort((a, b) => {
+      // Oldest modified first — touched items sink to the bottom
+      const ma = (a['o:modified'] && a['o:modified']['@value']) || '';
+      const mb = (b['o:modified'] && b['o:modified']['@value']) || '';
+      return ma.localeCompare(mb);
+    });
+  curateIndex = 0;
+}
+
+// ── Curate: mode switching ───────────────────────────────────────────────────
+
+function enterCurateMode() {
+  curateMode = true;
+  filterMode = 'curate';
+
+  dom.main.classList.add('hidden');
+  $('#curate-panel').classList.remove('hidden');
+
+  for (const b of $$('.filter-btn')) {
+    b.classList.toggle('active', b.dataset.filter === 'curate');
+  }
+  dom.boxSelect.classList.add('hidden');
+
+  buildCurateQueue();
+  updateCurateProgress();
+
+  if (curateQueue.length) {
+    renderCurateCards();
+    preloadCurateNext();
+  } else {
+    showCurateComplete();
+  }
+
+  savePosition();
+}
+
+function exitCurateMode() {
+  curateMode = false;
+  $('#curate-panel').classList.add('hidden');
+  dom.main.classList.remove('hidden');
+  clearCardStage();
+}
+
+// ── Curate: progress ─────────────────────────────────────────────────────────
+
+function updateCurateProgress() {
+  const countEl = $('#curate-count');
+  const undoBtn = $('#curate-undo');
+  const remaining = curateQueue.length - curateIndex;
+  const reviewed = curateIndex;
+  countEl.textContent = `${reviewed} reviewed · ${remaining} remaining`;
+  undoBtn.disabled = !curateLastAction;
+
+  // Update nav progress bar too
+  const pct = curateQueue.length > 0 ? (curateIndex / curateQueue.length) * 100 : 0;
+  dom.progressFill.style.width = `${pct}%`;
+}
+
+// ── Curate: card rendering ───────────────────────────────────────────────────
+
+function clearCardStage() {
+  const stage = $('#card-stage');
+  stage.innerHTML = '';
+}
+
+function renderCurateCards() {
+  clearCardStage();
+  // Next card behind (if exists)
+  if (curateIndex + 1 < curateQueue.length) {
+    renderCurateCard(curateQueue[curateIndex + 1], 1);
+  }
+  // Current card on top
+  if (curateIndex < curateQueue.length) {
+    renderCurateCard(curateQueue[curateIndex], 2);
+  }
+}
+
+async function renderCurateCard(item, zIndex) {
+  const stage = $('#card-stage');
+  const card = document.createElement('div');
+  card.className = 'curate-card';
+  card.dataset.itemId = item['o:id'];
+  card.style.zIndex = zIndex;
+
+  // Back card: scaled down for depth effect, hide meta to prevent text bleed
+  if (zIndex === 1) {
+    card.classList.add('back-card');
+    card.style.transform = 'scale(0.95)';
+    card.style.opacity = '0.5';
+    card.style.pointerEvents = 'none';
+  }
+
+  const identifier = item._identifier || `item-${item['o:id']}`;
+  const medium = extractValue(item, 'dcterms:medium');
+  const date = extractValue(item, 'dcterms:date');
+  const h = extractValue(item, 'schema:height');
+  const w = extractValue(item, 'schema:width');
+  const dims = (h && w) ? `${h}″ × ${w}″` : '';
+  const detail = [medium, dims].filter(Boolean).join(', ');
+
+  card.innerHTML = `
+    <div class="card-img-wrap">
+      <div class="card-img-loading">Loading…</div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-id">${identifier}</div>
+      ${detail ? `<div class="card-meta-detail">${detail}</div>` : ''}
+      ${date ? `<div class="card-meta-date">${date}</div>` : ''}
+    </div>
+  `;
+
+  stage.appendChild(card);
+
+  // Load image
+  const url = await getImageUrl(item);
+  if (url) {
+    const imgWrap = card.querySelector('.card-img-wrap');
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = identifier;
+    img.onload = () => {
+      const loading = imgWrap.querySelector('.card-img-loading');
+      if (loading) loading.remove();
+    };
+    imgWrap.appendChild(img);
+  }
+
+  // Only attach swipe handlers to the top card
+  if (zIndex === 2) {
+    attachSwipeHandlers(card);
+  }
+}
+
+function preloadCurateNext() {
+  // Preload 2 items ahead (next is already rendered)
+  const ahead = curateIndex + 2;
+  if (ahead < curateQueue.length) {
+    getImageUrl(curateQueue[ahead]).then(url => {
+      if (url) { const img = new Image(); img.src = url; }
+    });
+  }
+}
+
+// ── Curate: swipe gesture system ─────────────────────────────────────────────
+
+function attachSwipeHandlers(cardEl) {
+  cardEl.addEventListener('pointerdown', onCuratePointerDown);
+}
+
+function onCuratePointerDown(e) {
+  if (curateDragState || curateActing) return;
+  const card = e.currentTarget;
+  card.setPointerCapture(e.pointerId);
+  card.classList.add('dragging');
+  curateDragState = {
+    startX: e.clientX,
+    startY: e.clientY,
+    currentX: e.clientX,
+    currentY: e.clientY,
+    cardEl: card,
+    pointerId: e.pointerId,
+  };
+  card.addEventListener('pointermove', onCuratePointerMove);
+  card.addEventListener('pointerup', onCuratePointerUp);
+  card.addEventListener('pointercancel', onCuratePointerUp);
+}
+
+function onCuratePointerMove(e) {
+  if (!curateDragState || e.pointerId !== curateDragState.pointerId) return;
+  curateDragState.currentX = e.clientX;
+  curateDragState.currentY = e.clientY;
+
+  const dx = curateDragState.currentX - curateDragState.startX;
+  const dy = (curateDragState.currentY - curateDragState.startY) * 0.3;
+  const rotation = dx * ROTATION_FACTOR;
+
+  curateDragState.cardEl.style.transform =
+    `translate(${dx}px, ${dy}px) rotate(${rotation}deg)`;
+
+  // Green glow hint when dragging right past half-threshold
+  curateDragState.cardEl.classList.toggle('hint-right', dx > SWIPE_THRESHOLD * 0.5);
+}
+
+function onCuratePointerUp(e) {
+  if (!curateDragState || e.pointerId !== curateDragState.pointerId) return;
+  const card = curateDragState.cardEl;
+  card.removeEventListener('pointermove', onCuratePointerMove);
+  card.removeEventListener('pointerup', onCuratePointerUp);
+  card.removeEventListener('pointercancel', onCuratePointerUp);
+  card.classList.remove('dragging', 'hint-right');
+
+  const dx = curateDragState.currentX - curateDragState.startX;
+  curateDragState = null;
+
+  if (dx > SWIPE_THRESHOLD) {
+    flyOffCard(card, 'right');
+  } else if (dx < -SWIPE_THRESHOLD) {
+    flyOffCard(card, 'left');
+  } else {
+    // Snap back
+    card.classList.add('snap-back');
+    card.style.transform = '';
+    card.addEventListener('transitionend', () => {
+      card.classList.remove('snap-back');
+    }, { once: true });
+  }
+}
+
+function flyOffCard(cardEl, direction) {
+  if (curateActing) return;
+  curateActing = true;
+
+  const vw = window.innerWidth;
+  const targetX = direction === 'right' ? vw * FLY_DISTANCE : -vw * FLY_DISTANCE;
+  const rotation = direction === 'right' ? 30 : -30;
+
+  cardEl.classList.add('fly-off');
+  cardEl.style.transform = `translate(${targetX}px, 0) rotate(${rotation}deg)`;
+
+  cardEl.addEventListener('transitionend', () => {
+    cardEl.remove();
+    promoteCurateBackCard();
+    curateActing = false;
+  }, { once: true });
+
+  // Trigger the action
+  const itemId = Number(cardEl.dataset.itemId);
+  if (direction === 'right') {
+    curateKeep(itemId);
+  } else {
+    curatePass(itemId);
+  }
+}
+
+function triggerCurateSwipe(direction) {
+  if (curateActing) return;
+  const stage = $('#card-stage');
+  // Find the top card by z-index (can't use :last-child — DOM order
+  // changes after promoteCurateBackCard appends a new back card)
+  let topCard = null;
+  for (const c of stage.querySelectorAll('.curate-card:not(.fly-off)')) {
+    if (!topCard || Number(c.style.zIndex) > Number(topCard.style.zIndex)) {
+      topCard = c;
+    }
+  }
+  if (topCard) {
+    flyOffCard(topCard, direction);
+  }
+}
+
+function promoteCurateBackCard() {
+  const stage = $('#card-stage');
+  const backCard = stage.querySelector('.curate-card');
+  if (backCard && backCard.style.zIndex === '1') {
+    backCard.classList.remove('back-card');
+    backCard.style.zIndex = 2;
+    backCard.style.pointerEvents = '';
+    backCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+    backCard.style.transform = '';
+    backCard.style.opacity = '1';
+    attachSwipeHandlers(backCard);
+    backCard.addEventListener('transitionend', () => {
+      backCard.style.transition = '';
+    }, { once: true });
+  }
+
+  // Render new back card if available
+  if (curateIndex + 1 < curateQueue.length) {
+    renderCurateCard(curateQueue[curateIndex + 1], 1);
+  }
+
+  preloadCurateNext();
+
+  if (curateIndex >= curateQueue.length) {
+    showCurateComplete();
+  }
+}
+
+// ── Curate: API actions ──────────────────────────────────────────────────────
+
+function buildCuratePayload(item) {
+  // Same pattern as buildPayload() but with no form edits — preserve everything
+  const payload = {};
+
+  for (const [key, val] of Object.entries(item)) {
+    if (key.includes(':') && !key.startsWith('o:') && Array.isArray(val)) {
+      payload[key] = val.filter(v => typeof v === 'object').map(cleanValue);
+    }
+  }
+
+  for (const sysKey of ['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
+    if (sysKey in item) payload[sysKey] = item[sysKey];
+  }
+
+  return payload;
+}
+
+async function curateKeep(itemId) {
+  // Advance immediately — card is already gone, API works in background
+  curateIndex++;
+  curateLastAction = { itemId, action: 'keep' };
+  updateCurateProgress();
+
+  try {
+    const { json: freshItem } = await apiGet(`items/${itemId}`);
+    const payload = buildCuratePayload(freshItem);
+
+    // Append Permanent Collection set if not already present
+    const sets = payload['o:item_set'] || [];
+    if (!sets.some(s => s['o:id'] === PERMANENT_COLLECTION_SET_ID)) {
+      payload['o:item_set'] = [...sets, { 'o:id': PERMANENT_COLLECTION_SET_ID }];
+    }
+
+    await apiPatch(`items/${itemId}`, payload);
+    showToast('✓ Added to Permanent Collection');
+
+    // Update local state
+    const idx = allItems.findIndex(it => it['o:id'] === itemId);
+    if (idx >= 0) {
+      allItems[idx]['o:item_set'] = payload['o:item_set'];
+    }
+  } catch (err) {
+    showToast(`Error: ${err.message}`, true);
+    console.error('Curate keep failed:', err);
+    curateLastAction = null;
+  }
+}
+
+async function curatePass(itemId) {
+  // Advance immediately — card is already gone, API works in background
+  curateIndex++;
+  curateLastAction = { itemId, action: 'pass' };
+  updateCurateProgress();
+
+  try {
+    // "Touch" the item — re-save without changes to bump o:modified
+    const { json: freshItem } = await apiGet(`items/${itemId}`);
+    const payload = buildCuratePayload(freshItem);
+    await apiPatch(`items/${itemId}`, payload);
+  } catch (err) {
+    showToast(`Error: ${err.message}`, true);
+    console.error('Curate pass failed:', err);
+    curateLastAction = null;
+  }
+}
+
+// ── Curate: undo ─────────────────────────────────────────────────────────────
+
+async function curateUndo() {
+  if (!curateLastAction || curateActing) return;
+  const { itemId, action } = curateLastAction;
+
+  if (action === 'keep') {
+    // Remove from Permanent Collection set
+    try {
+      const { json: freshItem } = await apiGet(`items/${itemId}`);
+      const payload = buildCuratePayload(freshItem);
+      payload['o:item_set'] = (payload['o:item_set'] || [])
+        .filter(s => s['o:id'] !== PERMANENT_COLLECTION_SET_ID);
+      await apiPatch(`items/${itemId}`, payload);
+      showToast('Undone — removed from collection');
+
+      // Update local state
+      const idx = allItems.findIndex(it => it['o:id'] === itemId);
+      if (idx >= 0) {
+        allItems[idx]['o:item_set'] = payload['o:item_set'];
+      }
+    } catch (err) {
+      showToast(`Undo error: ${err.message}`, true);
+      return;
+    }
+  } else {
+    showToast('Undone');
+  }
+
+  // Re-insert item at previous position
+  curateIndex = Math.max(0, curateIndex - 1);
+  const item = allItems.find(it => it['o:id'] === itemId);
+  if (item && curateIndex <= curateQueue.length) {
+    curateQueue.splice(curateIndex, 0, item);
+  }
+
+  curateLastAction = null;
+  renderCurateCards();
+  updateCurateProgress();
+}
+
+// ── Curate: completion ───────────────────────────────────────────────────────
+
+function showCurateComplete() {
+  const stage = $('#card-stage');
+  const kept = allItems.filter(item => {
+    const sets = item['o:item_set'] || [];
+    return sets.some(s => s['o:id'] === PERMANENT_COLLECTION_SET_ID);
+  }).length;
+
+  stage.innerHTML = `
+    <div class="curate-done">
+      <h2>Done</h2>
+      <p>${curateIndex} items reviewed · ${kept} in Permanent Collection</p>
+      <button class="btn btn-nav" id="curate-restart">Start over</button>
+    </div>
+  `;
+  $('#curate-restart').addEventListener('click', () => {
+    buildCurateQueue();
+    renderCurateCards();
+    updateCurateProgress();
+  });
+}
+
+// ── Curate: button & keyboard wiring ─────────────────────────────────────────
+
+function setupCurateButtons() {
+  $('#curate-pass').addEventListener('click', () => triggerCurateSwipe('left'));
+  $('#curate-keep').addEventListener('click', () => triggerCurateSwipe('right'));
+  $('#curate-undo').addEventListener('click', curateUndo);
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -884,6 +1357,7 @@ async function init() {
   setupKeyboard();
   setupFilterButtons();
   setupDirtyTracking();
+  setupCurateButtons();
 
   // Restore saved position
   restorePosition();
@@ -902,14 +1376,19 @@ async function init() {
   }
 
   setupBoxSelect();
-  buildQueue();
-  updateNav();
 
   dom.loading.classList.add('hidden');
-  dom.main.classList.remove('hidden');
 
-  if (queue.length) {
-    await loadItem(queueIndex);
+  // Enter curate mode if that was the saved filter
+  if (filterMode === 'curate') {
+    enterCurateMode();
+  } else {
+    buildQueue();
+    updateNav();
+    dom.main.classList.remove('hidden');
+    if (queue.length) {
+      await loadItem(queueIndex);
+    }
   }
 }
 
