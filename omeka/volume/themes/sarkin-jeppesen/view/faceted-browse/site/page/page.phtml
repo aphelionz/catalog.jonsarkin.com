@@ -118,6 +118,34 @@ $isNotMime = function ($str) {
                 $dateRaw = $val($item, 'dcterms:date', '') ?: $val($item, 'schema:dateCreated', '');
                 $date    = $isArtworkDate($dateRaw) ? $dateRaw : '';
                 $catId   = $val($item, 'dcterms:identifier', '');
+                $isWriting = ($item->resourceTemplate() && $item->resourceTemplate()->id() === 3);
+            ?>
+            <?php if ($isWriting): ?>
+            <?php
+                $genre   = $val($item, 'schema:genre', '');
+                $rawText = strip_tags((string) $item->value('bibo:content', ['default' => '']));
+                $excerpt = (mb_strlen($rawText) > 200)
+                    ? preg_replace('/\s+\S*$/', "\xE2\x80\xA6", mb_substr($rawText, 0, 200))
+                    : $rawText;
+                $dateYear = $date ? substr(strip_tags($date), 0, 4) : '';
+                $headerParts = array_filter([$genre, $dateYear]);
+            ?>
+            <li class="chart-card chart-card--writing">
+                <a href="<?php echo $escape($item->url()); ?>">
+                    <div class="card-writing-header">
+                        <?php echo $escape(implode(' · ', $headerParts)) ?: "\xE2\x80\x94"; ?>
+                    </div>
+                    <div class="card-excerpt"><?php echo $escape($excerpt); ?></div>
+                    <div class="card-info">
+                        <?php if ($catId): ?>
+                            <div class="card-id"><?php echo $catId; ?></div>
+                        <?php endif; ?>
+                        <div class="card-title"><?php echo $escape($heading); ?></div>
+                    </div>
+                </a>
+            </li>
+            <?php else: ?>
+            <?php
                 $mediumRaw = $val($item, 'dcterms:medium', '');
                 $medium  = $isNotMime($mediumRaw) ? $mediumRaw : '';
                 $surface = $val($item, 'schema:artworkSurface', '');
@@ -167,6 +195,7 @@ $isNotMime = function ($str) {
                     </div>
                 </a>
             </li>
+            <?php endif; ?>
             <?php endforeach; ?>
         </ul>
         <?php else: ?>

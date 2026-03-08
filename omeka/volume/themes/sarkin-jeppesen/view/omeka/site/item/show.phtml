@@ -60,6 +60,13 @@ if ($creatorVal) {
 $identifier = $val('dcterms:identifier');
 $type       = $val('dcterms:type');
 
+// ── Writing detection ──
+$resourceTemplate = $item->resourceTemplate();
+$isWriting = ($resourceTemplate && $resourceTemplate->id() === 3);
+$genre     = $val('schema:genre');
+$fullText  = $val('bibo:content');
+$sourceUrl = $val('dcterms:source');
+
 // ── Physical ──
 $mediumRaw  = $val('dcterms:medium');
 $medium     = ($mediumRaw && $isNotMime($mediumRaw)) ? $mediumRaw : '';
@@ -83,11 +90,20 @@ if ($height && $width) {
 
 // No medium→format fallback: format (framing) and medium are distinct fields
 
-// All works are untitled — build display labels from catalog number + medium + date
-$pageLabel = $identifier ?: ('Item #' . $item->id());
-$pageLabelLong = $pageLabel;
-if ($medium) $pageLabelLong .= ' · ' . strip_tags($medium);
-if ($date)   $pageLabelLong .= ', ' . strip_tags($date);
+// Build display labels
+if ($isWriting) {
+    // Writings have real titles
+    $pageLabel = $item->displayTitle() ?: ($identifier ?: ('Item #' . $item->id()));
+    $pageLabelLong = $pageLabel;
+    if ($genre) $pageLabelLong .= ' · ' . strip_tags($genre);
+    if ($date)  $pageLabelLong .= ', ' . strip_tags($date);
+} else {
+    // Artworks are untitled — build display labels from catalog number + medium + date
+    $pageLabel = $identifier ?: ('Item #' . $item->id());
+    $pageLabelLong = $pageLabel;
+    if ($medium) $pageLabelLong .= ' · ' . strip_tags($medium);
+    if ($date)   $pageLabelLong .= ', ' . strip_tags($date);
+}
 
 // ── Custody & Rights ──
 $owner      = $val('bibo:owner');
@@ -132,10 +148,17 @@ foreach ($allMedia as $m) {
 // ── SEO: title, meta description, Open Graph, Twitter Card, canonical ──
 $this->headTitle(strip_tags($pageLabelLong) . ' — Jon Sarkin');
 
-$metaDesc = ($creator ?: 'Jon Sarkin') . '. ' . strip_tags($pageLabel)
-    . ($medium ? ". $medium" : '')
-    . ($date ? " ($date)" : '')
-    . '. From the Jon Sarkin Catalog Raisonné.';
+if ($isWriting) {
+    $metaDesc = ($creator ?: 'Jon Sarkin') . '. ' . strip_tags($pageLabel)
+        . ($genre ? ". $genre" : '')
+        . ($date ? " ($date)" : '')
+        . '. From the Jon Sarkin Catalog Raisonné.';
+} else {
+    $metaDesc = ($creator ?: 'Jon Sarkin') . '. ' . strip_tags($pageLabel)
+        . ($medium ? ". $medium" : '')
+        . ($date ? " ($date)" : '')
+        . '. From the Jon Sarkin Catalog Raisonné.';
+}
 $this->headMeta()->appendName('description', strip_tags($metaDesc));
 
 $this->headMeta()->appendProperty('og:title', strip_tags($pageLabelLong) . ' — ' . ($creator ?: 'Jon Sarkin'));
@@ -150,28 +173,49 @@ $this->headMeta()->appendName('twitter:card', 'summary_large_image');
 $this->headLink(['rel' => 'canonical', 'href' => $this->serverUrl(true)]);
 
 // ── Schema.org JSON-LD ──
-$jsonLd = [
-    '@context' => 'https://schema.org',
-    '@type'    => 'VisualArtwork',
-    'name'     => strip_tags($pageLabel),
-];
-if ($identifier) $jsonLd['identifier'] = strip_tags($identifier);
-$jsonLd['creator'] = [
-    '@type'     => 'Person',
-    'name'      => $creator ?: 'Jon Sarkin',
-    'birthDate' => '1953',
-    'deathDate' => '2024',
-];
-if ($date)       $jsonLd['dateCreated'] = strip_tags($date);
-if ($medium)     $jsonLd['artMedium'] = strip_tags($medium);
-if ($surface)    $jsonLd['artworkSurface'] = strip_tags($surface);
-if ($type)       $jsonLd['artform'] = strip_tags($type);
-if ($height)     $jsonLd['height'] = strip_tags($height);
-if ($width)      $jsonLd['width'] = strip_tags($width);
-if ($imageUrl)   $jsonLd['image'] = $imageUrl;
-$jsonLd['copyrightHolder'] = ['@type' => 'Organization', 'name' => 'The Jon Sarkin Estate'];
-if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
-if ($spatial)    $jsonLd['locationCreated'] = ['@type' => 'Place', 'name' => strip_tags($spatial)];
+if ($isWriting) {
+    $jsonLd = [
+        '@context' => 'https://schema.org',
+        '@type'    => 'Article',
+        'name'     => strip_tags($pageLabel),
+    ];
+    if ($identifier) $jsonLd['identifier'] = strip_tags($identifier);
+    $jsonLd['author'] = [
+        '@type'     => 'Person',
+        'name'      => $creator ?: 'Jon Sarkin',
+        'birthDate' => '1953',
+        'deathDate' => '2024',
+    ];
+    if ($date)       $jsonLd['datePublished'] = strip_tags($date);
+    if ($genre)      $jsonLd['genre'] = strip_tags($genre);
+    if ($fullText)   $jsonLd['articleBody'] = strip_tags($fullText);
+    $jsonLd['copyrightHolder'] = ['@type' => 'Organization', 'name' => 'The Jon Sarkin Estate'];
+    if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
+    if ($sourceUrl)  $jsonLd['url'] = strip_tags($sourceUrl);
+} else {
+    $jsonLd = [
+        '@context' => 'https://schema.org',
+        '@type'    => 'VisualArtwork',
+        'name'     => strip_tags($pageLabel),
+    ];
+    if ($identifier) $jsonLd['identifier'] = strip_tags($identifier);
+    $jsonLd['creator'] = [
+        '@type'     => 'Person',
+        'name'      => $creator ?: 'Jon Sarkin',
+        'birthDate' => '1953',
+        'deathDate' => '2024',
+    ];
+    if ($date)       $jsonLd['dateCreated'] = strip_tags($date);
+    if ($medium)     $jsonLd['artMedium'] = strip_tags($medium);
+    if ($surface)    $jsonLd['artworkSurface'] = strip_tags($surface);
+    if ($type)       $jsonLd['artform'] = strip_tags($type);
+    if ($height)     $jsonLd['height'] = strip_tags($height);
+    if ($width)      $jsonLd['width'] = strip_tags($width);
+    if ($imageUrl)   $jsonLd['image'] = $imageUrl;
+    $jsonLd['copyrightHolder'] = ['@type' => 'Organization', 'name' => 'The Jon Sarkin Estate'];
+    if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
+    if ($spatial)    $jsonLd['locationCreated'] = ['@type' => 'Place', 'name' => strip_tags($spatial)];
+}
 $jsonLd['isPartOf'] = [
     '@type' => 'CreativeWork',
     'name'  => 'Jon Sarkin: Catalog Raisonné',
@@ -187,6 +231,37 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
 <article aria-labelledby="record-title">
 
     <!-- ═══ RECORD HEADER ═══ -->
+    <?php if ($isWriting): ?>
+    <header class="record-header record-header--writing">
+        <div>
+            <div class="record-facts">
+                <?php if ($date): ?>
+                <div class="fact year">
+                    <dl><dt>Published</dt><dd><?php echo $date; ?></dd></dl>
+                </div>
+                <?php endif; ?>
+                <?php if ($genre): ?>
+                <div class="fact">
+                    <dl><dt>Form</dt><dd><?php echo $genre; ?></dd></dl>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="record-header-right">
+            <?php if ($identifier): ?>
+                <div class="catalog-id"><?php echo $identifier; ?></div>
+            <?php endif; ?>
+            <div class="icon-actions">
+                <button type="button" class="pill-button" id="copy-citation">[cite]</button>
+                <button type="button" class="pill-button" onclick="window.print();">[print]</button>
+                <button type="button" class="pill-button" data-action="share">[share]</button>
+                <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>" class="pill-button">[rights]</a>
+                <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
+            </div>
+            <h1 id="record-title"><?php echo $escape($pageLabel); ?></h1>
+        </div>
+    </header>
+    <?php else: ?>
     <header class="record-header">
         <div>
             <div class="record-facts">
@@ -226,42 +301,72 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <h1 id="record-title"><?php echo $escape($pageLabel); ?></h1>
         </div>
     </header>
+    <?php endif; ?>
 
     <!-- ═══ METADATA BAR ═══ -->
     <section class="record-metadata" aria-labelledby="object-metadata-heading">
         <h2 id="object-metadata-heading" class="sr-only"><?php echo $translate('Object metadata'); ?></h2>
         <div class="metadata-top">
             <div class="metadata-fields">
-                <?php if ($medium): ?>
-                <dl>
-                    <dt>Medium</dt><dd><?php echo $medium; ?></dd>
-                </dl>
-                <?php endif; ?>
-                <?php if ($surface): ?>
-                <dl>
-                    <dt>Support</dt><dd><?php echo $surface; ?></dd>
-                </dl>
-                <?php endif; ?>
-                <?php if ($condition): ?>
-                <dl>
-                    <dt>Condition</dt><dd><?php echo $condition; ?></dd>
-                </dl>
-                <?php endif; ?>
-                <?php
-                $ownerDisplay = $owner ?: (!empty($provenanceVals) ? $provenanceVals[0] : '');
-                if ($ownerDisplay && $isPermanentCollection) {
-                    $ownerDisplay .= ' (permanent collection)';
-                }
-                if ($ownerDisplay): ?>
-                <dl>
-                    <dt>Owner</dt><dd><?php echo $ownerDisplay; ?></dd>
-                </dl>
+                <?php if ($isWriting): ?>
+                    <?php if ($genre): ?>
+                    <dl>
+                        <dt>Literary Form</dt><dd><?php echo $genre; ?></dd>
+                    </dl>
+                    <?php endif; ?>
+                    <?php if ($date): ?>
+                    <dl>
+                        <dt>Published</dt><dd><?php echo $date; ?></dd>
+                    </dl>
+                    <?php endif; ?>
+                    <?php if ($sourceUrl): ?>
+                    <dl>
+                        <dt>Source</dt><dd><a href="<?php echo $escape($sourceUrl); ?>" target="_blank" rel="noopener" class="writing-source"><?php echo $escape(preg_replace('#^https?://#', '', strip_tags($sourceUrl))); ?></a></dd>
+                    </dl>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <?php if ($medium): ?>
+                    <dl>
+                        <dt>Medium</dt><dd><?php echo $medium; ?></dd>
+                    </dl>
+                    <?php endif; ?>
+                    <?php if ($surface): ?>
+                    <dl>
+                        <dt>Support</dt><dd><?php echo $surface; ?></dd>
+                    </dl>
+                    <?php endif; ?>
+                    <?php if ($condition): ?>
+                    <dl>
+                        <dt>Condition</dt><dd><?php echo $condition; ?></dd>
+                    </dl>
+                    <?php endif; ?>
+                    <?php
+                    $ownerDisplay = $owner ?: (!empty($provenanceVals) ? $provenanceVals[0] : '');
+                    if ($ownerDisplay && $isPermanentCollection) {
+                        $ownerDisplay .= ' (permanent collection)';
+                    }
+                    if ($ownerDisplay): ?>
+                    <dl>
+                        <dt>Owner</dt><dd><?php echo $ownerDisplay; ?></dd>
+                    </dl>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
 
     </section>
 
+    <?php if ($isWriting): ?>
+    <!-- ═══ WRITING CONTENT ═══ -->
+    <section class="record-media writing-content" aria-labelledby="writing-content-heading">
+        <h2 id="writing-content-heading" class="sr-only"><?php echo $translate('Full text'); ?></h2>
+        <?php if ($fullText): ?>
+            <div class="writing-text"><?php echo nl2br($fullText); ?></div>
+        <?php else: ?>
+            <p class="writing-no-text"><?php echo $translate('Full text not available.'); ?></p>
+        <?php endif; ?>
+    </section>
+    <?php else: ?>
     <!-- ═══ ARTWORK MEDIA ═══ -->
     <section class="record-media" aria-labelledby="artwork-media-heading">
         <h2 id="artwork-media-heading" class="sr-only"><?php echo $translate('Artwork media'); ?></h2>
@@ -277,8 +382,51 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             </div>
         <?php endif; ?>
     </section>
+    <?php endif; ?>
 
     <!-- ═══ CONTEXT / DOCUMENTATION SECTION ═══ -->
+    <?php if ($isWriting): ?>
+    <section class="record-value writing-documentation" aria-labelledby="collector-context-heading">
+        <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
+
+        <div class="writing-docs-inner">
+            <?php if ($description): ?>
+            <section aria-labelledby="description-heading">
+                <h4 id="description-heading"><?php echo $translate('Description'); ?></h4>
+                <p><?php echo $description; ?></p>
+            </section>
+            <?php endif; ?>
+
+            <?php if (!empty($motifs)): ?>
+            <section aria-labelledby="subjects-heading">
+                <h4 id="subjects-heading"><?php echo $translate('Subjects'); ?></h4>
+                <ul class="genres" aria-label="<?php echo $translate('Subjects'); ?>">
+                    <?php foreach ($motifs as $motif): ?>
+                        <li><a href="<?php echo $escape($this->url('site/resource', ['site-slug' => $this->currentSite()->slug(), 'controller' => 'item', 'action' => 'browse']) . '?property%5B0%5D%5Bproperty%5D=dcterms%3Asubject&property%5B0%5D%5Btype%5D=eq&property%5B0%5D%5Btext%5D=' . urlencode(strip_tags($motif))); ?>"><?php echo $motif; ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </section>
+            <?php endif; ?>
+
+            <?php if (!empty($bibliography)): ?>
+            <section aria-labelledby="bibliography-heading">
+                <h4 id="bibliography-heading"><?php echo $translate('Bibliography'); ?></h4>
+                <ul>
+                    <?php foreach ($bibliography as $bib): ?>
+                        <li><?php echo $bib; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </section>
+            <?php endif; ?>
+
+            <?php $itemUrl = $this->serverUrl(true); ?>
+            <div class="print-qr" aria-hidden="true">
+                <div id="item-qr"></div>
+                <a href="<?php echo $escape($itemUrl); ?>"><?php echo $escape($itemUrl); ?></a>
+            </div>
+        </div>
+    </section>
+    <?php else: ?>
     <section class="record-value" aria-labelledby="collector-context-heading">
         <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
 
@@ -425,6 +573,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         </div>
 
     </section>
+    <?php endif; ?>
 
     <!-- ═══ RECORD FOOTER ═══ -->
     <?php if ($creditText || $rights): ?>
