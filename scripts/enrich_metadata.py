@@ -58,8 +58,10 @@ from PIL import Image
 # ── Configuration ──────────────────────────────────────────────────────────
 
 OMEKA_BASE = os.getenv("OMEKA_BASE_URL", "http://localhost:8888")
-OMEKA_KEY_ID = os.getenv("OMEKA_KEY_IDENTITY", "catalog_api")
-OMEKA_KEY_CRED = os.getenv("OMEKA_KEY_CREDENTIAL", "sarkin2024")
+OMEKA_KEY_ID = os.getenv("OMEKA_KEY_IDENTITY")
+OMEKA_KEY_CRED = os.getenv("OMEKA_KEY_CREDENTIAL")
+if not OMEKA_KEY_ID or not OMEKA_KEY_CRED:
+    raise SystemExit("OMEKA_KEY_IDENTITY and OMEKA_KEY_CREDENTIAL env vars are required")
 
 MODEL_ALIASES = {
     "haiku":  "claude-haiku-4-5-20251001",

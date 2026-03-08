@@ -5,6 +5,12 @@
 (function () {
     'use strict';
 
+    function esc(s) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(s));
+        return d.innerHTML;
+    }
+
     // ── Mobile nav toggle ──
     var navToggle = document.querySelector('.nav-toggle');
     var siteNav   = document.getElementById('site-nav');
@@ -130,7 +136,7 @@
                 data.motifs.forEach(function (m) {
                     var href = browseBase + encodeURIComponent(m.motif);
                     html += '<tr>';
-                    html += '<td><a href="' + href + '">' + m.motif + '</a></td>';
+                    html += '<td><a href="' + href + '">' + esc(m.motif) + '</a></td>';
                     html += '<td>' + m.corpus_frequency.toLocaleString() + ' of ' + formatted + '</td>';
                     html += '<td>' + m.corpus_percentage.toFixed(1) + '%</td>';
                     html += '</tr>';
@@ -178,7 +184,7 @@
                 data.words.forEach(function (w) {
                     var href = searchBase + encodeURIComponent(w.word);
                     html += '<tr>';
-                    html += '<td><a href="' + href + '">' + w.word + '</a></td>';
+                    html += '<td><a href="' + href + '">' + esc(w.word) + '</a></td>';
                     html += '<td>' + w.corpus_frequency.toLocaleString()
                           + ' of ' + formatted + '</td>';
                     html += '<td>' + w.corpus_percentage.toFixed(1) + '%</td>';

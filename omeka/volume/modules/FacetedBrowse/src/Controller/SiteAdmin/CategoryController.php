@@ -276,8 +276,10 @@ class CategoryController extends AbstractActionController
     protected function getCategoryQuery()
     {
         $categoryQuery = $this->params()->fromQuery('category_query');
-        parse_str($categoryQuery, $categoryQuery);
+        parse_str($categoryQuery ?? '', $categoryQuery);
+        // Force site scope and prevent visibility bypass via injected params
         $categoryQuery['site_id'] = $this->currentSite()->id();
+        unset($categoryQuery['is_public'], $categoryQuery['is_admin']);
         return $categoryQuery;
     }
 

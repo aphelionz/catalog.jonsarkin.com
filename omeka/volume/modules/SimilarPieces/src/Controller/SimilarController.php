@@ -20,7 +20,6 @@ class SimilarController extends AbstractActionController
     private EntityManager $entityManager;
 
     private const LEXICAL_CACHE_TTL = 3600; // 1 hour
-    private const LEXICAL_CACHE_FILE = '/tmp/lexical-corpus-cache.json';
     private const LEXICAL_MAX_WORDS = 25;
     private const LEXICAL_MIN_WORD_LENGTH = 2;
     private const BIBO_CONTENT_PROPERTY_ID = 91;
@@ -358,7 +357,7 @@ class SimilarController extends AbstractActionController
      */
     private function getLexicalCorpus(): array
     {
-        $cacheFile = self::LEXICAL_CACHE_FILE;
+        $cacheFile = OMEKA_PATH . '/files/lexical-corpus-cache.json';
 
         if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < self::LEXICAL_CACHE_TTL) {
             $cached = json_decode(file_get_contents($cacheFile), true);
