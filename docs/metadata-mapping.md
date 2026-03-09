@@ -132,8 +132,7 @@ CBM
 Pencil
 ```
 *Visual motifs (Eyes–Numbers) are detected by Claude during enrichment.
-Box categories (Desert–Pencil) are derived from the physical box field (`schema:box`)
-via `scripts/backfill_box_motifs.py`.*
+Box categories (Desert–Pencil) are derived from the physical box field (`schema:box`).*
 
 ### Condition
 ```

@@ -1,4 +1,4 @@
-.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply enrich-prod-dry enrich-prod doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry create-box-collections create-box-collections-dry ensure-api-key harvest harvest-discover harvest-fetch harvest-extract harvest-output
+.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply enrich-prod-dry enrich-prod doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema ensure-api-key harvest harvest-discover harvest-fetch harvest-extract harvest-output
 
 -include .env
 export
@@ -170,23 +170,6 @@ push-schema: ## Push local schema, site pages, item sets, and config to producti
 			    SELECT COUNT(*) AS item_sets FROM item_set;"'
 	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages, 18 item_sets."
 
-backfill-dry: ## Preview backfill changes without writing
-	python3 scripts/backfill_defaults.py --dry-run
-
-backfill: ## Backfill default metadata values (only fills empty fields)
-	python3 scripts/backfill_defaults.py
-
-backfill-box-motifs-dry: ## Preview box-derived motif additions
-	python3 scripts/backfill_box_motifs.py --dry-run
-
-backfill-box-motifs: ## Add box-derived motifs to dcterms:subject
-	python3 scripts/backfill_box_motifs.py
-
-create-box-collections-dry: ## Preview box-category item set creation
-	python3 scripts/create_box_item_sets.py --dry-run
-
-create-box-collections: ## Create item sets for box categories and assign items
-	python3 scripts/create_box_item_sets.py
 
 editor: ## Launch rapid-fire metadata editor standalone (localhost:9000, no Docker)
 	python3 tools/rapid-editor/serve.py
