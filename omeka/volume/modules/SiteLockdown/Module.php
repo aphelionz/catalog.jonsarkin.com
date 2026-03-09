@@ -57,13 +57,18 @@ class Module extends AbstractModule
             return;
         }
 
-        // Skip API routes (JSON API should remain accessible)
+        // Skip API and internal JSON routes (consumed by frontend JS)
         $routeName = $routeMatch->getMatchedRouteName();
         if (strpos($routeName, 'api') === 0 || strpos($routeName, '/api') !== false) {
             return;
         }
         $uri = $event->getRequest()->getUriString();
         if (preg_match('#/api(/|$|\?)#', $uri)) {
+            return;
+        }
+        // SimilarPieces module JSON endpoints (similar, iconography, lexical-profile)
+        $jsonRoutes = ['similar-pieces', 'iconography', 'iconography-batch', 'lexical-profile', 'similar-search'];
+        if (in_array($routeName, $jsonRoutes, true) || strpos($routeName, 'similar-pieces/') === 0) {
             return;
         }
 
