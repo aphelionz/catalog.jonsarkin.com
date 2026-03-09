@@ -57,6 +57,16 @@ class Module extends AbstractModule
             return;
         }
 
+        // Skip API routes (JSON API should remain accessible)
+        $routeName = $routeMatch->getMatchedRouteName();
+        if (strpos($routeName, 'api') === 0 || strpos($routeName, '/api') !== false) {
+            return;
+        }
+        $uri = $event->getRequest()->getUriString();
+        if (preg_match('#/api(/|$|\?)#', $uri)) {
+            return;
+        }
+
         $services = $event->getApplication()->getServiceManager();
         $settings = $services->get('Omeka\Settings');
 

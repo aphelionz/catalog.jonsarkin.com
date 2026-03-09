@@ -3,21 +3,14 @@
   hosts: omeka
   gather_facts: true
   vars:
-    omeka_root: /var/www/omeka-s
+    prod_dir: /opt/catalog
     volume_src: "{{ playbook_dir }}/../volume/"
     deploy_delete: false
-    deploy_use_sudo_rsync: true
   tasks:
-    - name: Ensure rsync is installed on the VPS
-      become: true
-      ansible.builtin.package:
-        name: rsync
-        state: present
-
-    - name: Sync ./volume into Omeka root (excluding uploads)
+    - name: Sync ./volume into prod Omeka volume (excluding uploads)
       synchronize:
         src: "{{ volume_src }}"
-        dest: "{{ omeka_root }}/"
+        dest: "{{ prod_dir }}/omeka/volume/"
         mode: push
         delete: "{{ deploy_delete }}"
         compress: true
@@ -25,8 +18,12 @@
         perms: false
         owner: false
         group: false
-        rsync_path: "{{ deploy_use_sudo_rsync | ternary('sudo rsync', omit) }}"
         rsync_opts:
           - "--omit-dir-times"
           - "--exclude=files/"
           - "--exclude=/config/"
+
+    - name: Restart Omeka container
+      command: docker compose restart omeka
+      args:
+        chdir: "{{ prod_dir }}"

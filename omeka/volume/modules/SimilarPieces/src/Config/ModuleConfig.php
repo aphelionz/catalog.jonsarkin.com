@@ -11,7 +11,7 @@ class ModuleConfig
         $config = $container->get('Config');
         $moduleConfig = $config['similar_pieces'] ?? [];
 
-        $baseUrl = $moduleConfig['base_url'] ?? 'https://similar.jonsarkin.com';
+        $baseUrl = $moduleConfig['base_url'] ?? 'http://clip-api:8000';
         $debug = $moduleConfig['debug'] ?? false;
         $enableSearchUi = $moduleConfig['enable_search_ui'] ?? false;
 
@@ -34,7 +34,7 @@ class ModuleConfig
             }
         }
 
-        $moduleConfig['base_url'] = self::normalizeBaseUrl((string) $baseUrl, 'https://similar.jonsarkin.com');
+        $moduleConfig['base_url'] = self::normalizeBaseUrl((string) $baseUrl, 'http://clip-api:8000');
         $moduleConfig['debug'] = (bool) $debug;
         $moduleConfig['enable_search_ui'] = (bool) $enableSearchUi;
 

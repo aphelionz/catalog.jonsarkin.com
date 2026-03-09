@@ -10,24 +10,19 @@ set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────────────
 PROD_HOST="${PROD_USER:-mark}@${PROD_HOST:-omeka.us-east1-b.folkloric-rite-468520-r2}"
-OMEKA_ROOT="${OMEKA_ROOT:-/var/www/omeka-s}"
+PROD_DIR="${PROD_DIR:-/opt/catalog}"
 
 LOCAL_DB_CMD="docker compose exec -T db mariadb -uomeka -pomeka omeka"
+# Prod DB access: source .env on the VPS to get $MYSQL_USER, $MYSQL_PASSWORD, $MYSQL_DATABASE
+PROD_DB_PREFIX="cd $PROD_DIR && . .env && docker compose exec -T db"
 
 # ── 1. Get local max resource ID ─────────────────────────────────────
 LOCAL_MAX=$($LOCAL_DB_CMD -N -e "SELECT COALESCE(MAX(id), 0) FROM resource;")
 echo "Local max resource ID: $LOCAL_MAX"
 
 # ── 2. Get prod max resource ID (to report delta) ────────────────────
-PROD_MAX=$(ssh "$PROD_HOST" "
-    cd $OMEKA_ROOT/config
-    DB_USER=\$(grep '^user' database.ini | sed 's/.*= *//; s/\"//g')
-    DB_PASS=\$(grep '^password' database.ini | sed 's/.*= *//; s/\"//g')
-    DB_NAME=\$(grep '^dbname' database.ini | sed 's/.*= *//; s/\"//g')
-    DB_HOST=\$(grep '^host' database.ini | sed 's/.*= *//; s/\"//g')
-    mariadb -u\"\$DB_USER\" -p\"\$DB_PASS\" -h\"\$DB_HOST\" \"\$DB_NAME\" \
-        -N -e 'SELECT COALESCE(MAX(id), 0) FROM resource;'
-")
+PROD_MAX=$(ssh "$PROD_HOST" "$PROD_DB_PREFIX mariadb -u\$MYSQL_USER -p\$MYSQL_PASSWORD \$MYSQL_DATABASE \
+    -N -e 'SELECT COALESCE(MAX(id), 0) FROM resource;'")
 echo "Prod max resource ID:  $PROD_MAX"
 
 if [ "$PROD_MAX" -le "$LOCAL_MAX" ]; then
@@ -45,11 +40,7 @@ echo "Pulling $NEW_COUNT new resource(s) (IDs $((LOCAL_MAX + 1))..$PROD_MAX)..."
 TABLES="resource item media value"
 
 ssh "$PROD_HOST" "
-    cd $OMEKA_ROOT/config
-    DB_USER=\$(grep '^user' database.ini | sed 's/.*= *//; s/\"//g')
-    DB_PASS=\$(grep '^password' database.ini | sed 's/.*= *//; s/\"//g')
-    DB_NAME=\$(grep '^dbname' database.ini | sed 's/.*= *//; s/\"//g')
-    DB_HOST=\$(grep '^host' database.ini | sed 's/.*= *//; s/\"//g')
+    cd $PROD_DIR && . .env
 
     # Disable FK checks around the inserts
     echo 'SET FOREIGN_KEY_CHECKS=0;'
@@ -60,7 +51,7 @@ ssh "$PROD_HOST" "
         else
             WHERE='id > $LOCAL_MAX'
         fi
-        mariadb-dump -u\"\$DB_USER\" -p\"\$DB_PASS\" -h\"\$DB_HOST\" \"\$DB_NAME\" \
+        docker compose exec -T db mariadb-dump -u\$MYSQL_USER -p\$MYSQL_PASSWORD \$MYSQL_DATABASE \
             --no-create-info --insert-ignore \
             --where=\"\$WHERE\" \
             \"\$TABLE\"
@@ -75,7 +66,7 @@ echo "Database rows imported."
 echo "Syncing media files..."
 rsync -avz --compress --partial --progress \
     --exclude='tmp/' \
-    "${PROD_HOST}:${OMEKA_ROOT}/files/" \
+    "${PROD_HOST}:/var/www/omeka-s/files/" \
     omeka/volume/files/
 echo "Files synced."
 

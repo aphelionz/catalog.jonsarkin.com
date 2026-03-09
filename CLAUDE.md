@@ -18,7 +18,7 @@ Catalog raisonné for artist Jon Sarkin (catalog.jonsarkin.com). A monorepo comb
   - `sarkin-clip/clip_api/` — FastAPI application code
   - `sarkin-clip/tests/` — pytest suite
 - `scripts/` — enrichment pipeline (Claude-based OCR + metadata)
-- `ansible-hyphae/` — production provisioning (separate concern)
+- `docker-compose.prod.yml` — production Docker Compose (Traefik + MariaDB + Omeka + Qdrant + clip-api)
 
 ## Ports
 - `8888` — Omeka S (public catalog)
@@ -42,7 +42,15 @@ make ingest       # one-shot: index Omeka items into Qdrant (CPU)
 
 ## Database
 - For data retrieval, favor making direct database calls rather than using the API
+- DB shell: `docker compose exec -T db mariadb -u root -proot omeka` (root access) or `-uomeka -pomeka` (app user)
 - See [docs/omeka-invariants.md](docs/omeka-invariants.md) for Omeka data model, property IDs, API patterns, and theme conventions
+
+## Data flow (prod ↔ dev)
+- **Code + schema**: dev → prod only (`make deploy`, `make push-schema`)
+- **New items**: prod → dev (`make pull-new`, `make pull-files`)
+- **Enrichment**: local laptop → prod API (`make enrich-prod`); requires confirmation to write
+- **Full DB reset**: prod → dev (`make pull`)
+- **Files**: prod → dev (`make pull-files`); dev → prod only for dev-created media via rsync
 
 ---
 
@@ -67,6 +75,20 @@ make ingest       # one-shot: index Omeka items into Qdrant (CPU)
 - Small and frequent — one logical change per commit
 
 ---
+
+## Preview best practices
+- Use `preview_inspect` for CSS/computed style checks — not `preview_eval` + `getComputedStyle`
+- Use `preview_snapshot` for text content checks — not `preview_eval` + `textContent`
+- Always wrap `preview_eval` in an IIFE: `(async () => { ... })()`
+- Always `preview_resize` to `desktop` preset before first screenshot (default viewport is ~650px, which triggers mobile breakpoints)
+- Before `preview_start`: run `docker compose down` if containers are up on port 8888
+
+## Known footguns
+- **JSON in SQL heredocs:** use `\\n` (double backslash), not `\n`. Single backslash produces literal newlines in stored JSON → 500 errors on faceted browse pages.
+- **Site slug:** the public site slug is `catalog` → URLs are `/s/catalog/item/{id}`. Not `main`, not `sarkin`.
+- **API returns HTML after `make pull`:** the DB migration page is showing. Visit `localhost:8888/admin` and click "Update database" to clear it.
+- **Doctrine cache:** DB changes (privacy, nav) may not appear in frontend until the Omeka container is restarted: `docker compose restart omeka`.
+- **Docker symlinks:** Docker volumes don't follow host symlinks. Copy module files rather than symlinking them.
 
 ## Communication
 - What changed and why — skip the obvious, don't restate my instructions

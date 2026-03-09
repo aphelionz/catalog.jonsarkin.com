@@ -1,6 +1,0 @@
----
-- name: Install Python runtime packages
-  ansible.builtin.apt:
-    name: "{{ python_runtime_packages }}"
-    state: present
-  become: true

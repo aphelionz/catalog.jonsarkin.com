@@ -309,16 +309,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <div class="metadata-top">
             <div class="metadata-fields">
                 <?php if ($isWriting): ?>
-                    <?php if ($genre): ?>
-                    <dl>
-                        <dt>Literary Form</dt><dd><?php echo $genre; ?></dd>
-                    </dl>
-                    <?php endif; ?>
-                    <?php if ($date): ?>
-                    <dl>
-                        <dt>Published</dt><dd><?php echo $date; ?></dd>
-                    </dl>
-                    <?php endif; ?>
                     <?php if ($sourceUrl): ?>
                     <dl>
                         <dt>Source</dt><dd><a href="<?php echo $escape($sourceUrl); ?>" target="_blank" rel="noopener" class="writing-source"><?php echo $escape(preg_replace('#^https?://#', '', strip_tags($sourceUrl))); ?></a></dd>
@@ -390,13 +380,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
 
         <div class="writing-docs-inner">
-            <?php if ($description): ?>
-            <section aria-labelledby="description-heading">
-                <h4 id="description-heading"><?php echo $translate('Description'); ?></h4>
-                <p><?php echo $description; ?></p>
-            </section>
-            <?php endif; ?>
-
             <?php if (!empty($motifs)): ?>
             <section aria-labelledby="subjects-heading">
                 <h4 id="subjects-heading"><?php echo $translate('Subjects'); ?></h4>

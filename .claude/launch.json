@@ -5,7 +5,8 @@
       "name": "catalog",
       "runtimeExecutable": "docker",
       "runtimeArgs": ["compose", "up"],
-      "port": 8888
+      "port": 8888,
+      "autoPort": false
     },
     {
       "name": "editor",

@@ -1,5 +1,7 @@
 # Secrets
 .env
+.env.prod
+acme.json
 
 # Python
 __pycache__/
@@ -34,6 +36,9 @@ backups/
 
 # Pytest
 .pytest_cache/
+
+# Wayback harvest output (large, regenerable)
+harvest/
 
 # Pulled production media (large, binary)
 omeka/volume/files/

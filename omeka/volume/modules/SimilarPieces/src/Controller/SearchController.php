@@ -103,7 +103,7 @@ class SearchController extends AbstractActionController
 
     private function fetchSearchPayload(string $query, int $limit, int $offset): array
     {
-        $baseUrl = (string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com');
+        $baseUrl = (string) ($this->config['base_url'] ?? 'http://clip-api:8000');
         $baseUrl = rtrim($baseUrl, '/');
         $url = $baseUrl . '/v1/omeka/search';
 

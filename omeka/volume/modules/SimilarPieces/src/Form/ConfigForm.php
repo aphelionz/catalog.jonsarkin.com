@@ -14,11 +14,11 @@ class ConfigForm extends Form
             'type' => Element\Text::class,
             'options' => [
                 'label' => 'Similarity service base URL',
-                'info' => 'Example: https://similar.jonsarkin.com',
+                'info' => 'Example: http://clip-api:8000',
             ],
             'attributes' => [
                 'id' => 'similar-pieces-base-url',
-                'placeholder' => 'https://similar.jonsarkin.com',
+                'placeholder' => 'http://clip-api:8000',
             ],
         ]);
 

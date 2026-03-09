@@ -10,22 +10,23 @@ $myCounts = $counts[$facet->id()] ?? [];
 
 $activeFilters = $this->placeholder('activeFilters')->getValue() ?: [];
 $activeClassIds = array_map('strval', $activeFilters['resource_class_id'] ?? []);
+
+$classLabels = [225 => 'Artwork', 118 => 'Writing'];
 ?>
 <?php if ($singleSelect): ?>
 <?php
-$filteredOptions = [];
+$allOptions = [];
 foreach ($classes as $class) {
     $count = $myCounts[$class->id()] ?? 0;
-    if ($count > 0) {
-        $filteredOptions[] = [
-            'value' => $class->id(),
-            'label' => sprintf('%s (%d)', $class->label(), $count),
-            'attributes' => [],
-        ];
-    }
+    $label = $classLabels[$class->id()] ?? $class->label();
+    $allOptions[] = [
+        'value' => $class->id(),
+        'label' => $count > 0 ? sprintf('%s (%d)', $label, $count) : $label,
+        'attributes' => [],
+    ];
 }
-if ($filteredOptions) {
-    $singleSelect->setValueOptions($filteredOptions);
+if ($allOptions) {
+    $singleSelect->setValueOptions($allOptions);
     if ($activeClassIds) {
         $singleSelect->setValue($activeClassIds[0]);
     }
@@ -49,7 +50,7 @@ if ($filteredOptions) {
                 name="<?php echo sprintf('resource_class_%s', $facet->id()); ?>"
                 data-class-id="<?php echo $this->escapeHtml($class->id()); ?>"
                 <?php echo $selected ? 'checked' : ''; ?>>
-                <?php echo $class->label(); ?>
+                <?php echo $classLabels[$class->id()] ?? $class->label(); ?>
                 <span class="facet-count">(<?php echo $count; ?>)</span>
         </label>
     </li>

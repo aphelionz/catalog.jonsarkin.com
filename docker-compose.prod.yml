@@ -1,0 +1,95 @@
+services:
+  traefik:
+    image: traefik:v2.11.32
+    restart: always
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.email=mark@mrh.io"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--log.level=WARN"
+      - "--accesslog=true"
+      - "--ping=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./acme.json:/acme.json
+
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MYSQL_DATABASE}
+      MARIADB_USER: ${MYSQL_USER}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect"]
+      interval: 10s
+      retries: 30
+
+  omeka:
+    image: giocomai/omeka-s-docker:v4.2.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./omeka/volume:/var/www/html/volume
+      - /var/www/omeka-s/files:/var/www/html/volume/files
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      OMEKA_ADMIN_EMAIL: ${OMEKA_ADMIN_EMAIL:-admin@example.com}
+      OMEKA_SITE_TITLE: "Jon Sarkin Catalog"
+      OMEKA_ENVIRONMENT: production
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.omeka-http.entrypoints: "web"
+      traefik.http.routers.omeka-http.rule: "Host(`catalog.jonsarkin.com`)"
+      traefik.http.routers.omeka-http.middlewares: "omeka-https-redirect"
+      traefik.http.middlewares.omeka-https-redirect.redirectscheme.scheme: "https"
+      traefik.http.routers.omeka.entrypoints: "websecure"
+      traefik.http.routers.omeka.rule: "Host(`catalog.jonsarkin.com`)"
+      traefik.http.routers.omeka.tls: "true"
+      traefik.http.routers.omeka.tls.certresolver: "letsencrypt"
+      traefik.http.services.omeka.loadbalancer.server.port: "80"
+
+  qdrant:
+    image: qdrant/qdrant:v1.16
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - qdrant_snapshots:/qdrant/snapshots
+
+  clip-api:
+    image: aphelionz/sarkin-clip-api
+    restart: unless-stopped
+    depends_on:
+      - qdrant
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: omeka_items
+      VECTOR_NAME: visual_vec
+      TEXT_VECTOR_NAME: text_vec_clip
+      SEARCH_MODE: hybrid
+      SEARCH_DB_PATH: /app/search_index/index.sqlite
+      DEFAULT_LIMIT: 50
+    volumes:
+      - search_index:/app/search_index
+
+volumes:
+  dbdata:
+  qdrant_data:
+  qdrant_snapshots:
+  search_index:

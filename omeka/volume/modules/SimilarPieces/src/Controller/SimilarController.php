@@ -199,7 +199,7 @@ class SimilarController extends AbstractActionController
         }
 
         try {
-            $baseUrl = rtrim((string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com'), '/');
+            $baseUrl = rtrim((string) ($this->config['base_url'] ?? 'http://clip-api:8000'), '/');
             $url = sprintf('%s/v1/omeka/items/%d/iconography', $baseUrl, $itemId);
 
             $client = clone $this->httpClient;
@@ -234,7 +234,7 @@ class SimilarController extends AbstractActionController
         }
 
         try {
-            $baseUrl = rtrim((string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com'), '/');
+            $baseUrl = rtrim((string) ($this->config['base_url'] ?? 'http://clip-api:8000'), '/');
             $url = $baseUrl . '/v1/omeka/items/iconography/batch?ids=' . urlencode($ids);
 
             $client = clone $this->httpClient;
@@ -414,7 +414,7 @@ class SimilarController extends AbstractActionController
 
     private function fetchHealthStatus(): string
     {
-        $baseUrl = (string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com');
+        $baseUrl = (string) ($this->config['base_url'] ?? 'http://clip-api:8000');
         $baseUrl = rtrim($baseUrl, '/');
         $url = $baseUrl . '/healthz';
 
@@ -467,7 +467,7 @@ class SimilarController extends AbstractActionController
 
     private function fetchSimilarPayload(int $itemId, ?int $limit = null): array
     {
-        $baseUrl = (string) ($this->config['base_url'] ?? 'https://similar.jonsarkin.com');
+        $baseUrl = (string) ($this->config['base_url'] ?? 'http://clip-api:8000');
         $baseUrl = rtrim($baseUrl, '/');
         $url = sprintf('%s/v1/omeka/items/%d/similar', $baseUrl, $itemId);
         if ($limit !== null) {

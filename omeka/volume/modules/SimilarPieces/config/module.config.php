@@ -102,7 +102,7 @@ return [
         ],
     ],
     'similar_pieces' => [
-        'base_url' => 'https://similar.jonsarkin.com',
+        'base_url' => 'http://clip-api:8000',
         'timeout' => 3,
         'default_per_page' => 24,
         'enable_item_link' => true,

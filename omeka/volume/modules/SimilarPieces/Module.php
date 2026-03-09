@@ -111,7 +111,7 @@ class Module extends AbstractModule
         }
 
         $data = $form->getData();
-        $baseUrl = ModuleConfig::normalizeBaseUrl((string) ($data['base_url'] ?? ''), 'https://similar.jonsarkin.com');
+        $baseUrl = ModuleConfig::normalizeBaseUrl((string) ($data['base_url'] ?? ''), 'http://clip-api:8000');
         $debug = !empty($data['debug']);
         $enableSearchUi = !empty($data['enable_search_ui']);
 
@@ -142,7 +142,7 @@ class Module extends AbstractModule
         $moduleConfig = $config['similar_pieces'] ?? [];
         $moduleConfig['base_url'] = ModuleConfig::normalizeBaseUrl(
             (string) ($moduleConfig['base_url'] ?? ''),
-            'https://similar.jonsarkin.com'
+            'http://clip-api:8000'
         );
         $moduleConfig['debug'] = !empty($moduleConfig['debug']);
         $moduleConfig['enable_search_ui'] = !empty($moduleConfig['enable_search_ui']);
@@ -260,7 +260,7 @@ class Module extends AbstractModule
         }
 
         $moduleConfig = $this->getModuleConfig();
-        $baseUrl = (string) ($moduleConfig['base_url'] ?? 'https://similar.jonsarkin.com');
+        $baseUrl = (string) ($moduleConfig['base_url'] ?? 'http://clip-api:8000');
         $baseUrl = rtrim($baseUrl, '/');
         $url = $baseUrl . '/healthz';
 

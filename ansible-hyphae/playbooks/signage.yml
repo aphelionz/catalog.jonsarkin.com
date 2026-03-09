@@ -1,7 +1,0 @@
----
-- name: Raspberry Pi signage baseline
-  hosts: signage
-  become: true
-  gather_facts: true
-  roles:
-    - raspi_signage

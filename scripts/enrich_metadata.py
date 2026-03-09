@@ -26,10 +26,11 @@ Usage:
   python scripts/enrich_metadata.py --model opus    --batch   # Best ($42 total)
 
 Environment variables:
-  ANTHROPIC_API_KEY    — Required. Claude API key.
-  OMEKA_BASE_URL       — Omeka S base URL (default: http://localhost:8888)
-  OMEKA_KEY_IDENTITY   — API key identity (default: catalog_api)
-  OMEKA_KEY_CREDENTIAL — API key credential (default: sarkin2024)
+  ANTHROPIC_API_KEY         — Required. Claude API key.
+  OMEKA_KEY_IDENTITY        — API key identity for local (default: catalog_api)
+  OMEKA_KEY_CREDENTIAL      — API key credential for local (default: sarkin2024)
+  OMEKA_PROD_KEY_IDENTITY   — API key identity for --target prod
+  OMEKA_PROD_KEY_CREDENTIAL — API key credential for --target prod
 """
 from __future__ import annotations
 
@@ -57,11 +58,38 @@ from PIL import Image
 
 # ── Configuration ──────────────────────────────────────────────────────────
 
-OMEKA_BASE = os.getenv("OMEKA_BASE_URL", "http://localhost:8888")
-OMEKA_KEY_ID = os.getenv("OMEKA_KEY_IDENTITY")
-OMEKA_KEY_CRED = os.getenv("OMEKA_KEY_CREDENTIAL")
-if not OMEKA_KEY_ID or not OMEKA_KEY_CRED:
-    raise SystemExit("OMEKA_KEY_IDENTITY and OMEKA_KEY_CREDENTIAL env vars are required")
+OMEKA_BASE = ""
+OMEKA_KEY_ID = ""
+OMEKA_KEY_CRED = ""
+_TARGET = "local"
+
+TARGETS = {
+    "local": {
+        "url": "http://localhost:8888",
+        "key_id_env": "OMEKA_KEY_IDENTITY",
+        "key_cred_env": "OMEKA_KEY_CREDENTIAL",
+    },
+    "prod": {
+        "url": "https://catalog.jonsarkin.com",
+        "key_id_env": "OMEKA_PROD_KEY_IDENTITY",
+        "key_cred_env": "OMEKA_PROD_KEY_CREDENTIAL",
+    },
+}
+
+
+def configure_target(target: str) -> None:
+    """Set Omeka connection globals based on target environment."""
+    global OMEKA_BASE, OMEKA_KEY_ID, OMEKA_KEY_CRED, _TARGET
+    _TARGET = target
+    cfg = TARGETS[target]
+    OMEKA_BASE = cfg["url"]
+    OMEKA_KEY_ID = os.getenv(cfg["key_id_env"], "")
+    OMEKA_KEY_CRED = os.getenv(cfg["key_cred_env"], "")
+    if not OMEKA_KEY_ID or not OMEKA_KEY_CRED:
+        raise SystemExit(
+            f"{cfg['key_id_env']} and {cfg['key_cred_env']} env vars are required "
+            f"for --target {target}"
+        )
 
 MODEL_ALIASES = {
     "haiku":  "claude-haiku-4-5-20251001",
@@ -1119,6 +1147,8 @@ Examples:
                       help="Apply cached results to Omeka (no Claude API call)")
 
     # Options
+    parser.add_argument("--target", choices=["local", "prod"], default="local",
+                        help="Target Omeka instance (default: local)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would change without writing to Omeka")
     parser.add_argument("--limit", type=int, default=0,
@@ -1133,6 +1163,19 @@ Examples:
 
     args = parser.parse_args()
     model = MODEL_ALIASES[args.model]
+
+    # Configure target (sets OMEKA_BASE, OMEKA_KEY_ID, OMEKA_KEY_CRED)
+    configure_target(args.target)
+
+    if args.target == "prod":
+        print(f"\n{'='*60}")
+        print(f"  *** TARGETING PRODUCTION: {OMEKA_BASE} ***")
+        print(f"{'='*60}\n")
+        if not args.dry_run and not args.batch_status:
+            confirm = input("Type YES to write to production: ")
+            if confirm.strip() != "YES":
+                print("Aborted.")
+                sys.exit(0)
 
     # ── Apply from cache (no API key needed) ──
     if args.apply_cache:

@@ -1,7 +1,0 @@
-[Socket]
-ListenStream=
-{% if cockpit_socket_freebind %}FreeBind=yes
-{% endif %}
-{% for stream in cockpit_effective_listen_streams %}
-ListenStream={{ stream }}
-{% endfor %}

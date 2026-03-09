@@ -14,7 +14,6 @@ $translate = $this->plugin('translate');
 // FacetedBrowse IDs (from faceted_browse_* tables)
 $fbPageId     = 2;
 $fbCategoryId = 2;
-$fbFacetId    = 2;
 $fbBaseUrl = $this->url('site/faceted-browse', [
     'site-slug' => $this->currentSite()->slug(),
     'page-id'   => $fbPageId,
@@ -35,15 +34,10 @@ $this->htmlElement('body')->appendAttribute('class', 'item-set browse');
         $thumb = $itemSet->thumbnail();
         $thumbUrl = $thumb ? $thumb->assetUrl() : null;
         $desc = $itemSet->value('dcterms:description', ['default' => null]);
-        $state = json_encode([
-            'categoryId'   => $fbCategoryId,
-            'sortBy'       => null,
-            'sortOrder'    => null,
-            'page'         => null,
-            'facetStates'  => [(string)$fbFacetId => [$itemSet->id()]],
-            'facetQueries' => [(string)$fbFacetId => 'item_set_id[]=' . $itemSet->id()],
+        $href = $fbBaseUrl . '?' . http_build_query([
+            'item_set_id' => [$itemSet->id()],
+            'faceted_browse_category_id' => $fbCategoryId,
         ]);
-        $href = $fbBaseUrl . '#' . rawurlencode($state);
     ?>
     <li class="item-set-entry">
         <a href="<?php echo $escape($href); ?>">

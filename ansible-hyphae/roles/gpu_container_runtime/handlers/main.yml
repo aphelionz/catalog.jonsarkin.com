@@ -1,6 +1,0 @@
----
-- name: Restart Docker
-  ansible.builtin.service:
-    name: "{{ gpu_container_runtime_docker_service }}"
-    state: restarted
-  become: true

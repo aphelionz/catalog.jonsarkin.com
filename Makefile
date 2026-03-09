@@ -1,4 +1,4 @@
-.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry create-box-collections create-box-collections-dry ensure-api-key
+.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply enrich-prod-dry enrich-prod doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema backfill backfill-dry create-box-collections create-box-collections-dry ensure-api-key harvest harvest-discover harvest-fetch harvest-extract harvest-output
 
 -include .env
 export
@@ -6,7 +6,7 @@ export
 # Production host (matches omeka/ansible/inventory.ini)
 PROD_HOST  := omeka.us-east1-b.folkloric-rite-468520-r2
 PROD_USER  := mark
-OMEKA_ROOT := /var/www/omeka-s
+PROD_DIR   := /opt/catalog
 BACKUP_DIR := backups
 
 local: ## Start the catalog stack (omeka + qdrant + clip-api)
@@ -45,8 +45,21 @@ enrich-batch-collect: ## Collect batch results and apply to Omeka
 enrich-apply: ## Re-apply cached enrichment results to Omeka (no API cost)
 	python3 scripts/enrich_metadata.py --apply-cache
 
-deploy: ## Push code (modules/themes) to production
-	ansible-playbook -i omeka/ansible/inventory.ini omeka/ansible/deploy.yml
+enrich-prod-dry: ## Preview enrichment of new prod items (no writes)
+	python3 scripts/enrich_metadata.py --target prod --dry-run
+
+enrich-prod: ## Enrich new prod items (writes to production — requires confirmation)
+	python3 scripts/enrich_metadata.py --target prod
+
+deploy: ## Push code (modules/themes) to production and restart Omeka
+	rsync -avz --compress --partial --progress \
+		--exclude='.env' --exclude='omeka/volume/files/' --exclude='backups/' \
+		--exclude='.hf_cache/' --exclude='__pycache__/' --exclude='.venv/' \
+		--exclude='harvest/' --exclude='search_index/' --exclude='.DS_Store' \
+		--exclude='.git/' --exclude='node_modules/' --exclude='.claude/' \
+		--exclude='acme.json' --exclude='omeka/volume/logs/' \
+		./ $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/
+	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose restart omeka'
 
 pull-new: ## Pull only new items from production (additive, no DB wipe)
 	bash scripts/pull_new_items.sh
@@ -55,13 +68,7 @@ pull: pull-db ensure-api-key pull-files pull-modules pull-themes ## Full pull: w
 
 pull-db: ## Pull production database into local MariaDB
 	@echo "Dumping production database..."
-	ssh $(PROD_USER)@$(PROD_HOST) '\
-		cd $(OMEKA_ROOT)/config && \
-		DB_USER=$$(grep "^user" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_PASS=$$(grep "^password" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_NAME=$$(grep "^dbname" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_HOST=$$(grep "^host" database.ini | sed "s/.*= *//; s/\"//g") && \
-		mariadb-dump -u"$$DB_USER" -p"$$DB_PASS" -h"$$DB_HOST" "$$DB_NAME"' \
+	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && . .env && docker compose exec -T db mariadb-dump -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE' \
 	| docker compose exec -T db mariadb -uomeka -pomeka omeka
 	@echo "Database imported."
 
@@ -69,21 +76,21 @@ pull-files: ## Pull production uploaded files to local
 	@echo "Syncing production files..."
 	rsync -avz --compress --partial --progress \
 		--exclude='tmp/' \
-		$(PROD_USER)@$(PROD_HOST):$(OMEKA_ROOT)/files/ \
+		$(PROD_USER)@$(PROD_HOST):/var/www/omeka-s/files/ \
 		omeka/volume/files/
 	@echo "Files synced."
 
 pull-modules: ## Pull production modules to local
 	@echo "Syncing production modules..."
 	rsync -avz --compress --partial --progress \
-		$(PROD_USER)@$(PROD_HOST):$(OMEKA_ROOT)/modules/ \
+		$(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/omeka/volume/modules/ \
 		omeka/volume/modules/
 	@echo "Modules synced."
 
 pull-themes: ## Pull production themes to local
 	@echo "Syncing production themes..."
 	rsync -avz --compress --partial --progress \
-		$(PROD_USER)@$(PROD_HOST):$(OMEKA_ROOT)/themes/ \
+		$(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/omeka/volume/themes/ \
 		omeka/volume/themes/
 	@echo "Themes synced."
 
@@ -91,7 +98,7 @@ doctor: ## Check local dev prerequisites
 	@echo "Checking prerequisites..."
 	@command -v docker >/dev/null 2>&1 && echo "  ✓ docker" || echo "  ✗ docker not found"
 	@docker compose version >/dev/null 2>&1 && echo "  ✓ docker compose" || echo "  ✗ docker compose v2 not found"
-	@command -v ansible-playbook >/dev/null 2>&1 && echo "  ✓ ansible" || echo "  ✗ ansible not found (needed for deploy)"
+	@ssh -o ConnectTimeout=3 $(PROD_USER)@$(PROD_HOST) 'docker compose version' >/dev/null 2>&1 && echo "  ✓ prod docker" || echo "  ✗ prod docker unreachable"
 	@command -v rsync >/dev/null 2>&1 && echo "  ✓ rsync" || echo "  ✗ rsync not found (needed for pull)"
 	@(! lsof -i :8888 -sTCP:LISTEN >/dev/null 2>&1) && echo "  ✓ port 8888 available" || echo "  ✗ port 8888 in use"
 	@(! lsof -i :8000 -sTCP:LISTEN >/dev/null 2>&1) && echo "  ✓ port 8000 available" || echo "  ✗ port 8000 in use"
@@ -153,21 +160,10 @@ push-schema: ## Push local schema, site pages, item sets, and config to producti
 		echo "SET FOREIGN_KEY_CHECKS = 1;"; \
 	} > /tmp/omeka-schema-export.sql
 	@echo "Pushing to production..."
-	cat /tmp/omeka-schema-export.sql | ssh $(PROD_USER)@$(PROD_HOST) '\
-		cd $(OMEKA_ROOT)/config && \
-		DB_USER=$$(grep "^user" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_PASS=$$(grep "^password" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_NAME=$$(grep "^dbname" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_HOST=$$(grep "^host" database.ini | sed "s/.*= *//; s/\"//g") && \
-		mariadb -u"$$DB_USER" -p"$$DB_PASS" -h"$$DB_HOST" "$$DB_NAME"'
+	cat /tmp/omeka-schema-export.sql | ssh $(PROD_USER)@$(PROD_HOST) \
+		'cd $(PROD_DIR) && . .env && docker compose exec -T db mariadb -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE'
 	@echo "Verifying production schema..."
-	@ssh $(PROD_USER)@$(PROD_HOST) '\
-		cd $(OMEKA_ROOT)/config && \
-		DB_USER=$$(grep "^user" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_PASS=$$(grep "^password" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_NAME=$$(grep "^dbname" database.ini | sed "s/.*= *//; s/\"//g") && \
-		DB_HOST=$$(grep "^host" database.ini | sed "s/.*= *//; s/\"//g") && \
-		mariadb -u"$$DB_USER" -p"$$DB_PASS" -h"$$DB_HOST" "$$DB_NAME" \
+	@ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && . .env && docker compose exec -T db mariadb -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE \
 			-e "SELECT COUNT(*) AS custom_vocabs FROM custom_vocab; \
 			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2; \
 			    SELECT COUNT(*) AS site_pages FROM site_page; \
@@ -194,6 +190,21 @@ create-box-collections: ## Create item sets for box categories and assign items
 
 editor: ## Launch rapid-fire metadata editor standalone (localhost:9000, no Docker)
 	python3 tools/rapid-editor/serve.py
+
+harvest: ## Full Wayback Machine harvest pipeline (discover + fetch + extract + output)
+	python3 scripts/harvest_wayback.py
+
+harvest-discover: ## Discover jsarkin.com URLs in Wayback Machine
+	python3 scripts/harvest_wayback.py discover
+
+harvest-fetch: ## Fetch archived pages (resumable, rate-limited ~1.5s/page)
+	python3 scripts/harvest_wayback.py fetch
+
+harvest-extract: ## Extract text from fetched pages + deduplicate
+	python3 scripts/harvest_wayback.py extract
+
+harvest-output: ## Generate CSV, JSON, and report from extracted data
+	python3 scripts/harvest_wayback.py output
 
 ensure-api-key: ## Create local-only API key (safe to re-run; never use on prod)
 	@HASH=$$(docker compose exec -T omeka php -r "echo password_hash('sarkin2024', PASSWORD_BCRYPT);") && \

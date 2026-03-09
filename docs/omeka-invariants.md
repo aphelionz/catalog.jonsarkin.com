@@ -8,7 +8,7 @@ Quick reference for the Jon Sarkin catalog's Omeka S data model, API patterns, a
 
 - **Resource template ID:** `2` ("Artwork (Jon Sarkin)") — all catalog items use this
 - **Creator item ID:** `3` — Jon Sarkin Person item, linked via `schema:creator`
-- **Site slug:** `s/sarkin` (used in URL generation)
+- **Site slug:** `s/catalog` (used in URL generation — e.g. `/s/catalog/item/123`)
 
 ### Core tables
 
@@ -196,3 +196,68 @@ Module: `omeka/volume/modules/SimilarPieces/`
 10. **No SCSS** — all CSS is hand-written in `asset/css/style.css`; selector specificity matters
 11. **`prepend()` loads in reverse order** — head management stack quirk
 12. **Fetch API doesn't reject on HTTP errors** — JS must check `r.ok` explicitly
+
+---
+
+## Hot File Structure Maps
+
+These files are modified in almost every session. Use line-range reads instead of full-file reads.
+
+### `asset/css/style.css` (2379 lines)
+
+| Lines | Section |
+|---|---|
+| 1–137 | **Global** — reset, CSS custom properties (`:root`), `@font-face`, base, utility, user bar |
+| 138–338 | **Site layout** — header, search, navigation, mobile nav, footer |
+| 339–899 | **Item show (detail page)** — record header, metadata bar, action nav, media/artwork, writing content, context/documentation, iconographic profile, lexical profile, similar pieces |
+| 900–1137 | **Item browse (card grid)** — browse header, card grid, individual cards, list view, no-image placeholder, writing cards |
+| 1138–1223 | **Item-set browse** |
+| 1224–1602 | **Faceted browse** — two-column layout, sidebar facets, browse controls, pagination, sort, loading spinner, mobile sidebar toggle, responsive overrides |
+| 1603–1651 | **Search results** |
+| 1652–1675 | **Content pages** (Omeka page blocks) |
+| 1676–1973 | **Home page** — masthead, intro row, stats, institutions, section headings, quote, body text, studio image, collections, CTA, acknowledgments, responsive |
+| 1974–2112 | **Pagination** (shared) |
+| 2113–2139 | **Page title** (shared) |
+| 2140–2215 | **Responsive** (shared breakpoints) |
+| 2216–end | **Print** — optimised for single-page item sheets |
+
+### `view/omeka/site/item/show.phtml` (574 lines)
+
+| Lines | Section |
+|---|---|
+| 1–47 | **Setup** — property helpers (`$val`, `$allVals`), identity extraction (catalog number, date, etc.) |
+| 48–62 | **Identity** — catalog number, creator, date, type, medium |
+| 63–69 | **Writing detection** — `$isWriting` flag based on resource class |
+| 70–107 | **Physical** — dimensions, support, signature, framing, condition |
+| 108–125 | **Custody & Rights** — owner, provenance, location, rights |
+| 126–147 | **Documentation, Collector layer, Media** — related items, exhibitions, media list |
+| 148–230 | **SEO** — title, meta description, Open Graph, Twitter Card, canonical URL, Schema.org JSON-LD |
+| 231–375 | **HTML output** — `<article>` with record header, metadata bar, action nav, artwork/media, context sections |
+| 375–574 | **Detail sections** — documentation, collector info, iconographic profile, lexical profile, similar pieces, transcription, rights footer, print QR |
+
+### `asset/js/sarkin.js` (315 lines)
+
+| Lines | Section |
+|---|---|
+| 1–12 | **Setup** — IIFE, `esc()` helper |
+| 14–22 | **Mobile nav toggle** |
+| 24–50 | **Cite button** — Chicago-style citation to clipboard |
+| 52–68 | **Share button** — Web Share API with fallback |
+| 70–106 | **Similar pieces** — async fetch from clip-api, renders card grid |
+| 108–154 | **Iconographic profile** — async fetch, renders motif frequency bars |
+| 156–208 | **Lexical profile** — async fetch, renders word frequency chart |
+| 210–256 | **Iconographic badges** — batch fetch for browse page cards |
+| 258–282 | **Zoom follow cursor** — 2× magnification on artwork hover |
+| 284–294 | **Live catalog count** — home page API fetch |
+| 296–315 | **Print QR code** — renders QR for current item URL |
+
+### `FacetedBrowse/src/Controller/Site/PageController.php` (188 lines)
+
+| Lines | Section |
+|---|---|
+| 9–103 | **`pageAction()`** — main browse page: resolves category, computes facet counts via custom GROUP BY, handles sort/pagination |
+| 104–114 | **`categoriesAction()`** — returns category list for sidebar |
+| 115–125 | **`facetsAction()`** — returns facet values with counts for a given category |
+| 126–188 | **`browseAction()`** — handles filtered browse with applied facets, sort-by-value options |
+
+Key customization: `computeFacetCounts()` uses GROUP BY queries instead of per-facet iteration. Edit facet behavior in the controller plugin (same directory).
