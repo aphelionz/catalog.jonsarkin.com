@@ -89,6 +89,8 @@ make ingest       # one-shot: index Omeka items into Qdrant (CPU)
 - **API returns HTML after `make pull`:** the DB migration page is showing. Visit `localhost:8888/admin` and click "Update database" to clear it.
 - **Doctrine cache:** DB changes (privacy, nav) may not appear in frontend until the Omeka container is restarted: `docker compose restart omeka`.
 - **Docker symlinks:** Docker volumes don't follow host symlinks. Copy module files rather than symlinking them.
+- **BulkImportFiles needs smalot/pdfparser:** the module eagerly loads its PDF extractor even for JPEG imports. Run `composer require smalot/pdfparser` inside `omeka/volume/modules/BulkImportFiles/` (or in the container at that path). Without it, all bulk imports 500.
+- **PHP max_file_uploads:** default is 20. For bulk uploads >20 files, add `max_file_uploads = 100` to `/usr/local/etc/php/conf.d/uploads.ini` inside the Omeka container and restart.
 
 ## Communication
 - What changed and why — skip the obvious, don't restate my instructions
