@@ -1,0 +1,166 @@
+location,type,total_mentions,as_setting,as_reference,as_origin,as_destination,stories
+California,state,6,4,1,1,0,"WRT-131, WRT-231, WRT-238, WRT-297, WRT-322, WRT-329"
+Memphis,city,4,1,3,0,0,"WRT-130, WRT-194, WRT-247, WRT-397"
+New York,city,4,2,1,1,0,"WRT-298, WRT-314, WRT-322, WRT-371"
+Paris,city,4,1,0,2,1,"WRT-290, WRT-307, WRT-385, WRT-406"
+Tennessee,state,4,0,3,1,0,"WRT-216, WRT-248, WRT-351"
+Utah,state,4,2,2,0,0,"WRT-124, WRT-132, WRT-135, WRT-222"
+France,country,3,1,1,1,0,"WRT-211, WRT-303, WRT-406"
+Italy,country,3,0,1,2,0,"WRT-220, WRT-312, WRT-381"
+Kansas,state,3,2,0,1,0,"WRT-213, WRT-388, WRT-459"
+Louisiana,state,3,2,1,0,0,"WRT-214, WRT-223, WRT-330"
+New Jersey,state,3,2,1,0,0,"WRT-201, WRT-236, WRT-326"
+Akron,city,2,1,0,0,1,"WRT-276, WRT-461"
+Alabama,state,2,1,1,0,0,"WRT-189, WRT-228"
+America,country,2,1,0,0,1,"WRT-202, WRT-312"
+Arkansas,state,2,2,0,0,0,WRT-298
+Boston,city,2,2,0,0,0,"WRT-122, WRT-346"
+Brooklyn,city,2,0,2,0,0,"WRT-196, WRT-407"
+Central African Republic,country,2,1,1,0,0,"WRT-228, WRT-303"
+Cleveland,city,2,2,0,0,0,"WRT-228, WRT-394"
+Duluth,city,2,1,1,0,0,"WRT-297, WRT-461"
+Greece,country,2,1,0,1,0,"WRT-130, WRT-229"
+Indiana,state,2,1,0,1,0,WRT-406
+Kentucky,state,2,0,2,0,0,"WRT-248, WRT-284"
+Madison Square Garden,landmark,2,0,2,0,0,"WRT-125, WRT-296"
+Missouri,state,2,2,0,0,0,"WRT-214, WRT-232"
+Mobile,city,2,0,2,0,0,"WRT-130, WRT-194"
+New York City,city,2,0,2,0,0,"WRT-130, WRT-296"
+Nigeria,country,2,0,0,2,0,"WRT-124, WRT-132"
+Ogden,city,2,2,0,0,0,"WRT-124, WRT-132"
+Ohio,state,2,2,0,0,0,"WRT-119, WRT-408"
+Puerto Rico,country,2,0,2,0,0,"WRT-361, WRT-409"
+Rome,city,2,0,1,1,0,"WRT-220, WRT-229"
+Africa,region,1,0,1,0,0,WRT-201
+Alaska,state,1,0,0,1,0,WRT-229
+Albany,city,1,0,1,0,0,WRT-239
+Albert Hall,landmark,1,0,1,0,0,WRT-194
+Amazon River,body_of_water,1,0,1,0,0,WRT-226
+Amsterdam,city,1,1,0,0,0,WRT-201
+Angkor Wat,landmark,1,0,1,0,0,WRT-246
+Arizona,state,1,0,1,0,0,WRT-222
+Avenue C,landmark,1,1,0,0,0,WRT-371
+Aztec Ruins,landmark,1,1,0,0,0,WRT-222
+"Aztec, New Mexico",city,1,1,0,0,0,WRT-222
+Babylon,city,1,0,1,0,0,WRT-194
+Baltimore,city,1,1,0,0,0,WRT-409
+Bangui,city,1,0,1,0,0,WRT-303
+Barbados,country,1,1,0,0,0,WRT-131
+Bellevue,landmark,1,1,0,0,0,WRT-371
+British Empire,region,1,0,1,0,0,WRT-194
+Brooklyn Bridge,landmark,1,0,1,0,0,WRT-459
+Bull Run,landmark,1,0,1,0,0,WRT-218
+Butte,city,1,1,0,0,0,WRT-198
+Cambodia,country,1,1,0,0,0,WRT-246
+Cameroon,country,1,0,1,0,0,WRT-303
+Caribbean,region,1,1,0,0,0,WRT-131
+Carolina,region,1,1,0,0,0,WRT-131
+Carson City,city,1,0,1,0,0,WRT-299
+Chad,country,1,0,1,0,0,WRT-303
+Chari River,body_of_water,1,0,1,0,0,WRT-303
+Chelsea,region,1,0,1,0,0,WRT-362
+Chico,city,1,1,0,0,0,WRT-131
+China,country,1,0,1,0,0,WRT-322
+Chrysler Building,landmark,1,0,1,0,0,WRT-125
+Churchill Downs,landmark,1,0,1,0,0,WRT-284
+Cincinnati,city,1,1,0,0,0,WRT-228
+Clarion,city,1,1,0,0,0,WRT-119
+Colorado,state,1,0,1,0,0,WRT-222
+Congo,region,1,0,1,0,0,WRT-245
+Congo,country,1,0,1,0,0,WRT-303
+Congo River,body_of_water,1,0,1,0,0,WRT-303
+Connecticut,state,1,0,0,1,0,WRT-142
+Dallas,city,1,1,0,0,0,WRT-318
+Dartmouth,landmark,1,0,1,0,0,WRT-216
+Detroit,city,1,1,0,0,0,WRT-459
+Durham,city,1,1,0,0,0,WRT-219
+Eastern Parkway,landmark,1,0,1,0,0,WRT-196
+Eden,region,1,0,1,0,0,WRT-126
+Edge City,city,1,1,0,0,0,WRT-322
+El Paso,city,1,1,0,0,0,WRT-366
+England,country,1,1,0,0,0,WRT-362
+Fenway Park,landmark,1,1,0,0,0,WRT-122
+Fishtown,city,1,1,0,0,0,WRT-333
+Florida,state,1,1,0,0,0,WRT-319
+Four Corners,region,1,0,1,0,0,WRT-222
+"Freehold, New Jersey",city,1,1,0,0,0,WRT-326
+Fresno,city,1,0,0,0,1,WRT-135
+Gilead,region,1,1,0,0,0,WRT-334
+Gloucester,city,1,0,1,0,0,WRT-333
+Grand Canyon,landmark,1,0,1,0,0,WRT-210
+Havana,city,1,0,1,0,0,WRT-131
+Hawaii,state,1,0,1,0,0,WRT-351
+Hibbing,city,1,0,0,1,0,WRT-297
+Holland,country,1,1,0,0,0,WRT-201
+Hollywood,city,1,1,0,0,0,WRT-131
+Idaho,state,1,1,0,0,0,WRT-213
+Illinois,state,1,1,0,0,0,WRT-214
+Iowa,state,1,0,0,0,1,WRT-371
+Israel,country,1,0,0,1,0,WRT-201
+Jersey City,city,1,1,0,0,0,WRT-146
+Kansas City,city,1,1,0,0,0,WRT-234
+Knoxville,city,1,0,0,0,1,WRT-248
+Lake Chad,body_of_water,1,0,1,0,0,WRT-303
+Leningrad,city,1,0,1,0,0,WRT-460
+Lincoln Road,landmark,1,1,0,0,0,WRT-319
+Lithuania,country,1,0,0,0,1,WRT-114
+Lowell,city,1,0,0,0,1,WRT-216
+Maine,state,1,0,0,0,1,WRT-001
+Massachusetts,state,1,0,0,0,1,WRT-216
+Mesabi Range,region,1,0,0,1,0,WRT-297
+Mexico,country,1,0,1,0,0,WRT-213
+Mexico,city,1,1,0,0,0,WRT-214
+Mississippi,body_of_water,1,1,0,0,0,WRT-232
+Mississippi,state,1,1,0,0,0,WRT-240
+Missoula,city,1,1,0,0,0,WRT-211
+Montana,state,1,1,0,0,0,WRT-198
+Montgomery,city,1,1,0,0,0,WRT-228
+Museum of Natural History,landmark,1,0,1,0,0,WRT-394
+Nebraska,state,1,0,1,0,0,WRT-284
+New Mexico,state,1,0,1,0,0,WRT-222
+New Orleans,city,1,0,1,0,0,WRT-330
+Newark,city,1,0,1,0,0,WRT-239
+Normal,city,1,0,1,0,0,WRT-214
+Norman,city,1,0,1,0,0,WRT-214
+North Carolina,state,1,1,0,0,0,WRT-219
+Northern California,region,1,1,0,0,0,WRT-283
+Oakland,city,1,0,0,0,1,WRT-238
+Oakland Bay Bridge,landmark,1,1,0,0,0,WRT-238
+Oklahoma,state,1,0,0,0,1,WRT-214
+Olympus,landmark,1,0,1,0,0,WRT-407
+Oregon,state,1,0,1,0,0,WRT-322
+Paradise,city,1,1,0,0,0,WRT-311
+Parthenon,landmark,1,0,1,0,0,WRT-125
+Phoenix,city,1,0,1,0,0,WRT-194
+Pnomh Penh,city,1,0,1,0,0,WRT-246
+Raglan Road,landmark,1,1,0,0,0,WRT-192
+Russia,country,1,0,0,1,0,WRT-202
+San Diego,city,1,0,1,0,0,WRT-459
+San Francisco,city,1,0,0,1,0,WRT-238
+San Jose,city,1,1,0,0,0,WRT-231
+San Luis Obispo,city,1,0,1,0,0,WRT-297
+San Quentin,landmark,1,1,0,0,0,WRT-361
+Scandinavia,region,1,0,1,0,0,WRT-239
+Seattle,city,1,0,0,1,0,WRT-461
+Shreveport,city,1,0,1,0,0,WRT-214
+South Bend,city,1,0,1,0,0,WRT-406
+South of France,region,1,0,1,0,0,WRT-239
+Southie,region,1,0,1,0,0,WRT-346
+Staten Island,city,1,0,0,0,1,WRT-125
+Staten Island,region,1,1,0,0,0,WRT-127
+Sudan,country,1,0,1,0,0,WRT-303
+TD Garden,landmark,1,1,0,0,0,WRT-346
+Terre Haute,city,1,0,1,0,0,WRT-406
+Tivoli Gardens,landmark,1,0,1,0,0,WRT-243
+Ubangi River,body_of_water,1,0,1,0,0,WRT-303
+Vermont,state,1,1,0,0,0,WRT-310
+Vietnam,country,1,0,1,0,0,WRT-408
+Virginia,state,1,1,0,0,0,WRT-131
+Xenia,city,1,1,0,0,0,WRT-408
+northern Maine coast,region,1,0,0,0,1,WRT-001
+the Acropolis,landmark,1,1,0,0,0,WRT-130
+the Keys,region,1,1,0,0,0,WRT-131
+the Midwest,region,1,0,0,0,1,WRT-371
+the West,region,1,1,0,0,0,WRT-387
+western New Jersey,region,1,0,1,0,0,WRT-130
+western Pennsylvania,region,1,1,0,0,0,WRT-119

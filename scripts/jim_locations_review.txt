@@ -1,0 +1,610 @@
+# JIM Stories — Geographic Location Extraction
+# 159 items processed, 0 errors
+# Model: claude-opus-4-6
+
+WRT-001 | JIM | 2009-04-29
+  - Maine (state, destination) — "able to afford a visit to his friend in Maine"
+  - northern Maine coast (region, destination) — "He lived in a small town on the northern Maine coast"
+
+WRT-114 | JIM HAS A NERVOUS BREAKDOWN AND TRIES HIS HAND AT POETRY | 2009-07-16
+  - Lithuania (country, destination) — "he relocated to Lithuania, where he tried his hand at writing poetry"
+
+WRT-115 | JIMMY | 2009-08-11
+  (no geographic references)
+
+WRT-119 | JIM | 2009-08-14
+  - western Pennsylvania (region, setting) — "He roamed from town to town, mostly in western Pennsylvania"
+  - Ohio (state, setting) — "sometimes across the Ohio border"
+  - Clarion (city, setting) — "There was this one guy in Clarion, though, who was a real asshole"
+
+WRT-120 | JIM (STORY #5) | 2009-08-14
+  (no geographic references)
+
+WRT-121 | JIM AS PROTOPLASM | 2009-08-15
+  (no geographic references)
+
+WRT-122 | JIM AT THE BALL GAME | 2009-08-25
+  - Fenway Park (landmark, setting) — "that ball game he went to at Fenway back in the 70's"
+  - Boston (city, setting) — "that ball game he went to at Fenway back in the 70's"
+
+WRT-123 | JIM #87 | 2009-08-27
+  (no geographic references)
+
+WRT-124 | JIM IN NIGERIA | 2009-08-27
+  - Ogden (city, setting) — "Here he was in in the Ogden, Utah municipal jail"
+  - Utah (state, setting) — "Here he was in in the Ogden, Utah municipal jail"
+  - Nigeria (country, origin) — "when he did a stretch at a prison in Nigeria"
+
+WRT-125 | JIM FALLS IN LOVE | 2009-08-28
+  - Madison Square Garden (landmark, reference) [cultural_reference] — "saw THE ROLLING THUNDER REVUE in Madison Square Garden in 75"
+  - Parthenon (landmark, reference) [cultural_reference] — "Margaret Bourke-White amd the Parthenon and the Chrysler Building"
+  - Chrysler Building (landmark, reference) [cultural_reference] — "the Parthenon and the Chrysler Building and Juniot Kimbrough"
+  - Staten Island (city, destination) — "if he went to Staten Island, all would be well"
+
+WRT-126 | JIM #77 | 2009-08-26
+  - Eden (region, reference) [metaphorical] — "chucked out of his pipe-dream of eden like a drunk"
+
+WRT-127 | HOW NED'S MURDER AFFECTED JIM AND I | 2009-08-28
+  - Staten Island (region, setting) — "the vanished trees of Staten Island dictated"
+
+WRT-128 | JIM AND THE DENTAL FLOSS | 2009-08-28
+  (no geographic references)
+
+WRT-129 | JIM'S DREAM | 2009-08-28
+  (no geographic references)
+
+WRT-130 | JIM'S THOUGHTS  AT THE ACROPOLIS | 2009-08-29
+  - the Acropolis (landmark, setting) — "JIM'S THOUGHTS AT THE ACROPOLIS"
+  - Greece (country, setting) — "had decided to go with Julie to Greece"
+  - western New Jersey (region, reference) — "he caught a bass in a lake in western New Jersey"
+  - Mobile (city, reference) [cultural_reference] — "being stuck inside of Mobile with the Memphis blues again"
+  - Memphis (city, reference) [cultural_reference] — "being stuck inside of Mobile with the Memphis blues again"
+  - New York City (city, reference) — "he'd go back to New York City where he might find Angel"
+
+WRT-131 | JIM GETS HIS REVENGE | 2009-08-29
+  - Hollywood (city, setting) [ambiguous] — "that sketchy joint on Hollywood and Elm"
+  - Chico (city, setting) — "When Jim got out of Chico"
+  - California (state, setting) — "he hitched from California to Virginia"
+  - Virginia (state, setting) — "he hitched from California to Virginia"
+  - Carolina (region, setting) [ambiguous] — "then to Carolina, and kept moving on south"
+  - the Keys (region, setting) — "kept moving on south to the Keys"
+  - Barbados (country, setting) — "the cheapest form of local Barbados rum"
+  - Havana (city, reference) [cultural_reference] — "a foul-smelling elixir that the locals called "Havana Big Band""
+  - Caribbean (region, setting) — "then to the Carribean and obsessively started making"
+
+WRT-132 | JIM IN NIGERIA (updated) | 2009-08-27
+  - Ogden (city, setting) — "Here he was in in the Ogden, Utah municipal jail"
+  - Utah (state, setting) — "Here he was in in the Ogden, Utah municipal jail"
+  - Nigeria (country, origin) — "when he did a stretch at a prison in Nigeria"
+
+WRT-133 | JIM GETS BACK FROM SEEING HIS SHRINK | 2009-08-31
+  (no geographic references)
+
+WRT-134 | JIM UNSTUCK | 2009-08-31
+  (no geographic references)
+
+WRT-135 | JIM DRIVES TO FRESNO | 2009-09-01
+  - Fresno (city, destination) — "JIM DRIVES TO FRESNO"
+  - Utah (state, reference) — "about a hundred miles from the utah border"
+
+WRT-136 | JIM GOES TO THE BUS STATION | 2009-08-27
+  (no geographic references)
+
+WRT-137 | JIM HITS THE WALL | 2009-08-19
+  (no geographic references)
+
+WRT-138 | JIM IN PURGATORY, CONT'D. | 2009-09-04
+  (no geographic references)
+
+WRT-139 | JIM WAKES UP IN A COLD SWEAT | 2009-09-04
+  (no geographic references)
+
+WRT-140 | JIM IS JASON ALEXANDER | 2009-09-04
+  (no geographic references)
+
+WRT-141 | JAMES AND THE GIANT PLUM | 2009-09-08
+  (no geographic references)
+
+WRT-142 | THE LOVE OF GOD IS THE BEGINNING OF WISDOM | 2009-09-08
+  - Connecticut (state, origin) — "Jim went to a private school in Connecticutt, where he grew up"
+
+WRT-143 | FUNKY JIM | 2009-09-08
+  (no geographic references)
+
+WRT-144 | (no subject) | 2009-09-10
+  (no geographic references)
+
+WRT-145 | JIM AND THE ROCK OF AGES | 2009-09-10
+  (no geographic references)
+
+WRT-146 | JIM'S ADVENTURE ONTHE HIGH SEAS BEGINS | 2009-09-10
+  - Jersey City (city, setting) — "my life as a janitor at the customs house here in Jersey City"
+
+WRT-189 | JIM AS A MACHINE PART | 2009-10-27
+  - Alabama (state, reference) — "Researchers at the University of Alabama have discovered signs of sentience"
+
+WRT-192 | HIGH SOCIETY JIM | 2009-10-30
+  - Raglan Road (landmark, setting) [ambiguous, cultural_reference] — "He lives on Raglan Road."
+
+WRT-193 | JIM’S AMAZEMENT | 2009-10-30
+  (no geographic references)
+
+WRT-194 | JIM AND HIS IMPOSSIBLE DREAM | 2009-10-31
+  - Mobile (city, reference) [cultural_reference] — "that time when Jim was in Mobile with the Memphis blues"
+  - Memphis (city, reference) [cultural_reference] — "in Mobile with the Memphis blues….or was it Memphis with the Mobile blues"
+  - Albert Hall (landmark, reference) [cultural_reference] — "by holes filling the Albert Hall"
+  - British Empire (region, reference) [metaphorical] — "by the sunset over the British Empire"
+  - Babylon (city, reference) [cultural_reference] — "by the waters of Babylon"
+  - Phoenix (city, reference) [cultural_reference] — "by the time I get to Phoenix"
+
+WRT-195 | JIM’S FLIGHT ON A COLD NIGHT | 2009-10-31
+  (no geographic references)
+
+WRT-196 | JIM IS | 2009-11-01
+  - Eastern Parkway (landmark, reference) — "a dapper dude name of Don who lived on Eastern Parkway in Brooklyn"
+  - Brooklyn (city, reference) — "who lived on Eastern Parkway in Brooklyn"
+
+WRT-197 | JIM IN MID-MARCH | 2009-11-01
+  (no geographic references)
+
+WRT-198 | JIM IN MONTANA | 2009-11-02
+  - Montana (state, setting) — "He's in this state in the state of Montana"
+  - Butte (city, setting) — "visiting his second cousin, Johnny Conkeroux, in Butte"
+
+WRT-199 | JIM AND YOU, DOWN BY THE RIVER | 2009-11-05
+  (no geographic references)
+
+WRT-200 | JIM MAKES A PHONE CALL | 2009-11-06
+  (no geographic references)
+
+WRT-201 | JIM BECOMES SICK OF HIS OWN NARRATIVE | 2009-11-07
+  - Amsterdam (city, setting) — "much like the narrator in The Fall by Camus, was in Amsterdam"
+  - Israel (country, origin) — "He was coming back from Israel"
+  - Holland (country, setting) — "he figured he would visit Holland on the way back"
+  - New Jersey (state, reference) — "the languid heat of New Jersey in August"
+  - Africa (region, reference) — "When he was in Africa, back in '57"
+
+WRT-202 | JIM AND THE RUSSIAN | 2009-11-08
+  - Russia (country, origin) — "This is a drink we drink in Russia, he said"
+  - America (country, setting) — "Dmitri had come to America to study mathematics"
+
+WRT-203 | JIM AND THE WAR ON TERROR | 2009-11-15
+  (no geographic references)
+
+WRT-204 | JIM ISN’T LIKE EVERYBODY ELSE | 2009-11-18
+  (no geographic references)
+
+WRT-206 | JIM’S DREAM | 2009-12-06
+  (no geographic references)
+
+WRT-209 | JIM WISHES HE WAS MILES | 2010-01-21
+  (no geographic references)
+
+WRT-210 | JIM AND THE HAY BALES | 2010-01-27
+  - Grand Canyon (landmark, reference) [cultural_reference] — "some Grand Canyon rescue episode where a vulture glides descending"
+
+WRT-211 | JIM SHOOTS UP TONY’S TRUCK | 2010-01-28
+  - Missoula (city, setting) — "All of Missoula heard about that."
+  - France (country, origin) — "Billy was from France and when Jim started bawling"
+
+WRT-212 | JIM AND THE TV | 2010-01-31
+  (no geographic references)
+
+WRT-213 | JIM HOWLS AND SCREAMS WITH JOY | 2010-01-31
+  - Kansas (state, setting) [ambiguous] — "his bleak furnished room in Kansas (or is it Idaho?"
+  - Idaho (state, setting) [ambiguous] — "in Kansas (or is it Idaho? He isn't sure anymore"
+  - Mexico (country, reference) [cultural_reference] — "Who disappeared into the volcanoes of Mexico?"
+
+WRT-214 | JIM GOES TO OKLAHOMA | 2010-02-01
+  - Oklahoma (state, destination) — "He's going to Oklahoma."
+  - Normal (city, reference) [ambiguous] — "His brother-in-law lives in Normal, in the panhandle he thinks"
+  - Norman (city, reference) [ambiguous] — "Or is it Norman?, Jim wonders."
+  - Illinois (state, setting) — "the bus crosses the Illinois-Missouri border"
+  - Missouri (state, setting) — "the bus crosses the Illinois-Missouri border"
+  - Mexico (city, setting) [ambiguous] — "It goes through a town called Mexico."
+  - Shreveport (city, reference) — "beat up by a gang of bikers in Shreveport, Louisiana in 1973"
+  - Louisiana (state, reference) — "beat up by a gang of bikers in Shreveport, Louisiana in 1973"
+
+WRT-215 | JIM AND THE TOUGH DAY | 2010-02-02
+  (no geographic references)
+
+WRT-216 | JIM AND THE WHO CONCERT | 2010-02-05
+  - Lowell (city, destination) — "go down to the train station of the cross in Lowell, Massachusetts"
+  - Massachusetts (state, destination) — "go down to the train station of the cross in Lowell, Massachusetts"
+  - Tennessee (state, reference) — "he'd met in a botched robbery in Tennesee, all those summers ago"
+  - Dartmouth (landmark, reference) [ambiguous] — "http://www.dartmouth.edu/%7Emilton/reading_room"
+
+WRT-217 | JIM IS NOT A MAN OF LETTERS | 2010-02-05
+  (no geographic references)
+
+WRT-218 | JIM LOATHES TEA PARTY-TYPE PATRIOTISM | 2010-02-05
+  - Bull Run (landmark, reference) [metaphorical] — "This not Bull Run. It never occurred to him"
+
+WRT-219 | JIM THINKS ABOUT NORTH CAROLINA | 2010-02-07
+  - North Carolina (state, setting) — "he went to this seafood restaurant in North Carolina, where he was visiting"
+  - Durham (city, setting) — "Jack owns a tire store in Durham"
+
+WRT-220 | JIM AND THE LINT DREAM | 2010-02-10
+  - Italy (country, reference) [cultural_reference] — "it was about this guy in Italy after the war"
+  - Rome (city, reference) [cultural_reference] — "walk the streets of Rome themselves, looking for the bike"
+
+WRT-221 | JIM LIKES USED STUFF | 2010-02-10
+  (no geographic references)
+
+WRT-222 | JIM AND THE TROUT DREAM | 2010-02-19
+  - Four Corners (region, reference) — "On their backs were maps of the fourcorners: UtahNewMexicoColoradoArizona"
+  - Utah (state, reference) — "maps of the fourcorners: UtahNewMexicoColoradoArizona"
+  - New Mexico (state, reference) — "maps of the fourcorners: UtahNewMexicoColoradoArizona"
+  - Colorado (state, reference) — "maps of the fourcorners: UtahNewMexicoColoradoArizona"
+  - Arizona (state, reference) — "maps of the fourcorners: UtahNewMexicoColoradoArizona"
+  - Aztec, New Mexico (city, setting) — "Once Jim was in the town of Aztec, New Mexico where they have these amazing ruins"
+  - Aztec Ruins (landmark, setting) — "in the town of Aztec, New Mexico where they have these amazing ruins left by Indians"
+
+WRT-223 | JIM IN LOUISIANA | 2010-02-22
+  - Louisiana (state, setting) — "JIM IN LOUISIANA"
+
+WRT-224 | JIM AND TOLSTOY | 2010-02-23
+  (no geographic references)
+
+WRT-225 | JIM AS THE SECRET SHARER | 2010-02-23
+  (no geographic references)
+
+WRT-226 | JIM ENCOUNTERS SOME REAL MUMBO-JUMBO | 2010-02-23
+  - Amazon River (body_of_water, reference) — "this nature show about the Amazon River"
+
+WRT-227 | JIM DOESN’T KNOW WHERE TO BEGIN | 2010-02-24
+  (no geographic references)
+
+WRT-228 | JIM WORKS AT AN APPLIANCE STORE | 2010-02-27
+  - Cincinnati (city, setting) — "Jim works at an appliance store in Cincinatti"
+  - Cleveland (city, setting) — "his 1975 performance at an old sewing machine factory in Cleveland"
+  - Montgomery (city, setting) — "the 1987 Shell Oil Arts Festival in Montgomery Alabama"
+  - Alabama (state, setting) — "the 1987 Shell Oil Arts Festival in Montgomery Alabama"
+  - Central African Republic (country, reference) — "he dedicated to political prisoners in the Central African Republic"
+
+WRT-229 | JIM AND HIS MEMORY DISORDER | 2010-03-04
+  - Greece (country, origin) [ambiguous] — "statues of Apollo he saw when he was in Greece or Rome"
+  - Rome (city, origin) [ambiguous] — "statues of Apollo he saw when he was in Greece or Rome"
+  - Alaska (state, origin) — "the time when he was in Alaska and heard a wolf howl"
+
+WRT-230 | JIM IN THE KITCHEN | 2010-03-04
+  (no geographic references)
+
+WRT-231 | JIM IN CALIFORNIA | 2010-03-05
+  - California (state, setting) — "JIM IN CALIFORNIA"
+  - San Jose (city, setting) — "Jim was in his yard in San Jose"
+
+WRT-232 | JIM REMEMBERS THE WATER | 2010-03-05
+  - Missouri (state, setting) — ""The Water" they call it in Missouri"
+  - Mississippi (body_of_water, setting) — "both sides of the Mississippi barely visible"
+
+WRT-233 | JIM’S BIRTHDAY | 2010-03-06
+  (no geographic references)
+
+WRT-234 | JIM IN KANAS CITY | 2010-03-07
+  - Kansas City (city, setting) [ambiguous] — "the sun setting over the Kansas City sky"
+
+WRT-235 | JIM FINDS THAT WHICH HE THOUGHT WAS LOST FOREVER | 2010-03-11
+  (no geographic references)
+
+WRT-236 | JIM AND CALVIN | 2010-03-12
+  - New Jersey (state, setting) — "at some place in New Jersey with his friend Calvin"
+
+WRT-237 | JIM AS A CHILD ACTOR | 2010-03-12
+  (no geographic references)
+
+WRT-238 | JIM IN CALIFORNIA, PART TWO | 2010-03-12
+  - California (state, setting) — "JIM IN CALIFORNIA, PART TWO"
+  - Oakland Bay Bridge (landmark, setting) — "Jim's in a cab going across the Oakland Bay Bridge"
+  - San Francisco (city, origin) — "He was visiting friends who live in San Francisco"
+  - Oakland (city, destination) — "The neighborhood where the bridge hits Oakland is pretty scummy"
+
+WRT-239 | JIM AND THE WALK ON THE BEACH | 2010-03-14
+  - South of France (region, reference) — "like fluffy white clouds in the South of France"
+  - Albany (city, reference) [ambiguous] — "like a maelstrom in Albany"
+  - Scandinavia (region, reference) — "like a zoot suit riot in Scandinavia"
+  - Newark (city, reference) [cultural_reference] — "like the 1967 Newark riots"
+
+WRT-240 | JIM IN MISSISSIPPI | 2010-03-14
+  - Mississippi (state, setting) — "on this fetid and humid Mississippi night"
+
+WRT-243 | JIM AND FRED | 2010-05-25
+  - Tivoli Gardens (landmark, reference) [ambiguous] — "considerable and considerate but indecisive turmoil, Tivoli Gardens, haberdashers"
+
+WRT-245 | JIM AND LEOPOLD | 2010-05-30
+  - Congo (region, reference) [cultural_reference] — "like some petty despot Leopold in his nauseating Congo, enslaving and torturing the natives"
+
+WRT-246 | JIM IN CAMBODIA | 2010-05-31
+  - Cambodia (country, setting) — "that time you took a vacation in Cambodia"
+  - Angkor Wat (landmark, reference) — "to see the ruins at Angkor Wat"
+  - Pnomh Penh (city, reference) — "had to call the embassy in Pnomh Penh to straighten it out"
+
+WRT-247 | JIM IN MEMPHIS | 2010-06-02
+  - Memphis (city, setting) [ambiguous] — "JIM IN MEMPHIS"
+
+WRT-248 | JIM IN TENNESSEE | 2010-06-03
+  - Tennessee (state, origin) — "but that was back in Tennessee"
+  - Tennessee (state, reference) — "go to jail or never set foot in Tennessee"
+  - Kentucky (state, reference) — "criss-cross that Kentucky border and go back to Knoxville"
+  - Knoxville (city, destination) — "criss-cross that Kentucky border and go back to Knoxville"
+
+WRT-274 | JIM AT THE LAUNDY-MAT | 2010-11-03
+  (no geographic references)
+
+WRT-276 | JIM IN AKRON | 2010-11-07
+  - Akron (city, setting) — "JIM IN AKRON"
+
+WRT-283 | JIM IN NORTHERN CALIFORNIA | 2011-01-05
+  - Northern California (region, setting) — "a wet, moss-covered ravine in Northern California. He was there in 74"
+
+WRT-284 | JIM RUNS INTO HIS OLD FRIEND TOM AND THEY HOLD UP A LIQUOR STORE | 2011-01-09
+  - Nebraska (state, reference) — "like that time in Nebraska when he drinks too much coffee"
+  - Kentucky (state, reference) [ambiguous] — "at Daphne's apartment on Kentucky Derby Day"
+  - Churchill Downs (landmark, reference) [cultural_reference] — "on Kentucky Derby Day"
+
+WRT-286 | JIM WINS THE LOTTERY | 2011-01-11
+  (no geographic references)
+
+WRT-287 | JIM AND THE BOWLING BALL | 2011-01-14
+  (no geographic references)
+
+WRT-290 | DESPITE THIS, JIM WANTS TO GO TO PARIS | 2011-01-17
+  - Paris (city, destination) — "JIM WANTS TO GO TO PARIS"
+
+WRT-296 | JIM AND HOBBES | 2011-01-26
+  - Madison Square Garden (landmark, reference) — "his friends went to see the Stones at Madison Square Garden"
+  - New York City (city, reference) — "his friends went to see the Stones at Madison Square Garden"
+
+WRT-297 | JIM AND THE ECHO | 2011-01-30
+  - Duluth (city, reference) — "a lonesome stretch of road between Duluth and Red Falls"
+  - Hibbing (city, origin) — "He lived in Hibbing, home of Bob Dylan"
+  - Mesabi Range (region, origin) — "out on the Mesabi Range where, as Dylan reminisced"
+  - California (state, origin) — "He had come a long way since he left California"
+  - San Luis Obispo (city, reference) — "it was still back in San Luis Obispo, with Pedro and Anthony"
+
+WRT-298 | JIM AND THE DRY CLEANING | 2011-01-31
+  - New York (city, origin) — "eventually he went to work in New York's garment district"
+  - Arkansas (state, setting) — "It was a warm Arkansas evening, one that reminded him"
+  - Arkansas (state, setting) — "as he looked up in the Arkansas sky"
+
+WRT-299 | JIM AND HIS HEART | 2011-02-01
+  - Carson City (city, reference) — "Joe Varraciola doin five up at Carson City there for grand theft auto"
+
+WRT-303 | JIM IN THE CENTRAL AFRICAN REPUBLIC | 2011-02-05
+  - Central African Republic (country, setting) — "Jim wakes up in the Central African Republic"
+  - Chad (country, reference) — "To the north lies Chad"
+  - Sudan (country, reference) — "to the east is Sudan"
+  - Congo (country, reference) [ambiguous] — "south is Congo and west lies Cameroon"
+  - Cameroon (country, reference) — "west lies Cameroon"
+  - Bangui (city, reference) — "And Bangui is its capital"
+  - Ubangi River (body_of_water, reference) — "two-thirds of the country lies in the basins of the Ubangi River"
+  - Congo River (body_of_water, reference) — "which flows south into the Congo River"
+  - Chari River (body_of_water, reference) — "the remaining third lies in the basin of the Chari River"
+  - Lake Chad (body_of_water, reference) — "which flows north into Lake Chad"
+  - France (country, reference) — "France called the colony it carved out in this region Ubangi-Chari"
+
+WRT-304 | JIM AND ISAIAH | 2011-02-10
+  (no geographic references)
+
+WRT-305 | JIM AND EZRA POUND | 2011-02-12
+  (no geographic references)
+
+WRT-306 | JIM AT THE BOOKSTORE | 2011-02-12
+  (no geographic references)
+
+WRT-307 | JIM AS A BANKER | 2011-02-13
+  - Paris (city, origin) — "Jim was in Paris, about ten years ago"
+
+WRT-308 | JIM CONSIDERS AN OPTION | 2011-02-13
+  (no geographic references)
+
+WRT-309 | JIM IN SUMMER | 2011-02-14
+  (no geographic references)
+
+WRT-310 | JIM AND YOU IN VERMONT | 2011-02-15
+  - Vermont (state, setting) — "Jim is in Vermont again enjoying the beautiful weather with you"
+
+WRT-311 | JIM IN PARADISE | 2011-02-15
+  - Paradise (city, setting) [ambiguous, metaphorical] — "JIM IN PARADISE"
+
+WRT-312 | JIM WRITES TO LOU | 2011-02-16
+  - Italy (country, origin) — "You left Italy for America"
+  - America (country, destination) — "You left Italy for America"
+
+WRT-313 | THE SMOKE BOMB | 2011-02-17
+  (no geographic references)
+
+WRT-314 | JIM IN NEW YORK | 2011-02-18
+  - New York (city, setting) [ambiguous] — "He was in New York on business"
+
+WRT-315 | JIM EATS AT A FISH RESTAURANT | 2011-02-19
+  (no geographic references)
+
+WRT-318 | JIM IN DALLAS | 2011-03-04
+  - Dallas (city, setting) — "JIM IN DALLAS"
+
+WRT-319 | JIM IN FLORIDA | 2011-03-05
+  - Florida (state, setting) — "JIM IN FLORIDA"
+  - Lincoln Road (landmark, setting) — "the fluorescent streetlights cast a glow on the palm trees on Lincoln Road"
+
+WRT-322 | JIM IN EDGE CITY | 2011-03-08
+  - Edge City (city, setting) [ambiguous] — "I really *am* in Edge City, California, on the coast about ten miles or so from the Oregon border"
+  - California (state, setting) — "I really *am* in Edge City, California, on the coast"
+  - Oregon (state, reference) — "about ten miles or so from the Oregon border"
+  - New York (city, reference) [ambiguous] — "nine out of ten Americans think that New York is in China"
+  - China (country, reference) [metaphorical] — "nine out of ten Americans think that New York is in China"
+
+WRT-326 | JIM IN FREEHOLD, NEW JERSEY | 2011-03-09
+  - Freehold, New Jersey (city, setting) — "JIM IN FREEHOLD, NEW JERSEY"
+  - New Jersey (state, setting) — "JIM IN FREEHOLD, NEW JERSEY"
+
+WRT-329 | JIM AT THE EDGE OF TOWN | 2011-03-13
+  - California (state, reference) — "the time when he was in California when the Arab hit him"
+
+WRT-330 | JIM IN LOUISIANA | 2011-03-15
+  - Louisiana (state, setting) — "JIM IN LOUISIANA"
+  - New Orleans (city, reference) — "he saw a huge garbage scow catch fire outside of New Orleans"
+
+WRT-333 | JIM IN FISHTOWN | 2011-03-16
+  - Fishtown (city, setting) [ambiguous] — "JIM IN FISHTOWN"
+  - Gloucester (city, reference) [gloucester_bleed] — "He reads about the 2010 Gloucester football team"
+
+WRT-334 | JIM IN GILEAD | 2011-03-28
+  - Gilead (region, setting) [ambiguous, cultural_reference] — "There *is* a balm in Gilead, he tells himself"
+
+WRT-335 | JIM RAILS AT HIS EXISTENCE | 2011-04-11
+  (no geographic references)
+
+WRT-346 | JIM GOES TO THE HOCKEY GAME | 2011-04-22
+  - TD Garden (landmark, setting) — "He was at a Bruins game at the Garden"
+  - Boston (city, setting) — "He was at a Bruins game at the Garden"
+  - Southie (region, reference) — "from the same neighborhood in Southie, drinking at the same bar"
+
+WRT-348 | JIM STARTS HIS DAY | 2011-04-23
+  (no geographic references)
+
+WRT-351 | JIM AND YOU | 2011-04-27
+  - Hawaii (state, reference) [cultural_reference] — "visions of Marlon Brando's Hawaii and your remembered waves"
+  - Tennessee (state, reference) [cultural_reference, ambiguous] — "if Tennessee Williams ain't right, why, pilgrim"
+
+WRT-360 | JIM AND WALLY | 2011-05-15
+  (no geographic references)
+
+WRT-361 | JIM AND I TRY TO ROB A BANK | 2011-05-29
+  - San Quentin (landmark, setting) — "here in San Quentin, the true minds of both Jim and this whole rotten heist"
+  - Puerto Rico (country, reference) [cultural_reference] — "a Puerto Rican junkie named Rico"
+
+WRT-362 | JIM AND HIS DREAM | 2011-05-31
+  - England (country, setting) [ambiguous] — "sitting on a couch in the fog, in England or somewhere"
+  - Chelsea (region, reference) [cultural_reference, ambiguous] — "listening to "Chelsea Morning" by Joni Mitchell"
+
+WRT-366 | JIM IN EL PASO | 2011-07-24
+  - El Paso (city, setting) — "Jim sat on a bench against a hot white wall outside the bus station"
+
+WRT-371 | JIM AND COLD SWEAT | 2011-08-06
+  - Avenue C (landmark, setting) — "I was at a party down on Avenue C"
+  - New York (city, setting) — "that's the big looney bin the got there in New York"
+  - Bellevue (landmark, setting) — "haul Cold Sweat down to Bellvue – that's the big looney bin"
+  - the Midwest (region, destination) — "he moved to the Midwest, back home, to Iowa"
+  - Iowa (state, destination) — "to Iowa or some shit"
+
+WRT-372 | JIM AT THE LAKE | 2011-08-15
+  (no geographic references)
+
+WRT-373 | THREE CHAPTERS | 2011-08-19
+  (no geographic references)
+
+WRT-374 | JIM SEEKS THE TRUTH | 2011-08-21
+  (no geographic references)
+
+WRT-376 | JIM UNDERSTANDS | 2011-08-28
+  (no geographic references)
+
+WRT-380 | JIM’S FEET FEEL LIKE TRIVETS | 2011-09-07
+  (no geographic references)
+
+WRT-381 | JIM IN ITALY | 2011-09-18
+  - Italy (country, origin) — "Jim then remembered the summer he was in Italy"
+
+WRT-382 | YOU AND JIM | 2011-09-19
+  (no geographic references)
+
+WRT-383 | JIM LEAVES THE PARTY | 2011-09-25
+  (no geographic references)
+
+WRT-384 | JIM’S CONFUSION | 2011-09-25
+  (no geographic references)
+
+WRT-385 | JIM IN PARIS | 2011-09-27
+  - Paris (city, origin) [ambiguous] — "It reminded him for some reason when he was in Paris, twenty years ago."
+
+WRT-387 | JIM IN THE WEST | 2011-10-05
+  - the West (region, setting) [ambiguous] — "JIM IN THE WEST"
+
+WRT-388 | JIM IN KANSAS | 2011-10-17
+  - Kansas (state, setting) — "JIM IN KANSAS"
+
+WRT-394 | JIM IN CLEVELAND | 2011-11-27
+  - Cleveland (city, setting) — "It was pouring that morning in Cleveland, and his lawn was a small muddy swamp."
+  - Museum of Natural History (landmark, reference) [ambiguous] — "a diorama of a prehistoric marsh he'd seen as a kid at the Museum of Natural History"
+
+WRT-395 | I MEET JIM AT THE CEMETERY | 2011-11-29
+  (no geographic references)
+
+WRT-396 | JIM’S HOUSE | 2011-11-29
+  (no geographic references)
+
+WRT-397 | JIM TAKE HIS DESSERT | 2011-12-15
+  - Memphis (city, reference) [ambiguous, metaphorical] — "in a sort of Memphis half-step of undulation and toodeloo-voodoo"
+
+WRT-398 | JIM AVOIDS GOING INTO THE GARAGE | 2011-12-20
+  (no geographic references)
+
+WRT-401 | THREE DAYS IN THE LIFE OF JIM | 2011-12-29
+  (no geographic references)
+
+WRT-404 | JIM STANDING ALONE ON THE MARBLE STEPS | 2012-01-12
+  (no geographic references)
+
+WRT-405 | JIM’S INARTICULATENESS | 2012-01-12
+  (no geographic references)
+
+WRT-406 | JIM MOVES TO PARIS AND THEN BACK HOME TO INDIANA | 2012-01-15
+  - Paris (city, setting) — "Jim stood on the balcony... He looked out on Paris."
+  - France (country, setting) — "Jim wondered what the hell he was doing in France."
+  - Indiana (state, origin) — "He had left his job in Indiana."
+  - Terre Haute (city, reference) — "It was still back there, in Terre Haute."
+  - South Bend (city, reference) — "the company had moved to South Bend, so his job wasn't back in Terre Haute"
+  - Indiana (state, setting) — "JIM MOVES BACK TO INDIANA"
+
+WRT-407 | JIM AND HUBERT SELBY, JR. | 2012-01-16
+  - Olympus (landmark, reference) [metaphorical] — "he could ascend OIympus by just thinking about it"
+  - Brooklyn (city, reference) [cultural_reference] — "a copy of LAST EXIT TO BROOKLYN in the other"
+
+WRT-408 | JIM AND VIETNAM | 2012-01-16
+  - Xenia (city, setting) — "he moved away from that town, and where he moved it smelled bad. Xenia, Ohio."
+  - Ohio (state, setting) — "Xenia, Ohio. I mean the air smelled bad on account of the refinery"
+  - Vietnam (country, reference) — "It was Vietnam back then and he can still remember the sound the choppers made on TV"
+
+WRT-409 | JIM IN BALTIMORE | 2012-01-19
+  - Baltimore (city, setting) — "JIM IN BALTIMORE"
+  - Puerto Rico (country, reference) [ambiguous] — "The gun that he bought from the Puerto Rican"
+
+WRT-414 | JIM’S SOLITARY EXISTENCE | 2012-03-18
+  (no geographic references)
+
+WRT-433 | JIM WAKES UP ON THE PARK BENCH | 2013-01-18
+  (no geographic references)
+
+WRT-435 | jJIM AT THE GATE | 2013-02-06
+  (no geographic references)
+
+WRT-436 | JIM ONCE HAD IT ALL | 2013-02-10
+  (no geographic references)
+
+WRT-437 | Untitled | 2013-04-04
+  (no geographic references)
+
+WRT-438 | JIM IN THE KITCHEN | 2013-04-07
+  (no geographic references)
+
+WRT-440 | JIM SITS AT A TABLE | 2013-04-26
+  (no geographic references)
+
+WRT-457 | Untitled | 2014-05-26
+  (no geographic references)
+
+WRT-459 | Untitled | 2014-05-31
+  - Kansas (state, origin) — "when he was just markin' time back in Kansas, sittin' on the fencepost"
+  - Detroit (city, setting) — "he's in outside of Detroit, at the Red Wing Motel"
+  - San Diego (city, reference) — "he was discharged from the Merchant Marines in San Diego"
+  - Brooklyn Bridge (landmark, reference) [metaphorical] — "Brooklyn Bridge brokers, bottom-of-the-deck dealers"
+
+WRT-460 | Fwd: | 2014-05-31
+  - Leningrad (city, reference) [metaphorical] — "his perception hurting like the siege of Leningrad"
+
+WRT-461 | Untitled | 2014-06-01
+  - Duluth (city, setting) — "I was outside of Duluth on one of my cross-country trucking trips"
+  - Seattle (city, origin) — "carrying a load of bus parts from Seattle to Akron"
+  - Akron (city, destination) — "carrying a load of bus parts from Seattle to Akron"
+
