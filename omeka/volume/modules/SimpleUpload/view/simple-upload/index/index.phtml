@@ -1,0 +1,175 @@
+<?php
+/**
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var array $results
+ */
+$translate = $this->plugin('translate');
+$this->htmlElement('body')->appendAttribute('class', 'simple-upload');
+?>
+
+<?php echo $this->pageTitle($translate('Simple Upload')); ?>
+
+<?php if (!empty($results)): ?>
+<div id="upload-results">
+    <h3><?= $translate('Upload Results') ?></h3>
+    <table class="tablesaw" data-tablesaw-mode="stack">
+        <thead>
+            <tr>
+                <th><?= $translate('File') ?></th>
+                <th><?= $translate('Status') ?></th>
+                <th><?= $translate('Item') ?></th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($results as $r): ?>
+            <tr>
+                <td><?= $this->escapeHtml($r['filename']) ?></td>
+                <td>
+                    <?php if ($r['success']): ?>
+                        <span class="o-icon-public" aria-label="<?= $translate('Success') ?>"
+                              title="<?= $translate('Success') ?>"></span>
+                        <?= $translate('Created') ?>
+                    <?php else: ?>
+                        <span class="o-icon-private" aria-label="<?= $translate('Error') ?>"
+                              title="<?= $translate('Error') ?>"></span>
+                        <?= $this->escapeHtml($r['error']) ?>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php if ($r['success']): ?>
+                        <a href="<?= $this->escapeHtml($r['url']) ?>">#<?= $r['item_id'] ?></a>
+                    <?php else: ?>
+                        &mdash;
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+<?php endif; ?>
+
+<form method="post" action="<?= $this->url('admin/simple-upload') ?>"
+      enctype="multipart/form-data" id="simple-upload-form">
+    <fieldset id="fieldset-upload">
+        <legend><?= $translate('Upload Images') ?></legend>
+        <p class="explanation">
+            <?= $translate('Select one or more image files. Each file becomes a new item with the filename as its title.') ?>
+        </p>
+
+        <div id="simple-upload-dropzone" class="field">
+            <div class="dropzone-inner">
+                <p class="dropzone-message">
+                    <?= $translate('Drag files here or click to select') ?>
+                </p>
+                <input type="file" name="file[]" id="simple-upload-input"
+                       multiple accept="image/*" class="dropzone-file-input">
+                <ul id="simple-upload-file-list"></ul>
+            </div>
+        </div>
+    </fieldset>
+
+    <button type="submit" class="button" id="simple-upload-submit" disabled>
+        <?= $translate('Upload and Create Items') ?>
+    </button>
+</form>
+
+<style>
+#simple-upload-dropzone {
+    border: 2px dashed #adb5bd;
+    border-radius: 6px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+    margin: 1rem 0;
+}
+#simple-upload-dropzone.drag-over {
+    border-color: #495057;
+    background: #f1f3f5;
+}
+.dropzone-file-input {
+    display: block;
+    margin: 1rem auto 0;
+}
+#simple-upload-file-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    text-align: left;
+}
+#simple-upload-file-list li {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+}
+#simple-upload-file-list .file-size {
+    color: #868e96;
+    font-size: 0.875em;
+}
+#simple-upload-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dropzone = document.getElementById('simple-upload-dropzone');
+    var input = document.getElementById('simple-upload-input');
+    var fileList = document.getElementById('simple-upload-file-list');
+    var submitBtn = document.getElementById('simple-upload-submit');
+    var form = document.getElementById('simple-upload-form');
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function updateFileList() {
+        fileList.innerHTML = '';
+        var files = input.files;
+        submitBtn.disabled = (files.length === 0);
+        for (var i = 0; i < files.length; i++) {
+            var li = document.createElement('li');
+            var nameSpan = document.createElement('span');
+            nameSpan.textContent = files[i].name;
+            var sizeSpan = document.createElement('span');
+            sizeSpan.className = 'file-size';
+            sizeSpan.textContent = formatSize(files[i].size);
+            li.appendChild(nameSpan);
+            li.appendChild(sizeSpan);
+            fileList.appendChild(li);
+        }
+    }
+
+    dropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropzone.classList.add('drag-over');
+    });
+    dropzone.addEventListener('dragleave', function() {
+        dropzone.classList.remove('drag-over');
+    });
+    dropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropzone.classList.remove('drag-over');
+        input.files = e.dataTransfer.files;
+        updateFileList();
+    });
+    dropzone.addEventListener('click', function(e) {
+        if (e.target !== input) {
+            input.click();
+        }
+    });
+
+    input.addEventListener('change', updateFileList);
+
+    form.addEventListener('submit', function() {
+        if (input.files.length === 0) return false;
+        submitBtn.textContent = 'Uploading\u2026';
+        submitBtn.disabled = true;
+    });
+});
+</script>
