@@ -14,10 +14,10 @@ if echo "$COMMAND" | grep -qE '(^|\s)make\s+(enrich|enrich-batch|enrich-batch-co
   fi
 fi
 
-# Block: make deploy
+# Warn: make deploy (user confirms via normal tool-approval prompt)
 if echo "$COMMAND" | grep -qE '(^|\s)make\s+deploy(\s|$)'; then
-  echo "BLOCKED: This command deploys to production. Ask the user for explicit approval." >&2
-  exit 2
+  echo "This command deploys to production. Make sure the user has approved." >&2
+  exit 0
 fi
 
 # Block: make pull (but allow make pull-new, pull-db, pull-files, pull-modules, pull-themes)

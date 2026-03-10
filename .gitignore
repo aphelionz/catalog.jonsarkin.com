@@ -45,11 +45,7 @@ omeka/volume/files/
 
 # Third-party Omeka modules (FacetedBrowse is ours — not ignored)
 omeka/volume/modules/BulkEdit/
-omeka/volume/modules/BulkExport/
-omeka/volume/modules/BulkImport/
-omeka/volume/modules/BulkImportFiles/
 omeka/volume/modules/CSSEditor/
-omeka/volume/modules/CSVImport/
 omeka/volume/modules/Common/
 omeka/volume/modules/CustomVocab/
 omeka/volume/modules/EasyAdmin/
