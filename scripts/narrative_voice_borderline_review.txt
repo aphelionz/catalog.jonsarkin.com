@@ -1,0 +1,108 @@
+BORDERLINE ITEMS (26) — review manually:
+----------------------------------------------------------------------
+  WRT-115 (JIMMY)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, narrating Jim/Jimmy's actions and thoughts externally. However, the line 'what am i, a goddam thesaurus fer chrissakes?' is rendered without quotation marks as direct first-person interior monologue, and the narrative voice itself shifts into a colloquial, Jim-inflected register throughout (e.g., 'he didn't meant ta puch the guy'), dissolving the boundary between narrator and character. The unquoted first-person 'what am i' line constitutes a genuine perspective shift beyond standard free indirect discourse.
+
+  WRT-123 (JIM #87)
+    Classified as: Third Person
+    Reasoning: The narrative is predominantly third person, with Jim referred to as 'he/him/Jim' throughout and an external narrator telling the story. The narrator uses 'you' and 'one' in generalizing/rhetorical ways ('one has when one's father's a bankrobber,' 'when your old man's out'), and directly addresses the reader ('You see, dear reader'), but these are rhetorical devices and authorial asides rather than genuine shifts to second-person narration where 'you' is a character. The parenthetical interjections ('big fucking surprise, huh?') reflect an opinionated narrator but not a first-person participant.
+
+  WRT-125 (JIM FALLS IN LOVE)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, narrating Jim's experience with 'he/him' throughout. However, the line 'he didn't even really care if you know what I'm talking about' introduces a first-person narrator ('I') who addresses the reader as 'you,' dissolving the boundary between external narrator and a participating voice. This is not simply dialogue or free indirect discourse — it is the narrator stepping forward as 'I' and acknowledging a 'you' audience mid-narrative, creating a genuine instability in perspective.
+
+  WRT-126 (JIM #77)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person ('Jim was sick,' 'Jim dully reasoned,' 'Jim felt'), but there are genuine perspective shifts where Jim's interior monologue bleeds into first person without dialogue framing — 'Perhaps I'm being a little bit rough on myself, Jim thought' and 'After a day at the bank, I mean, could he blame her.' The extended second-person passages ('the queasy, nauseaus feeling that you get') also go beyond rhetorical usage, addressing the reader as if placing them in Jim's experience. The boundary between narrator and Jim dissolves at multiple points.
+
+  WRT-136 (JIM GOES TO THE BUS STATION)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third-person narration about Jim, but the passage 'Get the fuck away from me. Don't bother me. Don't come near me.' shifts into unquoted first-person interior monologue that dissolves the boundary between narrator and character. While this could be read as free indirect discourse, the use of 'me' and 'I' without any framing (no 'he thought') and the extended direct address quality, combined with the metafictional moment where Jim 'wondered if he used the word fucking too many times in this sentence,' creates an unstable blending of narrator and character perspectives.
+
+  WRT-138 (JIM IN PURGATORY, CONT'D.)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in a clear third-person narration describing Jim's vision of purgatory, but then shifts into Jim's interior monologue ('All this really sucks moose-dick mused Jim, but I guess I could tolerate this bung-hole...') where the 'I' is rendered without quotes, blurring the boundary between narrator and character. The casual asides ('Or him. Whatever.') also dissolve the line between external narrator and Jim's own voice, creating genuine instability in perspective rather than standard free indirect discourse.
+
+  WRT-189 (JIM AS A MACHINE PART)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in third person describing Jim, then shifts to directly addressing 'you' as a conversational participant ('"What?" you say'), and an 'I' narrator emerges implicitly through the essayistic voice ('Well, apparently, you haven't read...'). The second-person address is not merely rhetorical — the narrator attributes speech and actions to 'you,' making it a genuine perspective shift from the third-person opening.
+
+  WRT-194 (JIM AND HIS IMPOSSIBLE DREAM)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, narrating Jim as 'he/him.' However, near the end, the perspective shifts: 'by the time I get to Phoenix' introduces a first-person 'I' outside of dialogue, and the final phrase 'which assuages us and cloaks us' shifts to a first-person plural, dissolving the boundary between narrator and character. These are not simply rhetorical or quoted speech but represent genuine instability in the narrative voice.
+
+  WRT-197 (JIM IN MID-MARCH)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, narrating Jim's experience from the outside ('Jim was outside,' 'He heard'). However, the passage 'Like when you know that you hear something, or think you do anyway' shifts into second person address, pulling the reader into Jim's subjective experience rather than functioning as mere rhetorical aside—it elaborates on the sensory uncertainty in a way that dissolves the boundary between narrator and character. This, combined with the free indirect discourse moments ('did he just in his mind?'), creates enough instability to classify as Mixed, though it is borderline.
+
+  WRT-199 (JIM AND YOU, DOWN BY THE RIVER)
+    Classified as: Second Person
+    Reasoning: The narrative consistently addresses 'you' as an active character in the story who speaks, interrupts, and interacts with Jim. While there are stretches describing Jim in the third person, the dominant framing is a second-person address where 'you' is a participant character throughout, and Jim is the other character observed from that 'you' perspective. However, this is borderline with Mixed/Unstable because the narration blends second-person address ('you say') with third-person rendering of Jim's thoughts and speech ('thought Jim,' 'he says'), creating some instability in perspective.
+
+  WRT-211 (JIM SHOOTS UP TONY’S TRUCK)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in a third-person narrative voice describing Jim's actions, then shifts to second-person address ('If you crawled under the truck'), then to conversational second-person ('You see'), and then to a first-person narrator ('Once I saw French Billy...'). The emergence of an 'I' narrator partway through represents a genuine perspective shift from the initially external third-person narration, making this Mixed/Unstable.
+
+  WRT-213 (JIM HOWLS AND SCREAMS WITH JOY)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, referring to Jim as 'he/him' throughout. However, the second sentence ('He listens through the wall to your dreams and waking nightmares') directly addresses a 'you' as a character present in the scene, not as a rhetorical device. This constitutes a genuine shift into second person address within an otherwise third-person narrative, making it Mixed/Unstable.
+
+  WRT-214 (JIM GOES TO OKLAHOMA)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, narrating Jim's actions and thoughts externally. However, the line 'Why did this occur to me?' uses first-person 'me' outside of quoted speech—it's rendered as Jim's direct interior monologue without quotation marks, and critically, it shifts the speaking subject to 'me,' dissolving the boundary between narrator and character. This, combined with the narrator's editorializing voice ('Not a particularly fond memory as far as memories go'), creates an unstable narrative perspective that blurs third-person narration with first-person interiority.
+
+  WRT-215 (JIM AND THE TOUGH DAY)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in third person ('Jim has had a tough day') but shifts into what feels like Jim's own narrating voice with 'He doesn't feel like going into it' and the rhetorical question 'The incident at the hardware store this morning?' — these suggest a dissolution of the boundary between external narrator and Jim as character. The casual, first-person-like interjections ('or was it Neil Young?') and the direct address quality create an unstable narrative perspective that wavers between third-person narration and Jim's own consciousness narrating.
+
+  WRT-222 (JIM AND THE TROUT DREAM)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in third person ('Jim dreamt') but shifts to second person ('You could see them') in the second sentence, creating a genuine perspective shift. The second paragraph returns to third person but adopts a casual, essayistic 'I'-less narrator voice that feels distinct from the opening's literary register. The 'you' is not merely rhetorical but draws the reader into Jim's dream as a participant, representing a genuine dissolution of stable perspective.
+
+  WRT-225 (JIM AS THE SECRET SHARER)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in third person describing Jim ('Jim's on the high seas'), then shifts to first person plural ('fills us with its hoarse roar'), and finally to second person ('the night confronting you'). These are genuine perspective shifts — not dialogue or rhetorical asides — indicating an unstable narrative voice that dissolves boundaries between observer, participant, and addressee.
+
+  WRT-230 (JIM IN THE KITCHEN)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in stable third person, narrating Jim's thoughts and actions externally. However, in the final passages, the narrative voice dissolves from Jim's perspective into a collective 'us' and 'our' ('beckoned to us now… our hopes and unpruned creations, our music, our joy'), which represents a genuine shift from third-person narration into a first-person plural voice that goes beyond free indirect discourse — the boundary between narrator and character dissolves.
+
+  WRT-239 (JIM AND THE WALK ON THE BEACH)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in third person describing Jim, then shifts to second person ('your persuasion, your indecision') addressing the reader as a character, incorporates a first-person moment ('remind me of you'), and returns to third person about Jim. These shifts represent genuine perspective instability rather than mere rhetorical flourishes, as the 'your' sequence is extended and substantive.
+
+  WRT-248 (JIM IN TENNESSEE)
+    Classified as: Third Person
+    Reasoning: The narrative is predominantly third person, describing Jim externally ('Jim saw,' 'He thought'). The 'you' instances ('you either go to jail,' 'when you get right down to it') are either reported speech from the judge or colloquial/rhetorical usage, not genuine second-person address to a character. The shift into present tense ('he admits,' 'he gets') represents free indirect discourse rather than a true perspective shift, keeping this within third-person narration.
+
+  WRT-290 (DESPITE THIS, JIM WANTS TO GO TO PARIS)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in stable third person narrating Jim's thoughts, but then shifts into a destabilized perspective where pronouns blur: 'they make you do something,' 'Why should you do something,' and 'Why must we waste your time doing something we hate doing.' The shift from 'he' to 'you' to 'we' represents a genuine dissolution of the boundary between the external narrator and Jim's consciousness, moving beyond simple free indirect discourse into an unstable mixing of perspectives.
+
+  WRT-313 (THE SMOKE BOMB)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece begins in third person narrating Jim's actions, but shifts to addressing 'you' as a participant ('fall on your sword,' 'as you know'), and includes a meta-narrative voice commenting on the text itself ('The opening is strong'). These shifts between third-person narration, second-person address, and self-referential commentary represent genuine perspective instability rather than simple rhetorical flourishes.
+
+  WRT-374 (JIM SEEKS THE TRUTH)
+    Classified as: Third Person
+    Reasoning: The piece is predominantly third person, referring to Jim as 'he/him/Jim' throughout. The 'you know?' is rhetorical rather than a genuine second-person address, and the brief shift to 'you' in 'someone that's always trying to take advantage of you' is similarly a general/rhetorical usage. There is no first-person narrator and no sustained second-person address.
+
+  WRT-382 (YOU AND JIM)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece shifts between second person ('you and Jim,' 'you can remember') and first person plural ('surrounds us,' 'as we widow-walk'), creating genuine instability in narrative perspective. The narrator addresses 'you' as a character while also including themselves as part of the action via 'us' and 'we,' dissolving a stable single point of view.
+
+  WRT-385 (JIM IN PARIS)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece opens with a first-person narrator ('I think it was two years ago') who sets the scene, then shifts into a sustained third-person narration about Jim for the remainder. This is a genuine shift from a first-person narrating voice to an external third-person perspective, not just a brief rhetorical aside.
+
+  WRT-405 (JIM’S INARTICULATENESS)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, narrating Jim's interior state using 'he/his' throughout. However, the simile 'like an overloaded truck taking a corner too damn fast and you hear the sickening shriek of tires' shifts into second person address ('you hear'), pulling the reader into the scene as a participant rather than merely using rhetorical 'you.' This, combined with the increasingly unmoored, catalogue-like list of similes that dissolves the boundary between external narration and a voice that seems to overtake the narrator's stable perspective, suggests a genuine destabilization of the narrative point of view.
+
+  WRT-457 (Untitled)
+    Classified as: Mixed/Unstable
+    Reasoning: The piece is predominantly third person, narrating Jim's experience externally. However, mid-paragraph the narrator shifts into a generalizing 'you' ('make you laugh,' 'when you get right down to it') and then a first-person plural 'we' ('just like we find say Metamorphosis amusing'), breaking the third-person frame. This represents a genuine dissolution of the boundary between external narrator and a more participatory, editorial voice that addresses the reader directly and includes itself in the commentary.
+
+
+Dry run complete. Use --apply to write results to DB.
