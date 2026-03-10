@@ -109,6 +109,23 @@ $isNotMime = function ($str) {
             <?php echo $this->sortSelector($sortings); ?>
         </div>
 
+        <?php
+        // Build export query from category base + active URL filters
+        $exportQuery = [];
+        parse_str($category->query() ?? '', $exportQuery);
+        foreach (['resource_class_id', 'item_set_id', 'resource_template_id', 'property', 'fulltext_search'] as $key) {
+            if (isset($_GET[$key])) {
+                $exportQuery[$key] = $_GET[$key];
+            }
+        }
+        $apiExportUrl = $this->url('api/default', ['resource' => 'items'], ['query' => $exportQuery + ['per_page' => 5000]]);
+        ?>
+        <div class="export-bar">
+            <span class="export-label"><?php echo $translate('Export'); ?></span>
+            <a href="#" class="button export-csv-btn"><?php echo $translate('CSV'); ?></a>
+            <a href="<?php echo $escape($apiExportUrl); ?>" class="button" target="_blank"><?php echo $translate('JSON'); ?></a>
+        </div>
+
         <?php if ($items): ?>
         <ul class="chart-grid">
             <?php foreach ($items as $item):
@@ -466,6 +483,65 @@ sectionSidebar.on('click', '.close-button', function() {
 
 mediaQuery.addListener(handleTabletChange);
 handleTabletChange(mediaQuery);
+
+// ── CSV Export ──
+$('.export-csv-btn').on('click', function(e) {
+    e.preventDefault();
+    var btn = $(this);
+    var origText = btn.text();
+    btn.text('Exporting\u2026').css('pointer-events', 'none');
+
+    var apiUrl = <?php echo json_encode($apiExportUrl); ?>;
+
+    function fetchAll(url, page, acc) {
+        var sep = url.indexOf('?') === -1 ? '?' : '&';
+        return $.getJSON(url + sep + 'page=' + page + '&per_page=500').then(function(data, status, xhr) {
+            acc = acc.concat(data);
+            var total = parseInt(xhr.getResponseHeader('Omeka-S-Total-Results') || '0', 10);
+            if (acc.length < total) {
+                return fetchAll(url, page + 1, acc);
+            }
+            return acc;
+        });
+    }
+
+    fetchAll(apiUrl, 1, []).then(function(items) {
+        var termSet = {};
+        items.forEach(function(item) {
+            Object.keys(item).forEach(function(k) {
+                if (k.indexOf(':') > 0 && k.indexOf('o:') !== 0 && k.indexOf('@') !== 0) {
+                    termSet[k] = true;
+                }
+            });
+        });
+        var terms = Object.keys(termSet).sort();
+        var cols = ['o:id', 'o:title'].concat(terms);
+        var header = cols.map(function(c) { return '"' + c.replace(/"/g, '""') + '"'; }).join(',');
+
+        var rows = items.map(function(item) {
+            return cols.map(function(col) {
+                if (col === 'o:id') return item['o:id'] || '';
+                if (col === 'o:title') return '"' + (item['o:title'] || '').replace(/"/g, '""') + '"';
+                var vals = item[col];
+                if (!vals || !vals.length) return '""';
+                var text = vals.map(function(v) {
+                    return v['@value'] || v['o:label'] || '';
+                }).join('; ');
+                return '"' + text.replace(/"/g, '""') + '"';
+            }).join(',');
+        });
+
+        var csv = header + '\n' + rows.join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'export.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }).always(function() {
+        btn.text(origText).css('pointer-events', '');
+    });
+});
 
 });
 </script>

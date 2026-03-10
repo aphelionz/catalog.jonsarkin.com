@@ -240,9 +240,12 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                     <dl><dt>Published</dt><dd><?php echo $date; ?></dd></dl>
                 </div>
                 <?php endif; ?>
-                <?php if ($genre): ?>
+                <?php if ($sourceUrl):
+                    $sourceDomain = parse_url(strip_tags($sourceUrl), PHP_URL_HOST);
+                    if ($sourceDomain) $sourceDomain = preg_replace('/^www\./', '', $sourceDomain);
+                ?>
                 <div class="fact">
-                    <dl><dt>Form</dt><dd><?php echo $genre; ?></dd></dl>
+                    <dl><dt>Source</dt><dd><a href="<?php echo $escape($sourceUrl); ?>" target="_blank" rel="noopener"><?php echo $escape($sourceDomain ?: 'source'); ?></a></dd></dl>
                 </div>
                 <?php endif; ?>
             </div>
@@ -309,11 +312,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <div class="metadata-top">
             <div class="metadata-fields">
                 <?php if ($isWriting): ?>
-                    <?php if ($sourceUrl): ?>
-                    <dl>
-                        <dt>Source</dt><dd><a href="<?php echo $escape($sourceUrl); ?>" target="_blank" rel="noopener" class="writing-source"><?php echo $escape(preg_replace('#^https?://#', '', strip_tags($sourceUrl))); ?></a></dd>
-                    </dl>
-                    <?php endif; ?>
                 <?php else: ?>
                     <?php if ($medium): ?>
                     <dl>
@@ -350,6 +348,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     <!-- ═══ WRITING CONTENT ═══ -->
     <section class="record-media writing-content" aria-labelledby="writing-content-heading">
         <h2 id="writing-content-heading" class="sr-only"><?php echo $translate('Full text'); ?></h2>
+        <h2 class="writing-title"><?php echo $escape($pageLabel); ?></h2>
         <?php if ($fullText): ?>
             <div class="writing-text"><?php echo nl2br($fullText); ?></div>
         <?php else: ?>

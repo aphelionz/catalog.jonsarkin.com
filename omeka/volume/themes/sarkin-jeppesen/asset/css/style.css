@@ -588,14 +588,14 @@ abbr[title] {
   margin: 0 0 0.5rem 0;
 }
 
-.writing-source {
-  color: var(--secondary);
-  text-decoration: underline;
-  font-size: 0.9rem;
-  word-break: break-all;
+.writing-title {
+  max-width: 680px;
+  margin: 1.5rem auto 0;
+  padding: 0 2rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.3;
 }
-
-.writing-source:hover { color: var(--primary); }
 
 /* Print styles for writings */
 @media print {
@@ -1450,6 +1450,43 @@ abbr[title] {
 .faceted-browse-page .button.permalink .success { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .faceted-browse-page .button.permalink .success.active { display: block; }
 .faceted-browse-page .button.permalink .default.inactive { opacity: 0; }
+
+/* Export bar */
+.faceted-browse-page .export-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--gutter);
+}
+.faceted-browse-page .export-label {
+  font-family: var(--font);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary);
+}
+.faceted-browse-page .bulk-export { display: contents; }
+.faceted-browse-page .bulk-export ul.exporters {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: flex;
+  gap: 6px;
+}
+.faceted-browse-page .bulk-export .exporter {
+  font-family: var(--font);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  padding: 6px 12px;
+  border: var(--border);
+  background: transparent;
+  color: var(--primary);
+  white-space: nowrap;
+}
+.faceted-browse-page .bulk-export .exporter:hover { background: var(--bg); }
+.faceted-browse-page .bulk-export .exporters li:not(:last-child)::after { content: none; }
 
 /* Sort selector */
 .faceted-browse-page .sorting {
