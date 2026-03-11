@@ -5,13 +5,19 @@
  */
 $translate = $this->plugin('translate');
 $this->htmlElement('body')->appendAttribute('class', 'simple-upload');
+$uploadUrl = $this->url('admin/simple-upload');
 ?>
 
 <?php echo $this->pageTitle($translate('Simple Upload')); ?>
 
-<?php if (!empty($results)): ?>
-<div id="upload-results">
+<div id="upload-results" style="display:none">
     <h3><?= $translate('Upload Results') ?></h3>
+    <div id="upload-progress" style="display:none">
+        <p id="progress-text"></p>
+        <div style="background:#dee2e6;border-radius:4px;height:8px;margin-bottom:1rem">
+            <div id="progress-bar" style="background:#495057;height:100%;border-radius:4px;width:0;transition:width 0.3s"></div>
+        </div>
+    </div>
     <table class="tablesaw" data-tablesaw-mode="stack">
         <thead>
             <tr>
@@ -20,37 +26,11 @@ $this->htmlElement('body')->appendAttribute('class', 'simple-upload');
                 <th><?= $translate('Item') ?></th>
             </tr>
         </thead>
-        <tbody>
-        <?php foreach ($results as $r): ?>
-            <tr>
-                <td><?= $this->escapeHtml($r['filename']) ?></td>
-                <td>
-                    <?php if ($r['success']): ?>
-                        <span class="o-icon-public" aria-label="<?= $translate('Success') ?>"
-                              title="<?= $translate('Success') ?>"></span>
-                        <?= $translate('Created') ?>
-                    <?php else: ?>
-                        <span class="o-icon-private" aria-label="<?= $translate('Error') ?>"
-                              title="<?= $translate('Error') ?>"></span>
-                        <?= $this->escapeHtml($r['error']) ?>
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <?php if ($r['success']): ?>
-                        <a href="<?= $this->escapeHtml($r['url']) ?>">#<?= $r['item_id'] ?></a>
-                    <?php else: ?>
-                        &mdash;
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
+        <tbody id="results-body"></tbody>
     </table>
 </div>
-<?php endif; ?>
 
-<form method="post" action="<?= $this->url('admin/simple-upload') ?>"
-      enctype="multipart/form-data" id="simple-upload-form">
+<form id="simple-upload-form" enctype="multipart/form-data">
     <fieldset id="fieldset-upload">
         <legend><?= $translate('Upload Images') ?></legend>
         <p class="explanation">
@@ -88,6 +68,10 @@ $this->htmlElement('body')->appendAttribute('class', 'simple-upload');
     border-color: #495057;
     background: #f1f3f5;
 }
+#simple-upload-dropzone.uploading {
+    opacity: 0.6;
+    pointer-events: none;
+}
 .dropzone-file-input {
     display: block;
     margin: 1rem auto 0;
@@ -116,16 +100,28 @@ $this->htmlElement('body')->appendAttribute('class', 'simple-upload');
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    var UPLOAD_URL = <?= json_encode($uploadUrl) ?>;
     var dropzone = document.getElementById('simple-upload-dropzone');
     var input = document.getElementById('simple-upload-input');
     var fileList = document.getElementById('simple-upload-file-list');
     var submitBtn = document.getElementById('simple-upload-submit');
     var form = document.getElementById('simple-upload-form');
+    var resultsDiv = document.getElementById('upload-results');
+    var resultsBody = document.getElementById('results-body');
+    var progressDiv = document.getElementById('upload-progress');
+    var progressText = document.getElementById('progress-text');
+    var progressBar = document.getElementById('progress-bar');
 
     function formatSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     function updateFileList() {
@@ -145,6 +141,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function addResultRow(filename, success, itemId, itemUrl, error) {
+        var tr = document.createElement('tr');
+        var statusHtml;
+        var itemHtml;
+        if (success) {
+            statusHtml = '<span class="o-icon-public" aria-label="Success" title="Success"></span> Created';
+            itemHtml = '<a href="' + escapeHtml(itemUrl) + '">#' + itemId + '</a>';
+        } else {
+            statusHtml = '<span class="o-icon-private" aria-label="Error" title="Error"></span> ' + escapeHtml(error);
+            itemHtml = '&mdash;';
+        }
+        tr.innerHTML = '<td>' + escapeHtml(filename) + '</td><td>' + statusHtml + '</td><td>' + itemHtml + '</td>';
+        resultsBody.appendChild(tr);
+    }
+
+    async function uploadFiles(files) {
+        var total = files.length;
+        var succeeded = 0;
+        var failed = 0;
+
+        // Reset UI
+        resultsBody.innerHTML = '';
+        resultsDiv.style.display = '';
+        progressDiv.style.display = '';
+        dropzone.classList.add('uploading');
+        submitBtn.textContent = 'Uploading\u2026';
+        submitBtn.disabled = true;
+
+        for (var i = 0; i < total; i++) {
+            var file = files[i];
+            var current = i + 1;
+            progressText.textContent = 'Uploading ' + current + ' of ' + total + ': ' + file.name;
+            progressBar.style.width = ((current - 1) / total * 100) + '%';
+
+            var formData = new FormData();
+            formData.append('file[]', file);
+
+            try {
+                var response = await fetch(UPLOAD_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server returned ' + response.status);
+                }
+
+                var result = await response.json();
+                if (result.success) {
+                    succeeded++;
+                    addResultRow(file.name, true, result.item_id, result.url, null);
+                } else {
+                    failed++;
+                    addResultRow(file.name, false, null, null, result.error || 'Unknown error');
+                }
+            } catch (err) {
+                failed++;
+                addResultRow(file.name, false, null, null, err.message || 'Network error');
+            }
+
+            progressBar.style.width = (current / total * 100) + '%';
+        }
+
+        progressText.textContent = 'Done! ' + succeeded + ' created' + (failed > 0 ? ', ' + failed + ' failed' : '') + '.';
+        dropzone.classList.remove('uploading');
+        submitBtn.textContent = 'Upload and Create Items';
+        // Clear the file input so they can upload more
+        input.value = '';
+        fileList.innerHTML = '';
+        submitBtn.disabled = true;
+    }
+
+    // Drag and drop
     dropzone.addEventListener('dragover', function(e) {
         e.preventDefault();
         dropzone.classList.add('drag-over');
@@ -166,10 +239,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     input.addEventListener('change', updateFileList);
 
-    form.addEventListener('submit', function() {
-        if (input.files.length === 0) return false;
-        submitBtn.textContent = 'Uploading\u2026';
-        submitBtn.disabled = true;
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (input.files.length === 0) return;
+        uploadFiles(Array.from(input.files));
     });
 });
 </script>

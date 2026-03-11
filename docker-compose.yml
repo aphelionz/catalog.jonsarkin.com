@@ -22,6 +22,7 @@ services:
         condition: service_healthy
     volumes:
       - ./omeka/volume:/var/www/html/volume
+      - ./omeka/php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     environment:
       MYSQL_HOST: db
       MYSQL_PORT: 3306

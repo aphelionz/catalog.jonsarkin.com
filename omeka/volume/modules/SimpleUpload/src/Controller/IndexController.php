@@ -3,6 +3,7 @@
 namespace SimpleUpload\Controller;
 
 use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\JsonModel;
 use Laminas\View\Model\ViewModel;
 use Omeka\Api\Exception\ValidationException;
 
@@ -17,6 +18,9 @@ class IndexController extends AbstractActionController
             $uploadedFiles = $files['file'] ?? [];
 
             if (empty($uploadedFiles)) {
+                if ($this->isAjax()) {
+                    return new JsonModel(['success' => false, 'error' => 'No files were uploaded.']);
+                }
                 $this->messenger()->addError('No files were uploaded.');
                 return $this->redirect()->toRoute('admin/simple-upload');
             }
@@ -88,10 +92,21 @@ class IndexController extends AbstractActionController
                     ];
                 }
             }
+
+            if ($this->isAjax()) {
+                return new JsonModel($results[0] ?? ['success' => false, 'error' => 'No file processed.']);
+            }
         }
 
         $view = new ViewModel();
         $view->setVariable('results', $results);
         return $view;
+    }
+
+    private function isAjax(): bool
+    {
+        $request = $this->getRequest();
+        return $request->isXmlHttpRequest()
+            || str_contains($request->getHeader('Accept', '')?->getFieldValue() ?? '', 'application/json');
     }
 }

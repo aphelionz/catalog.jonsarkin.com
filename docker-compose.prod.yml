@@ -43,6 +43,7 @@ services:
         condition: service_healthy
     volumes:
       - ./omeka/volume:/var/www/html/volume
+      - ./omeka/php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - /var/www/omeka-s/files:/var/www/html/volume/files
     environment:
       MYSQL_HOST: db
