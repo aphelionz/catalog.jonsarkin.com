@@ -312,6 +312,11 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <div class="metadata-top">
             <div class="metadata-fields">
                 <?php if ($isWriting): ?>
+                    <?php if ($fullText): ?>
+                    <dl>
+                        <dt>Words</dt><dd><?php echo number_format(str_word_count(strip_tags($fullText))); ?></dd>
+                    </dl>
+                    <?php endif; ?>
                 <?php else: ?>
                     <?php if ($medium): ?>
                     <dl>
