@@ -479,13 +479,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>" class="similar-more">View all</a>
             </section>
 
-            <?php if ($transcription): ?>
-            <section class="transcription-section" aria-labelledby="transcription-heading">
-                <h4 id="transcription-heading"><?php echo $translate('Transcription'); ?></h4>
-                <div class="transcription"><?php echo nl2br($transcription); ?></div>
-            </section>
-            <?php endif; ?>
-
             <div class="collector-details">
                 <?php if ($displayCare): ?>
                     <p class="care"><strong>Display &amp; care:</strong> <?php echo $displayCare; ?></p>

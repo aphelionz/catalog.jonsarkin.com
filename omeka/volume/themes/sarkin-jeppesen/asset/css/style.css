@@ -775,19 +775,6 @@ abbr[title] {
   letter-spacing: 0.02em;
 }
 
-.transcription-section {
-  padding: var(--gutter);
-  border-top: var(--border);
-}
-
-.transcription-section h4 {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 0 0 var(--gutter) 0;
-}
-
 .collector-details { padding: var(--gutter); }
 
 .care { margin: 0 0 var(--gutter) 0; }
@@ -2357,9 +2344,6 @@ nav.pagination span.row-count {
   .genres { grid-template-columns: repeat(3, 1fr); }
 
   .supporting-media { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-
-  .transcription { display: none; }
-  [id="transcription-heading"] { display: none; }
 
   .print-qr {
     display: block;
