@@ -22,9 +22,11 @@ foreach ($classes as $class) {
     $allOptions[] = [
         'value' => $class->id(),
         'label' => $count > 0 ? sprintf('%s (%d)', $label, $count) : $label,
+        'count' => $count,
         'attributes' => [],
     ];
 }
+usort($allOptions, fn($a, $b) => $b['count'] - $a['count']);
 if ($allOptions) {
     $singleSelect->setValueOptions($allOptions);
     if ($activeClassIds) {
@@ -34,11 +36,20 @@ if ($allOptions) {
 }
 ?>
 <?php else: ?>
+<?php
+// Sort classes by count DESC
+$sortedClasses = [];
+foreach ($classes as $class) {
+    $sortedClasses[] = ['class' => $class, 'count' => $myCounts[$class->id()] ?? 0];
+}
+usort($sortedClasses, fn($a, $b) => $b['count'] - $a['count']);
+?>
 <ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_resource_classes')); ?>">
     <?php $index = 0; ?>
-    <?php foreach ($classes as $class): ?>
+    <?php foreach ($sortedClasses as $entry): ?>
     <?php
-    $count = $myCounts[$class->id()] ?? 0;
+    $class = $entry['class'];
+    $count = $entry['count'];
     if ($count === 0) continue;
     $selected = in_array((string)$class->id(), $activeClassIds);
     ?>

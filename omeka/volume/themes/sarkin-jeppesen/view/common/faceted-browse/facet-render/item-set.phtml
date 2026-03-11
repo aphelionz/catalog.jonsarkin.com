@@ -20,10 +20,12 @@ foreach ($itemSets as $itemSet) {
         $filteredOptions[] = [
             'value' => $itemSet->id(),
             'label' => sprintf('%s (%d)', $itemSet->title(), $count),
+            'count' => $count,
             'attributes' => [],
         ];
     }
 }
+usort($filteredOptions, fn($a, $b) => $b['count'] - $a['count']);
 if ($filteredOptions) {
     $singleSelect->setValueOptions($filteredOptions);
     if ($activeSetIds) {
@@ -33,11 +35,20 @@ if ($filteredOptions) {
 }
 ?>
 <?php else: ?>
+<?php
+// Sort item sets by count DESC
+$sortedSets = [];
+foreach ($itemSets as $itemSet) {
+    $sortedSets[] = ['set' => $itemSet, 'count' => $myCounts[$itemSet->id()] ?? 0];
+}
+usort($sortedSets, fn($a, $b) => $b['count'] - $a['count']);
+?>
 <ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_item_sets')); ?>">
     <?php $index = 0; ?>
-    <?php foreach ($itemSets as $itemSet): ?>
+    <?php foreach ($sortedSets as $entry): ?>
     <?php
-    $count = $myCounts[$itemSet->id()] ?? 0;
+    $itemSet = $entry['set'];
+    $count = $entry['count'];
     if ($count === 0) continue;
     $selected = in_array((string)$itemSet->id(), $activeSetIds);
     ?>

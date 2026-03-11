@@ -52,12 +52,14 @@ foreach ($values as $key => $value) {
     $filteredOptions[] = [
         'value' => $key,
         'label' => sprintf('%s (%d)', $value, $count),
+        'count' => $count,
         'attributes' => [
             'data-property-id' => $dataPropertyId,
             'data-value' => $dataValue,
         ],
     ];
 }
+usort($filteredOptions, fn($a, $b) => $b['count'] - $a['count']);
 if ($filteredOptions) {
     $singleSelect->setValueOptions($filteredOptions);
     // Restore selection from URL params
@@ -71,12 +73,18 @@ if ($filteredOptions) {
 }
 ?>
 <?php else: ?>
+<?php
+// Sort keys by count DESC for display order
+$sortedKeys = array_keys($values);
+usort($sortedKeys, fn($a, $b) => ($myCounts[$b] ?? 0) - ($myCounts[$a] ?? 0));
+?>
 <ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_values')); ?>">
     <?php
     $index = 0;
-    foreach ($values as $key => $value):
+    foreach ($sortedKeys as $key):
     ?>
     <?php
+    $value = $values[$key];
     $count = $myCounts[$key] ?? 0;
     if ($count === 0) continue;
 
