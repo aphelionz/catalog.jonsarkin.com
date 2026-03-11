@@ -1,0 +1,350 @@
+<?php
+$heading = 'Visual Search';
+$this->headTitle($heading);
+$siteSlug = $siteSlug ?? 'catalog';
+$jsonUrl = $this->url('site/visual-search/json', [], true);
+$siteItemUrl = function ($id) use ($siteSlug) {
+    if ($siteSlug === '') {
+        return null;
+    }
+    try {
+        return $this->url('site/resource-id', [
+            'site-slug' => $siteSlug,
+            'controller' => 'item',
+            'id' => $id,
+        ]);
+    } catch (\Throwable $e) {
+        return null;
+    }
+};
+?>
+
+<h1><?= $this->escapeHtml($heading) ?></h1>
+<p>Upload a photo of a Sarkin piece to find it in the catalog.</p>
+
+<style>
+.vs-dropzone {
+    margin: 1.5rem 0;
+    padding: 2.5rem 1.5rem;
+    border: 2px dashed #c0c0c0;
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 200ms, background 200ms;
+    background: #fafafa;
+}
+.vs-dropzone.dragover {
+    border-color: #222;
+    background: #f0f0f0;
+}
+.vs-dropzone-label {
+    font-size: 1.1rem;
+    color: #555;
+    pointer-events: none;
+}
+.vs-dropzone-label strong {
+    color: #222;
+}
+.vs-dropzone input[type="file"] {
+    display: none;
+}
+.vs-preview {
+    margin: 1.5rem 0;
+    display: none;
+}
+.vs-preview img {
+    max-width: 320px;
+    max-height: 260px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+.vs-preview-info {
+    margin-top: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+.vs-searching {
+    margin: 1.5rem 0;
+    display: none;
+    color: #555;
+    font-size: 1.1rem;
+}
+.vs-error {
+    margin: 1rem 0;
+    color: #7a0b0b;
+}
+.vs-results-grid {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+.vs-results-grid .resource {
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.75rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.vs-results-grid .resource:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+}
+.vs-results-grid .resource-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.vs-results-grid .resource-link img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+.vs-results-grid .resource-name {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+.vs-results-grid .resource-score {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: #888;
+}
+.vs-new-search {
+    margin-top: 1rem;
+}
+.vs-new-search button {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #222;
+    background: #fff;
+    color: #222;
+    cursor: pointer;
+}
+</style>
+
+<?php if (!empty($error)): ?>
+    <p class="vs-error"><?= $this->escapeHtml($error) ?></p>
+<?php endif; ?>
+
+<?php if ($searched && empty($error) && empty($results)): ?>
+    <p>No matching items found. Try a different image.</p>
+<?php endif; ?>
+
+<?php if (!empty($results)): ?>
+    <h2>Results</h2>
+    <ul class="resource-list vs-results-grid">
+        <?php foreach ($results as $result): ?>
+            <?php
+            $item = $result['item'];
+            $id = $result['id'];
+            $label = sprintf('Item #%d', $id);
+            $linkUrl = null;
+            $thumbUrl = $result['thumb_url'] ?? null;
+            $score = $result['score'] ?? null;
+
+            if ($item) {
+                $label = $item->displayTitle() ?: $label;
+                if ($siteSlug !== '') {
+                    $linkUrl = $item->siteUrl($siteSlug);
+                }
+                $pm = $item->primaryMedia();
+                if ($pm) {
+                    $thumbUrl = $pm->thumbnailUrl('medium');
+                }
+            }
+            if (!$linkUrl && $siteSlug !== '') {
+                $linkUrl = $siteItemUrl($id);
+            }
+            ?>
+            <li class="item resource">
+                <?php if ($linkUrl): ?>
+                    <a href="<?= $this->escapeHtmlAttr($linkUrl) ?>" class="resource-link">
+                        <?php if ($thumbUrl): ?>
+                            <img src="<?= $this->escapeHtmlAttr($thumbUrl) ?>" alt="<?= $this->escapeHtmlAttr($label) ?>" loading="lazy">
+                        <?php endif; ?>
+                        <span class="resource-name"><?= $this->escapeHtml($label) ?></span>
+                        <?php if ($score !== null): ?>
+                            <span class="resource-score"><?= round($score * 100) ?>% match</span>
+                        <?php endif; ?>
+                    </a>
+                <?php else: ?>
+                    <span class="resource-name"><?= $this->escapeHtml($label) ?></span>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>
+
+<div id="vs-dropzone" class="vs-dropzone">
+    <div class="vs-dropzone-label">
+        <strong>Drop an image here</strong> or click to select
+    </div>
+    <input type="file" id="vs-file" accept="image/jpeg,image/png,image/webp">
+</div>
+
+<div id="vs-preview" class="vs-preview">
+    <img id="vs-preview-img" src="" alt="Preview">
+    <div class="vs-preview-info" id="vs-preview-info"></div>
+</div>
+
+<div id="vs-searching" class="vs-searching">Searching the catalog...</div>
+
+<div id="vs-js-error" class="vs-error" style="display:none;"></div>
+
+<div id="vs-js-results"></div>
+
+<script>
+(function () {
+    var dropzone = document.getElementById('vs-dropzone');
+    var fileInput = document.getElementById('vs-file');
+    var preview = document.getElementById('vs-preview');
+    var previewImg = document.getElementById('vs-preview-img');
+    var previewInfo = document.getElementById('vs-preview-info');
+    var searching = document.getElementById('vs-searching');
+    var errorEl = document.getElementById('vs-js-error');
+    var resultsEl = document.getElementById('vs-js-results');
+    var jsonUrl = <?= json_encode($jsonUrl) ?>;
+
+    dropzone.addEventListener('click', function () {
+        fileInput.click();
+    });
+
+    dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', function () {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', function () {
+        if (fileInput.files.length > 0) {
+            handleFile(fileInput.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        var allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (allowed.indexOf(file.type) === -1) {
+            showError('Please upload a JPEG, PNG, or WebP image.');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            showError('Image must be under 10 MB.');
+            return;
+        }
+
+        // Show preview
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+            previewInfo.textContent = file.name + ' (' + formatSize(file.size) + ')';
+        };
+        reader.readAsDataURL(file);
+
+        // Upload
+        uploadImage(file);
+    }
+
+    function uploadImage(file) {
+        errorEl.style.display = 'none';
+        resultsEl.innerHTML = '';
+        searching.style.display = 'block';
+
+        var formData = new FormData();
+        formData.append('image', file);
+
+        fetch(jsonUrl, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(function (resp) {
+            if (!resp.ok) {
+                return resp.json().then(function (data) {
+                    throw new Error(data.error || 'Search failed');
+                });
+            }
+            return resp.json();
+        })
+        .then(function (data) {
+            searching.style.display = 'none';
+            renderResults(data.results || []);
+        })
+        .catch(function (err) {
+            searching.style.display = 'none';
+            showError(err.message || 'Visual search failed. Please try again.');
+        });
+    }
+
+    function renderResults(results) {
+        if (results.length === 0) {
+            resultsEl.innerHTML = '<p>No matching items found. Try a different image.</p>';
+            return;
+        }
+
+        var html = '<h2>Results</h2><ul class="resource-list vs-results-grid">';
+        for (var i = 0; i < results.length; i++) {
+            var r = results[i];
+            var scoreHtml = r.score != null
+                ? '<span class="resource-score">' + Math.round(r.score * 100) + '% match</span>'
+                : '';
+            html += '<li class="item resource">';
+            if (r.url) {
+                html += '<a href="' + escapeAttr(r.url) + '" class="resource-link">';
+            }
+            if (r.thumbnail) {
+                html += '<img src="' + escapeAttr(r.thumbnail) + '" alt="' + escapeAttr(r.title) + '" loading="lazy">';
+            }
+            html += '<span class="resource-name">' + escapeHtml(r.title) + '</span>';
+            html += scoreHtml;
+            if (r.url) {
+                html += '</a>';
+            }
+            html += '</li>';
+        }
+        html += '</ul>';
+        resultsEl.innerHTML = html;
+    }
+
+    function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+    }
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str || ''));
+        return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+        return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+})();
+</script>

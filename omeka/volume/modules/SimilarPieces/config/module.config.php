@@ -83,12 +83,41 @@ return [
                     ],
                 ],
             ],
+            // Site child route — renders inside themed site wrapper at /s/{slug}/visual-search
+            'site' => [
+                'child_routes' => [
+                    'visual-search' => [
+                        'type' => 'Literal',
+                        'options' => [
+                            'route' => '/visual-search',
+                            'defaults' => [
+                                '__NAMESPACE__' => 'SimilarPieces\\Controller',
+                                'controller' => Controller\VisualSearchController::class,
+                                'action' => 'index',
+                            ],
+                        ],
+                        'may_terminate' => true,
+                        'child_routes' => [
+                            'json' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/json',
+                                    'defaults' => [
+                                        'action' => 'json',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ],
     ],
     'controllers' => [
         'factories' => [
             Controller\SimilarController::class => Service\Controller\SimilarControllerFactory::class,
             Controller\SearchController::class => Service\Controller\SearchControllerFactory::class,
+            Controller\VisualSearchController::class => Service\Controller\VisualSearchControllerFactory::class,
         ],
     ],
     'form_elements' => [

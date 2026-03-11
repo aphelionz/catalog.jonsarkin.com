@@ -17,6 +17,7 @@ use RuntimeException;
 use SimilarPieces\Config\ModuleConfig;
 use SimilarPieces\Controller\SearchController;
 use SimilarPieces\Controller\SimilarController;
+use SimilarPieces\Controller\VisualSearchController;
 use SimilarPieces\Form\ConfigForm;
 use Throwable;
 
@@ -52,6 +53,7 @@ class Module extends AbstractModule
         $acl = $services->get('Omeka\Acl');
         $resourceId = SimilarController::class;
         $searchResourceId = SearchController::class;
+        $visualSearchResourceId = VisualSearchController::class;
 
         if (method_exists($acl, 'hasResource') && !$acl->hasResource($resourceId)) {
             $acl->addResource(new Resource($resourceId));
@@ -59,9 +61,13 @@ class Module extends AbstractModule
         if (method_exists($acl, 'hasResource') && !$acl->hasResource($searchResourceId)) {
             $acl->addResource(new Resource($searchResourceId));
         }
+        if (method_exists($acl, 'hasResource') && !$acl->hasResource($visualSearchResourceId)) {
+            $acl->addResource(new Resource($visualSearchResourceId));
+        }
 
         $acl->allow(null, $resourceId);
         $acl->allow(null, $searchResourceId);
+        $acl->allow(null, $visualSearchResourceId);
 
         $event->getApplication()->getEventManager()->attach(
             MvcEvent::EVENT_RENDER,

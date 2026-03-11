@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile
 
 from clip_api import embeddings
 from clip_api.config import Settings, load_settings
@@ -12,6 +12,7 @@ from clip_api.models import (
     IconographyBatchItem,
     IconographyBatchResponse,
     IconographyResponse,
+    ImageSearchResponse,
     MatchItem,
     MotifDetail,
     SearchResponse,
@@ -749,6 +750,91 @@ def items_iconography_batch(ids: str = "") -> IconographyBatchResponse:
         ))
 
     return IconographyBatchResponse(items=items)
+
+
+IMAGE_SEARCH_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+IMAGE_SEARCH_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+def _search_visual(
+    settings: Settings,
+    query_vector: list[float],
+    *,
+    limit: int,
+    catalog_version: Optional[int],
+) -> Dict[str, Any]:
+    url = f"{settings.qdrant_url}/collections/{settings.qdrant_collection}/points/search"
+    body: Dict[str, Any] = {
+        "vector": {"name": settings.vector_name, "vector": query_vector},
+        "limit": limit,
+        "with_payload": list(ALLOWED_PAYLOAD_FIELDS),
+        "with_vector": False,
+    }
+    if catalog_version is not None:
+        body["filter"] = {"must": [{"key": "catalog_version", "match": {"value": catalog_version}}]}
+
+    response = request_json("POST", url, headers=_headers(settings), json=body)
+    if not response.is_success:
+        message = extract_error_message(response)
+        raise QdrantError(message, status_code=response.status_code, payload=message)
+    return response.json()
+
+
+@app.post(
+    "/v1/omeka/images/search",
+    response_model=ImageSearchResponse,
+)
+async def image_search(
+    image: UploadFile,
+    limit: Optional[str] = None,
+    catalog_version: Optional[str] = None,
+) -> ImageSearchResponse:
+    settings = _settings()
+    if not settings.similar_enabled:
+        raise HTTPException(status_code=503, detail="Visual search is disabled")
+
+    if image.content_type and image.content_type not in IMAGE_SEARCH_ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Image must be JPEG, PNG, or WebP")
+
+    image_bytes = await image.read()
+    if len(image_bytes) > IMAGE_SEARCH_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Image must be under 10 MB")
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Empty image file")
+
+    limit_value = (
+        settings.default_limit
+        if limit is None
+        else _parse_int_param("limit", limit, min_value=1, max_value=settings.max_limit)
+    )
+    catalog_version_value = 2 if catalog_version is None else _parse_int_param("catalog_version", catalog_version, min_value=1)
+
+    try:
+        query_vector = embeddings.embed_image(image_bytes)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Could not process image") from exc
+
+    try:
+        search_response = _search_visual(
+            settings,
+            query_vector,
+            limit=limit_value,
+            catalog_version=catalog_version_value,
+        )
+    except QdrantUnavailable as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except QdrantError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    matches = []
+    for item in search_response.get("result") or []:
+        payload = item.get("payload") or {}
+        payload = {k: v for k, v in payload.items() if k in ALLOWED_PAYLOAD_FIELDS}
+        match = _build_item_payload(payload, item.get("id"))
+        score = float(item.get("score") or 0.0)
+        matches.append(MatchItem(**match, score=score))
+
+    return ImageSearchResponse(matches=matches)
 
 
 if __name__ == "__main__":

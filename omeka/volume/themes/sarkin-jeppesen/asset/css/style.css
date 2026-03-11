@@ -212,6 +212,16 @@ abbr[title] {
 
 .site-search button:hover { color: var(--secondary); }
 
+.site-search-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.site-search-advanced {
+  margin-top: 2px;
+}
+
 /* ---------- Site Navigation ---------- */
 
 .site-nav {
@@ -2259,7 +2269,7 @@ nav.pagination span.row-count {
   .zoom,
   #user-bar,
   #similar-pieces,
-  .site-search,
+  .site-search-group,
   .site-footer,
   .estate-key { display: none !important; }
 

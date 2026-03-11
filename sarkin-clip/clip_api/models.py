@@ -62,3 +62,10 @@ class IconographyBatchItem(BaseModel):
 
 class IconographyBatchResponse(BaseModel):
     items: List[IconographyBatchItem]
+
+
+# ── Visual search (image upload) ──
+
+
+class ImageSearchResponse(BaseModel):
+    matches: List[MatchItem]
