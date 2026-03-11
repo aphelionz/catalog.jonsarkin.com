@@ -51,6 +51,12 @@ enrich-prod-dry: ## Preview enrichment of new prod items (no writes)
 enrich-prod: ## Enrich new prod items (writes to production — requires confirmation)
 	python3 scripts/enrich_metadata.py --target prod
 
+references: ## Preview cultural reference extraction from JIM Stories (dry-run)
+	python3 scripts/extract_jim_references.py
+
+references-apply: ## Extract cultural references and write to DB + create faceted browse
+	python3 scripts/extract_jim_references.py --apply
+
 deploy: ## Push code (modules/themes) to production and restart Omeka
 	rsync -avz --compress --partial --progress \
 		--exclude='.env' --exclude='omeka/volume/files/' --exclude='backups/' \

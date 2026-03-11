@@ -1,0 +1,966 @@
+# JIM Stories — Literary & Cultural Reference Index
+# 159 items processed, 0 errors
+# Model: claude-opus-4-6
+
+WRT-001 | JIM | 2009-04-29
+  - Robert Duncan (author, namedrop) — "His latest piece concerned the poet Robert Duncan"
+
+WRT-114 | JIM HAS A NERVOUS BREAKDOWN AND TRIES HIS HAND AT POETRY | 2009-07-16
+  (no cultural references)
+
+WRT-115 | JIMMY | 2009-08-11
+  - Henry V (work, namedrop) — "he picked up his tattered copy of henry V and headed back for his home"
+  - William Shakespeare (author, namedrop) [implicit — Henry V is by Shakespeare] — "he picked up his tattered copy of henry V and headed back for his home"
+  - The Catcher in the Rye (work, allusion) [implicit — the voice, diction, and use of 'goddam' and 'fer chrissakes' strongly echo Holden Caulfield's narrative voice in Salinger's The Catcher in the Rye; the entire story's tone and style mirror Holden's narration] — "what am i, a goddam thesaurus fer chrissakes?"
+  - J.D. Salinger (author, allusion) [implicit — the narrative voice throughout strongly echoes Salinger's style in The Catcher in the Rye] — "what am i, a goddam thesaurus fer chrissakes?"
+
+WRT-119 | JIM | 2009-08-14
+  - Gertrude Stein (author, allusion) [implicit — echoes Stein's 'a rose is a rose is a rose'] — "A loser is a loser is a loser"
+
+WRT-120 | JIM (STORY #5) | 2009-08-14
+  (no cultural references)
+
+WRT-121 | JIM AS PROTOPLASM | 2009-08-15
+  - Travis Bickle (fictional_character, identification) — "He felt like Travis Bickle, God's lonely man"
+  - Taxi Driver (film, identification) [Travis Bickle is the protagonist of Taxi Driver] — "He felt like Travis Bickle, God's lonely man"
+  - Notes from Underground (work, allusion) — "He thought about the narrator from Notes from Underground"
+  - Fyodor Dostoevsky (author, allusion) [implicit — Notes from Underground is by Dostoevsky] — "He thought about the narrator from Notes from Underground"
+  - Heart of Darkness (work, allusion) — "He thought about the main character in Heart of Darkness, Marlowe"
+  - Joseph Conrad (author, allusion) [implicit — Heart of Darkness is by Joseph Conrad] — "He thought about the main character in Heart of Darkness, Marlowe"
+  - Charles Marlow (fictional_character, allusion) [Spelled 'Marlowe' in text; canonical spelling is 'Marlow'] — "the main character in Heart of Darkness, Marlowe"
+  - Apocalypse Now (film, namedrop) — "He thought about how he went to see Apocalypse Now just before 9/11"
+  - September 11 attacks (historical_event, namedrop) — "he went to see Apocalypse Now just before 9/11 and then saw it again right after"
+
+WRT-122 | JIM AT THE BALL GAME | 2009-08-25
+  - Fenway Park (venue, namedrop) — "that ball game he went to at Fenway back in the 70's"
+  - New York Yankees (sports, namedrop) — "the Yankees pitcher gives up a walk-off home run"
+  - Fear and Loathing in Las Vegas (work, allusion) [possible reference — 'loathing' combined with the drug-fueled narrative and 'bad craziness' echoes Hunter S. Thompson] — "his dislike became a combination of hate and loathing and distaste"
+  - Hunter S. Thompson (author, allusion) [implicit — 'bad craziness' is a signature Hunter S. Thompson phrase, reinforced by the drug-fueled gonzo narrative style throughout] — "Some serious bad craziness"
+
+WRT-123 | JIM #87 | 2009-08-27
+  - War and Peace (work, namedrop) — "he became quite listless and did weird shit like memorizing War and Peace"
+  - Leo Tolstoy (author, namedrop) [implicit — War and Peace is by Tolstoy] — "he became quite listless and did weird shit like memorizing War and Peace"
+
+WRT-124 | JIM IN NIGERIA | 2009-08-27
+  - Waiting for Godot (work, allusion) — "like the guy in Waiting for Godot or the sub-IQ fence-janitor"
+  - Samuel Beckett (author, allusion) [implicit — Waiting for Godot is by Samuel Beckett] — "like the guy in Waiting for Godot or the sub-IQ fence-janitor"
+  - Lucky (fictional_character, allusion) [possible reference — likely Lucky, the enslaved character in Waiting for Godot, though could refer to another character] — "like the guy in Waiting for Godot or the sub-IQ fence-janitor"
+
+WRT-125 | JIM FALLS IN LOVE | 2009-08-28
+  - This Magic Moment (song, quotation) — "hit Jim like when he heard the line "THIS MAGIC MOMENT.""
+  - The Drifters (band, quotation) ["This Magic Moment" originally performed by The Drifters (1960), also covered by Jay and the Americans] — "hit Jim like when he heard the line "THIS MAGIC MOMENT.""
+  - Rolling Thunder Revue (other, namedrop) — "when he saw THE ROLLING THUNDER REVUE in Madison Square Garden in 75"
+  - Bob Dylan (musician, namedrop) [implicit — Rolling Thunder Revue was Bob Dylan's touring concert series] — "when he saw THE ROLLING THUNDER REVUE in Madison Square Garden in 75"
+  - Madison Square Garden (venue, namedrop) — "THE ROLLING THUNDER REVUE in Madison Square Garden in 75"
+  - The Cabinet of Dr. Caligari (film, namedrop) — "the last time he saw THE CABINET OF DR. CALIGARI"
+  - The Kinks (band, namedrop) — "all moshed together like The Kinks and Harry Dean Stanton"
+  - Harry Dean Stanton (other, namedrop) [Actor] — "like The Kinks and Harry Dean Stanton and Jimmy Page"
+  - Jimmy Page (musician, namedrop) — "Harry Dean Stanton and Jimmy Page and Winslow Homer"
+  - Winslow Homer (visual_artist, namedrop) — "Jimmy Page and Winslow Homer and Pollock"
+  - Jackson Pollock (visual_artist, namedrop) — "Winslow Homer and Pollock and Margaret Bourke-White"
+  - Margaret Bourke-White (visual_artist, namedrop) [Photographer/photojournalist] — "Pollock and Margaret Bourke-White amd the Parthenon"
+  - Parthenon (other, namedrop) [Ancient Greek temple, architectural/cultural landmark] — "Margaret Bourke-White amd the Parthenon and the Chrysler Building"
+  - Chrysler Building (other, namedrop) [Iconic Art Deco skyscraper in New York City] — "the Parthenon and the Chrysler Building and Juniot Kimbrough"
+  - Junior Kimbrough (musician, namedrop) [Spelled 'Juniot' in text — likely typo for 'Junior'] — "the Chrysler Building and Juniot Kimbrough and Jerry Jeff Walker"
+  - Jerry Jeff Walker (musician, namedrop) — "Juniot Kimbrough and Jerry Jeff Walker and Sonny Landreth"
+  - Sonny Landreth (musician, namedrop) — "Jerry Jeff Walker and Sonny Landreth and Kubrick"
+  - Stanley Kubrick (other, namedrop) [Film director] — "Sonny Landreth and Kubrick and Degas and Brando"
+  - Edgar Degas (visual_artist, namedrop) — "Kubrick and Degas and Brando and Denis Lehane"
+  - Marlon Brando (other, namedrop) [Actor] — "Degas and Brando and Denis Lehane and Bogart"
+  - Dennis Lehane (author, namedrop) — "Brando and Denis Lehane and Bogart and Tom Waits"
+  - Humphrey Bogart (other, namedrop) [Actor] — "Denis Lehane and Bogart and Tom Waits and Duchamp"
+  - Tom Waits (musician, namedrop) — "Bogart and Tom Waits and Duchamp and Schwitters"
+  - Marcel Duchamp (visual_artist, namedrop) — "Tom Waits and Duchamp and Schwitters"
+  - Kurt Schwitters (visual_artist, namedrop) — "Duchamp and Schwitters. Jim didn't know where he was"
+  - Casablanca (film, namedrop) — "the groundhog saw CASABLANCA in Cyrillic subtitles"
+  - Break On Through (To the Other Side) (song, quotation) [implicit — The Doors song 'Break On Through (To the Other Side)'] — "broke on through to the other side, divided day into night"
+  - The Doors (band, quotation) [implicit — lyrics from The Doors' 'Break On Through (To the Other Side)'] — "broke on through to the other side, divided day into night"
+  - Igor Stravinsky (musician, namedrop) [Used as a character name; likely references the composer Igor Stravinsky, though fictionalized as a WWII veteran neighbor] — "as Stravinsky, the old World War II veteran who lived upstairs"
+  - World War II (historical_event, namedrop) — "Stravinsky, the old World War II veteran who lived upstairs"
+  - Perry Como (musician, namedrop) — "that guy who was always listening to Perry Como"
+  - The Star-Spangled Banner (song, allusion) [implicit — echoes 'by the dawn's early light' from The Star-Spangled Banner] — "even if he never saw the dawn's early light again"
+  - The Great Gatsby (work, quotation) [Extended paraphrase/quotation from the final passage of F. Scott Fitzgerald's The Great Gatsby] — "most of the shore places that were closed now might be dark, that the only light would be a shadowy, moving glow of a ferryboat across the sound"
+  - F. Scott Fitzgerald (author, quotation) [implicit — the closing passage is closely paraphrased from Fitzgerald's The Great Gatsby] — "most of the shore places that were closed now might be dark… the inessential houses… the old island"
+
+WRT-126 | JIM #77 | 2009-08-26
+  - Garden of Eden (religious, allusion) [Biblical allusion to expulsion from the Garden of Eden] — "chucked out of his pipe-dream of eden like a drunk thrown out of a bar"
+  - American Idol (tv, namedrop) — "she was more interested in American Idol than him"
+  - Just My Imagination (Running Away with Me) (song, quotation) — "some jerk off-key warble "Just My Imagination""
+  - The Temptations (band, quotation) [implicit — 'Just My Imagination (Running Away with Me)' is a 1971 hit by The Temptations] — "some jerk off-key warble "Just My Imagination""
+
+WRT-127 | HOW NED'S MURDER AFFECTED JIM AND I | 2009-08-28
+  - karma (religious, allusion) — "Jim needed to avenge Ned's whack to set and see it right. Karma. Karmic balance and all that shit."
+  - Staten Island Ferry (other, namedrop) [possible reference — likely the Staten Island Ferry given later mention of Staten Island; needs review] — "Jim, as he had done for thousands of days, took the ferry to work that morning"
+  - Staten Island (other, namedrop) — "the vanished trees of Staten Island dictated"
+
+WRT-128 | JIM AND THE DENTAL FLOSS | 2009-08-28
+  (no cultural references)
+
+WRT-129 | JIM'S DREAM | 2009-08-28
+  - Teddy Kennedy (historical_figure, allusion) — "its Teddy Kennedyesque cargo, but being pushed back the other way"
+  - Road Runner (cartoon) (other, allusion) [Reference to the Wile E. Coyote and Road Runner Looney Tunes cartoons] — "cactuses like that you'd see in some Roadrunner cartoon or something"
+  - Fear and Loathing in Las Vegas (work, allusion) [possible reference — 'fear and dreadful loathing' in a desert driving context echoes Hunter S. Thompson's Fear and Loathing in Las Vegas] — "a shared feel of horror and fear and dreadful loathing"
+  - Hunter S. Thompson (author, allusion) [implicit — desert car journey combined with 'fear and loathing' strongly echoes Thompson] — "a shared feel of horror and fear and dreadful loathing"
+
+WRT-130 | JIM'S THOUGHTS  AT THE ACROPOLIS | 2009-08-29
+  - post-modernism (other, structural) — "I am a victim of post-modernism thought Jim"
+  - Ouroboros (religious, allusion) [Ancient symbol of a serpent eating its own tail, used here as metaphor for cyclical nature of post-modernism reverting to conservatism] — "Like a snake eating its tail he told himself"
+  - The Great Gatsby (work, allusion) — "his green light at the end of Daisy's dock a sputtered smoke-ring"
+  - F. Scott Fitzgerald (author, allusion) [implicit — The Great Gatsby is by F. Scott Fitzgerald] — "his green light at the end of Daisy's dock a sputtered smoke-ring"
+  - Daisy Buchanan (fictional_character, allusion) — "his green light at the end of Daisy's dock"
+  - Bob Dylan (musician, quotation) — "stuck inside of Mobile with the Memphis blues again"
+  - Stuck Inside of Mobile with the Memphis Blues Again (song, quotation) — "stuck inside of Mobile with the Memphis blues again"
+  - Big Daddy (fictional_character, allusion) — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Cat on a Hot Tin Roof (work, allusion) [Big Daddy and 'mendacity' are from Tennessee Williams' Cat on a Hot Tin Roof] — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Tennessee Williams (author, allusion) [implicit — Big Daddy is a Tennessee Williams character] — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Willy Loman (fictional_character, allusion) — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Death of a Salesman (work, allusion) [implicit — Willy Loman is from Arthur Miller's Death of a Salesman] — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Arthur Miller (author, allusion) [implicit — Willy Loman is an Arthur Miller character] — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Yossarian (fictional_character, allusion) — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Catch-22 (work, allusion) [implicit — Yossarian is the protagonist of Joseph Heller's Catch-22] — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - Joseph Heller (author, allusion) [implicit — Yossarian is a Joseph Heller character] — "Big Daddy's mendacity and Willy Loman Yossarian-isms"
+  - filibuster (other, allusion) [U.S. political reference to partisan gridlock and Senate filibuster tactics] — "blue state/red state/purple state filibusterings"
+  - Howl (work, allusion) [possible reference — echoes the angel-headed hipsters and cross-country journeys of Ginsberg's Howl; needs review] — "he might find Angel who just arrived there from yon coast"
+  - Harley-Davidson (other, namedrop) — "her Harley-Davidson's cornucopial whine attuned to an FM station"
+  - William S. Burroughs (author, allusion) — "William Burroughs was the morning rush hour DJ doing some dead-end repartee-cliche"
+  - Allen Ginsberg (author, allusion) — "dead-end repartee-cliche with Allen Ginsberg about being mired in relief's lack"
+  - Bob Dylan (musician, allusion) [implicit — echoes Bob Dylan's 'Subterranean Homesick Blues' and/or the lyric imagery of wandering boot-heels throughout Dylan's work] — "being mired in relief's lack and directionless boot-heels"
+  - The Acropolis (venue, structural) [The ancient Acropolis of Athens; setting referenced in title] — "JIM'S THOUGHTS AT THE ACROPOLIS"
+
+WRT-131 | JIM GETS HIS REVENGE | 2009-08-29
+  - Cumbia (other, namedrop) [Cumbia is a traditional Latin American music/dance genre with roots in African slave culture] — "obsessively started making "cumbia" CDs - you know, that percussive dance music rooted in the dances slaves would perform"
+  - Drum and bass (other, namedrop) [Reference to the electronic music genre] — "change the cumbia beat to a primordial drum 'n' bass pattern"
+
+WRT-132 | JIM IN NIGERIA (updated) | 2009-08-27
+  - Waiting for Godot (work, allusion) — "like the guy in Waiting for Godot or the sub-IQ fence-janitor"
+  - Samuel Beckett (author, allusion) [implicit — Waiting for Godot is by Samuel Beckett] — "like the guy in Waiting for Godot or the sub-IQ fence-janitor"
+  - Lucky (fictional_character, allusion) [possible reference — likely Lucky, the clown-like character in Waiting for Godot, though could refer to another character] — "like an idiot clown, like the guy in Waiting for Godot"
+
+WRT-133 | JIM GETS BACK FROM SEEING HIS SHRINK | 2009-08-31
+  - Richard Wilbur (author, namedrop) [Richard Wilbur, American poet. Referred to as Jim's 'friend' — real person fictionalized.] — "They were the words of his friend Rich Wilbur, who, under the glow of the northern sky"
+  - A Wedding Toast (work, quotation) [possible reference — needs review. The passage closely echoes Richard Wilbur's poem, likely 'Walking to Sleep' or another Wilbur poem about flight and birds] — "Treetops are not so high...Nor I so low that I don't instinctively know how it would be to fly"
+  - Ted Kennedy (historical_figure, namedrop) [real_person_fictionalized] — "It was Teddy Kennedy. Then Jim woke up from his dream."
+  - Bill Veeck (historical_figure, namedrop) [possible reference — needs review. Veeck may allude to Bill Veeck, the baseball executive, used here as a psychiatrist's name; could also be a personal acquaintance.] — "although Dr. Veeck had said, We have to stop now, Jim"
+
+WRT-134 | JIM UNSTUCK | 2009-08-31
+  - Slaughterhouse-Five (work, structural) — "he had read just about half of Slaughterhouse Five"
+  - Kurt Vonnegut (author, namedrop) — "he also thought about that Vonnegut had given Billy the last name "Pilgrim" on purpose"
+  - Billy Pilgrim (fictional_character, identification) — "like Billy Pilgrim, was thinking that maybe he was unstuck in time too"
+  - Kilgore Trout (fictional_character, allusion) — "it's like he's channelling his sci-fi trash alter-ego Kilgore Trout"
+  - RMS Titanic (other, allusion) [Reference to the historical ship RMS Titanic; implies a doomed journey] — "you have a ticket on The Titanic, and tell him you'll finish this conversation"
+  - Slaughterhouse-Five (film) (film, namedrop) [1972 film adaptation of Slaughterhouse-Five directed by George Roy Hill] — "you'd read it twice, and seen the movie too"
+
+WRT-135 | JIM DRIVES TO FRESNO | 2009-09-01
+  - Roy Orbison (musician, namedrop) — "he hears a roy orbison song say only the lonely on the firebird radio"
+  - Only the Lonely (Know the Way I Feel) (song, quotation) — "he hears a roy orbison song say only the lonely on the firebird radio"
+  - John Lennon (musician, namedrop) — "some cool shit that lennon put out when jim was in high school"
+  - God (song, quotation) [From John Lennon's song 'God' on the album John Lennon/Plastic Ono Band] — "god is a concept by which we measure our pain"
+  - Rosetta Stone (other, allusion) — "from her lawyer seems like the fucking rosetta stone for christ sakes"
+  - Kung Fu (tv, allusion) [Likely reference to the TV series Kung Fu (1972–1975) starring David Carradine] — "impenetrable wise like kung fu"
+  - Wile E. Coyote (fictional_character, allusion) — "the coyote who outfoxes the roadrunner in some bizarro world"
+  - Road Runner (fictional_character, allusion) — "the coyote who outfoxes the roadrunner in some bizarro world"
+  - Looney Tunes (other, allusion) [Wile E. Coyote and Road Runner are characters from Warner Bros. Looney Tunes/Merrie Melodies cartoons] — "the coyote who outfoxes the roadrunner in some bizarro world"
+  - Bizarro World (other, allusion) [Bizarro World is from DC Comics Superman mythology] — "in some bizarro world where the roadrunner always gets fucked"
+  - Rock of Ages (religious, allusion) [Reference to the Christian hymn 'Rock of Ages' by Augustus Toplady] — "jim is a rock of ages impenetrable wise"
+  - Pontiac Firebird (other, namedrop) [Pontiac Firebird automobile; Jim's car is also referred to as 'the pontiac'] — "only the lonely on the firebird radio"
+
+WRT-136 | JIM GOES TO THE BUS STATION | 2009-08-27
+  (no cultural references)
+
+WRT-137 | JIM HITS THE WALL | 2009-08-19
+  - Looney Tunes (other, allusion) — "My goddam life has turned into a fucking looney tunes cartoon he thought"
+  - Karma (religious, allusion) — "some random bad-crazy karmic shitstorm that was lurking him like an irrational crime"
+
+WRT-138 | JIM IN PURGATORY, CONT'D. | 2009-09-04
+  - The Wizard of Oz (film, allusion) — "his horde of flying monkeys, out of work since The Wizard of Oz"
+  - Cookie Monster (fictional_character, namedrop) [Character from Sesame Street] — "a dental plan endorsed by the cookie monster"
+  - Sesame Street (tv, namedrop) [implicit — Cookie Monster is from Sesame Street] — "a dental plan endorsed by the cookie monster"
+  - Klaatu (fictional_character, allusion) [Portmanteau of Klaatu (from The Day the Earth Stood Still) and Minotaur] — "the lair of "The Klaatu-taur," a beast so foul"
+  - The Day the Earth Stood Still (film, allusion) [implicit — Klaatu is the alien from The Day the Earth Stood Still] — "the lair of "The Klaatu-taur," a beast so foul"
+  - Minotaur (other, allusion) [implicit — '-taur' evokes the Minotaur of Greek mythology] — "the lair of "The Klaatu-taur," a beast so foul"
+  - Henny Youngman (historical_figure, namedrop) — "a beast so foul that even Henny Youngman wouldn't joke about it"
+
+WRT-139 | JIM WAKES UP IN A COLD SWEAT | 2009-09-04
+  (no cultural references)
+
+WRT-140 | JIM IS JASON ALEXANDER | 2009-09-04
+  - Jason Alexander (historical_figure, identification) [Title identifies Jim as the actor Jason Alexander] — "JIM IS JASON ALEXANDER"
+  - Larry David (historical_figure, identification) — "I am Larry David and stole this whole shtick from an episode of Curb Your Enthusiasm"
+  - Curb Your Enthusiasm (tv, structural) [The narrator explicitly acknowledges the entire story is derived from this show] — "stole this whole shtick from an episode of Curb Your Enthusiasm"
+  - Seinfeld (tv, allusion) [implicit — Jason Alexander is best known for playing George Costanza on Seinfeld; Larry David co-created Seinfeld and George was based on him, linking the title and ending] — "JIM IS JASON ALEXANDER"
+
+WRT-141 | JAMES AND THE GIANT PLUM | 2009-09-08
+  - James and the Giant Peach (work, allusion) [Title echoes Roald Dahl's James and the Giant Peach] — "JAMES AND THE GIANT PLUM"
+  - Roald Dahl (author, allusion) [implicit — James and the Giant Peach is by Roald Dahl] — "JAMES AND THE GIANT PLUM"
+  - Brown Sugar (song, namedrop) — "Jim was in bed, listening to "Brown Sugar" by The Rolling Stones"
+  - The Rolling Stones (band, namedrop) — "Jim was in bed, listening to "Brown Sugar" by The Rolling Stones"
+  - Robert Frost (author, quotation) [implicit — echoes Frost's 'Stopping by Woods on a Snowy Evening': 'And miles to go before I sleep'] — "he had more important things to do, miles to go before he slept in the sand"
+  - Stopping by Woods on a Snowy Evening (work, quotation) [implicit — 'miles to go before I sleep'] — "he had more important things to do, miles to go before he slept in the sand"
+  - Keith Richards (musician, namedrop) — "with Keith Richards doing that uber-Chuck Berry riff at the end of the song"
+  - Chuck Berry (musician, allusion) — "with Keith Richards doing that uber-Chuck Berry riff at the end of the song"
+  - This Is Just to Say (work, allusion) [implicit — echoes William Carlos Williams' 'This Is Just to Say' about eating plums] — "he realized it was almost the end of the summer, and he hadn't eaten one goddamn plum"
+  - William Carlos Williams (author, allusion) [implicit — the plums reference evokes Williams' 'This Is Just to Say'] — "he realized it was almost the end of the summer, and he hadn't eaten one goddamn plum"
+
+WRT-142 | THE LOVE OF GOD IS THE BEGINNING OF WISDOM | 2009-09-08
+  - Book of Proverbs (religious, structural) [Proverbs 9:10 / Psalm 111:10 — this biblical proverb serves as the structural and thematic centerpiece of the piece; the title inverts it by replacing 'FEAR' with 'LOVE'] — "Engraved on the table, in big capital letters, was the saying, 'THE FEAR OF THE LORD IS THE BEGINNING OF WISDOM.'"
+
+WRT-143 | FUNKY JIM | 2009-09-08
+  - Ernest Hemingway (author, allusion) [possible reference — needs review. The cumulative, polysyndetic prose style in this passage echoes Hemingway, but this is a stylistic parallel rather than a clear named reference. Marginal extraction.] — "dusk would fall and night would followed dusk inevitably and inexorably and as it darkened so would Jim's stumbling mood"
+
+WRT-144 | (no subject) | 2009-09-10
+  - Emily Dickinson (author, namedrop) — "made him memorize some stupid poem by Emily Dickinson"
+  - My Heart Leaps Up (work, quotation) [This poem is actually by William Wordsworth, not Emily Dickinson — the misattribution appears to be Jim's error or deliberate comedic conflation] — "the one that starts my heart leaps up when I behold a rainbow in the sky"
+  - William Wordsworth (author, quotation) [implicit — 'My Heart Leaps Up' is by Wordsworth, though the text attributes it to Dickinson] — "the one that starts my heart leaps up when I behold a rainbow in the sky"
+  - There Is No Frigate Like a Book (work, quotation) — "hear Wilcox gush on about there is no frigate like a book or some crap like that"
+  - Emily Dickinson (author, allusion) [implicit — 'There Is No Frigate Like a Book' is by Emily Dickinson] — "hear Wilcox gush on about there is no frigate like a book or some crap like that"
+  - Ode to a Nightingale (work, namedrop) — "Not ode to a nightingale or crap like that"
+  - John Keats (author, allusion) [implicit — 'Ode to a Nightingale' is by John Keats] — "Not ode to a nightingale or crap like that"
+  - Zeno's paradox (other, allusion) [possible reference — the endlessly receding finish line evokes Zeno's dichotomy paradox; needs review] — "as he approached the finish line it kept receding away from him. He realized that he would never finish the race"
+
+WRT-145 | JIM AND THE ROCK OF AGES | 2009-09-10
+  (no cultural references)
+
+WRT-146 | JIM'S ADVENTURE ONTHE HIGH SEAS BEGINS | 2009-09-10
+  - Moby-Dick (work, structural) [Echoes the famous opening line 'Call me Ishmael' from Moby-Dick] — "Call me Jim. Some years ago (the precise number is unimportant, but it is twelve)"
+  - Herman Melville (author, structural) [implicit — 'Call me Jim' parodies the opening of Melville's Moby-Dick] — "Call me Jim. Some years ago (the precise number is unimportant, but it is twelve)"
+  - Ishmael (fictional_character, identification) [implicit — Jim substitutes for Ishmael, the narrator of Moby-Dick] — "Call me Jim. Some years ago (the precise number is unimportant, but it is twelve)"
+  - Sea Fever (work, quotation) — "the beginning of the poem Sea Fever by John Masefield: "I must go down to the sea again""
+  - John Masefield (author, quotation) — "the poem Sea Fever by John Masefield: "I must go down to the sea again, to the lonely seas and sky""
+  - The Custom House (work, allusion) [possible reference — needs review. Echoes the Custom House preface to Hawthorne's The Scarlet Letter, where the narrator works at a custom house] — "my life as a janitor at the customs house here in Jersey City"
+  - Charles Dickens (author, allusion) [implicit — 'dead as a doornail' is famously used in the opening of Dickens' A Christmas Carol; here adapted to 'deaf as a doornail'] — "I will not resort to that old saw "deaf as a doornail""
+
+WRT-189 | JIM AS A MACHINE PART | 2009-10-27
+  - Artificial Intelligence (work, namedrop) [possible reference — likely refers to the academic journal 'Artificial Intelligence' published by Elsevier, though could be a fictional publication. Needs review.] — "you haven't read the latest issue of Artificial Intelligence"
+  - University of Alabama (other, namedrop) [Real university used as a fictional setting for a fictional research claim] — "Researchers at the University of Alabama have discovered signs of sentience in simple machine parts"
+
+WRT-192 | HIGH SOCIETY JIM | 2009-10-30
+  - Fun with Dick and Jane (work, structural) [implicit — echoes the 'See Dick run' primer style from the Dick and Jane readers] — "See Jim run. Jim has a ball."
+  - On Raglan Road (song, allusion) [Patrick Kavanagh's poem 'On Raglan Road' (set to music by Luke Kelly); 'autumn day' echoes the poem's opening 'On Raglan Road on an autumn day'] — "He lives on Raglan Road. It is an autumn day."
+  - Patrick Kavanagh (author, allusion) [implicit — 'On Raglan Road' is a poem by Patrick Kavanagh, opening 'On Raglan Road on an autumn day'] — "He lives on Raglan Road. It is an autumn day."
+
+WRT-193 | JIM’S AMAZEMENT | 2009-10-30
+  - Ezekiel's Wheel (religious, allusion) [implicit — echoes the biblical vision in Ezekiel 1:16, 'a wheel within a wheel'] — "It's like a wheel within a wheel, or the spokes of a wheel becoming both its center and rim"
+  - Phlogiston theory (other, namedrop) — "such outdated, archaic stuff as phlogiston and spontaneous generation and ether and flat earth"
+  - Spontaneous generation (other, namedrop) — "such outdated, archaic stuff as phlogiston and spontaneous generation and ether and flat earth"
+  - Luminiferous aether (other, namedrop) — "such outdated, archaic stuff as phlogiston and spontaneous generation and ether and flat earth"
+  - Flat Earth (other, namedrop) — "such outdated, archaic stuff as phlogiston and spontaneous generation and ether and flat earth"
+  - Ash heap of history (other, allusion) [implicit — echoes the phrase 'ash heap of history,' attributed to Leon Trotsky and later Ronald Reagan] — "jettisons physical laws into the waste bin of history where they belong"
+
+WRT-194 | JIM AND HIS IMPOSSIBLE DREAM | 2009-10-31
+  - Freaks (film, allusion) — "ballet performed by the pinheads in the movie FREAKS"
+  - Hieronymus Bosch (visual_artist, allusion) — "like Hieronymous Bosch in the throes of an ether binge"
+  - Bob Dylan (musician, quotation) — "that time when Jim was in Mobile with the Memphis blues….or was it Memphis with the Mobile blues?"
+  - Stuck Inside of Mobile with the Memphis Blues Again (song, quotation) — "that time when Jim was in Mobile with the Memphis blues….or was it Memphis with the Mobile blues?"
+  - Bible (religious, allusion) — "his copy of the Bible permanently opened to the Book of Revelations"
+  - Book of Revelation (religious, allusion) — "permanently opened to the Book of Revelations, its truth irrevocably recognized"
+  - Kubla Khan (work, quotation) [implicit — quotes Samuel Taylor Coleridge's 'Kubla Khan'] — "his dream influenced by caverns measureless to man"
+  - Samuel Taylor Coleridge (author, quotation) [implicit — 'caverns measureless to man' is from Coleridge's 'Kubla Khan'] — "his dream influenced by caverns measureless to man"
+  - T.S. Eliot (author, quotation) [implicit — from Eliot's 'The Hollow Men'] — "by rats' feet over broken glass"
+  - The Hollow Men (work, quotation) [implicit — 'rats' feet over broken glass' echoes Eliot's 'The Hollow Men'] — "by rats' feet over broken glass"
+  - Gravity's Rainbow (work, allusion) — "his heart beholding gravity's rainbow"
+  - Thomas Pynchon (author, allusion) [implicit — Gravity's Rainbow is by Thomas Pynchon] — "his heart beholding gravity's rainbow"
+  - Orion (other, namedrop) [Orion the constellation/mythological figure] — "by Orion, by Methusaleh, by railroad gates"
+  - Methuselah (religious, namedrop) [Biblical figure known for extreme longevity] — "by Orion, by Methusaleh, by railroad gates"
+  - A Day in the Life (song, quotation) [implicit — 'now they know how many holes it takes to fill the Albert Hall' from The Beatles' 'A Day in the Life'] — "by holes filling the Albert Hall"
+  - The Beatles (band, quotation) [implicit — from The Beatles' 'A Day in the Life'] — "by holes filling the Albert Hall"
+  - Royal Albert Hall (venue, quotation) — "by holes filling the Albert Hall"
+  - British Empire (historical_event, namedrop) — "by the sunset over the British Empire"
+  - Paul Revere and the Raiders (band, namedrop) — "by Paul Revere and the Raiders, by dried tubers"
+  - T.S. Eliot (author, quotation) [implicit — 'dried tubers' echoes The Waste Land ('feeding / A little life with dried tubers')] — "by Paul Revere and the Raiders, by dried tubers"
+  - The Waste Land (work, quotation) [implicit — 'dried tubers' from the opening of Eliot's The Waste Land] — "by Paul Revere and the Raiders, by dried tubers"
+  - The Great Gatsby (work, allusion) [The eyes of Doctor T. J. Eckleburg from F. Scott Fitzgerald's The Great Gatsby] — "by the eyes of T.J. Eckleberg, by Ernest Hemingway"
+  - F. Scott Fitzgerald (author, allusion) [implicit — T.J. Eckleburg is from Fitzgerald's The Great Gatsby] — "by the eyes of T.J. Eckleberg, by Ernest Hemingway"
+  - Doctor T.J. Eckleburg (fictional_character, allusion) — "by the eyes of T.J. Eckleberg, by Ernest Hemingway"
+  - Ernest Hemingway (author, namedrop) — "by the eyes of T.J. Eckleberg, by Ernest Hemingway, by castles made of sand"
+  - Castles Made of Sand (song, quotation) [implicit — Jimi Hendrix song 'Castles Made of Sand'] — "by Ernest Hemingway, by castles made of sand, by the waters of Babylon"
+  - Jimi Hendrix (musician, quotation) [implicit — 'Castles Made of Sand' is a Jimi Hendrix song] — "by Ernest Hemingway, by castles made of sand, by the waters of Babylon"
+  - Psalm 137 (religious, allusion) [implicit — 'By the waters of Babylon' from Psalm 137] — "by castles made of sand, by the waters of Babylon, by Yossarian"
+  - Yossarian (fictional_character, namedrop) — "by the waters of Babylon, by Yossarian, by the time I get to Phoenix"
+  - Catch-22 (work, namedrop) [implicit — Yossarian is the protagonist of Joseph Heller's Catch-22] — "by the waters of Babylon, by Yossarian, by the time I get to Phoenix"
+  - Joseph Heller (author, namedrop) [implicit — Yossarian is from Heller's Catch-22] — "by the waters of Babylon, by Yossarian, by the time I get to Phoenix"
+  - By the Time I Get to Phoenix (song, quotation) — "by Yossarian, by the time I get to Phoenix, by Geronimo"
+  - Glen Campbell (musician, quotation) [implicit — 'By the Time I Get to Phoenix' popularized by Glen Campbell] — "by Yossarian, by the time I get to Phoenix, by Geronimo"
+  - Geronimo (historical_figure, namedrop) — "by the time I get to Phoenix, by Geronimo, by blue skies"
+  - Do Not Go Gentle into That Good Night (work, quotation) [implicit — echoes Dylan Thomas' 'Do not go gentle into that good night' / 'Rage, rage against the dying of the light'] — "railing, railing against the dying gentle night which assuages us"
+  - Dylan Thomas (author, quotation) [implicit — paraphrase of Dylan Thomas' 'Do Not Go Gentle into That Good Night'] — "railing, railing against the dying gentle night which assuages us"
+  - The Raven (work, allusion) [possible reference — 'dying embers' echoes Poe's 'The Raven' ('each separate dying ember wrought its ghost upon the floor')] — "Jim sits by the fire, its dying embers railing"
+  - Edgar Allan Poe (author, allusion) [possible reference — 'dying embers' may echo Poe's 'The Raven'] — "Jim sits by the fire, its dying embers railing"
+  - The Impossible Dream (song, structural) [Title echoes 'The Impossible Dream' from Man of La Mancha] — "JIM AND HIS IMPOSSIBLE DREAM"
+  - Man of La Mancha (work, structural) [implicit — 'The Impossible Dream' is from the musical Man of La Mancha] — "JIM AND HIS IMPOSSIBLE DREAM"
+
+WRT-195 | JIM’S FLIGHT ON A COLD NIGHT | 2009-10-31
+  (no cultural references)
+
+WRT-196 | JIM IS | 2009-11-01
+  - Plato (philosopher, allusion) — "I venture into Plato's cave as some kind of thoughtless experiment"
+  - Allegory of the Cave (work, allusion) [From Plato's Republic] — "I venture into Plato's cave as some kind of thoughtless experiment"
+  - Henny Youngman (historical_figure, namedrop) — "a thoughtless experiment devised by Henny Youngman's accountant"
+  - The Great Gatsby (work, allusion) [possible reference — echoes the green light from Gatsby; needs review] — "he met his timely demise in a green-light explosion"
+  - Robert Frost (author, allusion) [implicit — alludes to Frost's 'The Road Not Taken'] — "roads not taken are well-forsaken"
+  - The Road Not Taken (work, allusion) — "roads not taken are well-forsaken"
+  - Kublai Khan (historical_figure, allusion) — "when Kublai Khan is put upon to memorize the book of desire"
+  - Kubla Khan (work, allusion) [Alludes to Samuel Taylor Coleridge's poem 'Kubla Khan'] — "when Kublai Khan is put upon to memorize the book of desire"
+  - Samuel Taylor Coleridge (author, allusion) [implicit — Kublai Khan evokes Coleridge's poem] — "when Kublai Khan is put upon to memorize the book of desire"
+  - Robert Burns (author, allusion) [possible reference — may echo 'Stopping by Woods on a Snowy Evening' by Frost (horse shaking bells), needs review] — "when horses give a little shake and roads not taken"
+  - Stopping by Woods on a Snowy Evening (work, allusion) [possible reference — 'My little horse must think it queer / He gives his harness bells a shake' from Frost's poem, combined with snow days context] — "when horses give a little shake and roads not taken"
+  - Gertrude Stein (author, allusion) [implicit — echoes Stein's repetition technique, 'a rose is a rose is a rose'] — "when Jim is….is….is….is….is….is….is"
+  - For What It's Worth (song, allusion) [possible reference — may allude to Buffalo Springfield's 'For What It's Worth'; needs review] — "For what it's worth, Jim was fond of saying"
+
+WRT-197 | JIM IN MID-MARCH | 2009-11-01
+  - Not Ideas About the Thing But the Thing Itself (work, quotation) [Echoes Wallace Stevens' poem 'Not Ideas About the Thing But the Thing Itself' — 'A scrawny cry from outside / ... in the early March wind'] — "Then he heard it again: that scrawny cry in the wind"
+  - Wallace Stevens (author, quotation) [implicit — 'scrawny cry' and March wind setting closely parallel Stevens' poem. The entire piece mirrors the poem's structure: early March, sunrise, a bird's cry, uncertainty whether the sound is real or imagined] — "Then he heard it again: that scrawny cry in the wind"
+
+WRT-198 | JIM IN MONTANA | 2009-11-02
+  - Anaconda Copper Company (other, namedrop) [Historical mining company that operated the Berkeley Pit in Butte, Montana] — "the toxic aftermath of the huge pit abandoned by the Anaconda Copper Company"
+  - Environmental Protection Agency (other, namedrop) — "Johnny works for the EPA, cleaning up the toxic aftermath"
+  - Berkeley Pit (other, allusion) [implicit — refers to the Berkeley Pit Superfund site in Butte, Montana, though not named directly] — "trying to figure out how to deal with the poison lake that's filled the huge hole that was dug by the company"
+
+WRT-199 | JIM AND YOU, DOWN BY THE RIVER | 2009-11-05
+  - Philip Larkin (author, quotation) [Jon explicitly credits Larkin in the footnote] — "largely lifted from the poem "And Now the Leaves Suddenly Lose Strength" by Philip Larkin"
+  - And Now the Leaves Suddenly Lose Strength (work, quotation) [Jon explicitly acknowledges lifting words from this poem] — "largely lifted from the poem "And Now the Leaves Suddenly Lose Strength" by Philip Larkin"
+
+WRT-200 | JIM MAKES A PHONE CALL | 2009-11-06
+  (no cultural references)
+
+WRT-201 | JIM BECOMES SICK OF HIS OWN NARRATIVE | 2009-11-07
+  - The Fall (work, identification) — "much like the narrator in The Fall by Camus, was in Amsterdam"
+  - Albert Camus (author, identification) — "much like the narrator in The Fall by Camus, was in Amsterdam"
+  - Jean-Baptiste Clamence (fictional_character, identification) [Jean-Baptiste Clamence is the narrator/protagonist of Camus' The Fall, who similarly monologues in Amsterdam bars] — "much like the narrator in The Fall by Camus, was in Amsterdam"
+
+WRT-202 | JIM AND THE RUSSIAN | 2009-11-08
+  - Fyodor Dostoevsky (author, allusion) [possible reference — Dmitri evokes Dmitri Karamazov from Dostoevsky's The Brothers Karamazov; 'the Russian' context strengthens the connection but could simply be a Russian name. Needs review.] — "He once went skiing with Dmitri"
+  - Dmitri Karamazov (fictional_character, allusion) [possible reference — the Russian character named Dmitri may allude to Dmitri Karamazov. Needs review.] — "He once went skiing with Dmitri"
+
+WRT-203 | JIM AND THE WAR ON TERROR | 2009-11-15
+  - Dateline (tv, namedrop) — "his fear of the TV show Dateline"
+  - The Perfect Storm (work, allusion) [possible reference — 'the perfect storm' echoes Sebastian Junger's book/film The Perfect Storm, though it may also be used as a common idiom] — "It is like the perfect storm of horror for Jim"
+  - War on Terror (historical_event, structural) — "Jim is terrified of terror, or more specifically by and of the war on terror"
+
+WRT-204 | JIM ISN’T LIKE EVERYBODY ELSE | 2009-11-18
+  - The Kinks (band, allusion) [possible reference — needs review. Title echoes The Kinks' song 'I'm Not Like Everybody Else'] — "JIM ISN'T LIKE EVERYBODY ELSE"
+  - I'm Not Like Everybody Else (song, allusion) [possible reference — title echoes The Kinks' 1966 song 'I'm Not Like Everybody Else'] — "JIM ISN'T LIKE EVERYBODY ELSE"
+
+WRT-206 | JIM’S DREAM | 2009-12-06
+  - Andrew Dice Clay (historical_figure, namedrop) — "His recurring nightmare again: the one with Andrew Dice Clay"
+  - Hank Williams (musician, namedrop) — "Then Hank Williams walks in and shoots Andrew Dice Clay with an M-16"
+  - Johnny Guitar (film) (film, quotation) — "like Johnny Guitar says in the western 'Johnny Guitar,' 'There's nothing like a cup of coffee and a cigarette'"
+  - Johnny Guitar (character) (fictional_character, quotation) — "like Johnny Guitar says in the western 'Johnny Guitar,' 'There's nothing like a cup of coffee and a cigarette'"
+
+WRT-209 | JIM WISHES HE WAS MILES | 2010-01-21
+  - Miles Davis (musician, identification) [Title reference — Jim wishes he was Miles Davis] — "JIM WISHES HE WAS MILES"
+  - Now's the Time (song, namedrop) — "he was working on "Now's the Time," and he still is"
+  - Charlie Parker (musician, allusion) [implicit — 'Now's the Time' is a bebop standard composed by Charlie Parker] — "he was working on "Now's the Time," and he still is"
+
+WRT-210 | JIM AND THE HAY BALES | 2010-01-27
+  - Neil Young (musician, structural) [Explicitly acknowledged by author in endnote] — "This is a riff on the Neil Young song "Thrashers.""
+  - Thrasher (song, structural) [From Neil Young's album Rust Never Sleeps (1979). Multiple lines throughout the piece paraphrase or adapt lyrics from this song.] — "This is a riff on the Neil Young song "Thrashers.""
+  - Rust Never Sleeps (album, structural) [implicit — 'Thrasher' is a track on Rust Never Sleeps] — "This is a riff on the Neil Young song "Thrashers.""
+  - Subterranean Homesick Blues (song, quotation) [possible reference — needs review. These lines closely echo 'Subterranean Homesick Blues' by Bob Dylan ('the pump don't work / 'cause the vandals took the handles') but more likely still part of the Thrasher paraphrase] — "headed out to where the pavement turns to sand with a one-way ticket to the land of truth"
+  - Bob Dylan (musician, quotation) [possible reference — needs review. 'One-way ticket' and 'suitcase in hand' echo Dylan phrasing, but these lines are adapted from Neil Young's 'Thrasher'] — "a one-way ticket to the land of truth, and his suitcase in his hand"
+
+WRT-211 | JIM SHOOTS UP TONY’S TRUCK | 2010-01-28
+  - Black Crow (song, namedrop) [possible reference — needs review. Could allude to Joni Mitchell's 'Black Crow' or simply be the truck's nickname. Context suggests it's just the truck's name.] — "The "Black Crow" he called it."
+
+WRT-212 | JIM AND THE TV | 2010-01-31
+  - Roald Dahl (author, structural) [The entire piece closely paraphrases Roald Dahl's poem 'Television'; the embedded URL explicitly credits it] — "he was never, NEVER, NEVER to let you near his television set"
+  - Television (work, structural) [Roald Dahl's poem 'Television' from Charlie and the Chocolate Factory; URL at end of text explicitly identifies source] — "he was never, NEVER, NEVER to let you near his television set"
+
+WRT-213 | JIM HOWLS AND SCREAMS WITH JOY | 2010-01-31
+  - Allen Ginsberg (author, namedrop) — "Jim would like to thank Allen Ginsberg for his invaluable assistance in helping him to compose his thoughts"
+  - Howl (work, structural) [The entire piece closely paraphrases and rearranges imagery and language from Ginsberg's 'Howl'; the title also echoes it] — "the machinery of other skeletons howls and screams with joy"
+  - Allen Ginsberg (author, quotation) [Phrases drawn from Ginsberg's 'Howl' — e.g., 'shuddering cloud' and 'lightning in the mind'] — "His shuddering cloud-mood and brain-lightning leaps toward the poles of his consciousness"
+  - Allen Ginsberg (author, quotation) ['backyard green tree cemetery dawns' and 'kind king light of mind' are phrases from 'Howl' and 'Footnote to Howl'] — "like backyard green tree cemetery dawns and kind king light of mind"
+  - Allen Ginsberg (author, quotation) [Echoes catalog-style imagery from 'Howl'] — "his screaming vomiting whispering, his brilliant eyes"
+  - Allen Ginsberg (author, quotation) [Echoes 'Howl' imagery of furnished rooms] — "his bleak furnished room in Kansas"
+  - Allen Ginsberg (author, quotation) [Paraphrases language from early lines of 'Howl'] — "seeking as he is visionary supernatural ecstasies and impulses of winter midnight"
+  - Allen Ginsberg (author, quotation) [Direct quotation/paraphrase from 'Howl' Part I] — "Who disappeared into the volcanoes of Mexico? He just doesn't care anymore"
+  - Allen Ginsberg (author, quotation) [Echoes 'Howl' Part II Moloch imagery of machinery and skeletons] — "the machinery of other skeletons howls and screams with joy"
+  - Allen Ginsberg (author, quotation) [Echoes 'Howl' — 'the ash of poetry' appears in or closely paraphrases the poem] — "The ash of poetry is scattered incomprehensibly"
+
+WRT-214 | JIM GOES TO OKLAHOMA | 2010-02-01
+  - Normal, Illinois (other, namedrop) [Normal is a real town in Illinois, not Oklahoma's panhandle — Jim's confusion is part of the narrative] — "His brother-in-law lives in Normal, in the panhandle he thinks"
+  - Norman, Oklahoma (other, namedrop) [Norman is a real city in Oklahoma] — "Or is it Norman?, Jim wonders"
+  - Mexico, Missouri (other, namedrop) [Mexico is a real town in Missouri] — "It goes through a town called Mexico"
+
+WRT-215 | JIM AND THE TOUGH DAY | 2010-02-02
+  - Bob Dylan (musician, namedrop) [Presented as a humorous, fabricated quote attributed to Dylan] — "As Dylan said – or was it Neil Young?"
+  - Neil Young (musician, namedrop) [Presented as a humorous, fabricated quote attributed to either Dylan or Neil Young] — "or was it Neil Young?, "Jim, you will have a rough day someday.""
+
+WRT-216 | JIM AND THE WHO CONCERT | 2010-02-05
+  - Neil Young (musician, namedrop) — "what his friend Neil Young said: Somewhere in the fire of love, our dreams went up in smoke"
+  - Paradise Lost (work, structural) [Multiple URLs link to Dartmouth's annotated Paradise Lost Book 1. Language throughout ('revenge-throne,' 'rebelling angelic energy,' 'glory above his peers,' 'bottomless perdition,' 'penal fire,' 'horrid crew,' 'vanquished') is drawn directly from Milton's text.] — "that blissful...secret, that...upright heart and pure view"
+  - John Milton (author, structural) [Milton's name appears in the URLs; the entire piece is saturated with Paradise Lost Book 1 language] — "http://www.dartmouth.edu/%7Emilton/reading_room/pl/book_1/"
+  - Robert Lowell (author, allusion) — "go down to the train station of the cross in Lowell, Massachusetts with Robert Lowell's suitcase"
+  - Lowell, Massachusetts (other, allusion) [Lowell, MA is Jack Kerouac's hometown; the combination of train station and Lowell may allude to Kerouac] — "the train station of the cross in Lowell, Massachusetts"
+  - Jack Kerouac (author, allusion) [implicit — Lowell, MA is Kerouac's birthplace and a recurring setting in his work] — "go down to the train station of the cross in Lowell, Massachusetts"
+  - Stations of the Cross (religious, allusion) [possible reference — 'station of the cross' merges train station with Christian Stations of the Cross] — "the train station of the cross in Lowell, Massachusetts"
+  - The Who (band, namedrop) — "once you went with him to a Who concert"
+
+WRT-217 | JIM IS NOT A MAN OF LETTERS | 2010-02-05
+  (no cultural references)
+
+WRT-218 | JIM LOATHES TEA PARTY-TYPE PATRIOTISM | 2010-02-05
+  - Tea Party movement (historical_event, structural) [Title reference to the Tea Party political movement] — "JIM LOATHES TEA PARTY-TYPE PATRIOTISM"
+  - Coca-Cola (other, allusion) — "being sold a brand new idea of patriotism like it was Coca-Cola"
+  - Battle of Bull Run (historical_event, allusion) — "This not Bull Run. It never occurred to him that it's some Bullshit Run patriotism"
+  - William Butler Yeats (author, namedrop) — "an ersatz William Yeats bumper sticker"
+  - Lost in the Supermarket (song, allusion) [Possible reference to The Clash song 'Lost in the Supermarket'] — "That kind of lost-in-the-supermarket patriotism does not appeal to me"
+  - The Clash (band, allusion) [implicit — 'Lost in the Supermarket' is a Clash song] — "That kind of lost-in-the-supermarket patriotism does not appeal to me"
+  - Sam Shepard (author, identification) [Likely refers to playwright/author Sam Shepard; misspelled as 'Shepherd' in text. Echoes Shepard's themes of American landscape and disorientation, possibly from Motel Chronicles] — "Like Sam Shepherd, I keep finding myself getting off the freeway at familiar landmarks"
+
+WRT-219 | JIM THINKS ABOUT NORTH CAROLINA | 2010-02-07
+  - Dumbo (film, namedrop) — "Jim has seen Dumbo so many times he's lost count"
+  - Tender Is the Night (work, namedrop) — "The same thing with Tender is the Night by Fitzgerald"
+  - F. Scott Fitzgerald (author, namedrop) — "Tender is the Night by Fitzgerald"
+
+WRT-220 | JIM AND THE LINT DREAM | 2010-02-10
+  - Sonny Barger (historical_figure, namedrop) — "a dream that Sonny Barger, who was the president of the Hell's Angels in the sixties"
+  - Hells Angels (other, namedrop) — "Sonny Barger, who was the president of the Hell's Angels in the sixties"
+  - Bicycle Thieves (film, structural) [Tony's entire retelling is the plot of Vittorio De Sica's Bicycle Thieves (Ladri di biciclette, 1948)] — "it was about this guy in Italy after the war. With no money and a wife and two kids"
+  - Vittorio De Sica (other, allusion) [implicit — Vittorio De Sica directed Bicycle Thieves] — "it was about this guy in Italy after the war"
+
+WRT-221 | JIM LIKES USED STUFF | 2010-02-10
+  - Fontella Bass (musician, namedrop) [Fontella Bass was a soul/R&B singer known for 'Rescue Me'; here fictionally presented as a poet] — "he got a book of poems by Fontella Bass"
+  - Aeschylus (author, namedrop) — "Trance dance two thou sand Aeschylus energy over flowing"
+  - Eight Miles High (song, allusion) [possible reference — 'Eight Miles High' by The Byrds] — "Rap sheet eight miles high"
+  - The Byrds (band, allusion) [implicit — 'Eight Miles High' is a song by The Byrds] — "Rap sheet eight miles high"
+  - Lost Highway (film, allusion) [possible reference — David Lynch's Lost Highway (1997); could also refer to Hank Williams biography or other uses] — "The lost high way week end"
+  - King Lear (work, allusion) — "With a King Lear look Ram shackling my hankles"
+  - William Shakespeare (author, allusion) [implicit — King Lear is by Shakespeare] — "With a King Lear look Ram shackling my hankles"
+  - High Times (other, allusion) [possible reference — High Times magazine] — "The high times bijou"
+  - Weekend (1967 film) (film, allusion) [possible reference — Jean-Luc Godard's Weekend; needs review] — "The lost high way week end"
+
+WRT-222 | JIM AND THE TROUT DREAM | 2010-02-19
+  - Cormac McCarthy (author, structural) [implicit — closely paraphrases the final passage of Cormac McCarthy's The Road] — "Jim dreamt there were brooktrout in the stream in the mountains. You could see them in the greenblueripples"
+  - The Road (work, structural) [implicit — the opening paragraph is a near-direct paraphrase of the closing passage of McCarthy's The Road, including brook trout, maps on their backs, and the phrase 'could not be put back'] — "Jim dreamt there were brooktrout in the stream in the mountains. You could see them in the greenblueripples where the brownedges of their fins feat..."
+  - Anasazi (other, namedrop) [Historical/cultural reference to the ancestral Puebloan people] — "They are called the Anasazi people"
+  - Aztec civilization (other, namedrop) — "it must've been a northern outpost of the Aztec civilization"
+
+WRT-223 | JIM IN LOUISIANA | 2010-02-22
+  - Notes from Underground (work, allusion) [possible reference — needs review. The 'underground man' trapped below ground echoes Dostoevsky's Notes from Underground, but this may be a stretch] — "Jim lies at the bottom of a septic tank, with no knowledge how he got there"
+
+WRT-224 | JIM AND TOLSTOY | 2010-02-23
+  - Nosferatu (film, allusion) — "those bleak beliefs of Nosferatu"
+  - Adventures of Huckleberry Finn (work, quotation) [implicit — 'light out for the territories' is the famous closing line of Huckleberry Finn] — "lit out for the territories….move on down the line"
+  - Mark Twain (author, quotation) [implicit — via Huckleberry Finn] — "lit out for the territories….move on down the line"
+  - Rip Van Winkle (fictional_character, allusion) [Portmanteau of Rip Van Winkle and Van Morrison] — "wink forty with Rip Van Morrison and beat the blankets of ghosts"
+  - Van Morrison (musician, allusion) [Portmanteau of Rip Van Winkle and Van Morrison] — "wink forty with Rip Van Morrison and beat the blankets of ghosts"
+  - Of Mice and Men (work, allusion) [implicit — 'live off the fat of the land' echoes George and Lennie's dream in Of Mice and Men (also biblical)] — "he could live off the fat of the land, where he could dream of raisins in the sun"
+  - A Raisin in the Sun (work, allusion) — "where he could dream of raisins in the sun"
+  - Lorraine Hansberry (author, allusion) [implicit — A Raisin in the Sun is by Lorraine Hansberry] — "where he could dream of raisins in the sun"
+  - Langston Hughes (author, allusion) [implicit — 'A Raisin in the Sun' title derives from Langston Hughes' poem 'Harlem' ('a dream deferred')] — "where he could dream of raisins in the sun"
+  - David Copperfield (work, allusion) — "but enough of these David Copperfieldian asides"
+  - Charles Dickens (author, allusion) [implicit — David Copperfield is by Dickens] — "but enough of these David Copperfieldian asides"
+  - Aretha Franklin (musician, namedrop) — "to listen to his Aretha Franklin records"
+  - High Noon (film, namedrop) — "to watch *High Noon*"
+  - Mystery Train (song, allusion) [possible reference — 'Mystery Train' recorded by Junior Parker and Elvis Presley] — "he's lost his train of thought, that mystery train of willow-the-wispy wisps"
+  - Neil Young (musician, namedrop) — "of Neil Young's blues, of ping-pong diplomacies"
+  - Ping-pong diplomacy (historical_event, allusion) [Reference to the 1971 US-China ping-pong diplomacy] — "of Neil Young's blues, of ping-pong diplomacies"
+  - James Arness (historical_figure, namedrop) [Actor famous for playing Marshal Matt Dillon on Gunsmoke] — "James Arness is back in town, and you know what that means"
+  - Gunsmoke (tv, allusion) [implicit — James Arness is most associated with Gunsmoke] — "James Arness is back in town, and you know what that means"
+  - Waiting for Godot (work, allusion) [possible reference — 'Endless waiting for Dr. Moebius' echoes Waiting for Godot's structure] — "Endless waiting for Dr. Moebius, and worthless time spent cutting coupons"
+  - War and Peace (work, namedrop) — "Or read * War and Peace*"
+  - Leo Tolstoy (author, namedrop) [Appears in title; War and Peace referenced in final line] — "JIM AND TOLSTOY"
+  - Olympic Games (sports, namedrop) — "to dream of shuffleboard and Olympic curling and tangled slinkies"
+
+WRT-225 | JIM AS THE SECRET SHARER | 2010-02-23
+  - The Secret Sharer (work, structural) [Title directly references Conrad's short story] — "JIM AS THE SECRET SHARER"
+  - Joseph Conrad (author, structural) [implicit — The Secret Sharer is by Joseph Conrad] — "JIM AS THE SECRET SHARER"
+  - Lord Jim (work, allusion) [possible reference — Jim as a seafaring character echoes Conrad's Lord Jim, reinforced by the Conrad framing of the title] — "Jim's on the high seas once more"
+  - Ixion (religious, allusion) [Ixion is a figure from Greek mythology, bound to a spinning wheel as eternal punishment] — "distant like Ixion's wreck, like a feeble red signal"
+
+WRT-226 | JIM ENCOUNTERS SOME REAL MUMBO-JUMBO | 2010-02-23
+  - The Congo (work, quotation) [Direct quotation from Vachel Lindsay's poem 'The Congo' (1914), which uses the refrain 'Boomlay, boomlay, boomlay, BOOM'] — ""Boomlay boomlay boomlay boom," chanted the natives"
+  - Vachel Lindsay (author, quotation) [implicit — 'Boomlay boomlay boomlay boom' is from Vachel Lindsay's 'The Congo'] — ""Boomlay boomlay boomlay boom," chanted the natives"
+  - Be Careful What You Do (song, quotation) [possible reference — needs review; could echo Michael Jackson's 'Billie Jean' or similar lyric] — "the warning he'd received from the old woman: "Be careful what you do""
+  - Amazon River (other, namedrop) — "this nature show about the Amazon River"
+
+WRT-227 | JIM DOESN’T KNOW WHERE TO BEGIN | 2010-02-24
+  - In Search of Lost Time (work, allusion) [implicit — echoes Marcel Proust's 'Remembrance of Things Past' (In Search of Lost Time)] — "this makes him wistful and remembering of things past: balloons on his birthday, dust motes glinting in the sunlight"
+  - Marcel Proust (author, allusion) [implicit — 'remembering of things past' echoes the English title of Proust's À la recherche du temps perdu] — "this makes him wistful and remembering of things past: balloons on his birthday, dust motes glinting in the sunlight"
+  - Existentialism (other, allusion) — "so very very topsy-turvy and crazy and surreal and absurd, so existential. Yeah, so damn existential"
+
+WRT-228 | JIM WORKS AT AN APPLIANCE STORE | 2010-02-27
+  - Casio (other, namedrop) [Brand name reference to Casio keyboards] — "takes broken or outdated appliances home and interfaces them with old Casios"
+  - Alvin and the Chipmunks (other, allusion) [implicit — the name Alvin paired with the nickname Chipmunk echoes the animated franchise Alvin and the Chipmunks] — "his friend Alvin, who they call Chipmunk, gives him"
+  - Richard Nixon (historical_figure, namedrop) — "had a narrator read a political commentary on Nixon's resignation"
+  - Nixon resignation (historical_event, namedrop) — "had a narrator read a political commentary on Nixon's resignation"
+  - Aeschylus (author, namedrop) [Aeschylus is the ancient Greek tragedian; used here as a title reference] — "Cutler's theory minimal heat in Aeschylus Unbound"
+  - World War II (historical_event, namedrop) — "specific to the site of an old torpedo factory from World War II"
+  - Central African Republic (other, namedrop) — "which he dedicated to political prisoners in the Central African Republic"
+  - UNIVAC (other, allusion) [possible reference — UNIVEX echoes UNIVAC, the pioneering early computer; needs review] — "he had devised a computer system called UNIVEX"
+  - Newhouse Foundation (other, namedrop) [possible reference to the Samuel I. Newhouse Foundation; needs review] — "he was commissioned by the Newhouse Foundation to compose"
+
+WRT-229 | JIM AND HIS MEMORY DISORDER | 2010-03-04
+  - Apollo (religious, namedrop) [Greek/Roman mythological figure] — "visions of those statues of Apollo he saw when he was in Greece or Rome"
+  - Richard Nixon (historical_figure, namedrop) — "sick of Richard Nixon, sick of talking in class"
+
+WRT-230 | JIM IN THE KITCHEN | 2010-03-04
+  - Red Grooms (visual_artist, namedrop) — "a memoir by a guy who was the caretaker for Red Grooms for many years"
+  - Red Grooms (visual_artist, allusion) — "not knowing how much they, the Red Groomses, beckoned to us now"
+
+WRT-231 | JIM IN CALIFORNIA | 2010-03-05
+  - World War II (historical_event, allusion) — "He looked at the abandoned World War II tank factory across the street"
+
+WRT-232 | JIM REMEMBERS THE WATER | 2010-03-05
+  - Mississippi River flood (historical_event, structural) [Likely refers to the Great Flood of 1993 or possibly the 1927 Mississippi flood — a real historical flooding event in Missouri along the Mississippi River] — "Jim was only five during the flood, "The Water" they call it in Missouri"
+
+WRT-233 | JIM’S BIRTHDAY | 2010-03-06
+  - Joseph Conrad (author, allusion) [possible reference — needs review. The passage closely echoes the opening of Heart of Darkness with its description of fading light over water/landscape and the repeated 'feeble' evokes Conrad's prose style] — "born hardly warming up the earth anymore but just as a feeble torch lighting up the place against the sky that feeble light was going out"
+  - Heart of Darkness (work, allusion) [possible reference — needs review. The imagery of a fading light/torch against the sky and the repetitive, incantatory style strongly echo the opening passage of Heart of Darkness] — "born hardly warming up the earth anymore but just as a feeble torch lighting up the place against the sky that feeble light was going out"
+
+WRT-234 | JIM IN KANAS CITY | 2010-03-07
+  - Hank Williams (musician, namedrop) — "he thought of that Hank Williams song, the one about the red sky at sunset"
+  - Allen Ginsberg (author, allusion) [possible reference — needs review. The imagery of grime, broken-toothed sermons, and 'mad black vision' echoes Ginsberg's Howl and its visionary tone] — "my skin of grime and dust inside feels like some mad black vision"
+  - On the Road (work, allusion) [implicit — the East/West road narrative and Kansas City setting echo Kerouac's On the Road] — "he couldn't decide whether to go further West or go to back East"
+  - Jack Kerouac (author, allusion) [implicit — the drifter-on-the-road framework through Kansas City strongly echoes Kerouac] — "he couldn't decide whether to go further West or go to back East"
+
+WRT-235 | JIM FINDS THAT WHICH HE THOUGHT WAS LOST FOREVER | 2010-03-11
+  (no cultural references)
+
+WRT-236 | JIM AND CALVIN | 2010-03-12
+  - X (band) (band, namedrop) — "Jim went to see the band X at some place in New Jersey"
+  - Rolling Rock (other, namedrop) [Rolling Rock is a beer brand; minor cultural reference] — "went back to the house and drank Rolling Rock and listened to music"
+
+WRT-237 | JIM AS A CHILD ACTOR | 2010-03-12
+  (no cultural references)
+
+WRT-238 | JIM IN CALIFORNIA, PART TWO | 2010-03-12
+  - Frank Gehry (historical_figure, namedrop) — "do you think Frank Gehry or Frank Lloyd Wright came out of the box doing cool shit right off the bat?"
+  - Frank Lloyd Wright (historical_figure, namedrop) — "do you think Frank Gehry or Frank Lloyd Wright came out of the box doing cool shit right off the bat?"
+
+WRT-239 | JIM AND THE WALK ON THE BEACH | 2010-03-14
+  - These Foolish Things (Remind Me of You) (song, quotation) — "like a maelstrom in Albany or these foolish things that remind me of you"
+  - Zoot Suit Riot (song, allusion) [possible reference — could refer to the Cherry Poppin' Daddies song or the 1943 Zoot Suit Riots historical event] — "like a zoot suit riot in Scandinavia"
+  - The Jimi Hendrix Experience (band, namedrop) — "like the Jimi Hendrix Experience, like three-point perspective"
+  - Jimi Hendrix (musician, namedrop) [implicit — Jimi Hendrix was the frontman of the band] — "like the Jimi Hendrix Experience, like three-point perspective"
+  - The Ghost in the Machine (other, allusion) [Phrase coined by Gilbert Ryle critiquing Cartesian dualism; also an album by The Police — ambiguous] — "like a ghost in the machine, like future shock"
+  - Future Shock (work, allusion) [Reference to Alvin Toffler's 1970 book Future Shock] — "like a ghost in the machine, like future shock"
+  - Alvin Toffler (author, allusion) [implicit — Future Shock is by Alvin Toffler] — "like a ghost in the machine, like future shock"
+  - 1967 Newark riots (historical_event, namedrop) — "like a Eureka moment, like the 1967 Newark riots, like the Magna Carta"
+  - Magna Carta (historical_event, namedrop) — "like the 1967 Newark riots, like the Magna Carta, like Stevie Wonder"
+  - Stevie Wonder (musician, namedrop) — "like the Magna Carta, like Stevie Wonder, like a disco ball"
+  - The Well-Tempered Clavier (work, allusion) — "like a disco ball, like a well-tempered clavier, like Sun Ra"
+  - Johann Sebastian Bach (musician, allusion) [implicit — The Well-Tempered Clavier is by J.S. Bach] — "like a disco ball, like a well-tempered clavier, like Sun Ra"
+  - Sun Ra (musician, namedrop) — "like a well-tempered clavier, like Sun Ra, like Isis"
+  - Isis (religious, namedrop) [Egyptian goddess; could also reference Bob Dylan's song 'Isis' — ambiguous] — "like Sun Ra, like Isis, like Wee Willie Keeler"
+  - Wee Willie Keeler (sports, namedrop) — "like Isis, like Wee Willie Keeler, like Popeye"
+  - Popeye (fictional_character, namedrop) — "like Wee Willie Keeler, like Popeye, like the Sun King"
+  - Louis XIV (historical_figure, namedrop) ['The Sun King' is the well-known epithet for Louis XIV of France] — "like Popeye, like the Sun King, like the feeling Jim gets"
+  - A Day at the Races (film, allusion) [Likely reference to the 1937 Marx Brothers film; could also reference the Queen album] — "like a night on the town or a day at the races"
+
+WRT-240 | JIM IN MISSISSIPPI | 2010-03-14
+  - Bill O'Reilly (historical_figure, namedrop) — "blu-ray and Bill O'Reilly….Jim's had enough"
+  - Socrates (philosopher, allusion) — "of Socratic unhelpfulness and unhealthy solidities"
+  - Chiaroscuro (other, allusion) [Chiaroscuro is an art technique involving contrasts of light and dark; used here as atmospheric description. Possible reference — needs review as it may simply be a descriptive term rather than a specific cultural reference.] — "with the full moon in full chiascuro"
+
+WRT-243 | JIM AND FRED | 2010-05-25
+  - Peter Lorre (historical_figure, allusion) — "usually played by Peter Lorre or Broderick Crawford, has to own up"
+  - Broderick Crawford (historical_figure, allusion) — "usually played by Peter Lorre or Broderick Crawford, has to own up"
+  - film noir (other, allusion) — "you sometimes see in hard-boiled film-noir movies"
+  - Veronica Lake (historical_figure, allusion) — "like Veronica Lake becoming Roseanna Arquette or a tadpole"
+  - Rosanna Arquette (historical_figure, allusion) — "like Veronica Lake becoming Roseanna Arquette or a tadpole"
+  - Pequod (fictional_character, namedrop) [The Pequod is the whaling ship in Herman Melville's Moby-Dick] — "the functional debut, the heralded sputter, the Pequod, the alimony"
+  - Moby-Dick (work, allusion) [implicit — the Pequod is from Moby-Dick] — "the functional debut, the heralded sputter, the Pequod, the alimony"
+  - Free Bird (song, allusion) [possible reference — may allude to Lynyrd Skynyrd's 'Free Bird'] — "of deconsecrated shibboleths, of free-bird ideas, and the cacophoned"
+  - Lynyrd Skynyrd (band, allusion) [possible reference — 'free-bird' may allude to Lynyrd Skynyrd] — "of deconsecrated shibboleths, of free-bird ideas, and the cacophoned"
+  - Virgin birth (religious, namedrop) — "ins and outs and ins again, a virgin birth, caravan with"
+  - Caravan (song, allusion) [possible reference — 'caravan with a drum solo' may allude to the jazz standard 'Caravan' by Duke Ellington/Juan Tizol] — "a virgin birth, caravan with a drum solo, postcards painted"
+  - Age of Aquarius (song, namedrop) [possible reference — may allude to 'Aquarius/Let the Sunshine In' from the musical Hair] — "merry-go-rounded, Aquarius, we shall not be moved, ideals"
+  - We Shall Not Be Moved (song, quotation) [Traditional protest/spiritual song, prominent in civil rights movement] — "Aquarius, we shall not be moved, ideals, roadsigns"
+  - Tivoli Gardens (venue, namedrop) — "indecisive turmoil, Tivoli Gardens, haberdashers, the blind leading"
+  - The blind leading the blind (religious, allusion) [Biblical allusion — Matthew 15:14] — "haberdashers, the blind leading the blind leading the blind…..and Jim"
+  - Middle Way (religious, allusion) [possible reference — may allude to the Buddhist concept of the Middle Way] — "He chose a third way, a middle way, a way that"
+
+WRT-245 | JIM AND LEOPOLD | 2010-05-30
+  - Leopold II of Belgium (historical_figure, allusion) — "like some petty despot Leopold in his nauseating Congo, enslaving and torturing the natives"
+  - Congo Free State (historical_event, allusion) [Reference to Leopold II's brutal colonial rule of the Congo Free State] — "like some petty despot Leopold in his nauseating Congo, enslaving and torturing the natives, squeezing rubber trees"
+  - Heart of Darkness (work, allusion) [possible reference — the Congo setting, rubber exploitation, and 'bureaucratic hell' strongly echo Joseph Conrad's Heart of Darkness] — "like some petty despot Leopold in his nauseating Congo, enslaving and torturing the natives"
+  - Joseph Conrad (author, allusion) [implicit — the Congo imagery and 'bureaucratic hell' echo Conrad's Heart of Darkness] — "like some petty despot Leopold in his nauseating Congo, enslaving and torturing the natives"
+
+WRT-246 | JIM IN CAMBODIA | 2010-05-31
+  - Angkor Wat (other, namedrop) [Historical temple complex in Cambodia] — "a vacation in Cambodia – to see the ruins at Angkor Wat"
+  - Hunter S. Thompson (author, allusion) [implicit — 'king-hell' is a characteristic expression of Hunter S. Thompson's gonzo style; possible reference — needs review] — "had a king-hell nightmare at the airport"
+
+WRT-247 | JIM IN MEMPHIS | 2010-06-02
+  - Memphis, Tennessee (other, structural) [Title reference to Memphis — could refer to the city or possibly echo cultural associations (Elvis, blues, Bob Dylan's 'Stuck Inside of Mobile with the Memphis Blues Again'), but no specific reference is developed in the text. Possible reference — needs review.] — "JIM IN MEMPHIS"
+
+WRT-248 | JIM IN TENNESSEE | 2010-06-03
+  - T.S. Eliot (author, quotation) [implicit — echoes Prufrock's 'That is not what I meant at all' from The Love Song of J. Alfred Prufrock] — ""That's *not *what I meant," said Jim."
+  - The Love Song of J. Alfred Prufrock (work, quotation) [implicit — echoes 'That is not what I meant at all, / That is not it, at all'] — ""That's *not *what I meant," said Jim."
+
+WRT-274 | JIM AT THE LAUNDY-MAT | 2010-11-03
+  (no cultural references)
+
+WRT-276 | JIM IN AKRON | 2010-11-07
+  - Allen Ginsberg (author, allusion) [implicit — 'hydrogen jukebox' and angel imagery are signature Ginsberg motifs from Howl] — "the spectre of his genius fated by a cloud of hydrogen mind-angels"
+  - Howl (work, structural) [The litany of urban/institutional imagery closely echoes the structure and language of Part II of Howl ('Moloch whose buildings are judgment!')] — "I stream out of the sky above Jim, above the robot apartment buildings, the invisible mental institutions, the visible suburbs, the skeleton treasu..."
+  - Allen Ginsberg (author, allusion) [implicit — echoes Ginsberg's ecstatic visionary voice and his concept of natural mind] — "Me, out of natural ecstasy, or curiosity, or whatever, I stream out of the sky"
+
+WRT-283 | JIM IN NORTHERN CALIFORNIA | 2011-01-05
+  - Northern California (other, namedrop) [Geographic reference, not a cultural reference per se — included for completeness but may not qualify] — "a wet, moss-covered ravine in Northern California. He was there in 74 with his friend Tony"
+
+WRT-284 | JIM RUNS INTO HIS OLD FRIEND TOM AND THEY HOLD UP A LIQUOR STORE | 2011-01-09
+  - The Great Gatsby (work, allusion) — "like that drunken scene at Myrtle's apartment in "The Great Gatsby.""
+  - F. Scott Fitzgerald (author, allusion) [implicit — The Great Gatsby is by F. Scott Fitzgerald] — "like that drunken scene at Myrtle's apartment in "The Great Gatsby.""
+  - Myrtle Wilson (fictional_character, allusion) — "like that drunken scene at Myrtle's apartment in "The Great Gatsby.""
+  - Kentucky Derby (sports, namedrop) — "too much at Daphne's apartment on Kentucky Derby Day"
+
+WRT-286 | JIM WINS THE LOTTERY | 2011-01-11
+  - Stream of consciousness (other, allusion) [Literary/psychological term associated with William James, James Joyce, Virginia Woolf, etc.] — "the thought will spill into his stream, yes, the stream of consciousness"
+
+WRT-287 | JIM AND THE BOWLING BALL | 2011-01-14
+  - Powerball (other, namedrop) — "he has recently won the Powerball to a three hundred million dollar tune"
+  - Facebook (other, namedrop) — "I just saw you on Facebook and wanted to include you"
+
+WRT-290 | DESPITE THIS, JIM WANTS TO GO TO PARIS | 2011-01-17
+  (no cultural references)
+
+WRT-296 | JIM AND HOBBES | 2011-01-26
+  - The Rolling Stones (band, namedrop) — "when his friends went to see the Stones at Madison Square Garden"
+  - Madison Square Garden (venue, namedrop) — "when his friends went to see the Stones at Madison Square Garden"
+
+WRT-297 | JIM AND THE ECHO | 2011-01-30
+  - Bob Dylan (musician, namedrop) — "He lived in Hibbing, home of Bob Dylan, out on the Mesabi Range"
+  - Bob Dylan (musician, quotation) — "as Dylan reminisced, "the winds blow heavy on the borderline""
+  - The Great Gatsby (work, quotation) [Paraphrase of the closing passage of The Great Gatsby] — "like F. Scott Fitzgerald wrote, "his dream was so close that he could hardly fail to grasp it""
+  - F. Scott Fitzgerald (author, quotation) — "like F. Scott Fitzgerald wrote, "his dream was so close that he could hardly fail to grasp it""
+  - Hibbing (other, allusion) [Hibbing, Minnesota — Bob Dylan's hometown; serves as cultural/geographical reference] — "He lived in Hibbing, home of Bob Dylan, out on the Mesabi Range"
+
+WRT-298 | JIM AND THE DRY CLEANING | 2011-01-31
+  - William Westmoreland (historical_figure, namedrop) [possible reference — could be General William Westmoreland (Vietnam War), or a personal acquaintance. Needs review.] — "that night years ago when Westmoreland and he had stomachs full of wine and passed out in old man Johnson's pasture"
+  - Lyndon B. Johnson (historical_figure, namedrop) [possible reference — 'old man Johnson' combined with Westmoreland and Arkansas context may allude to President Lyndon Johnson. Needs review.] — "passed out in old man Johnson's pasture"
+
+WRT-299 | JIM AND HIS HEART | 2011-02-01
+  - Carson City Correctional Facility (other, namedrop) [possible reference — likely refers to a real correctional facility (e.g., Carson City Correctional Facility in Michigan); needs review] — "Joe Varraciola doin five up at Carson City there for grand theft auto"
+
+WRT-303 | JIM IN THE CENTRAL AFRICAN REPUBLIC | 2011-02-05
+  (no cultural references)
+
+WRT-304 | JIM AND ISAIAH | 2011-02-10
+  - Isaiah (religious, allusion) [The text itself flags the name as unusual; Isaiah is a major biblical prophet. The incongruity of a prophet's name for a bookie appears deliberate.] — "calls Isaiah, his bookie. What a strange name for a bookie, don't you think?"
+
+WRT-305 | JIM AND EZRA POUND | 2011-02-12
+  - Ezra Pound (author, structural) [Title explicitly names Ezra Pound; the entire text draws from his poetry] — "JIM AND EZRA POUND"
+  - Les Millwin (work, quotation) [Quotation from Ezra Pound's poem 'Les Millwin'] — "like a skin of loose silk blown against a wall"
+  - Hugh Selwyn Mauberley (work, quotation) [Quotation from Ezra Pound's 'Hugh Selwyn Mauberley'] — "He is dying piece-meal; a sort of emotional anemia"
+  - The Garden (work, quotation) [Quotation from Ezra Pound's poem 'The Garden'] — "a rabble of filthy, sturdy, unkillable infants of the very poor"
+  - Beatitudes (Sermon on the Mount) (religious, allusion) [Echoes Matthew 5:5 'the meek shall inherit the earth'; also present in Pound's 'The Garden'] — "They shall inherit the earth"
+  - Ité (work, quotation) [Possible reference to Ezra Pound's 'Ité' — needs review] — "the end of his brooding, his boredom, his exquisite and excessive speeech"
+  - Ιμέρρω (work, quotation) [Possible quotation from Ezra Pound's 'The Garden' or another Pound poem — needs review] — "it is almost with fear that he commits that indiscretion"
+
+WRT-306 | JIM AT THE BOOKSTORE | 2011-02-12
+  - Crucifixion of Jesus (religious, namedrop) — ""I remember the Crucifixion." With that the mood became decidedly ugly"
+  - Lynyrd Skynyrd (band, allusion) — "like an angry crowd at a Lynryd Skynryd concert screaming for "Free Bird.""
+  - Free Bird (song, namedrop) — "at a Lynryd Skynryd concert screaming for "Free Bird.""
+  - The Road Not Taken (work, allusion) [implicit — echoes Robert Frost's 'The Road Not Taken'] — "Why I took the path not taken and walked about alone to town"
+  - Robert Frost (author, allusion) [implicit — 'the path not taken' alludes to Robert Frost's poem] — "Why I took the path not taken and walked about alone to town"
+  - Jesus calming the storm (religious, allusion) [possible reference — echoes the biblical account of Jesus calming the sea (Mark 4:39)] — "the sea was rough but I calmed it. You roughed the calm sea and you deserved your fate"
+
+WRT-307 | JIM AS A BANKER | 2011-02-13
+  - Little Lord Fauntleroy (work, allusion) — "without being a branded a Little Lord Fauntelroy poster child"
+  - shibboleth (religious, allusion) [Biblical reference from the Book of Judges (12:5-6), used here to mean a distinguishing marker] — "How'd ya like to crawl through life with a "shibboleth" like this?"
+  - World War II (historical_event, namedrop) [Likely refers to World War II and American liberation of France, though text just says 'World War'] — "more grateful to Americans for pulling their chestnuts outa the fire in World War"
+  - The New Colossus (work, allusion) [implicit — echoes Emma Lazarus's 'The New Colossus' (Statue of Liberty poem) with 'shore,' 'minions' (huddled masses), and immigrant imagery] — "blind to te disenfranchised and shoeless minions, who came to this shore seeking a better life"
+  - Emma Lazarus (author, allusion) [implicit — the passage evokes Lazarus's 'Give me your tired, your poor, your huddled masses'] — "blind to te disenfranchised and shoeless minions, who came to this shore seeking a better life"
+
+WRT-308 | JIM CONSIDERS AN OPTION | 2011-02-13
+  (no cultural references)
+
+WRT-309 | JIM IN SUMMER | 2011-02-14
+  - Michael Jackson (musician, namedrop) — "he fills his head with it and then dreams of truck bombs and Michael Jackson"
+  - Wish You Were Here (other, allusion) [possible reference — echoes Pink Floyd's 'Wish You Were Here' or classic postcard trope; needs review] — "Jim wishes you were here to enjoy this beautiful weather"
+
+WRT-310 | JIM AND YOU IN VERMONT | 2011-02-15
+  (no cultural references)
+
+WRT-311 | JIM IN PARADISE | 2011-02-15
+  - Pyrrhic victory (historical_figure, allusion) [Reference to King Pyrrhus of Epirus, whose costly victories gave rise to the term 'Pyrrhic victory'] — "But it is a Pyrrhic one."
+
+WRT-312 | JIM WRITES TO LOU | 2011-02-16
+  - T.S. Eliot (author, quotation) — "I plagiarized that from T.S. Eliot"
+  - The Hollow Men (work, quotation) [Jon explicitly calls this plagiarism; the line is from Eliot's 'The Hollow Men'] — "seems to end not with a bang, but a whimper. I plagiarized that from T.S. Eliot"
+
+WRT-313 | THE SMOKE BOMB | 2011-02-17
+  - Whirling dervishes (religious, allusion) [Reference to Sufi mystical practice of spinning meditation] — "the turncoats turn like whirling dervishes"
+
+WRT-314 | JIM IN NEW YORK | 2011-02-18
+  (no cultural references)
+
+WRT-315 | JIM EATS AT A FISH RESTAURANT | 2011-02-19
+  (no cultural references)
+
+WRT-318 | JIM IN DALLAS | 2011-03-04
+  - Jack Kerouac (author, namedrop) — "talking about Jack Kerouac with Dave, who is a mortgage broker"
+  - The Lone Ranger (fictional_character, allusion) [implicit — pun on 'The Lone Ranger'] — "David Rothman: Lone Arranger"
+
+WRT-319 | JIM IN FLORIDA | 2011-03-05
+  - Lincoln Road (venue, namedrop) [Lincoln Road is a well-known street/mall in Miami Beach, Florida] — "the fluorescent streetlights cast a glow on the palm trees on Lincoln Road"
+
+WRT-322 | JIM IN EDGE CITY | 2011-03-08
+  - Johnny Cash (musician, namedrop) — "I ain't seen the sun since I don't know when. I stole that from Johnny Cash."
+  - Folsom Prison Blues (song, quotation) [Paraphrase of 'I haven't seen the sunshine since I don't know when' from Folsom Prison Blues] — "I ain't seen the sun since I don't know when. I stole that from Johnny Cash."
+  - American Idol (tv, allusion) — "American Idol is the coin of the realm"
+  - Tom Wolfe (author, allusion) [possible reference — 'Edge City' is a concept popularized by Joel Garreau, but also used by Tom Wolfe in The Electric Kool-Aid Acid Test. Needs review.] — "Another rainy night here in Edge City"
+  - Edge City (work, structural) [possible reference — Joel Garreau's 'Edge City: Life on the New Frontier' (1991) or Tom Wolfe's usage in The Electric Kool-Aid Acid Test. The term serves as the structural setting of the piece.] — "I really am in Edge City, California"
+
+WRT-326 | JIM IN FREEHOLD, NEW JERSEY | 2011-03-09
+  - Lawrence Ferlinghetti (author, namedrop) — "he's reminded of a poem by Lawrence Ferlinghetti"
+  - Night closed my windows (work, quotation) [Poem by Lawrence Ferlinghetti, quoted in full] — "Night closed my windows and The sky became a crystal house The crystal windows glowed"
+  - Bruce Springsteen (musician, allusion) [possible reference — Freehold, NJ is Bruce Springsteen's hometown; needs review] — "JIM IN FREEHOLD, NEW JERSEY"
+  - Oldsmobile Cutlass (other, namedrop) — "a candy-apple red Cutlass from the 70's"
+
+WRT-329 | JIM AT THE EDGE OF TOWN | 2011-03-13
+  - Marilyn Monroe (historical_figure, namedrop) — "back in '62, the summer that Marilyn Monroe killed herself"
+  - Albert Camus (author, allusion) [implicit — possible allusion to Camus' The Stranger, in which the protagonist's pivotal encounter involves 'the Arab.' The transposition to California and an umbrella recontextualizes the reference. Possible reference — needs review] — "the time when he was in California when the Arab hit him with an umbrella"
+  - The Stranger (work, allusion) [implicit — possible allusion to Camus' The Stranger (L'Étranger), where the key scene involves 'the Arab' on a beach. Possible reference — needs review] — "the time when he was in California when the Arab hit him with an umbrella"
+  - Hunter S. Thompson (historical_figure, namedrop) [possible reference — 'Hunter' in a list of the dead may refer to Hunter S. Thompson. Needs review] — "He recalled people that were dead now, James and Hunter and Richard"
+  - Irwin Allen Ginsberg (historical_figure, namedrop) [possible reference — 'Irwin' could refer to Allen Ginsberg (born Irwin Allen Ginsberg), a recurring figure in Sarkin's work. Needs review] — "and Santo and Irwin and his father and Jane Winsor"
+
+WRT-330 | JIM IN LOUISIANA | 2011-03-15
+  - Richard Nixon (historical_figure, namedrop) — "Later that night, Nixon resigned."
+  - Nixon resignation (historical_event, namedrop) [Nixon resigned the presidency on August 9, 1974, consistent with the 'back in '74' reference] — "Later that night, Nixon resigned."
+  - New Orleans (other, namedrop) [Geographic reference; title also places Jim in Louisiana] — "he saw a huge garbage scow catch fire outside of New Orleans"
+  - Hunter S. Thompson (author, allusion) [implicit — 'king-hell' is a signature Hunter S. Thompson phrase from Fear and Loathing and other works] — "Perhaps a king-hell hangover is the only way to greet morning"
+
+WRT-333 | JIM IN FISHTOWN | 2011-03-16
+  - Jack Kerouac (author, namedrop) — "Kerouac compared this to fame, that fame is like old papers being blown down Main Street"
+  - Gloucester (other, namedrop) [Gloucester, Massachusetts — likely a local/regional reference rather than a major cultural one; possible reference — needs review] — "He reads about the 2010 Gloucester football team"
+
+WRT-334 | JIM IN GILEAD | 2011-03-28
+  - François Villon (author, quotation) [implicit — famous line from Villon's 'Ballade des dames du temps jadis,' often translated by Dante Gabriel Rossetti] — ""Where are the snows of yesteryear?" wonders Jim"
+  - Ballade des dames du temps jadis (work, quotation) — ""Where are the snows of yesteryear?" wonders Jim"
+  - Fortress of Solitude (other, allusion) [Superman's Fortress of Solitude — an Arctic stronghold; here used metaphorically for frozen memories] — "locked away in some fortress of solitude, where frozen memories are eternally congealed"
+  - There Is a Balm in Gilead (religious, quotation) [Biblical reference — Jeremiah 8:22 asks 'Is there no balm in Gilead?'; also a well-known African American spiritual. Jim's emphatic 'is' reverses Jeremiah's despairing question into affirmation.] — "There *is* a balm in Gilead, he tells himself"
+
+WRT-335 | JIM RAILS AT HIS EXISTENCE | 2011-04-11
+  - Ship of Theseus (philosopher, allusion) [Classical philosophical paradox known as the Ship of Theseus, attributed to Plutarch's account of Theseus's ship] — "if you have a ship, and you replace every part of the ship with an identical part, is it still the same ship?"
+
+WRT-346 | JIM GOES TO THE HOCKEY GAME | 2011-04-22
+  - Boston Bruins (sports, namedrop) — "He was at a Bruins game at the Garden"
+  - TD Garden (venue, namedrop) — "He was at a Bruins game at the Garden"
+  - Montreal Canadiens (sports, namedrop) — "a playoff game against the Canadiens with his wife and kids"
+  - South Boston (other, allusion) [Southie is a colloquial name for South Boston, used here to evoke a specific working-class cultural milieu] — "from the same neighborhood in Southie, drinking at the same bar"
+
+WRT-348 | JIM STARTS HIS DAY | 2011-04-23
+  - Robert Frost (author, quotation) [implicit — paraphrases Frost's 'Stopping by Woods on a Snowy Evening': 'miles to go before I sleep'] — "He still has many miles to go before he sleeps in the sand"
+  - Stopping by Woods on a Snowy Evening (work, quotation) — "He still has many miles to go before he sleeps in the sand"
+  - The Man in the Gray Flannel Suit (work, allusion) [possible reference — 'grey-flannel' likely alludes to Sloan Wilson's The Man in the Gray Flannel Suit — needs review] — "the grey-flannel organ-grinders"
+  - Grantland Rice (author, allusion) [implicit — 'the Great Scorer' alludes to Grantland Rice's famous verse 'When the One Great Scorer comes'] — "handicaps them on the Great Scorer's tote-board"
+  - Desiderius Erasmus (philosopher, allusion) [possible reference — 'In the land of the blind, the one-eyed man is king' is a proverb often attributed to Erasmus — needs review] — "the one-eyed king persists in his admonition to his slaves"
+  - Doo Lang Doo Lang Doo Lang (song, quotation) [possible reference — likely refers to a doo-wop song, possibly 'Happy Birthday Sweet Sixteen' by Neil Sedaka or 'Duke of Earl' by Gene Chandler — needs review] — "its washed-out refrains of "doo-lang doo-lang""
+  - Mr. Tambourine Man (song, allusion) [possible reference — tambourine may allude to Bob Dylan's 'Mr. Tambourine Man' — needs review] — "and the tambourine's of guilt holds sway"
+  - T.S. Eliot (author, allusion) [possible reference — April opening may echo 'The Waste Land' ('April is the cruellest month') — needs review] — "Jim wakes up and looks out his window at the world outside, the April trees"
+  - The Waste Land (work, allusion) [possible reference — April with bare trees and overcast weather echoes the opening of The Waste Land — needs review] — "Jim wakes up and looks out his window at the world outside, the April trees"
+  - Virgil (author, allusion) [implicit — inverts the classical proverb 'fortune favors the bold' (Virgil, Aeneid)] — "where fortune favors cowards, yes, handicaps them"
+
+WRT-351 | JIM AND YOU | 2011-04-27
+  - The Book of Love (song, allusion) [possible reference — 'Book of Love' by The Monotones (1958). Could also reference the concept generically.] — "writing the book of love go hand in knot"
+  - Doo-lang (song, quotation) ['Doo-lang' is a vocal refrain from 'Book of Love' by The Monotones, reinforcing the song reference] — "go hand in knot or doo-lang in glove"
+  - William Shakespeare (author, allusion) [implicit — echoes 'this sceptred isle' from Shakespeare's Richard II (John of Gaunt's speech)] — "the silent sea that calms this sceptered world"
+  - Richard II (work, allusion) [implicit — 'this sceptred isle' speech from Richard II, Act 2 Scene 1] — "the silent sea that calms this sceptered world"
+  - Marlon Brando (historical_figure, namedrop) [Likely references Brando's love of Polynesia / his ownership of Tetiaroa atoll, or possibly the film Mutiny on the Bounty] — "visions of Marlon Brando's Hawaii and your remembered waves"
+  - Tennessee Williams (author, namedrop) — "if Tennessee Williams ain't right, why, pilgrim, they'll be money to pay"
+  - The Crack-Up (work, allusion) [possible reference — echoes F. Scott Fitzgerald's essay collection 'The Crack-Up'; needs review] — "some inconsistent crack-up and if Tennessee Williams"
+  - F. Scott Fitzgerald (author, allusion) [possible reference — 'The Crack-Up' is Fitzgerald's autobiographical essay collection; needs review] — "some inconsistent crack-up and if Tennessee Williams"
+  - Flashdance (film, allusion) [possible reference — may allude to the 1983 film Flashdance; needs review] — "blackens the scene in a flashdance firefox of bituminous dreams"
+  - Alvin Dark (sports, namedrop) [Alvin Dark — MLB player and manager] — "theorems that Alvin Dark would only laugh about if he were here"
+
+WRT-360 | JIM AND WALLY | 2011-05-15
+  - Sunday Morning (work, quotation) [Direct quotation from Wallace Stevens' poem 'Sunday Morning': 'Complacencies of the Sunday morning, / And late coffee and oranges in a sunny chair'] — "His mood of late is like coffee and oranges on a sunny chair"
+  - Wallace Stevens (author, identification) ['Wally Stevens' is a fictionalized, familiar-name version of poet Wallace Stevens] — "like his friend and drinking buddy Wally Stevens"
+  - Wallace Stevens (author, quotation) [implicit — the phrase is from Wallace Stevens' 'Sunday Morning'; also note 'complacent'/'complacency' echoes Stevens' 'Complacencies of the Sunday morning'] — "His mood of late is like coffee and oranges on a sunny chair"
+
+WRT-361 | JIM AND I TRY TO ROB A BANK | 2011-05-29
+  - San Quentin State Prison (venue, namedrop) — "Now, here in San Quentin, the true minds of both Jim and this whole rotten heist are revealed"
+  - Bible (Isaiah 53:7) (religious, allusion) [implicit — echoes the biblical image of a lamb led to slaughter, notably Isaiah 53:7] — "I felt like a lamb being taken to slaughter who's been warned ahead of time that his throat is gonna be slit"
+
+WRT-362 | JIM AND HIS DREAM | 2011-05-31
+  - T.S. Eliot (author, namedrop) — "Last night Jim dreamed about T.S. Eliot"
+  - T.S. Eliot (author, namedrop) — "he, Eliot, was sitting on a couch in the fog, in England or somewhere"
+  - Joni Mitchell (musician, namedrop) — "He was listening to "Chelsea Morning" by Joni Mitchell"
+  - Chelsea Morning (song, namedrop) — "He was listening to "Chelsea Morning" by Joni Mitchell"
+  - Jack Kerouac (author, namedrop) — "He remembers her asking what he thought of Kerouac"
+
+WRT-366 | JIM IN EL PASO | 2011-07-24
+  - J.D. Salinger (author, allusion) [implicit — 'phoniness' as a central grievance echoes Holden Caulfield's signature complaint in The Catcher in the Rye, though this is a loose allusion at best. Possible reference — needs review] — "hated everything about it, its cheapness and phoniness and pettiness"
+  - unholy trinity (religious, allusion) [Inversion of the Christian Holy Trinity concept] — "the relentless fever of this insane heat fused this unholy trinity into the same element"
+
+WRT-371 | JIM AND COLD SWEAT | 2011-08-06
+  - James Brown (musician, namedrop) — "every time that James Brown song Cold Sweat comes on"
+  - Cold Sweat (song, structural) [The song provides the character's nickname and is central to the story] — "every time that James Brown song Cold Sweat comes on, he goes absolutely apeshit"
+  - Bellevue Hospital (other, namedrop) [Bellevue Hospital Center, famous psychiatric facility in New York City; misspelled as 'Bellvue' in text] — "they haul Cold Sweat down to Bellvue – that's the big looney bin the got there in New York"
+  - Cold Sweat (song, quotation) [Quoting lyrics from James Brown's 'Cold Sweat'] — "he's drooling and mumbling "I break out in a cold sweat!" over and over"
+
+WRT-372 | JIM AT THE LAKE | 2011-08-15
+  (no cultural references)
+
+WRT-373 | THREE CHAPTERS | 2011-08-19
+  - Book of Proverbs (religious, allusion) [implicit — echoes Proverbs 1:7 and similar wisdom literature contrasting the wise and fools; possible reference — needs review] — "Jim's word is infuriating, especially to the wise. Fools despise him too"
+
+WRT-374 | JIM SEEKS THE TRUTH | 2011-08-21
+  - Apocalypse Now (film, allusion) [possible reference — 'errand boy sent by grocery clerks' is Colonel Kurtz's line in Apocalypse Now; needs review] — "if Jim thinks of others just as corrupt errand boys or unwanted worms"
+  - William Butler Yeats (author, allusion) [implicit — echoes 'Turning and turning in the widening gyre' from Yeats' 'The Second Coming'] — "turning and turning over reality until he sees its soft maggoty underbelly"
+  - The Second Coming (work, allusion) [implicit — echoes the opening of Yeats' poem 'The Second Coming'] — "turning and turning over reality until he sees its soft maggoty underbelly"
+
+WRT-376 | JIM UNDERSTANDS | 2011-08-28
+  - Adam West (historical_figure, namedrop) — "he sat next to this guy that looked like Adam West – he played Batman on TV"
+  - Batman (1966 TV series) (tv, namedrop) — "Adam West – he played Batman on TV – and found the conversation galling"
+  - Bob Dylan (musician, quotation) [implicit — echoes lyrics from Bob Dylan and The Band's 'Wheels on Fire' / 'This Wheel's on Fire': 'If your mem'ry serves you well'] — "if Jim remembers right, if his memory serves him well, his life back then was one long party"
+  - This Wheel's on Fire (song, quotation) [implicit — 'If your memory serves you well' is the opening line of 'This Wheel's on Fire' by Bob Dylan / The Band] — "if Jim remembers right, if his memory serves him well"
+  - Waiting for Godot (work, allusion) [possible reference — needs review; the imagery of meeting, waiting, and doing nothing echoes Beckett's Waiting for Godot] — "We meet and wait like paving blocks with nothing to do, resting in midnight's rain beneath a solitary streetlight"
+  - Samuel Beckett (author, allusion) [possible reference — needs review; implicit via Waiting for Godot echoes] — "We meet and wait like paving blocks with nothing to do, resting in midnight's rain beneath a solitary streetlight"
+
+WRT-380 | JIM’S FEET FEEL LIKE TRIVETS | 2011-09-07
+  (no cultural references)
+
+WRT-381 | JIM IN ITALY | 2011-09-18
+  - T.S. Eliot (author, structural) [implicit — pervasive allusion to Eliot's 'The Love Song of J. Alfred Prufrock'] — "the possessive thick-set yellow fog that comes in from the bay"
+  - The Love Song of J. Alfred Prufrock (work, structural) [implicit — 'yellow fog,' 'yellow smoke,' 'sawdust,' 'October night,' and the evening/pool imagery all echo Prufrock] — "the possessive thick-set yellow fog that comes in from the bay"
+  - The Love Song of J. Alfred Prufrock (work, quotation) [implicit — closely paraphrases Prufrock's 'The yellow fog that rubs its muzzle on the window-panes' and 'The yellow smoke that rubs its muzzle on the window-panes'] — "The fog is like yellow smoke"
+  - The Love Song of J. Alfred Prufrock (work, allusion) [implicit — echoes Prufrock's fog that 'rubs its muzzle on the window-panes'] — "He sat on the bench and rubs his dog's muzzle. Or is it his?"
+  - The Love Song of J. Alfred Prufrock (work, allusion) [implicit — echoes 'sawdust restaurants' in Prufrock] — "It was an October night. A sawdust night."
+  - Percy Bysshe Shelley (author, allusion) [possible reference — echoes Shelley's 'Ode to the West Wind'; needs review] — "like the west wind of his house's curlicued memory"
+  - Ode to the West Wind (work, allusion) [possible reference — needs review] — "like the west wind of his house's curlicued memory"
+  - A Farewell to Arms (work, allusion) [possible reference — the Italy setting, summer nights, lake, and spare Hemingway-esque prose echo A Farewell to Arms; needs review] — "He had just come back from dinner and it was a warm summer night, a fine night for a stroll, down to the lake"
+  - Ernest Hemingway (author, allusion) [possible reference — the Italian lake setting and clipped prose style evoke Hemingway; needs review] — "He had just come back from dinner and it was a warm summer night, a fine night for a stroll, down to the lake"
+
+WRT-382 | YOU AND JIM | 2011-09-19
+  - Hamlet (work, allusion) [implicit — echoes Hamlet's 'To be or not to be' soliloquy: 'the slings and arrows of outrageous fortune'] — "vagabonded by outrageous fortune and things that not even you can remember"
+  - William Shakespeare (author, allusion) [implicit — 'outrageous fortune' from Shakespeare's Hamlet] — "vagabonded by outrageous fortune and things that not even you can remember"
+  - widow's walk (other, allusion) [possible reference — 'widow's walk' is a rooftop platform associated with New England seafaring culture; used here as a verb] — "as we widow-walk through this vagabonded dream"
+
+WRT-383 | JIM LEAVES THE PARTY | 2011-09-25
+  - The Great Gatsby (work, structural) [implicit — The entire passage structurally echoes the narrative voice of Nick Carraway in The Great Gatsby: a first-person narrator observing a party-goer's departure, the language of 'colossal' illusion, incandescent dreams, and the famous closing passage about the past. The 'high-water mark' and five years of dreams echo Gatsby's pursuit.] — "Jim went over to say good-bye to me and I saw he had the same expression as when he first entered the party"
+  - F. Scott Fitzgerald (author, allusion) [implicit — 'colossal' echoes Gatsby's 'colossal vitality of his illusion'; the phrase 'illusion of vitality' directly inverts/mirrors Fitzgerald's language] — "his colossal lack of creativity and his illusion off vitality"
+  - John Keats (author, allusion) [implicit — possible allusion to Keats's 'Ode to a Nightingale' and the concept of immortal/deathless song; needs review] — "some forgotten deathless song had vocalized itself"
+
+WRT-384 | JIM’S CONFUSION | 2011-09-25
+  - F. Scott Fitzgerald (author, quotation) — "F. Scott Fitzgerald once wrote that "there is no confusion like the confusion of a simple mind""
+  - The Great Gatsby (work, quotation) [This quote is from The Great Gatsby, Chapter 8] — "F. Scott Fitzgerald once wrote that "there is no confusion like the confusion of a simple mind""
+
+WRT-385 | JIM IN PARIS | 2011-09-27
+  - Twinkle, Twinkle, Little Star (work, quotation) [Traditional nursery rhyme, originally a poem by Jane Taylor (1806)] — ""Twinkle, twinkle, little star," he thought."
+  - Jane Taylor (author, quotation) [implicit — 'Twinkle, Twinkle, Little Star' is from Jane Taylor's poem 'The Star'] — ""Twinkle, twinkle, little star," he thought."
+
+WRT-387 | JIM IN THE WEST | 2011-10-05
+  - The Great Gatsby (work, quotation) — "He thought back to Fitzgerald's description of the "valley of ashes" in The Great Gatsby"
+  - F. Scott Fitzgerald (author, quotation) — "He thought back to Fitzgerald's description of the "valley of ashes" in The Great Gatsby"
+
+WRT-388 | JIM IN KANSAS | 2011-10-17
+  (no cultural references)
+
+WRT-394 | JIM IN CLEVELAND | 2011-11-27
+  - American Museum of Natural History (venue, namedrop) [Likely refers to the American Museum of Natural History in New York, though could be another natural history museum] — "a diorama of a prehistoric marsh he'd seen as a kid at the Museum of Natural History"
+
+WRT-395 | I MEET JIM AT THE CEMETERY | 2011-11-29
+  - Charles Dickens (author, allusion) [possible reference — needs review. The cemetery opening with gothic weather and first-person narration echoes Dickensian atmosphere (e.g., Great Expectations' opening in a churchyard), but the parallel is not unmistakable enough to confirm.] — "It was a horribly black and wet day. The sky…resembled something I'd never seen before"
+
+WRT-396 | JIM’S HOUSE | 2011-11-29
+  - The Great Gatsby (work, structural) [The entire passage closely paraphrases/adapts Chapter 8 of The Great Gatsby, where Nick and Gatsby are in Gatsby's mansion after the accident. The final line ('You ought to go away… they'll trace your car') is near-verbatim from Nick's dialogue to Gatsby.] — "Jim's house had never seemed so enormous to me as it did that night when we hunted through the great room for cigarettes"
+  - F. Scott Fitzgerald (author, structural) [implicit — the entire piece is a close adaptation/plagiarism of a passage from F. Scott Fitzgerald's The Great Gatsby] — "Jim's house had never seemed so enormous to me as it did that night when we hunted through the great room for cigarettes"
+
+WRT-397 | JIM TAKE HIS DESSERT | 2011-12-15
+  - Mel Brooks (historical_figure, allusion) — "like somebody trapped in a Mel Brooks movie where they are sleepwalking and sleep-waking"
+  - Memphis half-step (other, allusion) [possible reference — may allude to the Grateful Dead's 'Mississippi Half-Step Uptown Toodeloo' given the 'half-step' and 'toodeloo' phrasing] — "in a sort of Memphis half-step of undulation and toodeloo-voodoo"
+  - Mississippi Half-Step Uptown Toodeloo (song, allusion) [implicit — the combination of 'half-step' and 'toodeloo' strongly echoes the Grateful Dead song 'Mississippi Half-Step Uptown Toodeloo'] — "in a sort of Memphis half-step of undulation and toodeloo-voodoo"
+  - Grateful Dead (band, allusion) [implicit — via allusion to 'Mississippi Half-Step Uptown Toodeloo'] — "in a sort of Memphis half-step of undulation and toodeloo-voodoo"
+
+WRT-398 | JIM AVOIDS GOING INTO THE GARAGE | 2011-12-20
+  - Keith Moon (musician, allusion) — "making a rhythm that sounded like Keith Moon drumming"
+
+WRT-401 | THREE DAYS IN THE LIFE OF JIM | 2011-12-29
+  (no cultural references)
+
+WRT-404 | JIM STANDING ALONE ON THE MARBLE STEPS | 2012-01-12
+  (no cultural references)
+
+WRT-405 | JIM’S INARTICULATENESS | 2012-01-12
+  - The Great Gatsby (work, quotation) [Close paraphrase of the final paragraphs of The Great Gatsby, where Fitzgerald describes Gatsby's attempt to articulate his vision] — "His lips part like a dumb man's, as though there was more struggling upon them than a wisp of startled air"
+  - F. Scott Fitzgerald (author, quotation) [implicit — closely paraphrases Fitzgerald's prose from The Great Gatsby] — "His lips part like a dumb man's, as though there was more struggling upon them than a wisp of startled air"
+  - The Hollow Men (work, allusion) [implicit — echoes T.S. Eliot's 'We are the hollow men... Headpiece filled with straw'] — "He is the husk of a husk – a hollow husk, stuffed with vacuum"
+  - T.S. Eliot (author, allusion) [implicit — alludes to The Hollow Men] — "He is the husk of a husk – a hollow husk, stuffed with vacuum"
+  - Joseph Conrad (author, allusion) [possible reference — 'appalled' echoes Kurtz in Heart of Darkness; needs review] — "he remains appalled – appalled by his alienation"
+  - Heart of Darkness (work, allusion) [possible reference — Marlow describes Kurtz's final vision with the word 'appalled'] — "he remains appalled – appalled by his alienation"
+  - Paul Revere (historical_figure, namedrop) — "like Paul Revere's horse"
+
+WRT-406 | JIM MOVES TO PARIS AND THEN BACK HOME TO INDIANA | 2012-01-15
+  - A Brief Encounter with the Enemy (work, structural) [Jon explicitly credits this as a source he 'borrowed heavily from'] — "I borrowed heavily from "A Brief Encounter with the Enemy" by Said Sayrafiezadeh"
+  - Said Sayrafiezadeh (author, namedrop) [Jon explicitly credits this as a source he 'borrowed heavily from'] — ""A Brief Encounter with the Enemy" by Said Sayrafiezadeh which as published in the Jan. 16, 2012 issue"
+  - The New Yorker (other, namedrop) — "published in the Jan. 16, 2012 issue of The New Yorker"
+
+WRT-407 | JIM AND HUBERT SELBY, JR. | 2012-01-16
+  - Mount Olympus (religious, allusion) [Reference to Greek mythological home of the gods] — "he could ascend OIympus by just thinking about it"
+  - Cool Hand Luke (film, allusion) — "he could eat fifty hard-boiled eggs like Cool Hand Luke"
+  - Wilson Pickett (musician, allusion) — "the memory of every damn Wilson Pickett song he ever heard"
+  - Methuselah (religious, allusion) [Biblical figure known for extreme longevity] — "as if Methusaleh himself had come out of the sky on a fiery spiral"
+  - Quetzalcoatl (religious, allusion) [possible reference — 'plumed serpent' evokes the Mesoamerican deity Quetzalcoatl; could also allude to D.H. Lawrence's novel The Plumed Serpent] — "holding a plumed serpent in one hand and a copy of LAST EXIT"
+  - Last Exit to Brooklyn (work, namedrop) — "a copy of LAST EXIT TO BROOKLYN in the other"
+  - Hubert Selby Jr. (author, structural) [Author of Last Exit to Brooklyn; named in the title and implicitly referenced via the book] — "JIM AND HUBERT SELBY, JR."
+
+WRT-408 | JIM AND VIETNAM | 2012-01-16
+  - Vietnam War (historical_event, structural) — "It was Vietnam back then and he can still remember the sound the choppers made on TV"
+  - Environmental Protection Agency (other, namedrop) — "This was the sixties, before the EPA, and air pollution meant money"
+  - Xenia, Ohio (other, namedrop) [Real place, used as setting] — "He moved away from that town, and where he moved it smelled bad. Xenia, Ohio."
+
+WRT-409 | JIM IN BALTIMORE | 2012-01-19
+  - Allen Ginsberg (author, allusion) [possible reference — 'insane poem written in a fever dream' may echo Beat poetry style, particularly Ginsberg. Needs review.] — "speeding like an insane poem written in a fever dream"
+
+WRT-414 | JIM’S SOLITARY EXISTENCE | 2012-03-18
+  - Allen Ginsberg (author, allusion) [implicit — possible echo of Ginsberg's 'Howl' imagery and phrasing] — "Neighborhood children scream under his stairway, sobbing in armies"
+  - Howl (work, allusion) [possible reference — needs review. 'Sobbing in armies' echoes the cadence and imagery of Ginsberg's 'Howl'] — "Neighborhood children scream under his stairway, sobbing in armies"
+
+WRT-433 | JIM WAKES UP ON THE PARK BENCH | 2013-01-18
+  (no cultural references)
+
+WRT-435 | jJIM AT THE GATE | 2013-02-06
+  - Franz Kafka (author, structural) [implicit — the scenario of a man before a gate with a gatekeeper closely echoes Kafka's parable 'Before the Law'] — "Jim was at the gate. The gatekeeper, a peasant from the countryside"
+  - Before the Law (work, structural) [implicit — the gate, the gatekeeper, and the structure of the encounter parallel Kafka's parable 'Before the Law' (also embedded in The Trial)] — "Jim was at the gate. The gatekeeper, a peasant from the countryside"
+
+WRT-436 | JIM ONCE HAD IT ALL | 2013-02-10
+  - RMS Titanic (historical_event, allusion) — "His delusion of certainty has melted like the iceberg that became a little too friendly with The Titanic"
+
+WRT-437 | Untitled | 2013-04-04
+  - Nikolai Gogol (author, quotation) — "Jim had, in the words of Gogol, black, burning eyes, beetling eyebrows, a furrowed forehead"
+  - Nikolai Gogol (author, quotation) — "as Gogol noted, you discover that they possess a great number of the most elusive peculiarities"
+  - Nikolai Gogol (author, quotation) — "In cases like these, according to Gogol, you must concentrate all your attention"
+  - Dead Souls (work, quotation) [The quoted passages closely paraphrase descriptions from Gogol's Dead Souls (Chichikov's portrait and the narrator's commentary on portraiture)] — "Jim had, in the words of Gogol, black, burning eyes, beetling eyebrows"
+
+WRT-438 | JIM IN THE KITCHEN | 2013-04-07
+  - T.S. Eliot (author, namedrop) — "the words, in the words of T.S. Eliot, are "meaningless as wind in dry grass""
+  - The Hollow Men (work, quotation) [Paraphrased from T.S. Eliot's 'The Hollow Men' — the original reads 'rats' feet over broken glass / In our dry cellar'] — ""meaningless as wind in dry grass or rats' feet over broken glass in our dry cellar""
+  - The Waste Land (work, namedrop) — "You evere read "The Wasteland?" All these allusions to myths, foreign language thrown in"
+  - The Emperor's New Clothes (work, allusion) [Reference to Hans Christian Andersen's fairy tale] — "there might be some "emperor's new clothes" mojo going on"
+  - Nikolai Gogol (author, allusion) — "Thinking about Jim reminds me of Gogol. I don't feel like explaining why"
+
+WRT-440 | JIM SITS AT A TABLE | 2013-04-26
+  - Holden Caulfield (fictional_character, allusion) [implicit — echoes Holden Caulfield's obsession with 'phonies' in The Catcher in the Rye] — "like going on and on about phonies, when I myself am like the biggest phony you're ever going to meet"
+  - The Catcher in the Rye (work, allusion) [implicit — 'phonies' is the signature preoccupation of Salinger's The Catcher in the Rye] — "like going on and on about phonies, when I myself am like the biggest phony you're ever going to meet"
+  - J.D. Salinger (author, allusion) [implicit — via Holden Caulfield / The Catcher in the Rye] — "like going on and on about phonies, when I myself am like the biggest phony you're ever going to meet"
+
+WRT-457 | Untitled | 2014-05-26
+  - The Metamorphosis (work, allusion) — "it's amusing in an existential way, just like we find say Metamorphosis amusing"
+  - Franz Kafka (author, allusion) [implicit — Metamorphosis is by Kafka] — "it's amusing in an existential way, just like we find say Metamorphosis amusing"
+  - The Doors (band, allusion) [possible reference — 'ride the snake' is a lyric from The Doors' 'The End'] — "he just rode the snake of atavistic experience like surfers hang on"
+  - The End (song, allusion) [possible reference — 'ride the snake' appears in The Doors' 'The End'] — "he just rode the snake of atavistic experience like surfers hang on"
+
+WRT-459 | Untitled | 2014-05-31
+  - Dorothy Gale (fictional_character, identification) — "he feels just like Dorothy in Muchkinland, just after her house landed on the witch"
+  - The Wizard of Oz (work, identification) — "he feels just like Dorothy in Muchkinland, just after her house landed on the witch"
+  - The Wizard of Oz (work, allusion) — "His yellow brick road is a lonely street, chocked with potholes"
+  - The Wizard of Oz (work, allusion) [Kansas as Dorothy's home in The Wizard of Oz, reinforcing the extended Oz metaphor] — "when he was just markin' time back in Kansas, sittin' on the fencepost"
+  - Ballade des dames du temps jadis (work, quotation) [Famous line from François Villon's poem, often translated by Dante Gabriel Rossetti as 'Where are the snows of yesteryear?'] — "Where are the snows of yesteryear, Mike"
+  - François Villon (author, allusion) [implicit — 'Where are the snows of yesteryear' is from Villon's Ballade des dames du temps jadis] — "Where are the snows of yesteryear, Mike"
+  - Langston Hughes (author, quotation) — "Jim thinks of the Langston Hughes poem As I Grew Older"
+  - As I Grew Older (work, quotation) — "Jim thinks of the Langston Hughes poem As I Grew Older"
+  - Detroit Red Wings (sports, allusion) [possible reference — the Red Wing Motel in Detroit likely nods to the Detroit Red Wings hockey team; needs review] — "he's in outside of Detroit, at the Red Wing Motel"
+
+WRT-460 | Fwd: | 2014-05-31
+  - Siege of Leningrad (historical_event, allusion) — "his perception hurting like the siege of Leningrad"
+  - Henry David Thoreau (author, quotation) — "Maybe Thoreau had it right, he thought. If I advance confidently in the direction of my dreams"
+  - Walden (work, quotation) [implicit — this is a famous passage from Thoreau's Walden] — "If I advance confidently in the direction of my dreams, and endeavor to live the life which I've imagined"
+  - Victor Hugo (author, namedrop) [possible reference — needs review. Appears as a sign-off; may be a personal name rather than a reference to the author Victor Hugo] — "Hugo — Jon Sarkin"
+
+WRT-461 | Untitled | 2014-06-01
+  - Franz Kafka (author, allusion) — "It was like a scene from some Kafka nightmare"
+

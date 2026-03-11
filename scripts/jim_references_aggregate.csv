@@ -1,0 +1,458 @@
+reference_name,reference_type,total_mentions,stories_appearing_in,story_identifiers,most_common_role
+Allen Ginsberg,author,15,6,"WRT-130, WRT-213, WRT-234, WRT-276, WRT-409, WRT-414",quotation
+F. Scott Fitzgerald,author,12,12,"WRT-125, WRT-130, WRT-194, WRT-219, WRT-284, WRT-297, WRT-351, WRT-383, WRT-384, WRT-387, WRT-396, WRT-405",quotation
+The Great Gatsby,work,11,11,"WRT-125, WRT-130, WRT-194, WRT-196, WRT-284, WRT-297, WRT-383, WRT-384, WRT-387, WRT-396, WRT-405",quotation
+T.S. Eliot,author,10,8,"WRT-194, WRT-248, WRT-312, WRT-348, WRT-362, WRT-381, WRT-405, WRT-438",quotation
+Bob Dylan,musician,9,7,"WRT-125, WRT-130, WRT-194, WRT-210, WRT-215, WRT-297, WRT-376",quotation
+Hunter S. Thompson,author,5,5,"WRT-122, WRT-129, WRT-246, WRT-329, WRT-330",allusion
+Jack Kerouac,author,5,5,"WRT-216, WRT-234, WRT-318, WRT-333, WRT-362",namedrop
+Joseph Conrad,author,5,5,"WRT-121, WRT-225, WRT-233, WRT-245, WRT-405",allusion
+The Love Song of J. Alfred Prufrock,work,5,2,"WRT-248, WRT-381",quotation
+Heart of Darkness,work,4,4,"WRT-121, WRT-233, WRT-245, WRT-405",allusion
+Howl,work,4,4,"WRT-130, WRT-213, WRT-276, WRT-414",allusion
+Neil Young,musician,4,4,"WRT-210, WRT-215, WRT-216, WRT-224",namedrop
+Nikolai Gogol,author,4,2,"WRT-437, WRT-438",quotation
+Robert Frost,author,4,4,"WRT-141, WRT-196, WRT-306, WRT-348",quotation
+The Hollow Men,work,4,4,"WRT-194, WRT-312, WRT-405, WRT-438",quotation
+The Wizard of Oz,work,4,2,"WRT-138, WRT-459",allusion
+Waiting for Godot,work,4,4,"WRT-124, WRT-132, WRT-224, WRT-376",allusion
+William Shakespeare,author,4,4,"WRT-115, WRT-221, WRT-351, WRT-382",allusion
+World War II,historical_event,4,4,"WRT-125, WRT-228, WRT-231, WRT-307",namedrop
+Charles Dickens,author,3,3,"WRT-146, WRT-224, WRT-395",allusion
+Ernest Hemingway,author,3,3,"WRT-143, WRT-194, WRT-381",allusion
+Franz Kafka,author,3,3,"WRT-435, WRT-457, WRT-461",allusion
+J.D. Salinger,author,3,3,"WRT-115, WRT-366, WRT-440",allusion
+Richard Nixon,historical_figure,3,3,"WRT-228, WRT-229, WRT-330",namedrop
+Samuel Beckett,author,3,3,"WRT-124, WRT-132, WRT-376",allusion
+Stopping by Woods on a Snowy Evening,work,3,3,"WRT-141, WRT-196, WRT-348",quotation
+The Waste Land,work,3,3,"WRT-194, WRT-348, WRT-438",quotation
+Wallace Stevens,author,3,2,"WRT-197, WRT-360",quotation
+Aeschylus,author,2,2,"WRT-221, WRT-228",namedrop
+Albert Camus,author,2,2,"WRT-201, WRT-329",identification
+American Idol,tv,2,2,"WRT-126, WRT-322",namedrop
+Apocalypse Now,film,2,2,"WRT-121, WRT-374",namedrop
+Ballade des dames du temps jadis,work,2,2,"WRT-334, WRT-459",quotation
+Book of Proverbs,religious,2,2,"WRT-142, WRT-373",structural
+Catch-22,work,2,2,"WRT-130, WRT-194",allusion
+Cold Sweat,song,2,1,WRT-371,structural
+Emily Dickinson,author,2,1,WRT-144,namedrop
+Environmental Protection Agency,other,2,2,"WRT-198, WRT-408",namedrop
+Fear and Loathing in Las Vegas,work,2,2,"WRT-122, WRT-129",allusion
+François Villon,author,2,2,"WRT-334, WRT-459",quotation
+Free Bird,song,2,2,"WRT-243, WRT-306",allusion
+Fyodor Dostoevsky,author,2,2,"WRT-121, WRT-202",allusion
+Gertrude Stein,author,2,2,"WRT-119, WRT-196",allusion
+Hank Williams,musician,2,2,"WRT-206, WRT-234",namedrop
+Henny Youngman,historical_figure,2,2,"WRT-138, WRT-196",namedrop
+Jimi Hendrix,musician,2,2,"WRT-194, WRT-239",quotation
+John Keats,author,2,2,"WRT-144, WRT-383",allusion
+Joseph Heller,author,2,2,"WRT-130, WRT-194",allusion
+Karma,religious,2,2,"WRT-127, WRT-137",allusion
+Kubla Khan,work,2,2,"WRT-194, WRT-196",quotation
+Langston Hughes,author,2,2,"WRT-224, WRT-459",allusion
+Leo Tolstoy,author,2,2,"WRT-123, WRT-224",namedrop
+Looney Tunes,other,2,2,"WRT-135, WRT-137",allusion
+Lucky,fictional_character,2,2,"WRT-124, WRT-132",allusion
+Lynyrd Skynyrd,band,2,2,"WRT-243, WRT-306",allusion
+Madison Square Garden,venue,2,2,"WRT-125, WRT-296",namedrop
+Marlon Brando,historical_figure,2,2,"WRT-125, WRT-351",namedrop
+Methuselah,religious,2,2,"WRT-194, WRT-407",namedrop
+Moby-Dick,work,2,2,"WRT-146, WRT-243",structural
+Nixon resignation,historical_event,2,2,"WRT-228, WRT-330",namedrop
+Notes from Underground,work,2,2,"WRT-121, WRT-223",allusion
+RMS Titanic,historical_event,2,2,"WRT-134, WRT-436",allusion
+Red Grooms,visual_artist,2,1,WRT-230,namedrop
+Roald Dahl,author,2,2,"WRT-141, WRT-212",allusion
+Samuel Taylor Coleridge,author,2,2,"WRT-194, WRT-196",quotation
+Stuck Inside of Mobile with the Memphis Blues Again,song,2,2,"WRT-130, WRT-194",quotation
+Tennessee Williams,author,2,2,"WRT-130, WRT-351",allusion
+The Catcher in the Rye,work,2,2,"WRT-115, WRT-440",allusion
+The Doors,band,2,2,"WRT-125, WRT-457",quotation
+The Kinks,band,2,2,"WRT-125, WRT-204",namedrop
+The Road Not Taken,work,2,2,"WRT-196, WRT-306",allusion
+The Rolling Stones,band,2,2,"WRT-141, WRT-296",namedrop
+War and Peace,work,2,2,"WRT-123, WRT-224",namedrop
+William Butler Yeats,author,2,2,"WRT-218, WRT-374",namedrop
+Yossarian,fictional_character,2,2,"WRT-130, WRT-194",allusion
+1967 Newark riots,historical_event,1,1,WRT-239,namedrop
+A Brief Encounter with the Enemy,work,1,1,WRT-406,structural
+A Day at the Races,film,1,1,WRT-239,allusion
+A Day in the Life,song,1,1,WRT-194,quotation
+A Farewell to Arms,work,1,1,WRT-381,allusion
+A Raisin in the Sun,work,1,1,WRT-224,allusion
+A Wedding Toast,work,1,1,WRT-133,quotation
+Adam West,historical_figure,1,1,WRT-376,namedrop
+Adventures of Huckleberry Finn,work,1,1,WRT-224,quotation
+Age of Aquarius,song,1,1,WRT-243,namedrop
+Allegory of the Cave,work,1,1,WRT-196,allusion
+Alvin Dark,sports,1,1,WRT-351,namedrop
+Alvin Toffler,author,1,1,WRT-239,allusion
+Alvin and the Chipmunks,other,1,1,WRT-228,allusion
+Amazon River,other,1,1,WRT-226,namedrop
+American Museum of Natural History,venue,1,1,WRT-394,namedrop
+Anaconda Copper Company,other,1,1,WRT-198,namedrop
+Anasazi,other,1,1,WRT-222,namedrop
+And Now the Leaves Suddenly Lose Strength,work,1,1,WRT-199,quotation
+Andrew Dice Clay,historical_figure,1,1,WRT-206,namedrop
+Angkor Wat,other,1,1,WRT-246,namedrop
+Apollo,religious,1,1,WRT-229,namedrop
+Aretha Franklin,musician,1,1,WRT-224,namedrop
+Arthur Miller,author,1,1,WRT-130,allusion
+Artificial Intelligence,work,1,1,WRT-189,namedrop
+As I Grew Older,work,1,1,WRT-459,quotation
+Ash heap of history,other,1,1,WRT-193,allusion
+Aztec civilization,other,1,1,WRT-222,namedrop
+Batman (1966 TV series),tv,1,1,WRT-376,namedrop
+Battle of Bull Run,historical_event,1,1,WRT-218,allusion
+Be Careful What You Do,song,1,1,WRT-226,quotation
+Beatitudes (Sermon on the Mount),religious,1,1,WRT-305,allusion
+Before the Law,work,1,1,WRT-435,structural
+Bellevue Hospital,other,1,1,WRT-371,namedrop
+Berkeley Pit,other,1,1,WRT-198,allusion
+Bible,religious,1,1,WRT-194,allusion
+Bible (Isaiah 53:7),religious,1,1,WRT-361,allusion
+Bicycle Thieves,film,1,1,WRT-220,structural
+Big Daddy,fictional_character,1,1,WRT-130,allusion
+Bill O'Reilly,historical_figure,1,1,WRT-240,namedrop
+Bill Veeck,historical_figure,1,1,WRT-133,namedrop
+Billy Pilgrim,fictional_character,1,1,WRT-134,identification
+Bizarro World,other,1,1,WRT-135,allusion
+Black Crow,song,1,1,WRT-211,namedrop
+Book of Revelation,religious,1,1,WRT-194,allusion
+Boston Bruins,sports,1,1,WRT-346,namedrop
+Break On Through (To the Other Side),song,1,1,WRT-125,quotation
+British Empire,historical_event,1,1,WRT-194,namedrop
+Broderick Crawford,historical_figure,1,1,WRT-243,allusion
+Brown Sugar,song,1,1,WRT-141,namedrop
+Bruce Springsteen,musician,1,1,WRT-326,allusion
+By the Time I Get to Phoenix,song,1,1,WRT-194,quotation
+Caravan,song,1,1,WRT-243,allusion
+Carson City Correctional Facility,other,1,1,WRT-299,namedrop
+Casablanca,film,1,1,WRT-125,namedrop
+Casio,other,1,1,WRT-228,namedrop
+Castles Made of Sand,song,1,1,WRT-194,quotation
+Cat on a Hot Tin Roof,work,1,1,WRT-130,allusion
+Central African Republic,other,1,1,WRT-228,namedrop
+Charles Marlow,fictional_character,1,1,WRT-121,allusion
+Charlie Parker,musician,1,1,WRT-209,allusion
+Chelsea Morning,song,1,1,WRT-362,namedrop
+Chiaroscuro,other,1,1,WRT-240,allusion
+Chrysler Building,other,1,1,WRT-125,namedrop
+Chuck Berry,musician,1,1,WRT-141,allusion
+Coca-Cola,other,1,1,WRT-218,allusion
+Congo Free State,historical_event,1,1,WRT-245,allusion
+Cookie Monster,fictional_character,1,1,WRT-138,namedrop
+Cool Hand Luke,film,1,1,WRT-407,allusion
+Cormac McCarthy,author,1,1,WRT-222,structural
+Crucifixion of Jesus,religious,1,1,WRT-306,namedrop
+Cumbia,other,1,1,WRT-131,namedrop
+Curb Your Enthusiasm,tv,1,1,WRT-140,structural
+Daisy Buchanan,fictional_character,1,1,WRT-130,allusion
+Dateline,tv,1,1,WRT-203,namedrop
+David Copperfield,work,1,1,WRT-224,allusion
+Dead Souls,work,1,1,WRT-437,quotation
+Death of a Salesman,work,1,1,WRT-130,allusion
+Dennis Lehane,author,1,1,WRT-125,namedrop
+Desiderius Erasmus,philosopher,1,1,WRT-348,allusion
+Detroit Red Wings,sports,1,1,WRT-459,allusion
+Dmitri Karamazov,fictional_character,1,1,WRT-202,allusion
+Do Not Go Gentle into That Good Night,work,1,1,WRT-194,quotation
+Doctor T.J. Eckleburg,fictional_character,1,1,WRT-194,allusion
+Doo Lang Doo Lang Doo Lang,song,1,1,WRT-348,quotation
+Doo-lang,song,1,1,WRT-351,quotation
+Dorothy Gale,fictional_character,1,1,WRT-459,identification
+Drum and bass,other,1,1,WRT-131,namedrop
+Dumbo,film,1,1,WRT-219,namedrop
+Dylan Thomas,author,1,1,WRT-194,quotation
+Edgar Allan Poe,author,1,1,WRT-194,allusion
+Edgar Degas,visual_artist,1,1,WRT-125,namedrop
+Edge City,work,1,1,WRT-322,structural
+Eight Miles High,song,1,1,WRT-221,allusion
+Emma Lazarus,author,1,1,WRT-307,allusion
+Existentialism,other,1,1,WRT-227,allusion
+Ezekiel's Wheel,religious,1,1,WRT-193,allusion
+Ezra Pound,author,1,1,WRT-305,structural
+Facebook,other,1,1,WRT-287,namedrop
+Fenway Park,venue,1,1,WRT-122,namedrop
+Flashdance,film,1,1,WRT-351,allusion
+Flat Earth,other,1,1,WRT-193,namedrop
+Folsom Prison Blues,song,1,1,WRT-322,quotation
+Fontella Bass,musician,1,1,WRT-221,namedrop
+For What It's Worth,song,1,1,WRT-196,allusion
+Fortress of Solitude,other,1,1,WRT-334,allusion
+Frank Gehry,historical_figure,1,1,WRT-238,namedrop
+Frank Lloyd Wright,historical_figure,1,1,WRT-238,namedrop
+Freaks,film,1,1,WRT-194,allusion
+Fun with Dick and Jane,work,1,1,WRT-192,structural
+Future Shock,work,1,1,WRT-239,allusion
+Garden of Eden,religious,1,1,WRT-126,allusion
+Geronimo,historical_figure,1,1,WRT-194,namedrop
+Glen Campbell,musician,1,1,WRT-194,quotation
+Gloucester,other,1,1,WRT-333,namedrop
+God,song,1,1,WRT-135,quotation
+Grantland Rice,author,1,1,WRT-348,allusion
+Grateful Dead,band,1,1,WRT-397,allusion
+Gravity's Rainbow,work,1,1,WRT-194,allusion
+Gunsmoke,tv,1,1,WRT-224,allusion
+Hamlet,work,1,1,WRT-382,allusion
+Harley-Davidson,other,1,1,WRT-130,namedrop
+Harry Dean Stanton,other,1,1,WRT-125,namedrop
+Hells Angels,other,1,1,WRT-220,namedrop
+Henry David Thoreau,author,1,1,WRT-460,quotation
+Henry V,work,1,1,WRT-115,namedrop
+Herman Melville,author,1,1,WRT-146,structural
+Hibbing,other,1,1,WRT-297,allusion
+Hieronymus Bosch,visual_artist,1,1,WRT-194,allusion
+High Noon,film,1,1,WRT-224,namedrop
+High Times,other,1,1,WRT-221,allusion
+Holden Caulfield,fictional_character,1,1,WRT-440,allusion
+Hubert Selby Jr.,author,1,1,WRT-407,structural
+Hugh Selwyn Mauberley,work,1,1,WRT-305,quotation
+Humphrey Bogart,other,1,1,WRT-125,namedrop
+I'm Not Like Everybody Else,song,1,1,WRT-204,allusion
+Igor Stravinsky,musician,1,1,WRT-125,namedrop
+In Search of Lost Time,work,1,1,WRT-227,allusion
+Irwin Allen Ginsberg,historical_figure,1,1,WRT-329,namedrop
+Isaiah,religious,1,1,WRT-304,allusion
+Ishmael,fictional_character,1,1,WRT-146,identification
+Isis,religious,1,1,WRT-239,namedrop
+Ité,work,1,1,WRT-305,quotation
+Ixion,religious,1,1,WRT-225,allusion
+Jackson Pollock,visual_artist,1,1,WRT-125,namedrop
+James Arness,historical_figure,1,1,WRT-224,namedrop
+James Brown,musician,1,1,WRT-371,namedrop
+James and the Giant Peach,work,1,1,WRT-141,allusion
+Jane Taylor,author,1,1,WRT-385,quotation
+Jason Alexander,historical_figure,1,1,WRT-140,identification
+Jean-Baptiste Clamence,fictional_character,1,1,WRT-201,identification
+Jerry Jeff Walker,musician,1,1,WRT-125,namedrop
+Jesus calming the storm,religious,1,1,WRT-306,allusion
+Jimmy Page,musician,1,1,WRT-125,namedrop
+Johann Sebastian Bach,musician,1,1,WRT-239,allusion
+John Lennon,musician,1,1,WRT-135,namedrop
+John Masefield,author,1,1,WRT-146,quotation
+John Milton,author,1,1,WRT-216,structural
+Johnny Cash,musician,1,1,WRT-322,namedrop
+Johnny Guitar (character),fictional_character,1,1,WRT-206,quotation
+Johnny Guitar (film),film,1,1,WRT-206,quotation
+Joni Mitchell,musician,1,1,WRT-362,namedrop
+Junior Kimbrough,musician,1,1,WRT-125,namedrop
+Just My Imagination (Running Away with Me),song,1,1,WRT-126,quotation
+Keith Moon,musician,1,1,WRT-398,allusion
+Keith Richards,musician,1,1,WRT-141,namedrop
+Kentucky Derby,sports,1,1,WRT-284,namedrop
+Kilgore Trout,fictional_character,1,1,WRT-134,allusion
+King Lear,work,1,1,WRT-221,allusion
+Klaatu,fictional_character,1,1,WRT-138,allusion
+Kublai Khan,historical_figure,1,1,WRT-196,allusion
+Kung Fu,tv,1,1,WRT-135,allusion
+Kurt Schwitters,visual_artist,1,1,WRT-125,namedrop
+Kurt Vonnegut,author,1,1,WRT-134,namedrop
+Larry David,historical_figure,1,1,WRT-140,identification
+Last Exit to Brooklyn,work,1,1,WRT-407,namedrop
+Lawrence Ferlinghetti,author,1,1,WRT-326,namedrop
+Leopold II of Belgium,historical_figure,1,1,WRT-245,allusion
+Les Millwin,work,1,1,WRT-305,quotation
+Lincoln Road,venue,1,1,WRT-319,namedrop
+Little Lord Fauntleroy,work,1,1,WRT-307,allusion
+Lord Jim,work,1,1,WRT-225,allusion
+Lorraine Hansberry,author,1,1,WRT-224,allusion
+Lost Highway,film,1,1,WRT-221,allusion
+Lost in the Supermarket,song,1,1,WRT-218,allusion
+Louis XIV,historical_figure,1,1,WRT-239,namedrop
+"Lowell, Massachusetts",other,1,1,WRT-216,allusion
+Luminiferous aether,other,1,1,WRT-193,namedrop
+Lyndon B. Johnson,historical_figure,1,1,WRT-298,namedrop
+Magna Carta,historical_event,1,1,WRT-239,namedrop
+Man of La Mancha,work,1,1,WRT-194,structural
+Marcel Duchamp,visual_artist,1,1,WRT-125,namedrop
+Marcel Proust,author,1,1,WRT-227,allusion
+Margaret Bourke-White,visual_artist,1,1,WRT-125,namedrop
+Marilyn Monroe,historical_figure,1,1,WRT-329,namedrop
+Mark Twain,author,1,1,WRT-224,quotation
+Mel Brooks,historical_figure,1,1,WRT-397,allusion
+Memphis half-step,other,1,1,WRT-397,allusion
+"Memphis, Tennessee",other,1,1,WRT-247,structural
+"Mexico, Missouri",other,1,1,WRT-214,namedrop
+Michael Jackson,musician,1,1,WRT-309,namedrop
+Middle Way,religious,1,1,WRT-243,allusion
+Miles Davis,musician,1,1,WRT-209,identification
+Minotaur,other,1,1,WRT-138,allusion
+Mississippi Half-Step Uptown Toodeloo,song,1,1,WRT-397,allusion
+Mississippi River flood,historical_event,1,1,WRT-232,structural
+Montreal Canadiens,sports,1,1,WRT-346,namedrop
+Mount Olympus,religious,1,1,WRT-407,allusion
+Mr. Tambourine Man,song,1,1,WRT-348,allusion
+My Heart Leaps Up,work,1,1,WRT-144,quotation
+Myrtle Wilson,fictional_character,1,1,WRT-284,allusion
+Mystery Train,song,1,1,WRT-224,allusion
+New Orleans,other,1,1,WRT-330,namedrop
+New York Yankees,sports,1,1,WRT-122,namedrop
+Newhouse Foundation,other,1,1,WRT-228,namedrop
+Night closed my windows,work,1,1,WRT-326,quotation
+"Normal, Illinois",other,1,1,WRT-214,namedrop
+"Norman, Oklahoma",other,1,1,WRT-214,namedrop
+Northern California,other,1,1,WRT-283,namedrop
+Nosferatu,film,1,1,WRT-224,allusion
+Not Ideas About the Thing But the Thing Itself,work,1,1,WRT-197,quotation
+Now's the Time,song,1,1,WRT-209,namedrop
+Ode to a Nightingale,work,1,1,WRT-144,namedrop
+Ode to the West Wind,work,1,1,WRT-381,allusion
+Of Mice and Men,work,1,1,WRT-224,allusion
+Oldsmobile Cutlass,other,1,1,WRT-326,namedrop
+Olympic Games,sports,1,1,WRT-224,namedrop
+On Raglan Road,song,1,1,WRT-192,allusion
+On the Road,work,1,1,WRT-234,allusion
+Only the Lonely (Know the Way I Feel),song,1,1,WRT-135,quotation
+Orion,other,1,1,WRT-194,namedrop
+Ouroboros,religious,1,1,WRT-130,allusion
+Paradise Lost,work,1,1,WRT-216,structural
+Parthenon,other,1,1,WRT-125,namedrop
+Patrick Kavanagh,author,1,1,WRT-192,allusion
+Paul Revere,historical_figure,1,1,WRT-405,namedrop
+Paul Revere and the Raiders,band,1,1,WRT-194,namedrop
+Pequod,fictional_character,1,1,WRT-243,namedrop
+Percy Bysshe Shelley,author,1,1,WRT-381,allusion
+Perry Como,musician,1,1,WRT-125,namedrop
+Peter Lorre,historical_figure,1,1,WRT-243,allusion
+Philip Larkin,author,1,1,WRT-199,quotation
+Phlogiston theory,other,1,1,WRT-193,namedrop
+Ping-pong diplomacy,historical_event,1,1,WRT-224,allusion
+Plato,philosopher,1,1,WRT-196,allusion
+Pontiac Firebird,other,1,1,WRT-135,namedrop
+Popeye,fictional_character,1,1,WRT-239,namedrop
+Powerball,other,1,1,WRT-287,namedrop
+Psalm 137,religious,1,1,WRT-194,allusion
+Pyrrhic victory,historical_figure,1,1,WRT-311,allusion
+Quetzalcoatl,religious,1,1,WRT-407,allusion
+Richard II,work,1,1,WRT-351,allusion
+Richard Wilbur,author,1,1,WRT-133,namedrop
+Rip Van Winkle,fictional_character,1,1,WRT-224,allusion
+Road Runner,fictional_character,1,1,WRT-135,allusion
+Road Runner (cartoon),other,1,1,WRT-129,allusion
+Robert Burns,author,1,1,WRT-196,allusion
+Robert Duncan,author,1,1,WRT-001,namedrop
+Robert Lowell,author,1,1,WRT-216,allusion
+Rock of Ages,religious,1,1,WRT-135,allusion
+Rolling Rock,other,1,1,WRT-236,namedrop
+Rolling Thunder Revue,other,1,1,WRT-125,namedrop
+Rosanna Arquette,historical_figure,1,1,WRT-243,allusion
+Rosetta Stone,other,1,1,WRT-135,allusion
+Roy Orbison,musician,1,1,WRT-135,namedrop
+Royal Albert Hall,venue,1,1,WRT-194,quotation
+Rust Never Sleeps,album,1,1,WRT-210,structural
+Said Sayrafiezadeh,author,1,1,WRT-406,namedrop
+Sam Shepard,author,1,1,WRT-218,identification
+San Quentin State Prison,venue,1,1,WRT-361,namedrop
+Sea Fever,work,1,1,WRT-146,quotation
+Seinfeld,tv,1,1,WRT-140,allusion
+September 11 attacks,historical_event,1,1,WRT-121,namedrop
+Sesame Street,tv,1,1,WRT-138,namedrop
+Ship of Theseus,philosopher,1,1,WRT-335,allusion
+Siege of Leningrad,historical_event,1,1,WRT-460,allusion
+Slaughterhouse-Five,work,1,1,WRT-134,structural
+Slaughterhouse-Five (film),film,1,1,WRT-134,namedrop
+Socrates,philosopher,1,1,WRT-240,allusion
+Sonny Barger,historical_figure,1,1,WRT-220,namedrop
+Sonny Landreth,musician,1,1,WRT-125,namedrop
+South Boston,other,1,1,WRT-346,allusion
+Spontaneous generation,other,1,1,WRT-193,namedrop
+Stanley Kubrick,other,1,1,WRT-125,namedrop
+Staten Island,other,1,1,WRT-127,namedrop
+Staten Island Ferry,other,1,1,WRT-127,namedrop
+Stations of the Cross,religious,1,1,WRT-216,allusion
+Stevie Wonder,musician,1,1,WRT-239,namedrop
+Stream of consciousness,other,1,1,WRT-286,allusion
+Subterranean Homesick Blues,song,1,1,WRT-210,quotation
+Sun Ra,musician,1,1,WRT-239,namedrop
+Sunday Morning,work,1,1,WRT-360,quotation
+TD Garden,venue,1,1,WRT-346,namedrop
+Taxi Driver,film,1,1,WRT-121,identification
+Tea Party movement,historical_event,1,1,WRT-218,structural
+Ted Kennedy,historical_figure,1,1,WRT-133,namedrop
+Teddy Kennedy,historical_figure,1,1,WRT-129,allusion
+Television,work,1,1,WRT-212,structural
+Tender Is the Night,work,1,1,WRT-219,namedrop
+The Acropolis,venue,1,1,WRT-130,structural
+The Beatles,band,1,1,WRT-194,quotation
+The Book of Love,song,1,1,WRT-351,allusion
+The Byrds,band,1,1,WRT-221,allusion
+The Cabinet of Dr. Caligari,film,1,1,WRT-125,namedrop
+The Clash,band,1,1,WRT-218,allusion
+The Congo,work,1,1,WRT-226,quotation
+The Crack-Up,work,1,1,WRT-351,allusion
+The Custom House,work,1,1,WRT-146,allusion
+The Day the Earth Stood Still,film,1,1,WRT-138,allusion
+The Drifters,band,1,1,WRT-125,quotation
+The Emperor's New Clothes,work,1,1,WRT-438,allusion
+The End,song,1,1,WRT-457,allusion
+The Fall,work,1,1,WRT-201,identification
+The Garden,work,1,1,WRT-305,quotation
+The Ghost in the Machine,other,1,1,WRT-239,allusion
+The Impossible Dream,song,1,1,WRT-194,structural
+The Jimi Hendrix Experience,band,1,1,WRT-239,namedrop
+The Lone Ranger,fictional_character,1,1,WRT-318,allusion
+The Man in the Gray Flannel Suit,work,1,1,WRT-348,allusion
+The Metamorphosis,work,1,1,WRT-457,allusion
+The New Colossus,work,1,1,WRT-307,allusion
+The New Yorker,other,1,1,WRT-406,namedrop
+The Perfect Storm,work,1,1,WRT-203,allusion
+The Raven,work,1,1,WRT-194,allusion
+The Road,work,1,1,WRT-222,structural
+The Second Coming,work,1,1,WRT-374,allusion
+The Secret Sharer,work,1,1,WRT-225,structural
+The Star-Spangled Banner,song,1,1,WRT-125,allusion
+The Stranger,work,1,1,WRT-329,allusion
+The Temptations,band,1,1,WRT-126,quotation
+The Well-Tempered Clavier,work,1,1,WRT-239,allusion
+The Who,band,1,1,WRT-216,namedrop
+The blind leading the blind,religious,1,1,WRT-243,allusion
+There Is No Frigate Like a Book,work,1,1,WRT-144,quotation
+There Is a Balm in Gilead,religious,1,1,WRT-334,quotation
+These Foolish Things (Remind Me of You),song,1,1,WRT-239,quotation
+This Is Just to Say,work,1,1,WRT-141,allusion
+This Magic Moment,song,1,1,WRT-125,quotation
+This Wheel's on Fire,song,1,1,WRT-376,quotation
+Thomas Pynchon,author,1,1,WRT-194,allusion
+Thrasher,song,1,1,WRT-210,structural
+Tivoli Gardens,venue,1,1,WRT-243,namedrop
+Tom Waits,musician,1,1,WRT-125,namedrop
+Tom Wolfe,author,1,1,WRT-322,allusion
+Travis Bickle,fictional_character,1,1,WRT-121,identification
+"Twinkle, Twinkle, Little Star",work,1,1,WRT-385,quotation
+UNIVAC,other,1,1,WRT-228,allusion
+University of Alabama,other,1,1,WRT-189,namedrop
+Vachel Lindsay,author,1,1,WRT-226,quotation
+Van Morrison,musician,1,1,WRT-224,allusion
+Veronica Lake,historical_figure,1,1,WRT-243,allusion
+Victor Hugo,author,1,1,WRT-460,namedrop
+Vietnam War,historical_event,1,1,WRT-408,structural
+Virgil,author,1,1,WRT-348,allusion
+Virgin birth,religious,1,1,WRT-243,namedrop
+Vittorio De Sica,other,1,1,WRT-220,allusion
+Walden,work,1,1,WRT-460,quotation
+War on Terror,historical_event,1,1,WRT-203,structural
+We Shall Not Be Moved,song,1,1,WRT-243,quotation
+Wee Willie Keeler,sports,1,1,WRT-239,namedrop
+Weekend (1967 film),film,1,1,WRT-221,allusion
+Whirling dervishes,religious,1,1,WRT-313,allusion
+Wile E. Coyote,fictional_character,1,1,WRT-135,allusion
+William Carlos Williams,author,1,1,WRT-141,allusion
+William S. Burroughs,author,1,1,WRT-130,allusion
+William Westmoreland,historical_figure,1,1,WRT-298,namedrop
+William Wordsworth,author,1,1,WRT-144,quotation
+Willy Loman,fictional_character,1,1,WRT-130,allusion
+Wilson Pickett,musician,1,1,WRT-407,allusion
+Winslow Homer,visual_artist,1,1,WRT-125,namedrop
+Wish You Were Here,other,1,1,WRT-309,allusion
+X (band),band,1,1,WRT-236,namedrop
+"Xenia, Ohio",other,1,1,WRT-408,namedrop
+Zeno's paradox,other,1,1,WRT-144,allusion
+Zoot Suit Riot,song,1,1,WRT-239,allusion
+filibuster,other,1,1,WRT-130,allusion
+film noir,other,1,1,WRT-243,allusion
+post-modernism,other,1,1,WRT-130,structural
+shibboleth,religious,1,1,WRT-307,allusion
+unholy trinity,religious,1,1,WRT-366,allusion
+widow's walk,other,1,1,WRT-382,allusion
+Ιμέρρω,work,1,1,WRT-305,quotation
