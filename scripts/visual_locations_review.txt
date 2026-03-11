@@ -1,0 +1,2123 @@
+JS-0000-T1001 | nipple 43
+  - Egypt (country, exact) — as "EGYPT"
+  - Ghana (country, exact) — as "GHANA"
+  - Uganda (country, exact) — as "UGANDA"
+  - Peru (country, exact) — as "PERU"
+  - Senegal (country, exact) — as "SENEGAL"
+  - Libya (country, exact) — as "LIBYA"
+  - Morocco (country, exact) — as "MOROCCO"
+  - Sudan (country, exact) — as "SUDAN"
+  - Tunisia (country, exact) — as "TUNISIA"
+  - Kenya (country, exact) — as "KENYA"
+  - Zimbabwe (country, exact) — as "ZIMBABWE"
+
+JS-0000-T1050 | building 18
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T1110 | building 48
+  - Central Park (landmark, multi_word) — as "CENTRAL PARK"
+
+JS-0000-T1130 | building 58
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-0000-T1140 | building 63
+  - Carson City (city, multi_word) — as "CARSON CITY"
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+  - Denver (city, exact) — as "DENVER"
+
+JS-0000-T1150 | building 68
+  - Alabama (state, exact) x2 — as "ALABAMA"
+
+JS-0000-T1154 | building 70
+  - New York City (city, multi_word) — as "NEW YORK CITY"
+  - New York (city, multi_word) — as "NEW YORK"
+
+JS-0000-T1178 | spiral/mouth 10
+  - Utah (state, exact) x4 — as "UTAH"
+  - Nevada (state, exact) — as "NEVADA"
+
+JS-0000-T1204 | spiral/mouth 23
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T1288 | brancusi 15
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-0000-T1382 | CBM 14
+  - Ohio (state, exact) — as "OHIO"
+  - Xenia (city, exact) — as "XENIA"
+
+JS-0000-T1392 | CBM 19
+  - Utah (state, exact) x3 — as "UTAH"
+
+JS-0000-T1394 | CBM 20
+  - Spain (country, exact) — as "SPAIN"
+
+JS-0000-T1400 | CBM 23
+  - Korea (country, exact) — as "KOREA"
+
+JS-0000-T143 | super artist 69
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Nevada (state, exact) — as "NEVADA"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-0000-T1474 | vehicle 35
+  - Egypt (country, exact) — as "EGYPT"
+  - Ghana (country, exact) — as "GHANA"
+  - Uganda (country, exact) — as "UGANDA"
+  - Senegal (country, exact) — as "SENEGAL"
+  - Somalia (country, exact) — as "SOMALIA"
+  - Congo (region, exact) x2 — as "CONGO"
+  - Libya (country, exact) — as "LIBYA"
+  - Utah (state, exact) x9 — as "UTAH"
+  - Ethiopia (country, exact) — as "ETHIOPIA"
+  - Morocco (country, exact) — as "MOROCCO"
+  - Sudan (country, exact) — as "SUDAN"
+  - Tunisia (country, exact) — as "TUNISIA"
+  - Kenya (country, exact) — as "KENYA"
+
+JS-0000-T1482 | vehicle 39
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - Nevada (state, exact) — as "NEVADA"
+
+JS-0000-T1512 | vehicle 54
+  - Ohio (state, exact) — as "OHIO"
+  - Connecticut (state, exact) — as "CONNECTICUT"
+  - Alaska (state, exact) — as "ALASKA"
+  - California (state, exact) — as "CALIFORNIA"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Iowa (state, exact) — as "IOWA"
+  - Maine (state, exact) — as "MAINE"
+  - Kansas (state, exact) — as "KANSAS"
+  - Utah (state, exact) x16 — as "UTAH"
+  - Maryland (state, exact) — as "MARYLAND"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Illinois (state, exact) — as "ILLINOIS"
+  - Florida (state, exact) — as "FLORIDA"
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Texas (state, exact) — as "TEXAS"
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Oregon (state, exact) — as "OREGON"
+  - Nebraska (state, exact) — as "NEBRASKA"
+  - Georgia (state, disambiguated) [disambiguated with 2 context words] — as "GEORGIA"
+
+JS-0000-T1526 | vehicle 61
+  - Stockholm (city, exact) — as "STOCKHOLM"
+
+JS-0000-T1530 | vehicle 63
+  - Idaho (state, exact) — as "IDAHO"
+
+JS-0000-T1532 | vehicle 64
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T1544 | vehicle 70
+  - Spain (country, exact) — as "SPAIN"
+  - Utah (state, exact) x27 — as "UTAH"
+
+JS-0000-T1604 | cardboard artist 21
+  - Tennessee (state, exact) — as "TENNESSEE"
+
+JS-0000-T1614 | cardboard artist 26
+  - Texas (state, exact) — as "TEXAS"
+
+JS-0000-T163 | super artist 79
+  - Ohio (state, exact) — as "OHIO"
+
+JS-0000-T1646 | cardboard artist 42
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - Ghana (country, exact) — as "GHANA"
+  - Tennessee (state, exact) — as "TENNESSEE"
+
+JS-0000-T1676 | cardboard artist 57
+  - Utah (state, exact) x12 — as "UTAH"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+
+JS-0000-T1690 | cardboard artist 64
+  - San Francisco (city, multi_word) — as "SAN FRANCISCO"
+
+JS-0000-T173 | super artist 84
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T1754 | cardboard artist 96
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-0000-T1756 | cardboard artist 97
+  - Wisconsin (state, exact) — as "WISCONSIN"
+
+JS-0000-T1774 | cardboard artist 106
+  - Prague (city, exact) — as "PRAGUE"
+
+JS-0000-T1780 | cardboard artist 109
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-0000-T1796 | cardboard artist 115
+  - Spain (country, exact) x5 — as "SPAIN"
+
+JS-0000-T1808 | cardboard artist 121
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T1916 | creature 42
+  - New Orleans (city, multi_word) x2 — as "NEW ORLEANS"
+  - America (country, exact) — as "AMERICA"
+
+JS-0000-T1986 | creature 77
+  - Utah (state, exact) x5 — as "UTAH"
+
+JS-0000-T205 | super artist 100
+  - Vietnam (country, exact) — as "VIETNAM"
+  - Cambodia (country, exact) — as "CAMBODIA"
+
+JS-0000-T2110 | creature 139
+  - San Francisco (city, multi_word) — as "SAN FRANCISCO"
+  - Paris (city, exact) — as "PARIS"
+
+JS-0000-T2114 | creature 141
+  - Utah (state, exact) x10 — as "UTAH"
+
+JS-0000-T2204 | creature 186
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-0000-T2384 | boat 53
+  - Kansas (state, exact) x3 — as "KANSAS"
+
+JS-0000-T239 | super artist 117
+  - Staten Island (city, multi_word) — as "STATEN ISLAND"
+  - Japan (country, exact) — as "JAPAN"
+  - Indonesia (country, exact) — as "INDONESIA"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Australia (country, exact) — as "AUSTRALIA"
+
+JS-0000-T245 | super artist 120
+  - Hollywood (city, exact) — as "HOLLYWOOD"
+
+JS-0000-T2490 | boat 106
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-0000-T257 | super artist 126
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+
+JS-0000-T259 | super artist 127
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-0000-T2632 | fish 3
+  - Spain (country, exact) — as "SPAIN"
+
+JS-0000-T2672 | fish 23
+  - Utah (state, exact) x19 — as "UTAH"
+
+JS-0000-T2674 | fish 24
+  - Washington (state, exact) — as "WASHINGTON"
+
+JS-0000-T2766 | fish 70
+  - Ohio (state, exact) — as "OHIO"
+  - Iraq (country, exact) — as "IRAQ"
+  - Peru (country, exact) — as "PERU"
+  - Chad (country, exact) — as "CHAD"
+  - Utah (state, exact) — as "UTAH"
+  - Mali (country, exact) — as "MALI"
+
+JS-0000-T2794 | fish 84
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T2824 | fish 99
+  - Egypt (country, exact) — as "EGYPT"
+  - Vietnam (country, exact) — as "VIETNAM"
+  - Uganda (country, exact) — as "UGANDA"
+  - Cambodia (country, exact) — as "CAMBODIA"
+  - Australia (country, exact) x2 — as "AUSTRALIA"
+  - Peru (country, exact) — as "PERU"
+  - Cameroon (country, exact) — as "CAMEROON"
+  - Brazil (country, exact) — as "BRAZIL"
+  - America (country, exact) — as "AMERICA"
+  - Senegal (country, exact) — as "SENEGAL"
+  - Denmark (country, exact) — as "DENMARK"
+  - Libya (country, exact) — as "LIBYA"
+  - Russia (country, exact) — as "RUSSIA"
+  - Sudan (country, exact) — as "SUDAN"
+  - China (country, exact) — as "CHINA"
+  - Thailand (country, exact) — as "THAILAND"
+
+JS-0000-T2834 | fish 104
+  - Central African Republic (country, multi_word) — as "CENTRAL AFRICAN REPUBLIC"
+  - Japan (country, exact) — as "JAPAN"
+  - Indonesia (country, exact) — as "INDONESIA"
+  - Ghana (country, exact) — as "GHANA"
+  - Austria (country, exact) — as "AUSTRIA"
+  - Egypt (country, exact) — as "EGYPT"
+  - Peru (country, exact) — as "PERU"
+  - Korea (country, exact) — as "KOREA"
+  - Brazil (country, exact) — as "BRAZIL"
+  - England (country, exact) — as "ENGLAND"
+  - France (country, exact) x2 — as "FRANCE"
+  - Senegal (country, exact) x8 — as "SENEGAL"
+  - Wales (country, exact) — as "WALES"
+  - Italy (country, exact) — as "ITALY"
+  - Denmark (country, exact) — as "DENMARK"
+  - Scotland (country, exact) — as "SCOTLAND"
+  - Pakistan (country, exact) — as "PAKISTAN"
+  - Chad (country, exact) — as "CHAD"
+  - Spain (country, exact) — as "SPAIN"
+  - Russia (country, exact) — as "RUSSIA"
+  - Ethiopia (country, exact) — as "ETHIOPIA"
+  - Israel (country, exact) — as "ISRAEL"
+  - Sudan (country, exact) — as "SUDAN"
+  - Tunisia (country, exact) — as "TUNISIA"
+  - Switzerland (country, exact) — as "SWITZERLAND"
+  - Ireland (country, exact) — as "IRELAND"
+  - China (country, exact) — as "CHINA"
+  - Kenya (country, exact) — as "KENYA"
+  - Mali (country, exact) — as "MALI"
+  - Zimbabwe (country, exact) — as "ZIMBABWE"
+  - Venezuela (country, exact) — as "VENEZUELA"
+  - Germany (country, exact) — as "GERMANY"
+  - Uruguay (country, exact) — as "URUGUAY"
+
+JS-0000-T307 | super artist 151
+  - Philadelphia (city, exact) — as "PHILADELPHIA"
+
+JS-0000-T315 | super artist 155
+  - Utah (state, exact) x42 — as "UTAH"
+
+JS-0000-T321 | super artist 158
+  - Hollywood (city, exact) — as "HOLLYWOOD"
+
+JS-0000-T3342 | ladies (box 2) 208
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-0000-T3378 | ladies (box 2) 226
+  - White House (landmark, multi_word) — as "WHITE HOUSE"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-0000-T3394 | ladies (box 2) 234
+  - Kansas (state, exact) — as "KANSAS"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-0000-T3396 | ladies (box 2) 235
+  - Paradise (city, exact) — as "PARADISE"
+  - Venezuela (country, exact) — as "VENEZUELA"
+
+JS-0000-T3422 | ladies (box 2) 248
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+  - Kentucky (state, exact) — as "KENTUCKY"
+
+JS-0000-T3444 | ladies (box 2) 259
+  - Moscow (city, exact) — as "MOSCOW"
+
+JS-0000-T345 | super artist 170
+  - Kansas (state, exact) — as "KANSAS"
+
+JS-0000-T347 | super artist 171
+  - Vietnam (country, exact) — as "VIETNAM"
+
+JS-0000-T3542 | ladies (box 2) 308
+  - Washington (state, exact) x2 — as "WASHINGTON"
+
+JS-0000-T3564 | ladies (box 2) 319
+  - Memphis (city, exact) — as "MEMPHIS"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-0000-T357 | super artist 176
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-0000-T361 | super artist 178
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-0000-T3718 | ladies (box 2) 396
+  - Olympus (landmark, exact) — as "OLYMPUS"
+
+JS-0000-T424 | window 15
+  - Utah (state, exact) x4 — as "UTAH"
+
+JS-0000-T4240 | portraits (box 2) 258
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Chicago (city, exact) — as "CHICAGO"
+
+JS-0000-T4662 | ocean 45
+  - China (country, exact) — as "CHINA"
+
+JS-0000-T4748 | ocean 88
+  - Missouri (state, exact) — as "MISSOURI"
+  - Lowell (city, exact) — as "LOWELL"
+
+JS-0000-T4832 | desert (box 1) 16
+  - Vietnam (country, exact) — as "VIETNAM"
+
+JS-0000-T4918 | desert (box 1) 59
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+  - Egypt (country, exact) — as "EGYPT"
+  - Phoenix (city, exact) — as "PHOENIX"
+  - Utah (state, exact) — as "UTAH"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-0000-T5026 | desert (box 1) 113
+  - Utah (state, exact) x6 — as "UTAH"
+
+JS-0000-T5144 | desert (box 1) 172
+  - Utah (state, exact) x4 — as "UTAH"
+
+JS-0000-T5192 | desert (box 1) 196
+  - Ghana (country, exact) — as "GHANA"
+
+JS-0000-T5202 | desert (box 1) 201
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T5204 | desert (box 1) 202
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T5206 | desert (box 1) 203
+  - Utah (state, exact) x81 — as "UTAH"
+
+JS-0000-T5238 | desert (box 2) 219
+  - Siberia (region, exact) — as "SIBERIA"
+
+JS-0000-T5362 | desert (box 2) 281
+  - Gilead (region, exact) x12 — as "GILEAD"
+
+JS-0000-T5380 | desert (box 2) 290
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Utah (state, exact) x84 — as "UTAH"
+
+JS-0000-T5396 | desert (box 2) 298
+  - New Mexico (state, multi_word) x8 — as "NEW MEXICO"
+  - Mexico (country, exact) x8 — as "MEXICO"
+
+JS-0000-T5658 | desert (box 3) 429
+  - Carson City (city, multi_word) — as "CARSON CITY"
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-0000-T5684 | desert (box 3) 442
+  - Utah (state, exact) x42 — as "UTAH"
+
+JS-0000-T5688 | desert (box 3) 444
+  - Carson City (city, multi_word) — as "CARSON CITY"
+  - Brooklyn (city, exact) — as "BROOKLYN"
+
+JS-0000-T5738 | desert (box 3) 469
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-0000-T5760 | desert (box 3) 480
+  - London (city, exact) — as "LONDON"
+
+JS-0000-T5786 | desert (box 3) 493
+  - Newark (city, exact) — as "NEWARK"
+
+JS-0000-T5816 | desert (box 3) 508
+  - Utah (state, exact) x50 — as "UTAH"
+
+JS-0000-T5842 | desert (box 3) 521
+  - Europe (region, exact) — as "EUROPE"
+
+JS-0000-T5862 | desert (box 3) 531
+  - Elko (city, exact) x11 — as "ELKO"
+
+JS-0000-T5974 | desert (box 3) 587
+  - Utah (state, exact) x21 — as "UTAH"
+
+JS-0000-T5992 | desert (box 3) 596
+  - Ohio (state, exact) — as "OHIO"
+  - Xenia (city, exact) x3 — as "XENIA"
+
+JS-0000-T6016 | desert (box 3) 608
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Chicago (city, exact) — as "CHICAGO"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-0000-T6064 | desert (box 3) 632
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T6096 | comic (box 1) 3
+  - Sudan (country, exact) — as "SUDAN"
+
+JS-0000-T610 | tree 58
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T6138 | comic (box 1) 24
+  - Chelsea (region, exact) — as "CHELSEA"
+
+JS-0000-T6206 | comic (box 1) 58
+  - Utah (state, exact) x2 — as "UTAH"
+
+JS-0000-T6210 | comic (box 1) 60
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T6214 | comic (box 1) 62
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T6218 | comic (box 1) 64
+  - Venice (city, exact) — as "VENICE"
+
+JS-0000-T622 | tree 64
+  - Egypt (country, exact) — as "EGYPT"
+  - Maine (state, exact) — as "MAINE"
+  - Uganda (country, exact) — as "UGANDA"
+  - Ghana (country, exact) — as "GHANA"
+  - Indonesia (country, exact) — as "INDONESIA"
+  - Peru (country, exact) — as "PERU"
+  - Cameroon (country, exact) x2 — as "CAMEROON"
+  - Iraq (country, exact) — as "IRAQ"
+  - Korea (country, exact) — as "KOREA"
+  - Tibet (region, exact) — as "TIBET"
+  - Denver (city, exact) — as "DENVER"
+  - Iran (country, exact) — as "IRAN"
+  - Senegal (country, exact) — as "SENEGAL"
+  - Cairo (city, exact) — as "CAIRO"
+  - France (country, exact) — as "FRANCE"
+  - Africa (region, exact) — as "AFRICA"
+  - Italy (country, exact) — as "ITALY"
+  - Belgium (country, exact) — as "BELGIUM"
+  - Missouri (state, exact) — as "MISSOURI"
+  - Libya (country, exact) — as "LIBYA"
+  - Russia (country, exact) — as "RUSSIA"
+  - Ethiopia (country, exact) — as "ETHIOPIA"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Israel (country, exact) — as "ISRAEL"
+  - Syria (country, exact) — as "SYRIA"
+  - Japan (country, exact) — as "JAPAN"
+  - Nigeria (country, exact) — as "NIGERIA"
+  - India (country, exact) — as "INDIA"
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Ireland (country, exact) — as "IRELAND"
+  - Mali (country, exact) — as "MALI"
+  - Canada (country, exact) — as "CANADA"
+  - Netherlands (country, exact) — as "NETHERLANDS"
+  - Uruguay (country, exact) — as "URUGUAY"
+  - Germany (country, exact) — as "GERMANY"
+
+JS-0000-T6226 | comic (box 1) 68
+  - Chicago (city, exact) — as "CHICAGO"
+
+JS-0000-T6256 | comic (box 1) 83
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T6278 | comic (box 1) 94
+  - Timbuktu (city, exact) — as "TIMBUKTU"
+
+JS-0000-T6302 | comic (box 1) 106
+  - Japan (country, exact) — as "JAPAN"
+
+JS-0000-T6310 | comic (box 1) 110
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T6316 | comic (box 1) 113
+  - Utah (state, exact) — as "UTAH"
+
+JS-0000-T6338 | comic (box 1) 124
+  - Ohio (state, exact) x2 — as "OHIO"
+  - Xenia (city, exact) — as "XENIA"
+
+JS-0000-T6340 | comic (box 1) 125
+  - New Orleans (city, multi_word) — as "NEW ORLEANS"
+  - Africa (region, exact) — as "AFRICA"
+  - Louisiana (state, exact) x2 — as "LOUISIANA"
+
+JS-0000-T6372 | comic (box 1) 141
+  - Peru (country, exact) — as "PERU"
+
+JS-0000-T6402 | comic (box 1) 156
+  - Mississippi (body_of_water, exact) x7 — as "MISSISSIPPI"
+
+JS-0000-T6404 | comic (box 1) 157
+  - Alaska (state, exact) — as "ALASKA"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Maine (state, exact) — as "MAINE"
+  - Utah (state, exact) — as "UTAH"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Nevada (state, exact) — as "NEVADA"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Florida (state, exact) — as "FLORIDA"
+  - Harlem (city, exact) — as "HARLEM"
+  - Texas (state, exact) — as "TEXAS"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Oregon (state, exact) — as "OREGON"
+  - Nebraska (state, exact) — as "NEBRASKA"
+  - Georgia (state, disambiguated) [disambiguated with 3 context words] — as "GEORGIA"
+
+JS-0000-T6438 | comic (box 1) 174
+  - Utah (state, exact) x2 — as "UTAH"
+
+JS-0000-T6458 | comic (box 1) 184
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+
+JS-0000-T6498 | comic (box 2) 204
+  - Xenia (city, exact) — as "XENIA"
+
+JS-0000-T6510 | comic (box 2) 210
+  - Utah (state, exact) x4 — as "UTAH"
+
+JS-0000-T6552 | comic (box 2) 231
+  - Maine (state, exact) — as "MAINE"
+
+JS-0000-T6558 | comic (box 2) 234
+  - Germany (country, exact) x2 — as "GERMANY"
+  - Spain (country, exact) — as "SPAIN"
+  - Europe (region, exact) — as "EUROPE"
+
+JS-0000-T6636 | comic (box 2) 273
+  - Mississippi (body_of_water, exact) x4 — as "MISSISSIPPI"
+
+JS-0000-T6674 | comic (box 2) 292
+  - Memphis (city, exact) — as "MEMPHIS"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-0000-T6794 | comic (box 2) 352
+  - Texas (state, exact) — as "TEXAS"
+
+JS-0000-T6828 | comic (box 2) 369
+  - Alabama (state, exact) — as "ALABAMA"
+
+JS-0000-T6844 | comic (box 2) 377
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-0000-T7483 | unstretched-06.jpg
+  - England (country, exact) — as "ENGLAND"
+  - Michigan (state, exact) — as "MICHIGAN"
+
+JS-0000-T782 | skull 19
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-0000-T794 | skull 25
+  - England (country, exact) — as "ENGLAND"
+
+JS-0000-T808 | skull 32
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+
+JS-0000-T810 | skull 33
+  - Denmark (country, exact) — as "DENMARK"
+
+JS-0000-T814 | skull 35
+  - Nevada (state, exact) — as "NEVADA"
+
+JS-0000-T842 | mri 3
+  - Norman (city, exact) — as "NORMAN"
+
+JS-0000-T880 | mri 22
+  - Memphis (city, exact) — as "MEMPHIS"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-0000-T89 | super artist 42
+  - Chicago (city, exact) — as "CHICAGO"
+
+JS-1921-T1013 | nipple 49
+  - the West (region, multi_word) — as "THE WEST"
+
+JS-1921-T1114 | building 50
+  - Kentucky (state, exact) — as "KENTUCKY"
+
+JS-1921-T1334 | brancusi 38
+  - New York (city, multi_word) — as "NEW YORK"
+  - China (country, exact) — as "CHINA"
+
+JS-1921-T1762 | cardboard artist 100
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - New York (city, multi_word) — as "NEW YORK"
+  - Brooklyn (city, exact) — as "BROOKLYN"
+
+JS-1921-T1782 | cardboard artist 110
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-1921-T2068 | creature 118
+  - Akron (city, exact) — as "AKRON"
+
+JS-1921-T2268 | creature 218
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Arkansas (state, exact) — as "ARKANSAS"
+
+JS-1921-T2682 | fish 28
+  - Ghana (country, exact) — as "GHANA"
+  - Texas (state, exact) — as "TEXAS"
+
+JS-1921-T2846 | fish 110
+  - Brooklyn (city, exact) — as "BROOKLYN"
+  - Nevada (state, exact) — as "NEVADA"
+  - Oregon (state, exact) — as "OREGON"
+  - Berlin (city, exact) — as "BERLIN"
+
+JS-1921-T4636 | ocean 32
+  - Utah (state, exact) x3 — as "UTAH"
+
+JS-1921-T5320 | desert (box 2) 260
+  - Utah (state, exact) — as "UTAH"
+
+JS-1921-T5674 | desert (box 3) 437
+  - Louisiana (state, exact) — as "LOUISIANA"
+
+JS-1921-T6550 | comic (box 2) 230
+  - Utah (state, exact) — as "UTAH"
+
+JS-1921-T6668 | comic (box 2) 289
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-1921-T698 | nipple 21
+  - Tennessee (state, exact) — as "TENNESSEE"
+
+JS-1921-T738 | pencil 8
+  - Golden Gate (landmark, multi_word) — as "GOLDEN GATE"
+
+JS-1922-T6582 | comic (box 2) 246
+  - China (country, exact) — as "CHINA"
+
+JS-1923-T1528 | vehicle 62
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+
+JS-1923-T490 | tree 3
+  - Morocco (country, exact) — as "MOROCCO"
+
+JS-1925-T452 | window 29
+  - Tennessee (state, exact) — as "TENNESSEE"
+  - Utah (state, exact) x7 — as "UTAH"
+
+JS-1927-T652 | tree 79
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - North Carolina (state, multi_word) — as "NORTH CAROLINA"
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - New York (city, multi_word) — as "NEW YORK"
+  - New Hampshire (state, multi_word) — as "NEW HAMPSHIRE"
+  - North Dakota (state, multi_word) — as "NORTH DAKOTA"
+  - Rhode Island (state, multi_word) — as "RHODE ISLAND"
+  - South Carolina (state, multi_word) — as "SOUTH CAROLINA"
+  - South Dakota (state, multi_word) — as "SOUTH DAKOTA"
+  - West Virginia (state, multi_word) — as "WEST VIRGINIA"
+  - Ohio (state, exact) — as "OHIO"
+  - Connecticut (state, exact) — as "CONNECTICUT"
+  - Alaska (state, exact) — as "ALASKA"
+  - California (state, exact) — as "CALIFORNIA"
+  - Idaho (state, exact) — as "IDAHO"
+  - Tennessee (state, exact) — as "TENNESSEE"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Iowa (state, exact) — as "IOWA"
+  - Maine (state, exact) x3 — as "MAINE"
+  - Kansas (state, exact) — as "KANSAS"
+  - Missouri (state, exact) — as "MISSOURI"
+  - Utah (state, exact) — as "UTAH"
+  - Maryland (state, exact) — as "MARYLAND"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Nevada (state, exact) — as "NEVADA"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Washington (state, exact) — as "WASHINGTON"
+  - Michigan (state, exact) — as "MICHIGAN"
+  - Illinois (state, exact) — as "ILLINOIS"
+  - Wisconsin (state, exact) — as "WISCONSIN"
+  - Florida (state, exact) — as "FLORIDA"
+  - Minnesota (state, exact) — as "MINNESOTA"
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Vermont (state, exact) x2 — as "VERMONT"
+  - Texas (state, exact) — as "TEXAS"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Oregon (state, exact) — as "OREGON"
+  - Wyoming (state, exact) — as "WYOMING"
+  - Mexico (country, exact) — as "MEXICO"
+  - Nebraska (state, exact) — as "NEBRASKA"
+  - Indiana (state, disambiguated) [disambiguated with 4 context words] — as "INDIANA"
+  - Georgia (state, disambiguated) [disambiguated with 5 context words] — as "GEORGIA"
+  - Virginia (state, disambiguated) x2 [disambiguated with 5 context words] — as "VIRGINIA"
+
+JS-1929-T560 | tree 33
+  - Utah (state, exact) x6 — as "UTAH"
+
+JS-1947-T5172 | desert (box 1) 186
+  - Utah (state, exact) — as "UTAH"
+
+JS-1947-T6094 | comic (box 1) 2
+  - New York (city, multi_word) — as "NEW YORK"
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-1957-T792 | skull 24
+  - Denver (city, exact) — as "DENVER"
+  - Denmark (country, exact) — as "DENMARK"
+  - Brooklyn (city, exact) — as "BROOKLYN"
+
+JS-1965-T4352 | portraits (box 2) 314
+  - Chicago (city, exact) — as "CHICAGO"
+
+JS-1971-T5422 | desert (box 2) 311
+  - San Luis Obispo (city, multi_word) — as "SAN LUIS OBISPO"
+  - California (state, exact) — as "CALIFORNIA"
+  - Utah (state, exact) — as "UTAH"
+
+JS-1974-T3562 | ladies (box 2) 318
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - Connecticut (state, exact) — as "CONNECTICUT"
+  - London (city, exact) — as "LONDON"
+  - Chicago (city, exact) — as "CHICAGO"
+  - Texas (state, exact) — as "TEXAS"
+
+JS-1974-T5174 | desert (box 1) 187
+  - Carson City (city, multi_word) — as "CARSON CITY"
+  - Las Vegas (city, multi_word) x2 — as "LAS VEGAS"
+  - Phoenix (city, exact) x2 — as "PHOENIX"
+  - Elko (city, exact) x2 — as "ELKO"
+  - Nevada (state, exact) — as "NEVADA"
+  - Sahara (region, exact) — as "SAHARA"
+
+JS-1975-T2556 | boat 139
+  - Jamaica (country, exact) — as "JAMAICA"
+
+JS-1981-T4618 | ocean 23
+  - Pacific (body_of_water, exact) — as "PACIFIC"
+  - Atlantic (body_of_water, exact) — as "ATLANTIC"
+
+JS-1981-T5638 | desert (box 2) 419
+  - New York (city, multi_word) — as "NEW YORK"
+
+JS-1982-T1464 | vehicle 30
+  - Houston (city, exact) — as "HOUSTON"
+
+JS-1982-T5018 | desert (box 1) 109
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - Cleveland (city, exact) — as "CLEVELAND"
+  - Utah (state, exact) — as "UTAH"
+
+JS-1983-T1466 | vehicle 31
+  - Ohio (state, exact) — as "OHIO"
+  - Phoenix (city, exact) — as "PHOENIX"
+  - Utah (state, exact) — as "UTAH"
+  - Iowa (state, exact) — as "IOWA"
+
+JS-1983-T1810 | cardboard artist 122
+  - the Keys (region, multi_word) — as "THE KEYS"
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-1984-T3348 | ladies (box 2) 211
+  - Congo (region, exact) — as "CONGO"
+
+JS-1984-T6024 | desert (box 3) 612
+  - El Paso (city, multi_word) — as "EL PASO"
+  - Los Angeles (city, multi_word) — as "LOS ANGELES"
+  - Texas (state, exact) — as "TEXAS"
+  - Paris (city, exact) — as "PARIS"
+
+JS-1986-T2972 | ladies (box 1) 23
+  - Jamaica (country, exact) — as "JAMAICA"
+
+JS-1991-T1007 | nipple 46
+  - Washington (state, exact) — as "WASHINGTON"
+
+JS-1993-T3450 | ladies (box 2) 262
+  - Texas (state, exact) — as "TEXAS"
+
+JS-1994-T2710 | fish 42
+  - Mississippi (body_of_water, exact) x8 — as "MISSISSIPPI"
+
+JS-1994-T6534 | comic (box 2) 222
+  - Memphis (city, exact) — as "MEMPHIS"
+
+JS-2001-T1746 | cardboard artist 92
+  - Memphis (city, exact) — as "MEMPHIS"
+
+JS-2001-T2024 | creature 96
+  - Singapore (city, exact) — as "SINGAPORE"
+
+JS-2001-T5670 | desert (box 3) 435
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-2002-T2668 | fish 21
+  - Maine (state, exact) — as "MAINE"
+  - Uganda (country, exact) — as "UGANDA"
+  - England (country, exact) — as "ENGLAND"
+
+JS-2002-T5162 | desert (box 1) 181
+  - Mexico (country, exact) x2 — as "MEXICO"
+
+JS-2002-T5692 | desert (box 3) 446
+  - Maine (state, exact) — as "MAINE"
+  - Alaska (state, exact) — as "ALASKA"
+  - Arkansas (state, exact) — as "ARKANSAS"
+
+JS-2002-T5696 | desert (box 3) 448
+  - Utah (state, exact) — as "UTAH"
+
+JS-2002-T6300 | comic (box 1) 105
+  - South Dakota (state, multi_word) — as "SOUTH DAKOTA"
+  - Harlem (city, exact) — as "HARLEM"
+
+JS-2003-T1576 | cardboard artist 7
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-2003-T3514 | ladies (box 2) 294
+  - the West (region, multi_word) — as "THE WEST"
+
+JS-2005-T4028 | portraits (box 1) 152
+  - Utah (state, exact) x78 — as "UTAH"
+
+JS-2007-T275 | super artist 135
+  - Minnesota (state, exact) — as "MINNESOTA"
+
+JS-2010-T5568 | desert (box 2) 384
+  - Pacific (body_of_water, exact) — as "PACIFIC"
+
+JS-2011-T1218 | spiral/mouth 30
+  - Utah (state, exact) x5 — as "UTAH"
+
+JS-2011-T1612 | cardboard artist 25
+  - Utah (state, exact) x5 — as "UTAH"
+
+JS-2011-T618 | tree 62
+  - Nile (body_of_water, exact) — as "NILE"
+  - Utah (state, exact) x4 — as "UTAH"
+
+JS-2011-T6614 | comic (box 2) 262
+  - Norman (city, exact) — as "NORMAN"
+  - Paris (city, exact) — as "PARIS"
+
+JS-2011-T85 | super artist 40
+  - the Midwest (region, multi_word) — as "THE MIDWEST"
+
+JS-2012-T4014 | portraits (box 1) 145
+  - China (country, exact) x5 — as "CHINA"
+
+JS-2012-T4350 | portraits (box 2) 313
+  - Ohio (state, exact) — as "OHIO"
+  - Idaho (state, exact) — as "IDAHO"
+  - Xenia (city, exact) — as "XENIA"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2012-T4842 | desert (box 1) 21
+  - New Mexico (state, multi_word) x10 — as "NEW MEXICO"
+  - Utah (state, exact) x4 — as "UTAH"
+  - Mexico (country, exact) x10 — as "MEXICO"
+
+JS-2012-T5256 | desert (box 2) 228
+  - Elko (city, exact) — as "ELKO"
+  - Utah (state, exact) x14 — as "UTAH"
+
+JS-2012-T5646 | desert (box 2) 423
+  - Utah (state, exact) x9 — as "UTAH"
+
+JS-2013-T2376 | boat 49
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Utah (state, exact) x35 — as "UTAH"
+  - Arizona (state, exact) x4 — as "ARIZONA"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-2013-T4994 | desert (box 1) 97
+  - Arizona (state, exact) x25 — as "ARIZONA"
+
+JS-2013-T6254 | comic (box 1) 82
+  - Texas (state, exact) — as "TEXAS"
+
+JS-2014-T1880 | creature 24
+  - Texas (state, exact) x2 — as "TEXAS"
+  - Tennessee (state, exact) x17 — as "TENNESSEE"
+
+JS-2014-T2154 | creature 161
+  - Greece (country, exact) — as "GREECE"
+
+JS-2014-T4902 | desert (box 1) 51
+  - Maine (state, exact) — as "MAINE"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2014-T5078 | desert (box 1) 139
+  - New York (city, multi_word) — as "NEW YORK"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+
+JS-2014-T5316 | desert (box 2) 258
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-2014-T5328 | desert (box 2) 264
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - North Carolina (state, multi_word) — as "NORTH CAROLINA"
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - New York (city, multi_word) — as "NEW YORK"
+  - New Hampshire (state, multi_word) — as "NEW HAMPSHIRE"
+  - North Dakota (state, multi_word) — as "NORTH DAKOTA"
+  - Rhode Island (state, multi_word) — as "RHODE ISLAND"
+  - South Carolina (state, multi_word) — as "SOUTH CAROLINA"
+  - South Dakota (state, multi_word) — as "SOUTH DAKOTA"
+  - West Virginia (state, multi_word) — as "WEST VIRGINIA"
+  - Ohio (state, exact) — as "OHIO"
+  - Maine (state, exact) — as "MAINE"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Connecticut (state, exact) — as "CONNECTICUT"
+  - Alaska (state, exact) — as "ALASKA"
+  - Brazil (country, exact) — as "BRAZIL"
+  - California (state, exact) — as "CALIFORNIA"
+  - Kansas (state, exact) — as "KANSAS"
+  - Illinois (state, exact) — as "ILLINOIS"
+  - Texas (state, exact) — as "TEXAS"
+  - Pakistan (country, exact) — as "PAKISTAN"
+  - Tennessee (state, exact) — as "TENNESSEE"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Florida (state, exact) — as "FLORIDA"
+  - Utah (state, exact) — as "UTAH"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Minnesota (state, exact) — as "MINNESOTA"
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+  - Nevada (state, exact) — as "NEVADA"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Iowa (state, exact) — as "IOWA"
+  - Oregon (state, exact) — as "OREGON"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Wyoming (state, exact) — as "WYOMING"
+  - Mexico (country, exact) — as "MEXICO"
+  - Indiana (state, disambiguated) [disambiguated with 3 context words] — as "INDIANA"
+  - Georgia (state, disambiguated) [disambiguated with 4 context words] — as "GEORGIA"
+  - Virginia (state, disambiguated) x2 [disambiguated with 2 context words] — as "VIRGINIA"
+
+JS-2014-T5392 | desert (box 2) 296
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+  - Nevada (state, exact) — as "NEVADA"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-2014-T5400 | desert (box 2) 300
+  - Utah (state, exact) — as "UTAH"
+
+JS-2014-T5494 | desert (box 2) 347
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-2014-T6110 | comic (box 1) 10
+  - Europe (region, exact) — as "EUROPE"
+
+JS-2014-T6130 | comic (box 1) 20
+  - Berlin (city, exact) — as "BERLIN"
+
+JS-2015-T1630 | cardboard artist 34
+  - London (city, exact) — as "LONDON"
+
+JS-2015-T2142 | creature 155
+  - Grand Canyon (landmark, multi_word) x2 — as "GRAND CANYON"
+  - Detroit (city, exact) x2 — as "DETROIT"
+
+JS-2015-T5710 | desert (box 3) 455
+  - Minnesota (state, exact) x5 — as "MINNESOTA"
+
+JS-2016-T1202 | spiral/mouth 22
+  - Brazil (country, exact) — as "BRAZIL"
+  - Canada (country, exact) — as "CANADA"
+
+JS-2016-T1658 | cardboard artist 48
+  - Tennessee (state, exact) — as "TENNESSEE"
+  - Iowa (state, exact) — as "IOWA"
+
+JS-2016-T1898 | creature 33
+  - the West (region, multi_word) — as "THE WEST"
+  - Missouri (state, exact) — as "MISSOURI"
+  - Illinois (state, exact) — as "ILLINOIS"
+
+JS-2016-T2118 | creature 143
+  - Austria (country, exact) — as "AUSTRIA"
+  - Australia (country, exact) — as "AUSTRALIA"
+  - Alaska (state, exact) — as "ALASKA"
+  - America (country, exact) — as "AMERICA"
+  - Africa (region, exact) — as "AFRICA"
+  - Asia (region, exact) — as "ASIA"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Arkansas (state, exact) — as "ARKANSAS"
+
+JS-2016-T2196 | creature 182
+  - Peru (country, exact) — as "PERU"
+
+JS-2016-T2258 | creature 213
+  - Spain (country, exact) — as "SPAIN"
+
+JS-2016-T2396 | boat 59
+  - Pakistan (country, exact) — as "PAKISTAN"
+
+JS-2016-T2970 | ladies (box 1) 22
+  - Idaho (state, exact) — as "IDAHO"
+
+JS-2016-T436 | window 21
+  - Philadelphia (city, exact) x2 — as "PHILADELPHIA"
+
+JS-2016-T4998 | desert (box 1) 99
+  - Hungary (country, exact) — as "HUNGARY"
+
+JS-2016-T5116 | desert (box 1) 158
+  - Utah (state, exact) x128 — as "UTAH"
+
+JS-2016-T5188 | desert (box 1) 194
+  - New Mexico (state, multi_word) x3 — as "NEW MEXICO"
+  - Nevada (state, exact) x2 — as "NEVADA"
+  - Egypt (country, exact) — as "EGYPT"
+  - Sudan (country, exact) x2 — as "SUDAN"
+  - Arizona (state, exact) x2 — as "ARIZONA"
+  - Tunisia (country, exact) — as "TUNISIA"
+  - Mexico (country, exact) x4 — as "MEXICO"
+  - Libya (country, exact) — as "LIBYA"
+  - Utah (state, exact) x12 — as "UTAH"
+
+JS-2016-T5614 | desert (box 2) 407
+  - South Dakota (state, multi_word) — as "SOUTH DAKOTA"
+
+JS-2016-T5750 | desert (box 3) 475
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2016-T5962 | desert (box 3) 581
+  - Babylon (city, exact) — as "BABYLON"
+
+JS-2016-T5966 | desert (box 3) 583
+  - Texas (state, exact) x11 — as "TEXAS"
+
+JS-2016-T6084 | desert (box 3) 642
+  - Utah (state, exact) — as "UTAH"
+
+JS-2016-T6156 | comic (box 1) 33
+  - New York City (city, multi_word) — as "NEW YORK CITY"
+  - New York (city, multi_word) — as "NEW YORK"
+
+JS-2016-T6236 | comic (box 1) 73
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2016-T6348 | comic (box 1) 129
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2016-T6528 | comic (box 2) 219
+  - Asia (region, exact) — as "ASIA"
+
+JS-2016-T6530 | comic (box 2) 220
+  - Maine (state, exact) — as "MAINE"
+  - Washington (state, exact) — as "WASHINGTON"
+
+JS-2016-T6554 | comic (box 2) 232
+  - Salt Lake City (city, multi_word) — as "SALT LAKE"
+  - Utah (state, exact) — as "UTAH"
+
+JS-2016-T6598 | comic (box 2) 254
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+
+JS-2016-T6642 | comic (box 2) 276
+  - France (country, exact) x2 — as "FRANCE"
+
+JS-2016-T6686 | comic (box 2) 298
+  - Ohio (state, exact) — as "OHIO"
+  - Xenia (city, exact) — as "XENIA"
+
+JS-2016-T6758 | comic (box 2) 334
+  - New York (city, multi_word) — as "NEW YORK"
+  - Brooklyn (city, exact) — as "BROOKLYN"
+
+JS-2016-T804 | skull 30
+  - Switzerland (country, exact) — as "SWITZERLAND"
+  - Germany (country, exact) — as "GERMANY"
+
+JS-2017-T1226 | spiral/mouth 34
+  - Versailles (landmark, exact) — as "VERSAILLES"
+
+JS-2017-T2432 | boat 77
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-2017-T2530 | boat 126
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-2017-T4580 | ocean 4
+  - Maine (state, exact) — as "MAINE"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Connecticut (state, exact) — as "CONNECTICUT"
+  - Alaska (state, exact) — as "ALASKA"
+  - California (state, exact) — as "CALIFORNIA"
+  - Illinois (state, exact) — as "ILLINOIS"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Florida (state, exact) — as "FLORIDA"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+  - Iowa (state, exact) — as "IOWA"
+  - Oregon (state, exact) — as "OREGON"
+  - Georgia (state, disambiguated) [disambiguated with 2 context words] — as "GEORGIA"
+
+JS-2017-T4734 | ocean 81
+  - Rome (city, exact) — as "ROME"
+
+JS-2017-T4890 | desert (box 1) 45
+  - England (country, exact) — as "ENGLAND"
+
+JS-2017-T4908 | desert (box 1) 54
+  - the West (region, multi_word) — as "THE WEST"
+
+JS-2017-T5102 | desert (box 1) 151
+  - Utah (state, exact) x27 — as "UTAH"
+
+JS-2017-T5414 | desert (box 2) 307
+  - Utah (state, exact) x27 — as "UTAH"
+
+JS-2017-T5510 | desert (box 2) 355
+  - Zurich (city, exact) — as "ZURICH"
+
+JS-2017-T5748 | desert (box 3) 474
+  - America (country, exact) — as "AMERICA"
+
+JS-2017-T5866 | desert (box 3) 533
+  - Vermont (state, exact) — as "VERMONT"
+
+JS-2017-T6744 | comic (box 2) 327
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+
+JS-2017-T844 | mri 4
+  - Utah (state, exact) x25 — as "UTAH"
+
+JS-2018-T1046 | building 16
+  - Pacific (body_of_water, exact) — as "PACIFIC"
+
+JS-2018-T1686 | cardboard artist 62
+  - Louisiana (state, exact) — as "LOUISIANA"
+
+JS-2018-T2270 | creature 219
+  - Utah (state, exact) — as "UTAH"
+
+JS-2018-T251 | super artist 123
+  - Timbuktu (city, exact) — as "TIMBUKTU"
+
+JS-2018-T271 | super artist 133
+  - Brazil (country, exact) — as "BRAZIL"
+
+JS-2018-T4670 | ocean 49
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+
+JS-2018-T4844 | desert (box 1) 22
+  - Utah (state, exact) — as "UTAH"
+
+JS-2018-T4850 | desert (box 1) 25
+  - the West (region, multi_word) — as "THE WEST"
+
+JS-2018-T5086 | desert (box 1) 143
+  - Los Angeles (city, multi_word) x2 — as "LOS ANGELES"
+  - Germany (country, exact) — as "GERMANY"
+
+JS-2018-T544 | tree 25
+  - New York (city, multi_word) — as "NEW YORK"
+  - Ohio (state, exact) — as "OHIO"
+  - Maine (state, exact) — as "MAINE"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Connecticut (state, exact) — as "CONNECTICUT"
+  - Alaska (state, exact) — as "ALASKA"
+  - Kansas (state, exact) — as "KANSAS"
+  - Illinois (state, exact) — as "ILLINOIS"
+  - Tennessee (state, exact) — as "TENNESSEE"
+  - Florida (state, exact) — as "FLORIDA"
+  - Utah (state, exact) — as "UTAH"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Minnesota (state, exact) — as "MINNESOTA"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Iowa (state, exact) — as "IOWA"
+  - Wyoming (state, exact) — as "WYOMING"
+  - Indiana (state, disambiguated) [disambiguated with 3 context words] — as "INDIANA"
+
+JS-2018-T870 | mri 17
+  - Utah (state, exact) x96 — as "UTAH"
+
+JS-2019-T1200 | spiral/mouth 21
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2019-T1328 | brancusi 35
+  - Romania (country, exact) — as "ROMANIA"
+  - Paris (city, exact) — as "PARIS"
+
+JS-2019-T1650 | cardboard artist 44
+  - Eiffel Tower (landmark, multi_word) — as "EIFFEL TOWER"
+
+JS-2019-T1794 | cardboard artist 114
+  - Egypt (country, exact) — as "EGYPT"
+  - Ethiopia (country, exact) — as "ETHIOPIA"
+  - Europe (region, exact) — as "EUROPE"
+
+JS-2019-T2174 | creature 171
+  - Utah (state, exact) — as "UTAH"
+
+JS-2019-T2290 | boat 6
+  - Nevada (state, exact) — as "NEVADA"
+
+JS-2019-T2314 | boat 18
+  - Harlem (city, exact) — as "HARLEM"
+
+JS-2019-T2562 | boat 142
+  - Ohio (state, exact) — as "OHIO"
+
+JS-2019-T2574 | boat 148
+  - Peru (country, exact) — as "PERU"
+
+JS-2019-T4446 | portraits (box 3) 361
+  - Central Park (landmark, multi_word) — as "CENTRAL PARK"
+
+JS-2019-T4732 | ocean 80
+  - Hawaii (state, exact) — as "HAWAII"
+  - Barbados (country, exact) x3 — as "BARBADOS"
+  - Jamaica (country, exact) x2 — as "JAMAICA"
+  - Texas (state, exact) — as "TEXAS"
+  - Minnesota (state, exact) — as "MINNESOTA"
+  - Nevada (state, exact) — as "NEVADA"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2019-T5142 | desert (box 1) 171
+  - Mali (country, exact) x6 — as "MALI"
+  - Elko (city, exact) x7 — as "ELKO"
+  - Utah (state, exact) x7 — as "UTAH"
+
+JS-2019-T5150 | desert (box 1) 175
+  - Utah (state, exact) x7 — as "UTAH"
+
+JS-2019-T5170 | desert (box 1) 185
+  - Grand Canyon (landmark, multi_word) — as "GRAND CANYON"
+  - Arizona (state, exact) x2 — as "ARIZONA"
+  - Butte (city, exact) x4 — as "BUTTE"
+  - Utah (state, exact) x85 — as "UTAH"
+
+JS-2019-T5216 | desert (box 1) 208
+  - Egypt (country, exact) — as "EGYPT"
+  - Ghana (country, exact) — as "GHANA"
+  - Uganda (country, exact) — as "UGANDA"
+  - Africa (region, exact) — as "AFRICA"
+  - Somalia (country, exact) — as "SOMALIA"
+  - Chad (country, exact) — as "CHAD"
+  - Congo (region, exact) — as "CONGO"
+  - Libya (country, exact) — as "LIBYA"
+  - Nigeria (country, exact) — as "NIGERIA"
+  - Morocco (country, exact) — as "MOROCCO"
+  - Sudan (country, exact) — as "SUDAN"
+  - Tunisia (country, exact) — as "TUNISIA"
+  - Kenya (country, exact) — as "KENYA"
+  - Mali (country, exact) x2 — as "MALI"
+  - Zimbabwe (country, exact) — as "ZIMBABWE"
+
+JS-2019-T5308 | desert (box 2) 254
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-2019-T5448 | desert (box 2) 324
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+  - Utah (state, exact) x6 — as "UTAH"
+
+JS-2019-T592 | tree 49
+  - France (country, exact) — as "FRANCE"
+  - Nevada (state, exact) — as "NEVADA"
+  - Paris (city, exact) — as "PARIS"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2019-T6350 | comic (box 1) 130
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - London (city, exact) — as "LONDON"
+  - Pacific (body_of_water, exact) x2 — as "PACIFIC"
+  - Utah (state, exact) — as "UTAH"
+  - Moscow (city, exact) — as "MOSCOW"
+  - Paris (city, exact) — as "PARIS"
+  - Brussels (city, exact) — as "BRUSSELS"
+  - Siberia (region, exact) — as "SIBERIA"
+  - Warsaw (city, exact) — as "WARSAW"
+
+JS-2019-T6868 | comic (box 2) 389
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Utah (state, exact) — as "UTAH"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Mexico (country, exact) — as "MEXICO"
+  - Knoxville (city, exact) — as "KNOXVILLE"
+
+JS-2020-T1074 | building 30
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - North Carolina (state, multi_word) — as "NORTH CAROLINA"
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - New York (city, multi_word) — as "NEW YORK"
+  - New Hampshire (state, multi_word) — as "NEW HAMPSHIRE"
+  - North Dakota (state, multi_word) — as "NORTH DAKOTA"
+  - Rhode Island (state, multi_word) — as "RHODE ISLAND"
+  - South Carolina (state, multi_word) — as "SOUTH CAROLINA"
+  - South Dakota (state, multi_word) — as "SOUTH DAKOTA"
+  - West Virginia (state, multi_word) — as "WEST VIRGINIA"
+  - Maine (state, exact) — as "MAINE"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Washington (state, exact) — as "WASHINGTON"
+  - Alaska (state, exact) — as "ALASKA"
+  - California (state, exact) — as "CALIFORNIA"
+  - Michigan (state, exact) — as "MICHIGAN"
+  - Kansas (state, exact) — as "KANSAS"
+  - Illinois (state, exact) — as "ILLINOIS"
+  - Texas (state, exact) — as "TEXAS"
+  - Denmark (country, exact) — as "DENMARK"
+  - Tennessee (state, exact) — as "TENNESSEE"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Missouri (state, exact) x2 — as "MISSOURI"
+  - Utah (state, exact) — as "UTAH"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Minnesota (state, exact) — as "MINNESOTA"
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+  - Nevada (state, exact) — as "NEVADA"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Iowa (state, exact) — as "IOWA"
+  - Oregon (state, exact) — as "OREGON"
+  - Wyoming (state, exact) — as "WYOMING"
+  - Mexico (country, exact) — as "MEXICO"
+  - Nebraska (state, exact) — as "NEBRASKA"
+  - Indiana (state, disambiguated) [disambiguated with 2 context words] — as "INDIANA"
+  - Georgia (state, disambiguated) [disambiguated with 3 context words] — as "GEORGIA"
+  - Virginia (state, disambiguated) x2 [disambiguated with 3 context words] — as "VIRGINIA"
+
+JS-2020-T1302 | brancusi 22
+  - Brazil (country, exact) — as "BRAZIL"
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-2020-T4884 | desert (box 1) 42
+  - Utah (state, exact) — as "UTAH"
+
+JS-2020-T5112 | desert (box 1) 156
+  - New York (city, multi_word) — as "NEW YORK"
+
+JS-2020-T6638 | comic (box 2) 274
+  - Oklahoma (state, exact) x2 — as "OKLAHOMA"
+
+JS-2021-T1146 | building 66
+  - Harlem (city, exact) — as "HARLEM"
+
+JS-2021-T1280 | brancusi 11
+  - Romania (country, exact) — as "ROMANIA"
+  - Paris (city, exact) x2 — as "PARIS"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2021-T1492 | vehicle 44
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-2021-T1572 | cardboard artist 5
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2021-T1702 | cardboard artist 70
+  - California (state, exact) — as "CALIFORNIA"
+
+JS-2021-T1846 | creature 17
+  - Caribbean (region, exact) — as "CARIBBEAN"
+
+JS-2021-T2308 | boat 15
+  - Portugal (country, exact) — as "PORTUGAL"
+
+JS-2021-T2646 | fish 10
+  - Pacific (body_of_water, exact) — as "PACIFIC"
+  - America (country, exact) — as "AMERICA"
+  - Atlantic (body_of_water, exact) — as "ATLANTIC"
+
+JS-2021-T2750 | fish 62
+  - Utah (state, exact) x16 — as "UTAH"
+
+JS-2021-T2776 | fish 75
+  - New York (city, multi_word) — as "NEW YORK"
+  - Ohio (state, exact) — as "OHIO"
+  - California (state, exact) — as "CALIFORNIA"
+  - Iowa (state, exact) — as "IOWA"
+  - Nevada (state, exact) — as "NEVADA"
+  - Illinois (state, exact) — as "ILLINOIS"
+  - Wyoming (state, exact) — as "WYOMING"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2021-T2890 | fish 132
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-2021-T4872 | desert (box 1) 36
+  - London (city, exact) — as "LONDON"
+
+JS-2021-T4954 | desert (box 1) 77
+  - Utah (state, exact) x19 — as "UTAH"
+
+JS-2021-T5048 | desert (box 1) 124
+  - Utah (state, exact) — as "UTAH"
+
+JS-2021-T5208 | desert (box 1) 204
+  - Pakistan (country, exact) — as "PAKISTAN"
+
+JS-2021-T5338 | desert (box 2) 269
+  - England (country, exact) — as "ENGLAND"
+
+JS-2021-T5378 | desert (box 2) 289
+  - Ohio (state, exact) — as "OHIO"
+  - Iraq (country, exact) — as "IRAQ"
+  - Peru (country, exact) — as "PERU"
+  - Chad (country, exact) — as "CHAD"
+  - Utah (state, exact) — as "UTAH"
+  - Iowa (state, exact) — as "IOWA"
+
+JS-2021-T5514 | desert (box 2) 357
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-2021-T5624 | desert (box 2) 412
+  - California (state, exact) — as "CALIFORNIA"
+
+JS-2021-T5672 | desert (box 3) 436
+  - New Orleans (city, multi_word) — as "NEW ORLEANS"
+  - Louisiana (state, exact) — as "LOUISIANA"
+
+JS-2021-T5876 | desert (box 3) 538
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-2021-T5878 | desert (box 3) 539
+  - Utah (state, exact) x3 — as "UTAH"
+
+JS-2021-T5902 | desert (box 3) 551
+  - Angkor Wat (landmark, multi_word) — as "ANGKOR WAT"
+  - Cambodia (country, exact) — as "CAMBODIA"
+
+JS-2021-T5944 | desert (box 3) 572
+  - New York (city, multi_word) — as "NEW YORK"
+  - North Dakota (state, multi_word) — as "NORTH DAKOTA"
+  - Rhode Island (state, multi_word) — as "RHODE ISLAND"
+  - South Dakota (state, multi_word) — as "SOUTH DAKOTA"
+  - Connecticut (state, exact) — as "CONNECTICUT"
+  - Alaska (state, exact) — as "ALASKA"
+  - California (state, exact) — as "CALIFORNIA"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Maine (state, exact) — as "MAINE"
+  - Missouri (state, exact) — as "MISSOURI"
+  - Utah (state, exact) — as "UTAH"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Nevada (state, exact) — as "NEVADA"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Wisconsin (state, exact) — as "WISCONSIN"
+  - Florida (state, exact) — as "FLORIDA"
+  - India (country, exact) — as "INDIA"
+  - Texas (state, exact) — as "TEXAS"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Arkansas (state, exact) — as "ARKANSAS"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Wyoming (state, exact) — as "WYOMING"
+  - Mexico (country, exact) — as "MEXICO"
+  - Nebraska (state, exact) — as "NEBRASKA"
+  - Georgia (state, disambiguated) [disambiguated with 3 context words] — as "GEORGIA"
+
+JS-2021-T6082 | desert (box 3) 641
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2021-T6264 | comic (box 1) 87
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Kentucky (state, exact) — as "KENTUCKY"
+
+JS-2021-T6304 | comic (box 1) 107
+  - Kentucky (state, exact) — as "KENTUCKY"
+
+JS-2021-T6306 | comic (box 1) 108
+  - Utah (state, exact) — as "UTAH"
+
+JS-2021-T6334 | comic (box 1) 122
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2021-T6460 | comic (box 1) 185
+  - San Francisco (city, multi_word) — as "SAN FRANCISCO"
+
+JS-2021-T6472 | comic (box 1) 191
+  - Nevada (state, exact) x2 — as "NEVADA"
+
+JS-2021-T6512 | comic (box 2) 211
+  - Utah (state, exact) — as "UTAH"
+
+JS-2021-T6564 | comic (box 2) 237
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2021-T6736 | comic (box 2) 323
+  - Illinois (state, exact) — as "ILLINOIS"
+
+JS-2021-T700 | nipple 22
+  - Ohio (state, exact) — as "OHIO"
+
+JS-2021-T730 | pencil 4
+  - Rhode Island (state, multi_word) — as "RHODE ISLAND"
+  - Ohio (state, exact) — as "OHIO"
+  - Alaska (state, exact) — as "ALASKA"
+  - Tennessee (state, exact) x2 — as "TENNESSEE"
+  - Alabama (state, exact) — as "ALABAMA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Pennsylvania (state, exact) — as "PENNSYLVANIA"
+  - Iowa (state, exact) — as "IOWA"
+  - Maine (state, exact) — as "MAINE"
+  - Kansas (state, exact) — as "KANSAS"
+  - Utah (state, exact) — as "UTAH"
+  - Maryland (state, exact) — as "MARYLAND"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Nevada (state, exact) — as "NEVADA"
+  - Hawaii (state, exact) — as "HAWAII"
+  - Minnesota (state, exact) — as "MINNESOTA"
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Texas (state, exact) — as "TEXAS"
+  - Arizona (state, exact) — as "ARIZONA"
+  - Oregon (state, exact) — as "OREGON"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2022-T1558 | vehicle 77
+  - Utah (state, exact) — as "UTAH"
+
+JS-2022-T3372 | ladies (box 2) 223
+  - Ireland (country, exact) — as "IRELAND"
+
+JS-2022-T3464 | ladies (box 2) 269
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+
+JS-2022-T371 | super artist 183
+  - New York (city, multi_word) — as "NEW YORK"
+
+JS-2022-T4800 | ocean 114
+  - Chad (country, exact) — as "CHAD"
+
+JS-2022-T5894 | desert (box 3) 547
+  - Utah (state, exact) x100 — as "UTAH"
+
+JS-2022-T6004 | desert (box 3) 602
+  - Egypt (country, exact) — as "EGYPT"
+  - Idaho (state, exact) — as "IDAHO"
+  - Siberia (region, exact) — as "SIBERIA"
+  - Sahara (region, exact) — as "SAHARA"
+  - Utah (state, exact) — as "UTAH"
+  - Reno (city, exact) — as "RENO"
+  - Brooklyn (city, exact) — as "BROOKLYN"
+
+JS-2022-T6050 | desert (box 3) 625
+  - Utah (state, exact) x120 — as "UTAH"
+
+JS-2022-T6678 | comic (box 2) 294
+  - Texas (state, exact) — as "TEXAS"
+
+JS-2022-T987 | nipple 36
+  - Japan (country, exact) — as "JAPAN"
+  - Indonesia (country, exact) — as "INDONESIA"
+  - Vietnam (country, exact) — as "VIETNAM"
+  - Cambodia (country, exact) — as "CAMBODIA"
+  - Korea (country, exact) — as "KOREA"
+  - Pakistan (country, exact) — as "PAKISTAN"
+  - Russia (country, exact) — as "RUSSIA"
+  - India (country, exact) — as "INDIA"
+  - China (country, exact) — as "CHINA"
+  - Thailand (country, exact) — as "THAILAND"
+
+JS-2023-T1486 | vehicle 41
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-2023-T1538 | vehicle 67
+  - Utah (state, exact) — as "UTAH"
+  - Nevada (state, exact) — as "NEVADA"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-2023-T1570 | cardboard artist 4
+  - Gloucester (city, exact) — as "GLOUCESTER"
+
+JS-2023-T187 | super artist 91
+  - Nevada (state, exact) — as "NEVADA"
+
+JS-2023-T195 | super artist 95
+  - Peru (country, exact) — as "PERU"
+  - Asia (region, exact) — as "ASIA"
+
+JS-2023-T2214 | creature 191
+  - Denmark (country, exact) — as "DENMARK"
+
+JS-2023-T2946 | ladies (box 1) 10
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Jamaica (country, exact) — as "JAMAICA"
+
+JS-2023-T3350 | ladies (box 2) 212
+  - Alaska (state, exact) — as "ALASKA"
+  - Kansas (state, exact) — as "KANSAS"
+  - Chad (country, exact) — as "CHAD"
+  - Minnesota (state, exact) — as "MINNESOTA"
+
+JS-2023-T3368 | ladies (box 2) 221
+  - France (country, exact) — as "FRANCE"
+
+JS-2023-T3374 | ladies (box 2) 224
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2023-T3376 | ladies (box 2) 225
+  - Virginia (state, disambiguated) [disambiguated with 2 context words] — as "VIRGINIA"
+
+JS-2023-T3406 | ladies (box 2) 240
+  - Vermont (state, exact) x13 — as "VERMONT"
+
+JS-2023-T3420 | ladies (box 2) 247
+  - Utah (state, exact) — as "UTAH"
+  - Brooklyn (city, exact) — as "BROOKLYN"
+
+JS-2023-T3426 | ladies (box 2) 250
+  - Boston (city, exact) — as "BOSTON"
+
+JS-2023-T3430 | ladies (box 2) 252
+  - Hawaii (state, exact) — as "HAWAII"
+
+JS-2023-T3434 | ladies (box 2) 254
+  - Texas (state, exact) — as "TEXAS"
+  - Oklahoma (state, exact) x2 — as "OKLAHOMA"
+
+JS-2023-T3456 | ladies (box 2) 265
+  - Ghana (country, exact) — as "GHANA"
+  - Senegal (country, exact) — as "SENEGAL"
+
+JS-2023-T3470 | ladies (box 2) 272
+  - Nigeria (country, exact) — as "NIGERIA"
+
+JS-2023-T3474 | ladies (box 2) 274
+  - Las Vegas (city, multi_word) — as "LAS VEGAS"
+
+JS-2023-T3476 | ladies (box 2) 275
+  - Paradise (city, exact) — as "PARADISE"
+
+JS-2023-T3490 | ladies (box 2) 282
+  - Utah (state, exact) — as "UTAH"
+
+JS-2023-T3500 | ladies (box 2) 287
+  - Tennessee (state, exact) — as "TENNESSEE"
+
+JS-2023-T3506 | ladies (box 2) 290
+  - England (country, exact) — as "ENGLAND"
+  - America (country, exact) — as "AMERICA"
+
+JS-2023-T3550 | ladies (box 2) 312
+  - New Mexico (state, multi_word) — as "NEW MEXICO"
+  - Mexico (country, exact) x2 — as "MEXICO"
+
+JS-2023-T3568 | ladies (box 2) 321
+  - Utah (state, exact) — as "UTAH"
+
+JS-2023-T3576 | ladies (box 2) 325
+  - Greece (country, exact) — as "GREECE"
+
+JS-2023-T4744 | ocean 86
+  - Jamaica (country, exact) — as "JAMAICA"
+
+JS-2023-T572 | tree 39
+  - the West (region, multi_word) — as "THE WEST"
+  - Utah (state, exact) — as "UTAH"
+  - Duluth (city, exact) — as "DULUTH"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2023-T6134 | comic (box 1) 22
+  - Texas (state, exact) — as "TEXAS"
+  - Houston (city, exact) — as "HOUSTON"
+
+JS-2023-T6482 | comic (box 1) 196
+  - Salt Lake City (city, multi_word) — as "SALT LAKE"
+
+JS-2023-T6518 | comic (box 2) 214
+  - Europe (region, exact) — as "EUROPE"
+
+JS-2023-T664 | nipple 4
+  - Memphis (city, exact) — as "MEMPHIS"
+  - Kentucky (state, exact) — as "KENTUCKY"
+
+JS-2023-T6830 | comic (box 2) 370
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+
+JS-2023-T6832 | comic (box 2) 371
+  - Massachusetts (state, exact) — as "MASSACHUSETTS"
+  - Hollywood (city, exact) — as "HOLLYWOOD"
+  - Oregon (state, exact) x2 — as "OREGON"
+
+JS-2023-T722 | nipple 33
+  - Times Square (landmark, multi_word) — as "TIMES SQUARE"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2023-T750 | skull 3
+  - Scotland (country, exact) x3 — as "SCOTLAND"
+
+JS-2023-T780 | skull 18
+  - Pacific (body_of_water, exact) — as "PACIFIC"
+  - Nevada (state, exact) — as "NEVADA"
+
+JS-2024-T1476 | vehicle 36
+  - Utah (state, exact) x20 — as "UTAH"
+
+JS-2024-T167 | super artist 81
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-2024-T1896 | creature 32
+  - Oklahoma (state, exact) x2 — as "OKLAHOMA"
+  - Texas (state, exact) — as "TEXAS"
+
+JS-2024-T2036 | creature 102
+  - Peru (country, exact) — as "PERU"
+  - Utah (state, exact) — as "UTAH"
+
+JS-2024-T2098 | creature 133
+  - Utah (state, exact) x3 — as "UTAH"
+
+JS-2024-T2194 | creature 181
+  - Kansas City (city, multi_word) — as "KANSAS CITY"
+  - Kansas (state, exact) — as "KANSAS"
+
+JS-2024-T2226 | creature 197
+  - Denver (city, exact) — as "DENVER"
+  - Denmark (country, exact) — as "DENMARK"
+
+JS-2024-T2232 | creature 200
+  - Canada (country, exact) — as "CANADA"
+
+JS-2024-T3364 | ladies (box 2) 219
+  - Jamaica (country, exact) — as "JAMAICA"
+  - Cleveland (city, exact) x2 — as "CLEVELAND"
+
+JS-2024-T3392 | ladies (box 2) 233
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-2024-T3408 | ladies (box 2) 241
+  - Montgomery (city, exact) x2 — as "MONTGOMERY"
+  - Wyoming (state, exact) — as "WYOMING"
+
+JS-2024-T3482 | ladies (box 2) 278
+  - Arkansas (state, exact) — as "ARKANSAS"
+
+JS-2024-T3520 | ladies (box 2) 297
+  - Memphis (city, exact) — as "MEMPHIS"
+
+JS-2024-T3582 | ladies (box 2) 328
+  - Nile (body_of_water, exact) — as "NILE"
+
+JS-2024-T3590 | ladies (box 2) 332
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Missouri (state, exact) — as "MISSOURI"
+
+JS-2024-T6468 | comic (box 1) 189
+  - Texas (state, exact) — as "TEXAS"
+
+JS-2024-T6608 | comic (box 2) 259
+  - Arizona (state, exact) — as "ARIZONA"
+
+JS-2025-T1520 | vehicle 58
+  - Texas (state, exact) — as "TEXAS"
+  - Utah (state, exact) — as "UTAH"
+
+JS-2025-T3518 | ladies (box 2) 296
+  - Montgomery (city, exact) — as "MONTGOMERY"
+
+JS-2026-T6572 | comic (box 2) 241
+  - Africa (region, exact) — as "AFRICA"
+
+JS-2026-T6888 | comic (box 2) 399
+  - Louisiana (state, exact) — as "LOUISIANA"
+
+JS-2026-T6890 | comic (box 2) 400
+  - Kansas City (city, multi_word) — as "KANSAS CITY"
+  - Kansas (state, exact) — as "KANSAS"
+  - Scotland (country, exact) — as "SCOTLAND"
+
+JS-2026-T6892 | comic (box 2) 401
+  - Canada (country, exact) — as "CANADA"
+
+JS-2026-T6898 | comic (box 2) 404
+  - Jamaica (country, exact) — as "JAMAICA"
+  - Seattle (city, exact) — as "SEATTLE"
+
+JS-2026-T6904 | comic (box 2) 407
+  - New York (city, multi_word) — as "NEW YORK"
+  - Cleveland (city, exact) — as "CLEVELAND"
+
+JS-2026-T6906 | comic (box 2) 408
+  - Vermont (state, exact) x2 — as "VERMONT"
+
+JS-2026-T6920 | comic (box 2) 415
+  - Egypt (country, exact) — as "EGYPT"
+  - Senegal (country, exact) — as "SENEGAL"
+  - Libya (country, exact) — as "LIBYA"
+
+JS-2026-T6922 | comic (box 2) 416
+  - Munich (city, exact) x2 — as "MUNICH"
+
+JS-2026-T6930 | comic (box 2) 420
+  - Moscow (city, exact) — as "MOSCOW"
+
+JS-2026-T6952 | pop culture 7
+  - Utah (state, exact) x2 — as "UTAH"
+
+JS-2026-T6958 | pop culture 10
+  - Ghana (country, exact) — as "GHANA"
+  - Elko (city, exact) — as "ELKO"
+  - Utah (state, exact) x2 — as "UTAH"
+
+JS-2026-T7020 | pop culture 17
+  - Kentucky (state, exact) — as "KENTUCKY"
+
+JS-2026-T7024 | pop culture 19
+  - Harlem (city, exact) x2 — as "HARLEM"
+
+JS-2026-T7028 | pop culture 21
+  - Spain (country, exact) — as "SPAIN"
+
+JS-2026-T7030 | pop culture 22
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7042 | pop culture 28
+  - Uganda (country, exact) — as "UGANDA"
+  - Cambodia (country, exact) — as "CAMBODIA"
+  - Cameroon (country, exact) — as "CAMEROON"
+  - Senegal (country, exact) — as "SENEGAL"
+  - Africa (region, exact) x2 — as "AFRICA"
+  - Libya (country, exact) — as "LIBYA"
+  - Sudan (country, exact) x2 — as "SUDAN"
+  - Tunisia (country, exact) — as "TUNISIA"
+  - Zimbabwe (country, exact) — as "ZIMBABWE"
+
+JS-2026-T7062 | pop culture 38
+  - Michigan (state, exact) — as "MICHIGAN"
+
+JS-2026-T7064 | pop culture 39
+  - Brooklyn (city, exact) — as "BROOKLYN"
+
+JS-2026-T7068 | pop culture 41
+  - Butte (city, exact) — as "BUTTE"
+
+JS-2026-T7070 | pop culture 42
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7072 | pop culture 43
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2026-T7078 | pop culture 46
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7080 | pop culture 47
+  - Xenia (city, exact) — as "XENIA"
+  - Utah (state, exact) x2 — as "UTAH"
+
+JS-2026-T7084 | pop culture 49
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - New York (city, multi_word) — as "NEW YORK"
+  - Ohio (state, exact) — as "OHIO"
+  - Austria (country, exact) — as "AUSTRIA"
+  - Newark (city, exact) — as "NEWARK"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+
+JS-2026-T7086 | pop culture 50
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+  - New York (city, multi_word) — as "NEW YORK"
+  - New Hampshire (state, multi_word) x2 — as "NEW HAMPSHIRE"
+  - Nairobi (city, exact) — as "NAIROBI"
+  - Nevada (state, exact) x15 — as "NEVADA"
+  - Nepal (country, exact) — as "NEPAL"
+  - Nebraska (state, exact) x3 — as "NEBRASKA"
+
+JS-2026-T7088 | pop culture 51
+  - Nevada (state, exact) — as "NEVADA"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2026-T7096 | pop culture 55
+  - Los Angeles (city, multi_word) — as "LOS ANGELES"
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7098 | pop culture 56
+  - Utah (state, exact) x5 — as "UTAH"
+
+JS-2026-T7104 | pop culture 59
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7108 | pop culture 61
+  - London (city, exact) — as "LONDON"
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7110 | pop culture 62
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2026-T7120 | pop culture 67
+  - Elko (city, exact) x3 — as "ELKO"
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7126 | pop culture 70
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7132 | pop culture 73
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2026-T7136 | pop culture 75
+  - Brazil (country, exact) x2 — as "BRAZIL"
+
+JS-2026-T7146 | pop culture 80
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7152 | pop culture 83
+  - Rome (city, exact) — as "ROME"
+
+JS-2026-T7154 | pop culture 84
+  - the West (region, multi_word) — as "the west"
+  - Rome (city, exact) x3 — as "ROME"
+
+JS-2026-T7162 | pop culture 88
+  - England (country, exact) — as "ENGLAND"
+  - Scotland (country, exact) — as "SCOTLAND"
+  - Utah (state, exact) — as "UTAH"
+  - Mecca (city, exact) — as "MECCA"
+  - Mexico (country, exact) — as "MEXICO"
+
+JS-2026-T7164 | pop culture 89
+  - Africa (region, exact) x3 — as "AFRICA"
+
+JS-2026-T7166 | pop culture 90
+  - Utah (state, exact) x2 — as "UTAH"
+
+JS-2026-T7168 | pop culture 91
+  - Texas (state, exact) x3 — as "TEXAS"
+
+JS-2026-T7176 | pop culture 95
+  - Hawaii (state, exact) — as "HAWAII"
+  - Kansas (state, exact) — as "KANSAS"
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+  - Florida (state, exact) — as "FLORIDA"
+  - Louisiana (state, exact) — as "LOUISIANA"
+  - Arkansas (state, exact) x2 — as "ARKANSAS"
+  - Kentucky (state, exact) — as "KENTUCKY"
+
+JS-2026-T7178 | pop culture 96
+  - Detroit (city, exact) — as "DETROIT"
+  - France (country, exact) — as "FRANCE"
+
+JS-2026-T7180 | pop culture 97
+  - South America (region, multi_word) — as "SOUTH AMERICA"
+  - America (country, exact) x2 — as "AMERICA"
+  - Utah (state, exact) x4 — as "UTAH"
+  - Uruguay (country, exact) — as "URUGUAY"
+
+JS-2026-T7192 | pop culture 103
+  - Gilead (region, exact) — as "GILEAD"
+
+JS-2026-T7194 | pop culture 104
+  - England (country, exact) — as "ENGLAND"
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7196 | pop culture 105
+  - Jerusalem (city, exact) — as "JERUSALEM"
+
+JS-2026-T7200 | pop culture 107
+  - Utah (state, exact) x3 — as "UTAH"
+
+JS-2026-T7210 | pop culture 112
+  - Austria (country, exact) — as "AUSTRIA"
+
+JS-2026-T7212 | pop culture 113
+  - China (country, exact) — as "CHINA"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Atlantic (body_of_water, exact) — as "ATLANTIC"
+
+JS-2026-T7220 | pop culture 117
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2026-T7242 | pop culture 128
+  - Texas (state, exact) — as "TEXAS"
+  - Utah (state, exact) x2 — as "UTAH"
+
+JS-2026-T7244 | pop culture 129
+  - Detroit (city, exact) — as "DETROIT"
+  - Canada (country, exact) — as "CANADA"
+
+JS-2026-T7246 | pop culture 130
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+
+JS-2026-T7254 | pop culture 134
+  - Carson City (city, multi_word) — as "CARSON CITY"
+  - Amsterdam (city, exact) — as "AMSTERDAM"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Nevada (state, exact) — as "NEVADA"
+
+JS-2026-T7260 | pop culture 137
+  - Maine (state, exact) — as "MAINE"
+
+JS-2026-T7264 | pop culture 139
+  - Paradise (city, exact) x2 — as "PARADISE"
+
+JS-2026-T7266 | pop culture 140
+  - Detroit (city, exact) — as "DETROIT"
+  - Nebraska (state, exact) x2 — as "NEBRASKA"
+
+JS-2026-T7276 | pop culture 145
+  - Utah (state, exact) — as "UTAH"
+  - Chico (city, exact) — as "CHICO"
+
+JS-2026-T7278 | pop culture 146
+  - Ohio (state, exact) — as "OHIO"
+  - Kentucky (state, exact) — as "KENTUCKY"
+  - Portugal (country, exact) — as "PORTUGAL"
+  - Baltimore (city, exact) — as "BALTIMORE"
+  - Hollywood (city, exact) — as "HOLLYWOOD"
+
+JS-2026-T7280 | pop culture 147
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7282 | pop culture 148
+  - Utah (state, exact) x3 — as "UTAH"
+
+JS-2026-T7286 | pop culture 150
+  - New Jersey (state, multi_word) — as "NEW JERSEY"
+
+JS-2026-T7288 | pop culture 151
+  - California (state, exact) — as "CALIFORNIA"
+  - Europe (region, exact) — as "EUROPE"
+  - Athens (city, exact) — as "ATHENS"
+
+JS-2026-T7290 | pop culture 152
+  - Utah (state, exact) x3 — as "UTAH"
+
+JS-2026-T7320 | pop culture 167
+  - California (state, exact) — as "CALIFORNIA"
+  - Utah (state, exact) — as "UTAH"
+  - Oklahoma (state, exact) — as "OKLAHOMA"
+  - Oregon (state, exact) — as "OREGON"
+
+JS-2026-T7322 | pop culture 168
+  - Iraq (country, exact) — as "IRAQ"
+  - Peru (country, exact) — as "PERU"
+  - Brazil (country, exact) — as "BRAZIL"
+  - Alaska (state, exact) — as "ALASKA"
+  - Kansas (state, exact) x2 — as "KANSAS"
+  - Iran (country, exact) — as "IRAN"
+  - Africa (region, exact) — as "AFRICA"
+  - Asia (region, exact) — as "ASIA"
+
+JS-2026-T7336 | pop culture 175
+  - Utah (state, exact) — as "UTAH"
+
+JS-2026-T7340 | pop culture 177
+  - Texas (state, exact) — as "TEXAS"
+
+JS-2026-T7346 | pop culture 180
+  - Tibet (region, exact) — as "TIBET"
+
+JS-2026-T7348 | pop culture 181
+  - Norman (city, exact) — as "NORMAN"
+  - Utah (state, exact) x3 — as "UTAH"
+  - Nevada (state, exact) x2 — as "NEVADA"
+  - Iowa (state, exact) — as "IOWA"
+  - Oregon (state, exact) — as "OREGON"
+  - Nebraska (state, exact) — as "NEBRASKA"
+
+JS-2026-T7360 | pop culture 187
+  - Spain (country, exact) — as "SPAIN"
+
+JS-2026-T7364 | pop culture 189
+  - Washington (state, exact) — as "WASHINGTON"
+  - Paris (city, exact) — as "PARIS"
+
+JS-2026-T7376 | pop culture 195
+  - Mississippi (body_of_water, exact) — as "MISSISSIPPI"
+
+JS-2026-T7380 | pop culture 197
+  - Detroit (city, exact) — as "DETROIT"
+
+JS-2027-T2838 | fish 106
+  - Mali (country, exact) — as "MALI"
+
+JS-2048-T6170 | comic (box 1) 40
+  - France (country, exact) — as "FRANCE"
+

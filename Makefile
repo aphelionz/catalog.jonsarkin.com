@@ -1,4 +1,4 @@
-.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply enrich-prod-dry enrich-prod doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema ensure-api-key harvest harvest-discover harvest-fetch harvest-extract harvest-output visual-refs visual-refs-apply visual-refs-cross-media
+.PHONY: local down logs ingest ingest-full ingest-dry enrich enrich-dry enrich-batch enrich-batch-status enrich-batch-collect enrich-apply enrich-prod-dry enrich-prod doctor doctor-catalog pull pull-new pull-db pull-files pull-modules pull-themes deploy backup-db restore-db push-schema ensure-api-key harvest harvest-discover harvest-fetch harvest-extract harvest-output visual-refs visual-refs-apply visual-refs-cross-media visual-locs visual-locs-apply visual-locs-cross-media
 
 -include .env
 export
@@ -65,6 +65,15 @@ visual-refs-apply: ## Extract visual references and write to DB + extend faceted
 
 visual-refs-cross-media: ## Generate cross-media reference reports (visual works ↔ JIM Stories)
 	python3 scripts/extract_visual_references.py --cross-media
+
+visual-locs: ## Extract geographic locations from visual work transcriptions (dry-run)
+	python3 scripts/extract_visual_locations.py
+
+visual-locs-apply: ## Extract visual locations and write to DB + extend faceted browse
+	python3 scripts/extract_visual_locations.py --apply
+
+visual-locs-cross-media: ## Generate cross-media location reports (visual works ↔ JIM Stories)
+	python3 scripts/extract_visual_locations.py --cross-media
 
 deploy: ## Push code (modules/themes) to production and restart Omeka
 	rsync -avz --compress --partial --progress \

@@ -1,0 +1,93 @@
+location_name,location_type,visual_works_count,visual_total_reps,jim_stories_count,jim_mentions
+Africa,region,8,11,1,1
+Akron,city,1,1,2,2
+Alabama,state,12,13,2,2
+Alaska,state,13,13,1,1
+America,country,7,8,2,2
+Amsterdam,city,1,1,1,1
+Angkor Wat,landmark,1,1,1,1
+Arizona,state,21,50,1,1
+Arkansas,state,13,14,1,2
+Babylon,city,1,1,1,1
+Baltimore,city,1,1,1,1
+Barbados,country,1,3,1,1
+Boston,city,1,1,2,2
+Brooklyn,city,8,8,2,2
+Butte,city,2,5,1,1
+California,state,12,12,6,6
+Cambodia,country,5,5,1,1
+Cameroon,country,3,4,1,1
+Caribbean,region,1,1,1,1
+Carson City,city,5,5,1,1
+Central African Republic,country,1,1,2,2
+Chad,country,6,6,1,1
+Chelsea,region,1,1,1,1
+Chico,city,1,1,1,1
+China,country,8,12,1,1
+Cleveland,city,10,11,2,2
+Congo,region,3,4,2,2
+Connecticut,state,7,7,1,1
+Detroit,city,13,14,1,1
+Duluth,city,1,1,2,2
+El Paso,city,1,1,1,1
+England,country,9,9,1,1
+Florida,state,8,8,1,1
+France,country,7,9,3,3
+Gilead,region,2,13,1,1
+Gloucester,city,10,10,1,1
+Grand Canyon,landmark,2,3,1,1
+Greece,country,2,2,2,2
+Hawaii,state,13,13,1,1
+Hollywood,city,4,4,1,1
+Idaho,state,5,5,1,1
+Illinois,state,9,9,1,1
+Indiana,state,4,4,1,2
+Iowa,state,12,12,1,1
+Israel,country,2,2,1,1
+Italy,country,2,2,3,3
+Kansas,state,14,17,3,3
+Kansas City,city,2,2,1,1
+Kentucky,state,17,17,2,2
+Knoxville,city,1,1,1,1
+Louisiana,state,17,18,3,3
+Lowell,city,1,1,1,1
+Maine,state,16,18,1,1
+Massachusetts,state,9,9,1,1
+Memphis,city,7,7,4,4
+Mexico,country,23,44,2,2
+Mississippi,body_of_water,31,47,2,2
+Missouri,state,7,8,2,2
+Montgomery,city,2,3,1,1
+Nebraska,state,16,19,1,1
+New Jersey,state,17,17,3,3
+New Mexico,state,19,37,1,1
+New Orleans,city,3,4,1,1
+New York,city,19,19,4,4
+New York City,city,2,2,2,2
+Newark,city,2,2,1,1
+Nigeria,country,3,3,2,2
+Norman,city,3,3,1,1
+North Carolina,state,3,3,1,1
+Ohio,state,19,20,2,2
+Oklahoma,state,19,22,1,1
+Olympus,landmark,1,1,1,1
+Oregon,state,11,12,1,1
+Paradise,city,3,4,1,1
+Paris,city,8,9,4,4
+Phoenix,city,3,4,1,1
+Rome,city,3,5,2,2
+Russia,country,4,4,1,1
+San Francisco,city,3,3,1,1
+San Luis Obispo,city,1,1,1,1
+Seattle,city,1,1,1,1
+Staten Island,city,1,1,2,2
+Sudan,country,8,10,1,1
+Tennessee,state,12,29,3,4
+the Keys,region,1,1,1,1
+the Midwest,region,1,1,1,1
+the West,region,7,7,1,1
+Utah,state,128,1417,4,4
+Vermont,state,4,18,1,1
+Vietnam,country,5,5,1,1
+Virginia,state,4,7,1,1
+Xenia,city,7,9,1,1
