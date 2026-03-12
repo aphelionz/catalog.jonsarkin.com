@@ -12,7 +12,7 @@ WORKDIR /app
 COPY requirements.api.txt /app/requirements.api.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir \
-        torch==2.8.0+cpu torchvision==0.23.0+cpu \
+        torch==2.8.0+cpu \
         --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r /app/requirements.api.txt && \
     pip cache purge

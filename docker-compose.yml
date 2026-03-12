@@ -58,6 +58,7 @@ services:
       TEXT_VECTOR_NAME: text_vec_clip
       SEARCH_MODE: hybrid
       DEFAULT_LIMIT: 50
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     restart: unless-stopped
 
   editor:

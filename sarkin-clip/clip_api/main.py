@@ -9,10 +9,14 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from clip_api import embeddings
 from clip_api.config import Settings, load_settings
 from clip_api.models import (
+    EnrichRequest,
+    EnrichResponse,
     IconographyBatchItem,
     IconographyBatchResponse,
     IconographyResponse,
     ImageSearchResponse,
+    IngestRequest,
+    IngestResponse,
     MatchItem,
     MotifDetail,
     SearchResponse,
@@ -835,6 +839,51 @@ async def image_search(
         matches.append(MatchItem(**match, score=score))
 
     return ImageSearchResponse(matches=matches)
+
+
+# ── Enrichment & single-item ingest ──────────────────────────────────────────
+
+
+@app.post("/v1/enrich", response_model=EnrichResponse)
+async def enrich_item(req: EnrichRequest) -> EnrichResponse:
+    """Analyze an artwork image with Claude and return structured metadata."""
+    import os
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured")
+
+    from clip_api.enrich import analyze_artwork
+
+    try:
+        result = await analyze_artwork(req.image_url, model=req.model)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Enrichment failed: {exc}") from exc
+
+    return EnrichResponse(**result)
+
+
+@app.post("/v1/ingest/{omeka_id}", response_model=IngestResponse)
+async def ingest_single_item(omeka_id: int, req: IngestRequest) -> IngestResponse:
+    """Embed a single item and upsert to Qdrant + SQLite FTS index."""
+    from clip_api.ingest import ingest_item
+
+    settings = _settings()
+    try:
+        result = await ingest_item(
+            settings=settings,
+            omeka_item_id=omeka_id,
+            image_url=req.image_url,
+            title=req.title,
+            description=req.description,
+            subjects=req.subjects,
+            year=req.year,
+            curator_notes=req.curator_notes,
+            omeka_url=req.omeka_url,
+            thumb_url=req.thumb_url,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Ingest failed: {exc}") from exc
+
+    return IngestResponse(**result)
 
 
 if __name__ == "__main__":

@@ -86,6 +86,7 @@ services:
       SEARCH_MODE: hybrid
       SEARCH_DB_PATH: /app/search_index/index.sqlite
       DEFAULT_LIMIT: 50
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - search_index:/app/search_index
 
