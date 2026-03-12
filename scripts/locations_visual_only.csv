@@ -1,101 +1,101 @@
 location_name,location_type,visual_works_count,visual_total_reps
 Asia,region,4,4
-Athens,city,1,1
-Atlantic,body_of_water,3,3
-Australia,country,3,4
-Austria,country,4,4
-Belgium,country,1,1
-Berlin,city,2,2
-Brazil,country,8,9
-Brussels,city,1,1
-Cairo,city,1,1
-Canada,country,5,5
-Central Park,landmark,2,2
-Chicago,city,6,6
-Denmark,country,7,7
-Denver,city,4,4
-Egypt,country,11,11
-Eiffel Tower,landmark,1,1
-Elko,city,6,25
-Ethiopia,country,4,4
+Athens,region,1,1
+Atlantic,region,3,3
+Australia,region,3,4
+Austria,region,4,4
+Belgium,region,1,1
+Berlin,region,2,2
+Brazil,region,9,11
+Brussels,region,1,1
+Cairo,region,1,1
+Canada,region,5,5
+Central Park,region,2,2
+Chicago,region,6,6
+Denmark,region,7,7
+Denver,region,4,4
+Egypt,region,11,11
+Eiffel Tower,region,1,1
+Elko,region,6,25
+Ethiopia,region,4,4
 Europe,region,6,6
-Georgia,state,7,7
-Germany,country,5,6
-Ghana,country,10,10
-Golden Gate,landmark,1,1
-Harlem,city,5,6
-Houston,city,2,2
-Hungary,country,1,1
-India,country,3,3
-Indonesia,country,4,4
-Iran,country,2,2
-Iraq,country,4,4
-Ireland,country,3,3
-Jamaica,country,7,8
-Japan,country,5,5
-Jerusalem,city,1,1
-Kenya,country,4,4
-Korea,country,4,4
-Las Vegas,city,10,11
-Libya,country,8,8
-London,city,6,6
-Los Angeles,city,3,4
-Mali,country,6,12
-Maryland,state,3,3
-Mecca,city,1,1
-Michigan,state,4,4
-Minnesota,state,9,13
-Morocco,country,4,4
-Moscow,city,3,3
-Munich,city,1,2
-Nairobi,city,1,1
-Nepal,country,1,1
-Netherlands,country,1,1
-Nevada,state,26,43
-New Hampshire,state,4,5
-Nile,body_of_water,2,2
-North Dakota,state,4,4
-Pacific,body_of_water,6,7
-Pakistan,country,5,5
-Pennsylvania,state,8,8
-Peru,country,12,12
-Philadelphia,city,2,3
-Portugal,country,2,2
-Prague,city,1,1
-Reno,city,1,1
-Rhode Island,state,5,5
-Romania,country,2,2
-Sahara,region,2,2
-Salt Lake City,city,2,2
-Scotland,country,4,6
-Senegal,country,8,15
+Georgia,state,8,8
+Germany,region,5,6
+Ghana,region,10,10
+Golden Gate,region,1,1
+Harlem,region,5,6
+Houston,region,2,2
+Hungary,region,1,1
+India,region,3,3
+Indonesia,region,4,4
+Iran,region,3,3
+Iraq,region,4,4
+Ireland,region,3,3
+Jamaica,region,7,8
+Japan,region,5,5
+Jerusalem,region,1,1
+Kenya,region,4,4
+Korea,region,4,4
+Las Vegas,region,10,11
+Libya,region,8,8
+London,region,7,7
+Los Angeles,region,3,4
+Mali,region,7,13
+Maryland,region,3,3
+Mecca,region,1,1
+Michigan,region,4,4
+Minnesota,region,9,13
+Morocco,region,4,4
+Moscow,region,3,3
+Munich,region,1,2
+Nairobi,region,1,1
+Nepal,region,1,1
+Netherlands,region,1,1
+Nevada,region,29,46
+New Hampshire,region,4,5
+Nile,region,2,2
+North Dakota,region,4,4
+Pacific,region,6,7
+Pakistan,region,5,5
+Pennsylvania,region,8,8
+Peru,region,14,14
+Philadelphia,region,2,3
+Portugal,region,2,2
+Prague,region,1,1
+Reno,region,1,1
+Rhode Island,region,5,5
+Romania,region,2,2
+Sahara,region,3,3
+Salt Lake City,region,2,2
+Scotland,region,4,6
+Senegal,region,8,15
 Siberia,region,3,3
-Singapore,city,1,1
-Somalia,country,2,2
+Singapore,region,1,1
+Somalia,region,2,2
 South America,region,1,1
-South Carolina,state,3,3
-South Dakota,state,6,6
-Spain,country,9,13
-Stockholm,city,1,1
-Switzerland,country,2,2
-Syria,country,1,1
-Texas,state,26,39
-Thailand,country,2,2
+South Carolina,region,3,3
+South Dakota,region,6,6
+Spain,region,9,13
+Stockholm,region,1,1
+Switzerland,region,2,2
+Syria,region,1,1
+Texas,region,27,40
+Thailand,region,2,2
 Tibet,region,2,2
-Timbuktu,city,2,2
-Times Square,landmark,1,1
-Tunisia,country,6,6
-Uganda,country,7,7
-Uruguay,country,3,3
-Venezuela,country,2,2
-Venice,city,1,1
-Versailles,landmark,1,1
-Wales,country,1,1
-Warsaw,city,1,1
-Washington,state,7,8
-West Virginia,state,3,3
-White House,landmark,1,1
-Wisconsin,state,3,3
-Wyoming,state,7,7
-Zimbabwe,country,4,4
-Zurich,city,1,1
+Timbuktu,region,2,2
+Times Square,region,1,1
+Tunisia,region,6,6
+Uganda,region,7,7
+Uruguay,region,3,3
+Venezuela,region,2,2
+Venice,region,1,1
+Versailles,region,1,1
+Wales,region,1,1
+Warsaw,region,1,1
+Washington,region,7,8
+West Virginia,region,4,4
+White House,region,1,1
+Wisconsin,region,3,3
+Wyoming,region,8,8
+Zimbabwe,region,4,4
+Zurich,region,1,1
