@@ -443,6 +443,10 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
     if work_type and work_type in WORK_TYPES:
         set_if_empty("dcterms:type", work_type)
 
+    support = enrichment.get("support")
+    if support and support in SUPPORTS:
+        set_if_empty("schema:artworkSurface", support)
+
     motifs = enrichment.get("motifs", [])
     valid_motifs = [m for m in motifs if m in MOTIFS]
     set_repeatable_if_empty("dcterms:subject", valid_motifs)
@@ -455,7 +459,7 @@ def build_patch_payload(item: dict, enrichment: dict) -> dict:
 def analyze_artwork(image_url: str, model: str) -> dict:
     """Send artwork image to Claude for structured analysis (real-time)."""
     client = anthropic.Anthropic()
-    b64_image, media_type = download_and_encode_image(image_url)
+    b64_image, media_type = download_and_encode_image(image_url, max_dim=IMAGE_MAX_DIM)
 
     response = client.messages.create(
         model=model,
