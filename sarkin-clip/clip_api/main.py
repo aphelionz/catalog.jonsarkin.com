@@ -854,7 +854,7 @@ async def enrich_item(req: EnrichRequest) -> EnrichResponse:
     from clip_api.enrich import analyze_artwork
 
     try:
-        result = await analyze_artwork(req.image_url, model=req.model)
+        result = await analyze_artwork(req.image_url, model=req.model, field_guidance=req.field_guidance)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Enrichment failed: {exc}") from exc
 

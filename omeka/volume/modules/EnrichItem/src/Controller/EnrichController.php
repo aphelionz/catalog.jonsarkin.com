@@ -76,9 +76,13 @@ class EnrichController extends AbstractActionController
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
         ]);
+        // Load per-field guidance from resource template alternate_comment
+        $fieldGuidance = $this->loadFieldGuidance();
+
         $client->setRawBody(json_encode([
             'image_url' => $mediaUrl,
             'model' => $model,
+            'field_guidance' => $fieldGuidance ?: null,
         ]));
         $client->setOptions(['timeout' => $timeout]);
 
@@ -281,6 +285,42 @@ class EnrichController extends AbstractActionController
     }
 
     // ── Private helpers ─────────────────────────────────────────────
+
+    /**
+     * Load alternate_comment from resource template properties as field guidance.
+     * Maps enrichment field names to the guidance text set in the template editor.
+     */
+    private function loadFieldGuidance(): array
+    {
+        $templateId = (int) ($this->config['resource_template_id'] ?? 2);
+        $conn = $this->entityManager->getConnection();
+
+        // Map property IDs to enrichment field names
+        $propToField = [];
+        foreach (self::FIELD_MAP as $field => $props) {
+            $propToField[$props['property_id']] = $field;
+        }
+        $propIds = array_keys($propToField);
+        $placeholders = implode(',', array_fill(0, count($propIds), '?'));
+
+        $sql = "SELECT property_id, alternate_comment
+                FROM resource_template_property
+                WHERE resource_template_id = ?
+                  AND property_id IN ($placeholders)
+                  AND alternate_comment IS NOT NULL
+                  AND alternate_comment != ''";
+        $params = array_merge([$templateId], $propIds);
+        $rows = $conn->fetchAllAssociative($sql, $params);
+
+        $guidance = [];
+        foreach ($rows as $row) {
+            $field = $propToField[(int) $row['property_id']] ?? null;
+            if ($field && !empty(trim($row['alternate_comment']))) {
+                $guidance[$field] = trim($row['alternate_comment']);
+            }
+        }
+        return $guidance;
+    }
 
     private function getOriginalMediaUrl($item): ?string
     {
