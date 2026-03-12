@@ -52,6 +52,9 @@ class EnrichController extends AbstractActionController
     public function analyzeAction(): JsonModel
     {
         $itemId = (int) $this->params('item_id');
+        $body = json_decode($this->getRequest()->getContent(), true) ?? [];
+        $model = $body['model'] ?? ($this->config['default_model'] ?? 'haiku');
+
         $item = $this->api->read('items', $itemId)->getContent();
 
         $mediaUrl = $this->getOriginalMediaUrl($item);
@@ -75,7 +78,7 @@ class EnrichController extends AbstractActionController
         ]);
         $client->setRawBody(json_encode([
             'image_url' => $mediaUrl,
-            'model' => 'haiku',
+            'model' => $model,
         ]));
         $client->setOptions(['timeout' => $timeout]);
 
@@ -95,12 +98,17 @@ class EnrichController extends AbstractActionController
             return new JsonModel(['error' => 'Invalid response from enrichment service']);
         }
 
+        // Extract usage info before building diff
+        $usage = $enrichment['usage'] ?? null;
+        unset($enrichment['usage']);
+
         // Build diff: compare current values vs suggestions
         $diff = $this->buildDiff($item, $enrichment);
 
         return new JsonModel([
             'enrichment' => $enrichment,
             'diff' => $diff,
+            'usage' => $usage,
         ]);
     }
 

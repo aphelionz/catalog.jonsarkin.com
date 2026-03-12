@@ -3,6 +3,7 @@
  * Enrichment panel injected into admin item show pages.
  * @var int $itemId
  * @var \Omeka\Api\Representation\ItemRepresentation $item
+ * @var array $vocabularies  Controlled vocabularies keyed by field name
  */
 $analyzeUrl = $this->url('admin/enrich-item', ['item_id' => $itemId]);
 $applyUrl = $this->url('admin/enrich-item/apply', ['item_id' => $itemId]);
@@ -26,10 +27,17 @@ $originalUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
     </div>
     <?php endif; ?>
 
-    <div id="enrich-controls">
+    <div id="enrich-controls" style="display: flex; align-items: center; gap: 0.75em; flex-wrap: wrap;">
+        <select id="enrich-model-select">
+            <option value="haiku">Haiku (fast, cheap)</option>
+            <option value="sonnet">Sonnet (balanced)</option>
+            <option value="opus">Opus (best, expensive)</option>
+        </select>
         <button type="button" id="enrich-analyze-btn" class="button">Analyze with Claude</button>
-        <span id="enrich-status" style="margin-left: 1em; color: #666;"></span>
+        <span id="enrich-status" style="color: #666;"></span>
     </div>
+
+    <div id="enrich-usage" style="display: none; margin-top: 0.5em; font-size: 0.85em; color: #888;"></div>
 
     <div id="enrich-results" style="display: none; margin-top: 1em;">
         <table class="tablesaw" style="width: 100%;">
@@ -57,11 +65,23 @@ $originalUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
     var analyzeUrl = <?= json_encode($analyzeUrl) ?>;
     var applyUrl = <?= json_encode($applyUrl) ?>;
     var ingestUrl = <?= json_encode($ingestUrl) ?>;
+    var vocabularies = <?= json_encode($vocabularies ?? []) ?>;
     var enrichment = null;
     var diff = null;
 
+    // Map field names to vocabulary keys
+    var vocabMap = {
+        signature: 'signature',
+        support: 'support',
+        work_type: 'work_type',
+        motifs: 'motifs',
+        condition_notes: 'condition'
+    };
+
+    var modelSelect = document.getElementById('enrich-model-select');
     var analyzeBtn = document.getElementById('enrich-analyze-btn');
     var status = document.getElementById('enrich-status');
+    var usageDiv = document.getElementById('enrich-usage');
     var results = document.getElementById('enrich-results');
     var diffBody = document.getElementById('enrich-diff-body');
     var applyBtn = document.getElementById('enrich-apply-btn');
@@ -71,8 +91,13 @@ $originalUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
     analyzeBtn.addEventListener('click', function() {
         analyzeBtn.disabled = true;
         status.textContent = 'Analyzing...';
+        usageDiv.style.display = 'none';
 
-        fetch(analyzeUrl, { method: 'POST', headers: { 'Accept': 'application/json' } })
+        fetch(analyzeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ model: modelSelect.value })
+        })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.error) {
@@ -86,6 +111,14 @@ $originalUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
                 results.style.display = 'block';
                 status.textContent = 'Done.';
                 analyzeBtn.disabled = false;
+
+                if (data.usage) {
+                    var u = data.usage;
+                    usageDiv.textContent = u.model + ' — '
+                        + u.input_tokens + ' in / ' + u.output_tokens + ' out — $'
+                        + u.cost_usd.toFixed(4);
+                    usageDiv.style.display = 'block';
+                }
             })
             .catch(function(e) {
                 status.textContent = 'Error: ' + e.message;
@@ -115,14 +148,18 @@ $originalUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
 
             var tr = document.createElement('tr');
             var currentText = Array.isArray(d.current) ? d.current.join(', ') : (d.current || '(empty)');
-            var suggestedText = Array.isArray(suggested) ? suggested.join(', ') : suggested;
+
+            // Build suggested cell content
+            var suggestedHtml = buildSuggestedCell(field, suggested);
+
+            var checkboxHtml = '<input type="checkbox" name="enrich_field" value="' + field + '"'
+                + (d.empty ? ' checked' : '') + '>';
 
             tr.innerHTML =
-                '<td><input type="checkbox" name="enrich_field" value="' + field + '"' +
-                (d.empty ? ' checked' : '') + '></td>' +
+                '<td>' + checkboxHtml + '</td>' +
                 '<td><strong>' + (fieldLabels[field] || field) + '</strong></td>' +
                 '<td>' + escapeHtml(currentText) + '</td>' +
-                '<td>' + escapeHtml(suggestedText) + '</td>';
+                '<td>' + suggestedHtml + '</td>';
 
             if (!d.empty) {
                 tr.style.opacity = '0.6';
@@ -132,11 +169,74 @@ $originalUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
         }
     }
 
+    function buildSuggestedCell(field, suggested) {
+        var vocabKey = vocabMap[field];
+        var vocab = vocabKey ? (vocabularies[vocabKey] || []) : [];
+
+        // Motifs: multi-select checkboxes
+        if (field === 'motifs' && vocab.length > 0) {
+            var suggestedArr = Array.isArray(suggested) ? suggested : [];
+            var html = '<div class="enrich-motifs" style="max-height: 150px; overflow-y: auto; font-size: 0.9em;">';
+            vocab.forEach(function(m) {
+                var checked = suggestedArr.indexOf(m) !== -1 ? ' checked' : '';
+                html += '<label style="display: block; white-space: nowrap;"><input type="checkbox" data-field="motifs" value="' + escapeHtml(m) + '"' + checked + '> ' + escapeHtml(m) + '</label>';
+            });
+            html += '</div>';
+            return html;
+        }
+
+        // Signature: single-character dropdown
+        if (field === 'signature' && vocab.length > 0) {
+            var html = '<select data-field="signature">';
+            vocab.forEach(function(v) {
+                var sel = (v === suggested || suggested.indexOf(v) === 0) ? ' selected' : '';
+                html += '<option value="' + escapeHtml(v) + '"' + sel + '>' + escapeHtml(v) + '</option>';
+            });
+            html += '</select>';
+            return html;
+        }
+
+        // Other vocab fields: dropdown with Claude's suggestion pre-selected
+        if (vocab.length > 0) {
+            var html = '<select data-field="' + field + '">';
+            vocab.forEach(function(v) {
+                var sel = v === suggested ? ' selected' : '';
+                html += '<option value="' + escapeHtml(v) + '"' + sel + '>' + escapeHtml(v) + '</option>';
+            });
+            // If Claude suggested something not in vocab, add it as an option
+            if (typeof suggested === 'string' && vocab.indexOf(suggested) === -1) {
+                html += '<option value="' + escapeHtml(suggested) + '" selected>' + escapeHtml(suggested) + ' (AI)</option>';
+            }
+            html += '</select>';
+            return html;
+        }
+
+        // Free text fields
+        var suggestedText = Array.isArray(suggested) ? suggested.join(', ') : suggested;
+        return escapeHtml(suggestedText);
+    }
+
     function getSelectedFields() {
         var fields = {};
         var checkboxes = diffBody.querySelectorAll('input[name="enrich_field"]:checked');
         checkboxes.forEach(function(cb) {
             var field = cb.value;
+            var row = cb.closest('tr');
+
+            // Check for dropdown or motif checkboxes
+            var select = row.querySelector('select[data-field]');
+            if (select) {
+                fields[field] = select.value;
+                return;
+            }
+
+            var motifChecks = row.querySelectorAll('input[data-field="motifs"]:checked');
+            if (motifChecks.length > 0) {
+                fields[field] = Array.from(motifChecks).map(function(c) { return c.value; });
+                return;
+            }
+
+            // Fall back to enrichment value
             if (enrichment[field] !== undefined) {
                 fields[field] = enrichment[field];
             }

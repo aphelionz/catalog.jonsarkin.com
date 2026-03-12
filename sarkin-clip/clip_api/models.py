@@ -79,6 +79,13 @@ class EnrichRequest(BaseModel):
     model: str = Field("sonnet", description="Claude model: haiku, sonnet, or opus")
 
 
+class UsageInfo(BaseModel):
+    input_tokens: int = 0
+    output_tokens: int = 0
+    model: str = ""
+    cost_usd: float = 0.0
+
+
 class EnrichResponse(BaseModel):
     transcription: Optional[str] = None
     signature: Optional[str] = None
@@ -88,6 +95,7 @@ class EnrichResponse(BaseModel):
     work_type: Optional[str] = None
     motifs: List[str] = []
     condition_notes: Optional[str] = None
+    usage: Optional[UsageInfo] = None
 
 
 # ── Single-item ingest ──

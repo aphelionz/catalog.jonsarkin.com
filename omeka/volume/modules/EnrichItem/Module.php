@@ -76,9 +76,24 @@ class Module extends AbstractModule
         $view = $event->getTarget();
         $item = $view->item;
         $itemId = $item->id();
+
+        // Load controlled vocabularies from custom_vocab table
+        $services = $this->getServiceLocator();
+        $em = $services->get('Omeka\EntityManager');
+        $conn = $em->getConnection();
+        $vocabRows = $conn->fetchAllAssociative(
+            "SELECT label, terms FROM custom_vocab WHERE label IN ('Work Type','Support','Motifs','Condition','Signature')"
+        );
+        $vocabularies = [];
+        foreach ($vocabRows as $row) {
+            $key = strtolower(str_replace(' ', '_', $row['label']));
+            $vocabularies[$key] = json_decode($row['terms'], true) ?: [];
+        }
+
         echo $view->partial('enrich-item/enrich/panel', [
             'itemId' => $itemId,
             'item' => $item,
+            'vocabularies' => $vocabularies,
         ]);
     }
 

@@ -85,6 +85,7 @@ return [
         'clip_api_base_url' => 'http://clip-api:8000',
         'timeout' => 30,
         'resource_template_id' => 2,
+        'default_model' => 'haiku',
     ],
     'navigation' => [
         'AdminModule' => [

@@ -198,7 +198,11 @@ def validate_enrichment(data: dict) -> dict:
 # ── Claude analysis ──────────────────────────────────────────────────────────
 
 async def analyze_artwork(image_url: str, model: str = "sonnet") -> dict:
-    """Send artwork image to Claude for structured analysis."""
+    """Send artwork image to Claude for structured analysis.
+
+    Returns a dict with enrichment fields plus a ``usage`` key containing
+    input_tokens, output_tokens, model, and estimated cost in USD.
+    """
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
@@ -220,4 +224,31 @@ async def analyze_artwork(image_url: str, model: str = "sonnet") -> dict:
     )
 
     raw = parse_claude_response(response.content[0].text)
-    return validate_enrichment(raw)
+    result = validate_enrichment(raw)
+
+    # Attach usage info
+    usage = response.usage
+    result["usage"] = {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "model": model_id,
+        "cost_usd": _estimate_cost(model_id, usage.input_tokens, usage.output_tokens),
+    }
+    return result
+
+
+# Per-million-token pricing (USD) as of 2025-05
+_PRICING = {
+    "claude-haiku-4-5-20251001":  {"input": 0.80,  "output": 4.00},
+    "claude-sonnet-4-5-20241022": {"input": 3.00,  "output": 15.00},
+    "claude-opus-4-20250514":     {"input": 15.00, "output": 75.00},
+}
+
+
+def _estimate_cost(model_id: str, input_tokens: int, output_tokens: int) -> float:
+    prices = _PRICING.get(model_id, {"input": 3.0, "output": 15.0})
+    return round(
+        input_tokens * prices["input"] / 1_000_000
+        + output_tokens * prices["output"] / 1_000_000,
+        6,
+    )
