@@ -448,12 +448,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                  class="iconographic-profile"
                  hidden>
             </div>
-            <?php elseif (!empty($motifs)): ?>
-                <ul class="genres" aria-label="<?php echo $translate('Motifs and subjects'); ?>">
-                    <?php foreach ($motifs as $motif): ?>
-                        <li><a href="<?php echo $escape($this->url('site/resource', ['site-slug' => $this->currentSite()->slug(), 'controller' => 'item', 'action' => 'browse']) . '?property%5B0%5D%5Bproperty%5D=dcterms%3Asubject&property%5B0%5D%5Btype%5D=eq&property%5B0%5D%5Btext%5D=' . urlencode(strip_tags($motif))); ?>"><?php echo $motif; ?></a></li>
-                    <?php endforeach; ?>
-                </ul>
             <?php endif; ?>
 
             <?php if ($transcription): ?>
