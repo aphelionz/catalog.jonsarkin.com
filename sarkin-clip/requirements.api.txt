@@ -4,7 +4,8 @@ python-multipart==0.0.20
 pydantic==2.12.5
 uvicorn==0.38.0
 open_clip_torch==3.2.0
-torch==2.8.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.8.0+cpu
 torchvision==0.23.0
 anthropic>=0.40.0
 pillow>=10.0.0
