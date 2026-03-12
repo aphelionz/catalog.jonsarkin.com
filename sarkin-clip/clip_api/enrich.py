@@ -97,8 +97,8 @@ IMAGE_QUALITY = 85
 
 MODEL_MAP = {
     "haiku": "claude-haiku-4-5-20251001",
-    "sonnet": "claude-sonnet-4-5-20241022",
-    "opus": "claude-opus-4-20250514",
+    "sonnet": "claude-sonnet-4-6",
+    "opus": "claude-opus-4-6",
 }
 
 
@@ -237,11 +237,11 @@ async def analyze_artwork(image_url: str, model: str = "sonnet") -> dict:
     return result
 
 
-# Per-million-token pricing (USD) as of 2025-05
+# Per-million-token pricing (USD)
 _PRICING = {
     "claude-haiku-4-5-20251001":  {"input": 0.80,  "output": 4.00},
-    "claude-sonnet-4-5-20241022": {"input": 3.00,  "output": 15.00},
-    "claude-opus-4-20250514":     {"input": 15.00, "output": 75.00},
+    "claude-sonnet-4-6":          {"input": 3.00,  "output": 15.00},
+    "claude-opus-4-6":            {"input": 15.00, "output": 75.00},
 }
 
 
