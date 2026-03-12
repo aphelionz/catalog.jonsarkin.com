@@ -2,14 +2,29 @@
 /**
  * Enrichment panel injected into admin item show pages.
  * @var int $itemId
+ * @var \Omeka\Api\Representation\ItemRepresentation $item
  */
 $analyzeUrl = $this->url('admin/enrich-item', ['item_id' => $itemId]);
 $applyUrl = $this->url('admin/enrich-item/apply', ['item_id' => $itemId]);
 $ingestUrl = $this->url('admin/enrich-item/ingest', ['item_id' => $itemId]);
+$media = $item->media();
+$primaryMedia = count($media) ? $media[0] : null;
+$largeUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
+$originalUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
 ?>
 
 <div id="enrich" class="section">
     <h3>Enrich with Claude</h3>
+
+    <?php if ($largeUrl): ?>
+    <div style="margin-bottom: 1em;">
+        <a href="<?= $this->escapeHtmlAttr($originalUrl) ?>" target="_blank">
+            <img src="<?= $this->escapeHtmlAttr($largeUrl) ?>"
+                 alt="<?= $this->escapeHtml($item->displayTitle()) ?>"
+                 style="max-width: 100%; max-height: 500px; border: 1px solid #ddd;">
+        </a>
+    </div>
+    <?php endif; ?>
 
     <div id="enrich-controls">
         <button type="button" id="enrich-analyze-btn" class="button">Analyze with Claude</button>
