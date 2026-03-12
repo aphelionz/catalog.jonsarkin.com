@@ -18,12 +18,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Minimal runtime deps (CPU). Install torch/vision CPU wheels.
+# Minimal runtime deps (CPU). Install torch/vision CPU wheels from PyTorch CPU index.
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install --upgrade pip && \
     pip3 install --no-cache-dir \
-        torch==2.8.0 \
-        torchvision==0.23.0 \
+        torch==2.8.0+cpu torchvision==0.23.0+cpu \
+        --index-url https://download.pytorch.org/whl/cpu && \
+    pip3 install --no-cache-dir \
         open_clip_torch==3.2.0 \
         anthropic>=0.40.0 \
         qdrant-client==1.16.1 \
