@@ -277,12 +277,18 @@ class EnrichController extends AbstractActionController
     private function getOriginalMediaUrl($item): ?string
     {
         $itemJson = json_decode(json_encode($item), true);
-        $media = $itemJson['o:media'] ?? [];
-        if (empty($media)) {
+        $mediaRefs = $itemJson['o:media'] ?? [];
+        if (empty($mediaRefs)) {
             return null;
         }
-        $firstMedia = $media[0];
-        return $firstMedia['o:original_url'] ?? null;
+        // o:media contains references — fetch the first media to get original_url
+        $mediaId = $mediaRefs[0]['o:id'] ?? null;
+        if (!$mediaId) {
+            return null;
+        }
+        $mediaRepr = $this->api->read('media', $mediaId)->getContent();
+        $mediaJson = json_decode(json_encode($mediaRepr), true);
+        return $mediaJson['o:original_url'] ?? null;
     }
 
     private function internalizeUrl(string $url): string
