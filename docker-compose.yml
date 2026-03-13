@@ -61,20 +61,6 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     restart: unless-stopped
 
-  editor:
-    image: python:3.12-alpine
-    ports:
-      - "9000:9000"
-    depends_on:
-      - omeka
-    volumes:
-      - ./tools/rapid-editor:/app
-    working_dir: /app
-    command: python3 serve.py
-    environment:
-      OMEKA_BASE_URL: http://omeka:80
-    restart: unless-stopped
-
   ingest:
     build:
       context: ./sarkin-clip

@@ -1,0 +1,881 @@
+/* ── Reset & base ──────────────────────────────────────────────────── */
+.rapid-editor-container *, .rapid-editor-container *::before, .rapid-editor-container *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --nav-h: 44px;
+  --bg: #f5f5f5;
+  --fg: #111;
+  --border: #ccc;
+  --accent: #2a7d2e;
+  --accent-hover: #236b26;
+  --warn: #e67e22;
+  --danger: #c0392b;
+  --chip-bg: #e8e8e8;
+  --chip-active: #111;
+}
+
+.rapid-editor-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--bg);
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.rapid-editor-container .hidden { display: none !important; }
+
+/* ── Nav bar ──────────────────────────────────────────────────────── */
+.rapid-editor-container #nav {
+  position: sticky; top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  background: #111;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 12px;
+  z-index: 100;
+  font-size: 12px;
+}
+
+.rapid-editor-container .nav-left { flex: 1; white-space: nowrap; }
+.rapid-editor-container .nav-center { flex: 0 0 auto; }
+.rapid-editor-container .nav-center a { color: #adf; text-decoration: none; font-weight: 600; }
+.rapid-editor-container .nav-center a:hover { text-decoration: underline; }
+.rapid-editor-container .nav-right { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+
+.rapid-editor-container .filter-buttons { display: flex; gap: 2px; }
+.rapid-editor-container .filter-btn {
+  background: #333; color: #ccc; border: none;
+  padding: 4px 10px; cursor: pointer; font-size: 11px;
+  border-radius: 3px;
+}
+.rapid-editor-container .filter-btn:hover { background: #444; }
+.rapid-editor-container .filter-btn.active { background: #555; color: #fff; }
+.rapid-editor-container .filter-btn span { font-weight: 700; }
+
+/* ── Split Issues button ─────────────────────────────────────────── */
+.rapid-editor-container .filter-split {
+  display: flex;
+  position: relative;
+}
+.rapid-editor-container .filter-split .filter-btn {
+  border-radius: 3px 0 0 3px;
+}
+.rapid-editor-container .filter-caret {
+  background: #333; color: #ccc; border: none;
+  border-left: 1px solid #444;
+  padding: 4px 6px; cursor: pointer; font-size: 11px;
+  border-radius: 0 3px 3px 0;
+  line-height: 1;
+}
+.rapid-editor-container .filter-caret:hover { background: #444; }
+.rapid-editor-container .filter-split:has(.filter-btn.active) .filter-caret { background: #555; color: #fff; }
+.rapid-editor-container .filter-caret.open { background: #555; color: #fff; }
+
+/* ── Sprint dropdown menu ────────────────────────────────────────── */
+.rapid-editor-container .sprint-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 6px;
+  min-width: 180px;
+  padding: 4px 0;
+  z-index: 110;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.rapid-editor-container .sprint-menu-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.rapid-editor-container .sprint-menu-item:hover { background: #333; color: #fff; }
+.rapid-editor-container .sprint-menu-item .sprint-menu-count {
+  color: #888;
+  font-variant-numeric: tabular-nums;
+}
+.rapid-editor-container .sprint-menu-item.active { color: var(--accent); font-weight: 600; }
+
+.rapid-editor-container #box-select {
+  background: #333; color: #fff; border: 1px solid #555;
+  font-size: 11px; padding: 3px 6px; border-radius: 3px;
+  max-width: 160px;
+}
+
+.rapid-editor-container #progress-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: #333;
+}
+.rapid-editor-container #progress-fill {
+  height: 100%; background: var(--accent);
+  width: 0; transition: width 0.3s ease;
+}
+
+/* ── Loading ──────────────────────────────────────────────────────── */
+.rapid-editor-container #loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); z-index: 200;
+}
+.rapid-editor-container .loading-inner { text-align: center; }
+.rapid-editor-container .spinner {
+  width: 32px; height: 32px; margin: 0 auto 12px;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Main layout ──────────────────────────────────────────────────── */
+.rapid-editor-container #main {
+  margin-top: var(--nav-h);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: calc(100% - var(--nav-h));
+}
+
+/* ── Image panel ──────────────────────────────────────────────────── */
+.rapid-editor-container #image-panel {
+  display: flex; align-items: center; justify-content: center;
+  background: #222; position: relative; overflow: hidden;
+}
+.rapid-editor-container #item-image {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+}
+.rapid-editor-container #image-loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #888; font-size: 14px;
+}
+
+/* ── Form panel ──────────────────────────────────────────────────── */
+.rapid-editor-container #form-panel {
+  overflow-y: auto; padding: 12px 16px 80px;
+  border-left: 3px solid transparent;
+  transition: border-color 0.3s;
+}
+.rapid-editor-container #form-panel.dirty { border-left-color: var(--warn); }
+.rapid-editor-container #form-panel.saved { border-left-color: var(--accent); }
+.rapid-editor-container #form-panel.error { border-left-color: var(--danger); }
+
+.rapid-editor-container label {
+  display: block; font-weight: 600; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: #666; margin: 10px 0 3px;
+}
+.rapid-editor-container label:first-of-type { margin-top: 0; }
+
+.rapid-editor-container input[type="text"], .rapid-editor-container input[type="number"], .rapid-editor-container select, .rapid-editor-container textarea {
+  width: 100%; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 3px;
+  font-size: 13px; font-family: inherit;
+  background: #fff;
+}
+.rapid-editor-container input:focus, .rapid-editor-container select:focus, .rapid-editor-container textarea:focus {
+  outline: none; border-color: #999;
+}
+.rapid-editor-container textarea { resize: vertical; }
+
+.rapid-editor-container .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ── Date pills ──────────────────────────────────────────────────── */
+.rapid-editor-container .date-pills {
+  display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 4px;
+}
+.rapid-editor-container .date-pill {
+  padding: 4px 7px; font-size: 13px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border); border-radius: 3px;
+  cursor: pointer; user-select: none;
+  background: #fff; color: var(--fg);
+  transition: all 0.1s; line-height: 1;
+  min-width: 28px; text-align: center;
+}
+.rapid-editor-container .date-pill:hover { background: #eee; }
+.rapid-editor-container .date-pill.active { background: #111; color: #fff; border-color: #111; }
+.rapid-editor-container .date-pill.decade-start { margin-left: 4px; }
+.rapid-editor-container .date-pill.date-unknown { font-size: 11px; color: #999; }
+.rapid-editor-container .date-pill.date-unknown.active { color: #fff; }
+
+.rapid-editor-container #f-date { font-size: 12px; padding: 4px 6px; }
+
+/* ── Transcription pills ─────────────────────────────────────────── */
+.rapid-editor-container .transcription-pills {
+  display: flex; gap: 4px; margin-bottom: 4px;
+}
+.rapid-editor-container .transcription-pill {
+  padding: 4px 10px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 3px;
+  cursor: pointer; user-select: none;
+  background: #fff; color: var(--fg);
+  transition: all 0.1s;
+}
+.rapid-editor-container .transcription-pill:hover { background: #eee; }
+.rapid-editor-container .transcription-pill.active { background: #111; color: #fff; border-color: #111; }
+
+/* ── Signature grid ──────────────────────────────────────────────── */
+.rapid-editor-container .sig-grid {
+  display: grid; grid-template-columns: repeat(3, 40px); gap: 3px;
+}
+.rapid-editor-container .sig-grid button {
+  width: 40px; height: 40px;
+  font-size: 18px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 3px;
+  background: #fff; color: var(--fg);
+  transition: all 0.1s;
+}
+.rapid-editor-container .sig-grid button:hover { background: #eee; }
+.rapid-editor-container .sig-grid button.active { background: #111; color: #fff; border-color: #111; }
+
+/* ── Motif chips ──────────────────────────────────────────────────── */
+.rapid-editor-container .chip-group { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.rapid-editor-container .chip {
+  padding: 4px 10px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 12px;
+  cursor: pointer; user-select: none;
+  background: var(--chip-bg); color: var(--fg);
+  transition: all 0.1s;
+}
+.rapid-editor-container .chip:hover { background: #ddd; }
+.rapid-editor-container .chip.active { background: var(--chip-active); color: #fff; border-color: var(--chip-active); }
+
+/* ── Issue badges ─────────────────────────────────────────────────── */
+.rapid-editor-container #issue-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.rapid-editor-container .badge {
+  font-size: 11px; padding: 2px 8px;
+  border-radius: 10px; font-weight: 600;
+}
+.rapid-editor-container .badge-error { background: var(--danger); color: #fff; }
+
+/* ── Action buttons ──────────────────────────────────────────────── */
+.rapid-editor-container .actions {
+  position: absolute; bottom: 0; right: 0;
+  width: 50%;
+  display: flex; gap: 4px;
+  padding: 10px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.rapid-editor-container .btn {
+  padding: 8px 14px; font-size: 13px; font-weight: 600;
+  border: none; border-radius: 4px; cursor: pointer;
+  font-family: inherit;
+}
+.rapid-editor-container .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.rapid-editor-container .btn-nav { background: #ddd; color: #333; }
+.rapid-editor-container .btn-nav:hover:not(:disabled) { background: #ccc; }
+.rapid-editor-container .btn-save { background: var(--accent); color: #fff; flex: 1; }
+.rapid-editor-container .btn-save:hover:not(:disabled) { background: var(--accent-hover); }
+.rapid-editor-container .btn-skip { background: #999; color: #fff; }
+.rapid-editor-container .btn-skip:hover:not(:disabled) { background: #888; }
+.rapid-editor-container .btn-save-next { background: #1a6d9e; color: #fff; flex: 1; }
+.rapid-editor-container .btn-save-next:hover:not(:disabled) { background: #155a84; }
+
+/* ── More fields ──────────────────────────────────────────────────── */
+.rapid-editor-container #more-fields {
+  margin-top: 14px; border: 1px solid var(--border);
+  border-radius: 4px; padding: 8px 10px;
+}
+.rapid-editor-container #more-fields summary {
+  cursor: pointer; font-weight: 600; font-size: 12px;
+  color: #666; user-select: none;
+}
+.rapid-editor-container #more-fields[open] summary { margin-bottom: 4px; }
+
+/* ── Toast ────────────────────────────────────────────────────────── */
+.rapid-editor-container #toast {
+  position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #111; color: #fff;
+  padding: 8px 20px; border-radius: 4px;
+  font-size: 13px; font-weight: 500;
+  z-index: 300;
+  animation: fadeout 1.5s ease 0.5s forwards;
+}
+@keyframes fadeout { to { opacity: 0; } }
+
+/* ==========================================================================
+   Curate Mode — Tinder-style swipe interface
+   ========================================================================== */
+
+.rapid-editor-container #curate-panel {
+  position: absolute;
+  top: var(--nav-h);
+  left: 0; right: 0; bottom: 0;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* ── Progress bar ──────────────────────────────────────────────────── */
+.rapid-editor-container #curate-progress {
+  position: absolute;
+  top: 12px; left: 16px; right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #888;
+  font-size: 13px;
+}
+.rapid-editor-container #curate-count { font-variant-numeric: tabular-nums; }
+.rapid-editor-container #curate-undo { margin-left: auto; font-size: 11px; padding: 4px 10px; }
+
+/* ── Card stage ────────────────────────────────────────────────────── */
+.rapid-editor-container #card-stage {
+  position: relative;
+  width: min(420px, 90vw);
+  height: min(560px, 70vh);
+}
+.rapid-editor-container #card-stage:has(.bucket-setup) {
+  width: min(700px, 95vw);
+  height: auto;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.rapid-editor-container .curate-card {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.08s ease-out, box-shadow 0.2s;
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+}
+.rapid-editor-container .curate-card.dragging {
+  cursor: grabbing;
+  transition: none;
+}
+.rapid-editor-container .curate-card.fly-off {
+  transition: transform 0.35s ease-in, opacity 0.35s ease-in;
+  opacity: 0;
+  pointer-events: none;
+}
+.rapid-editor-container .curate-card.snap-back {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.rapid-editor-container .curate-card.back-card .card-meta {
+  visibility: hidden;
+}
+.rapid-editor-container .curate-card.hint-right {
+  box-shadow: 0 0 0 3px var(--bucket-right-color, rgba(42, 125, 46, 0.6)), 0 4px 24px rgba(0,0,0,0.3);
+}
+.rapid-editor-container .curate-card.hint-left {
+  box-shadow: 0 0 0 3px var(--bucket-left-color, rgba(85, 85, 85, 0.6)), 0 4px 24px rgba(0,0,0,0.3);
+}
+
+/* ── Card interior ─────────────────────────────────────────────────── */
+.rapid-editor-container .card-img-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #222;
+  overflow: hidden;
+  min-height: 0;
+}
+.rapid-editor-container .card-img-wrap img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.rapid-editor-container .card-img-loading {
+  color: #666;
+  font-size: 13px;
+}
+.rapid-editor-container .card-meta {
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #eee;
+}
+.rapid-editor-container .card-meta-id {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111;
+}
+.rapid-editor-container .card-meta-id a {
+  color: inherit;
+  text-decoration: none;
+}
+.rapid-editor-container .card-meta-id a:hover {
+  text-decoration: underline;
+}
+.rapid-editor-container .card-meta-detail,
+.rapid-editor-container .card-meta-date {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ── Action buttons ────────────────────────────────────────────────── */
+.rapid-editor-container #curate-actions {
+  position: absolute;
+  bottom: 24px;
+  display: flex;
+  gap: 16px;
+}
+.rapid-editor-container .curate-btn-pass {
+  background: #555;
+  color: #fff;
+  padding: 12px 32px;
+  font-size: 15px;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.rapid-editor-container .curate-btn-pass:hover { background: #666; }
+.rapid-editor-container .curate-btn-keep {
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 32px;
+  font-size: 15px;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.rapid-editor-container .curate-btn-keep:hover { background: var(--accent-hover); }
+
+/* ── Completion screen ─────────────────────────────────────────────── */
+.rapid-editor-container .curate-done {
+  color: #888;
+  text-align: center;
+  padding-top: 30%;
+}
+.rapid-editor-container .curate-done h2 {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #aaa;
+  font-weight: 300;
+}
+.rapid-editor-container .curate-done p {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Bucket Sort Setup Screen
+   ========================================================================== */
+
+.rapid-editor-container .bucket-setup {
+  color: #ccc;
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+  overflow-y: auto;
+  max-height: calc(100% - var(--nav-h) - 40px);
+}
+
+.rapid-editor-container .bucket-preset-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.rapid-editor-container .bucket-preset-select {
+  flex: 1;
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.rapid-editor-container .bucket-column {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 14px;
+  border: 1px solid #444;
+  max-width: 400px;
+  margin: 0 auto 12px;
+}
+.rapid-editor-container .bucket-column h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.rapid-editor-container .bucket-label-row {
+  margin-bottom: 10px;
+}
+/* Override global light-mode input styles inside bucket setup */
+.rapid-editor-container #curate-panel .bucket-setup input[type="text"],
+.rapid-editor-container #curate-panel .bucket-setup select,
+.rapid-editor-container #curate-panel .bucket-setup textarea {
+  background: #333;
+  color: #fff;
+  border-color: #555;
+}
+.rapid-editor-container #curate-panel .bucket-setup input[type="text"]:focus,
+.rapid-editor-container #curate-panel .bucket-setup select:focus {
+  outline: none;
+  border-color: #888;
+}
+
+.rapid-editor-container .bucket-action-list {
+  min-height: 20px;
+  margin-bottom: 8px;
+}
+
+.rapid-editor-container .bucket-action-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.rapid-editor-container .bucket-action-row select {
+  flex: 1;
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 5px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: inherit;
+  min-width: 0;
+}
+.rapid-editor-container .bucket-action-row select:focus {
+  outline: none;
+  border-color: #888;
+}
+
+.rapid-editor-container .bucket-action-remove {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.rapid-editor-container .bucket-action-remove:hover {
+  color: #c0392b;
+  background: rgba(192, 57, 43, 0.15);
+}
+
+.rapid-editor-container .bucket-add-buttons {
+  display: flex;
+  gap: 6px;
+}
+.rapid-editor-container .bucket-add-buttons .btn {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #444;
+  color: #ccc;
+}
+.rapid-editor-container .bucket-add-buttons .btn:hover {
+  background: #555;
+}
+
+.rapid-editor-container .bucket-skip-hint {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.rapid-editor-container .bucket-queue-filter {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #aaa;
+}
+.rapid-editor-container .bucket-queue-filter label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: #aaa;
+  margin: 0;
+}
+.rapid-editor-container .bucket-queue-filter input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+.rapid-editor-container .bucket-queue-count {
+  margin-left: auto;
+  color: #666;
+  font-variant-numeric: tabular-nums;
+}
+
+.rapid-editor-container .bucket-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.rapid-editor-container .bucket-bottom-row .bucket-save-preset {
+  font-size: 12px;
+  padding: 8px 16px;
+}
+.rapid-editor-container .bucket-bottom-row .bucket-start {
+  font-size: 14px;
+  padding: 10px 24px;
+  border-radius: 6px;
+}
+
+.rapid-editor-container .bucket-delete-preset {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #333;
+  color: #888;
+}
+.rapid-editor-container .bucket-delete-preset:hover {
+  color: #c0392b;
+}
+
+/* ==========================================================================
+   Sprint Mode — field-specific card editing
+   ========================================================================== */
+
+.rapid-editor-container #sprint-panel {
+  position: absolute;
+  top: var(--nav-h);
+  left: 0; right: 0; bottom: 0;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.rapid-editor-container #sprint-progress {
+  position: absolute;
+  top: 12px; left: 16px; right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #888;
+  font-size: 13px;
+}
+.rapid-editor-container #sprint-field-label {
+  font-weight: 600;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+.rapid-editor-container #sprint-count { font-variant-numeric: tabular-nums; }
+.rapid-editor-container #sprint-undo { margin-left: auto; font-size: 11px; padding: 4px 10px; }
+
+.rapid-editor-container #sprint-stage {
+  position: relative;
+  width: min(420px, 90vw);
+  height: min(560px, 65vh);
+  margin-bottom: 60px;
+}
+
+.rapid-editor-container #sprint-actions {
+  position: absolute;
+  bottom: 24px;
+  display: flex;
+  gap: 16px;
+}
+
+/* ── Sprint card input zone ─────────────────────────────────────────── */
+.rapid-editor-container .card-input {
+  padding: 10px 16px 14px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.rapid-editor-container .card-input-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Pills inside card */
+.rapid-editor-container .card-input .sprint-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.rapid-editor-container .card-input .sprint-pill {
+  padding: 5px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  background: #f8f8f8;
+  color: var(--fg);
+  transition: all 0.1s;
+  font-family: inherit;
+}
+.rapid-editor-container .card-input .sprint-pill:hover { background: #eee; border-color: #bbb; }
+.rapid-editor-container .card-input .sprint-pill.active { background: #111; color: #fff; border-color: #111; }
+
+/* Grid inside card (signature) */
+.rapid-editor-container .card-input .sprint-grid {
+  display: grid;
+  gap: 3px;
+  justify-content: center;
+}
+.rapid-editor-container .card-input .sprint-grid button {
+  width: 44px; height: 44px;
+  font-size: 20px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f8f8f8;
+  color: var(--fg);
+  transition: all 0.1s;
+  font-family: inherit;
+}
+.rapid-editor-container .card-input .sprint-grid button:hover { background: #eee; }
+.rapid-editor-container .card-input .sprint-grid button.active { background: #111; color: #fff; border-color: #111; }
+
+/* Chips inside card (motifs) */
+.rapid-editor-container .card-input .sprint-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.rapid-editor-container .card-input .sprint-chip {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  background: #f0f0f0;
+  color: var(--fg);
+  transition: all 0.1s;
+  font-family: inherit;
+}
+.rapid-editor-container .card-input .sprint-chip:hover { background: #ddd; }
+.rapid-editor-container .card-input .sprint-chip.active { background: #111; color: #fff; border-color: #111; }
+
+/* Text input inside card */
+.rapid-editor-container .card-input .sprint-text {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  background: #fff;
+}
+.rapid-editor-container .card-input .sprint-text:focus { outline: none; border-color: #999; }
+
+/* Dimensions (dual input) inside card */
+.rapid-editor-container .card-input .sprint-dims {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.rapid-editor-container .card-input .sprint-dims input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  text-align: center;
+}
+.rapid-editor-container .card-input .sprint-dims input:focus { outline: none; border-color: #999; }
+.rapid-editor-container .card-input .sprint-dims .dims-x {
+  color: #999;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Save button inside card (for text/chips) */
+.rapid-editor-container .card-input .sprint-save {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rapid-editor-container .card-input .sprint-save:hover { background: var(--accent-hover); }
+
+/* Existing value badge */
+.rapid-editor-container .card-input .sprint-current {
+  font-size: 11px;
+  color: #c0392b;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+/* Sprint completion */
+.rapid-editor-container .sprint-done {
+  color: #888;
+  text-align: center;
+  padding-top: 30%;
+}
+.rapid-editor-container .sprint-done h2 {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #aaa;
+  font-weight: 300;
+}
+.rapid-editor-container .sprint-done p {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Back card hides input zone too */
+.rapid-editor-container .curate-card.back-card .card-input {
+  visibility: hidden;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .rapid-editor-container #card-stage, .rapid-editor-container #sprint-stage {
+    width: 95vw;
+    height: 65vh;
+  }
+  .rapid-editor-container #curate-actions, .rapid-editor-container #sprint-actions { bottom: 12px; gap: 12px; }
+  .rapid-editor-container .curate-btn-pass, .rapid-editor-container .curate-btn-keep { padding: 10px 24px; font-size: 14px; }
+}

@@ -7,12 +7,6 @@
       "runtimeArgs": ["compose", "up"],
       "port": 8888,
       "autoPort": false
-    },
-    {
-      "name": "editor",
-      "runtimeExecutable": "docker",
-      "runtimeArgs": ["compose", "up", "editor"],
-      "port": 9000
     }
   ]
 }

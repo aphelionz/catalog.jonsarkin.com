@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry enrich process-new sync deploy pull pull-new pull-db pull-files doctor doctor-catalog backup-db restore-db push-schema ensure-api-key editor
+.PHONY: help local down logs ingest ingest-full ingest-dry enrich process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key
 
 .DEFAULT_GOAL := help
 
@@ -14,7 +14,7 @@ BACKUP_DIR := backups
 help: ## Show available targets
 	@echo ""
 	@echo "  Dev"
-	@grep -E '^(local|down|logs|doctor|doctor-catalog|editor):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(local|down|logs|doctor):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Enrich & Ingest"
 	@grep -E '^(enrich|ingest|ingest-full|ingest-dry|process-new):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -60,12 +60,6 @@ doctor: ## Check local dev prerequisites
 	@(! lsof -i :8000 -sTCP:LISTEN >/dev/null 2>&1) && echo "  ✓ port 8000 available" || echo "  ✗ port 8000 in use"
 	@(! lsof -i :6333 -sTCP:LISTEN >/dev/null 2>&1) && echo "  ✓ port 6333 available" || echo "  ✗ port 6333 in use"
 	@echo "Done."
-
-doctor-catalog: ## Check catalog items for completeness issues
-	python3 scripts/doctor_catalog.py
-
-editor: ## Launch rapid-fire metadata editor standalone (localhost:9000, no Docker)
-	python3 tools/rapid-editor/serve.py
 
 # ── Enrich & Ingest ──────────────────────────────────────────────────
 
