@@ -74,11 +74,14 @@ class IndexController extends AbstractActionController
                     ];
                 } catch (ValidationException $e) {
                     $messages = [];
-                    foreach ($e->getErrorStore()->getErrors() as $msgs) {
-                        foreach ((array) $msgs as $msg) {
-                            $messages[] = is_array($msg) ? implode('; ', $msg) : $msg;
+                    array_walk_recursive(
+                        $e->getErrorStore()->getErrors(),
+                        function ($val) use (&$messages) {
+                            if (is_string($val) && $val !== '') {
+                                $messages[] = $val;
+                            }
                         }
-                    }
+                    );
                     $results[] = [
                         'filename' => $originalName,
                         'success' => false,
