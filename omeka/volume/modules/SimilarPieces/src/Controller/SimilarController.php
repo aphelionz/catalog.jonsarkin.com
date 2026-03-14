@@ -152,12 +152,14 @@ class SimilarController extends AbstractActionController
 
                 $url = null;
                 $thumbnail = null;
+                $original = null;
                 if ($item) {
                     $url = $siteSlug ? $item->siteUrl($siteSlug) : $item->url();
                     $title = $item->displayTitle();
                     $pm = $item->primaryMedia();
                     if ($pm) {
                         $thumbnail = $pm->thumbnailUrl('medium');
+                        $original = $pm->originalUrl();
                     }
                 }
 
@@ -173,6 +175,7 @@ class SimilarController extends AbstractActionController
                     'title' => $title ?? sprintf('Item %d', $id),
                     'url' => $url,
                     'thumbnail' => $thumbnail,
+                    'original' => $original,
                 ];
             }
 
