@@ -208,14 +208,19 @@ Be precise and conservative — only report what you can clearly see.
               Return empty array if none match."],
 
   "condition_notes": "Brief note on visible condition issues (tears, staining,
-                      foxing, fading). Return null if the work appears to be
-                      in good condition or if condition cannot be assessed
-                      from the image."
+                      foxing, fading, creasing, edge wear). Note that edge wear,
+                      tearing, creasing, and staining are typically inherent to
+                      the artist's process, not post-creation damage — Sarkin did
+                      not treat his works as precious objects. Use the phrase
+                      'inherent to the artist's process' to distinguish
+                      process-related wear from external damage. Return null if
+                      the work appears to be in good condition or if condition
+                      cannot be assessed from the image."
 }
 
 Return ONLY valid JSON. No markdown fences, no explanation."""
 
-ANALYSIS_PROMPT_VERSION = 2  # Bump to invalidate cache
+ANALYSIS_PROMPT_VERSION = 3  # Bump to invalidate cache
 
 
 # ── Image helpers ─────────────────────────────────────────────────────────
