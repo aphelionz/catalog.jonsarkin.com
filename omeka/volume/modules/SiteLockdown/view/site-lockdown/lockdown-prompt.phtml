@@ -1,80 +1,394 @@
+<?php
+/**
+ * SiteLockdown — Promotional landing page
+ *
+ * Standalone page (no Omeka layout) shown to unauthenticated visitors.
+ * Displays introductory text, a preview grid of catalog items, and a
+ * downplayed password form at the bottom.
+ *
+ * @var bool  $error        Whether to show a wrong-password message
+ * @var array $previewItems Array of Omeka\Api\Representation\ItemRepresentation
+ */
+
+$escape = function ($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); };
+
+// Helper: extract a single metadata value from an item
+$val = function ($item, $term, $fallback = '') use ($escape) {
+    $v = $item->value($term, ['default' => null]);
+    return $v ? $escape((string) $v) : $fallback;
+};
+
+// Reject EXIF timestamps and MIME types
+$isArtworkDate = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '') return false;
+    if (preg_match('/^\d{4}:\d{2}:\d{2}/', $str)) return false;
+    if (preg_match('/\d{4}-\d{2}-\d{2}T/', $str)) return false;
+    return true;
+};
+$isNotMime = function ($str) {
+    $str = trim(strip_tags($str));
+    if ($str === '') return false;
+    if (preg_match('#^[\w-]+/[\w.+-]+$#', $str)) return false;
+    return true;
+};
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>Access Required</title>
+    <title>The Jon Sarkin Catalog Raisonn&eacute;</title>
     <style>
+        @font-face {
+            font-family: 'Jost';
+            src: url('/themes/sarkin-jeppesen/asset/fonts/Jost-VF.ttf') format('truetype');
+            font-weight: 100 900;
+            font-display: swap;
+        }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:   #161a2b;
+            --secondary: #777;
+            --bg:        #f3f3f3;
+            --surface:   #fff;
+            --border:    2px solid #161a2b;
+            --border-light: 1px solid #ccc;
+            --gutter:    10px;
+            --font:      'Jost', 'Helvetica Neue', Arial, sans-serif;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f5f5f5;
+            font-family: var(--font);
+            background: var(--surface);
+            color: var(--primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ── */
+        .landing-header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            border-bottom: var(--border);
+        }
+        .landing-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        /* ── Intro ── */
+        .landing-intro {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .landing-intro p {
+            font-size: 1.05rem;
+            line-height: 1.75;
             color: #333;
+            margin-bottom: 1.25em;
+        }
+        .landing-intro p:last-child {
+            margin-bottom: 0;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* ── Preview section ── */
+        .preview-section {
+            border-top: var(--border);
+            padding: 40px 20px;
+            background: var(--bg);
+        }
+        .preview-section h2 {
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--secondary);
+            margin-bottom: 30px;
+        }
+
+        /* ── Card grid (matches theme chart-grid) ── */
+        .preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: calc(var(--gutter) * 1.5);
+            max-width: 920px;
+            margin: 0 auto;
+            list-style: none;
+        }
+        .preview-card {
+            width: calc((100% - var(--gutter) * 3) / 3);
+            background: var(--surface);
+            border: var(--border);
+            overflow: hidden;
+            transition: box-shadow 0.15s;
+        }
+        .preview-card:hover {
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.08);
+        }
+        .preview-card a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .preview-card .card-image {
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-bottom: var(--border);
+            background: var(--bg);
+        }
+        .preview-card .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .preview-card .card-image-placeholder {
+            width: 100%;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 1rem;
+            color: var(--secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
-        .card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-            padding: 2rem;
-            width: 100%;
-            max-width: 380px;
+        .preview-card .card-facts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: var(--border-light);
         }
-        .card h1 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 1.25rem;
+        .preview-card .card-fact {
+            padding: 6px 8px;
             text-align: center;
         }
-        .field { margin-bottom: 1rem; }
-        .field input {
-            width: 100%;
-            padding: 0.625rem 0.75rem;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        .preview-card .card-fact:first-child {
+            border-right: var(--border-light);
+        }
+        .preview-card .card-fact-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--secondary);
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+        .preview-card .card-fact-value {
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .preview-card .card-info {
+            padding: 8px 10px;
+        }
+        .preview-card .card-id {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--secondary);
+            margin-bottom: 2px;
+        }
+        .preview-card .card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            line-height: 1.3;
+        }
+        .preview-card .card-medium {
+            font-size: 0.7rem;
+            color: var(--secondary);
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        /* ── Password section ── */
+        .access-section {
+            border-top: var(--border);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .access-section h2 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        .access-section .access-subtext {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            max-width: 480px;
+            margin: 0 auto 20px;
+            line-height: 1.5;
+        }
+        .access-form {
+            display: flex;
+            gap: 8px;
+            max-width: 340px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+        .access-form input {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-family: var(--font);
+            border: var(--border-light);
             outline: none;
             transition: border-color 0.15s;
         }
-        .field input:focus { border-color: #555; }
-        .error {
-            color: #c0392b;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-            text-align: center;
+        .access-form input:focus {
+            border-color: var(--primary);
         }
-        button {
-            width: 100%;
-            padding: 0.625rem;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #fff;
-            background: #333;
-            border: none;
-            border-radius: 4px;
+        .access-form button {
+            padding: 8px 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--surface);
+            background: var(--primary);
+            border: var(--border);
             cursor: pointer;
             transition: background-color 0.15s;
+            white-space: nowrap;
         }
-        button:hover { background: #555; }
+        .access-form button:hover {
+            background: #333;
+        }
+        .access-error {
+            color: #c0392b;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        /* ── Footer ── */
+        .landing-footer {
+            border-top: var(--border);
+            padding: 20px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--secondary);
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .landing-header { padding: 40px 20px 30px; }
+            .landing-header h1 { font-size: 1.4rem; }
+            .preview-card { width: calc((100% - var(--gutter) * 1.5) / 2); }
+        }
+        @media (max-width: 480px) {
+            .landing-header h1 { font-size: 1.15rem; }
+            .landing-intro p { font-size: 0.95rem; }
+            .preview-card { width: calc((100% - var(--gutter) * 1.5) / 2); }
+            .preview-grid { gap: 10px; }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Access Required</h1>
+
+    <header class="landing-header">
+        <h1>The Jon Sarkin Catalog Raisonn&eacute;</h1>
+    </header>
+
+    <section class="landing-intro">
+        <p>Jon Sarkin (1953&ndash;2024) produced over 20,000 works across three decades following a stroke that fundamentally reorganized his brain. His practice has been the subject of a Pulitzer Prize&ndash;winning biography, a peer-reviewed critical essay in <em>Epidemiology and Psychiatric Sciences</em> (Cambridge University Press) comparing his work to Johns, Rauschenberg, Basquiat, and Twombly, and coverage in <em>The New Yorker</em>, <em>The New York Times</em>, NPR, <em>GQ</em>, and the <em>Boston Globe</em>. His work is held by the Centre Pompidou, the American Visionary Art Museum, and the Museum of Modern Art Archives.</p>
+        <p>This catalog raisonn&eacute; documents the full scope of that practice &mdash; over 3,500 works cataloged with curatorial series designations, computational iconographic profiling, full-text transcription and search, and visual similarity indexing.</p>
+    </section>
+
+    <?php if (!empty($previewItems)): ?>
+    <section class="preview-section">
+        <h2>Preview the Catalog</h2>
+        <ul class="preview-grid">
+            <?php foreach ($previewItems as $item):
+                $title   = $item->displayTitle() ?: 'Untitled';
+                $dateRaw = $val($item, 'dcterms:date', '') ?: $val($item, 'schema:dateCreated', '');
+                $date    = $isArtworkDate($dateRaw) ? $dateRaw : '';
+                $catId   = $val($item, 'dcterms:identifier', '');
+                $mediumRaw = $val($item, 'dcterms:medium', '');
+                $medium  = $isNotMime($mediumRaw) ? $mediumRaw : '';
+                $surface = $val($item, 'schema:artworkSurface', '');
+                $mediumDisplay = $medium . ($surface ? ' on ' . strtolower($surface) : '');
+                $height  = $val($item, 'schema:height', '');
+                $width   = $val($item, 'schema:width', '');
+                $extent  = $val($item, 'dcterms:extent', '');
+                if ($height && $width) {
+                    $dims = $height . ' &times; ' . $width;
+                } elseif ($extent) {
+                    $dims = $extent;
+                } else {
+                    $dims = '';
+                }
+                $primaryMedia = $item->primaryMedia();
+                $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
+                $itemUrl = '/s/catalog/item/' . $item->id();
+            ?>
+            <li class="preview-card">
+                <a href="<?php echo $escape($itemUrl); ?>">
+                    <div class="card-image">
+                        <?php if ($thumbUrl): ?>
+                            <img src="<?php echo $escape($thumbUrl); ?>"
+                                 alt="<?php echo $escape($title); ?>"
+                                 loading="lazy" />
+                        <?php else: ?>
+                            <div class="card-image-placeholder">No image</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="card-facts">
+                        <div class="card-fact">
+                            <div class="card-fact-label">Year</div>
+                            <div class="card-fact-value"><?php echo $date ?: '&mdash;'; ?></div>
+                        </div>
+                        <div class="card-fact">
+                            <div class="card-fact-label">Size</div>
+                            <div class="card-fact-value"><?php echo $dims ?: '&mdash;'; ?></div>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <?php if ($catId): ?>
+                            <div class="card-id"><?php echo $catId; ?></div>
+                        <?php endif; ?>
+                        <div class="card-title"><?php echo $escape($title); ?></div>
+                        <?php if ($mediumDisplay): ?>
+                            <div class="card-medium"><?php echo $mediumDisplay; ?></div>
+                        <?php endif; ?>
+                    </div>
+                </a>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+    </section>
+    <?php endif; ?>
+
+    <section class="access-section">
+        <h2>Full Catalog Access</h2>
+        <p class="access-subtext">The complete catalog raisonn&eacute; is currently in a pre-launch review period. Full public access is coming soon.</p>
         <?php if (!empty($error)): ?>
-            <p class="error">Incorrect password.</p>
+            <p class="access-error">Incorrect password.</p>
         <?php endif; ?>
-        <form method="post">
-            <div class="field">
-                <input type="password" name="lockdown_password" placeholder="Password" autofocus required>
-            </div>
+        <form method="post" class="access-form">
+            <input type="password" name="lockdown_password" placeholder="Password" required>
             <button type="submit">Enter</button>
         </form>
-    </div>
+    </section>
+
+    <footer class="landing-footer">
+        &copy; The Jon Sarkin Estate / Artists Rights Society (ARS), New York
+    </footer>
+
 </body>
 </html>

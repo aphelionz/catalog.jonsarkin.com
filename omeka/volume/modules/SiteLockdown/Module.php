@@ -10,6 +10,9 @@ use Omeka\Module\AbstractModule;
 
 class Module extends AbstractModule
 {
+    // ── Preview item IDs — update these to the real catalog item IDs ──
+    const PREVIEW_ITEM_IDS = [2082, 7467, 5440, 8824, 8818];
+
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
@@ -70,6 +73,20 @@ class Module extends AbstractModule
         $jsonRoutes = ['similar-pieces', 'iconography', 'iconography-batch', 'lexical-profile', 'similar-search'];
         if (in_array($routeName, $jsonRoutes, true) || strpos($routeName, 'similar-pieces/') === 0) {
             return;
+        }
+
+        // Allow preview item pages through without authentication
+        if ($routeName === 'site/resource-id') {
+            $controller = $routeMatch->getParam('controller');
+            $action = $routeMatch->getParam('action');
+            $id = $routeMatch->getParam('id');
+            $isItemController = ($controller === 'item'
+                || $controller === 'Omeka\Controller\Site\Item'
+                || $controller === 'Omeka\\Controller\\Site\\Item');
+            if ($isItemController && $action === 'show' && $id
+                && in_array((int) $id, self::PREVIEW_ITEM_IDS, true)) {
+                return; // Preview item — let through
+            }
         }
 
         $services = $event->getApplication()->getServiceManager();
@@ -139,8 +156,22 @@ class Module extends AbstractModule
         $services = $event->getApplication()->getServiceManager();
         $renderer = $services->get('ViewRenderer');
 
+        // Fetch preview items for the landing page grid
+        $previewItems = [];
+        try {
+            $api = $services->get('Omeka\ApiManager');
+            $result = $api->search('items', [
+                'id' => self::PREVIEW_ITEM_IDS,
+                'sort_by' => 'id',
+            ]);
+            $previewItems = $result->getContent();
+        } catch (\Exception $e) {
+            // Degrade gracefully — show page without previews
+        }
+
         $viewModel = new \Laminas\View\Model\ViewModel([
             'error' => $showError,
+            'previewItems' => $previewItems,
         ]);
         $viewModel->setTemplate('site-lockdown/lockdown-prompt');
         $viewModel->setTerminal(true);
