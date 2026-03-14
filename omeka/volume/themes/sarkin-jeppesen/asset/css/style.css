@@ -688,7 +688,7 @@ abbr[title] {
   letter-spacing: 0.08em;
   text-align: left;
   padding: 4px var(--gutter) 4px 0;
-  border-bottom: var(--border);
+  border-bottom: 1px solid #000;
   color: var(--secondary);
 }
 
@@ -840,6 +840,27 @@ abbr[title] {
 .similar-pieces-link { display: none; }
 
 /* ── Similar Pieces (inline on item page) ── */
+
+.item-condition {
+  padding-bottom: var(--gutter);
+  margin: 0 calc(-1 * var(--gutter)) var(--gutter);
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+  border-bottom: 2px solid #000;
+}
+
+.item-condition h3 {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.5em;
+}
+
+.item-condition p {
+  margin: 0;
+  font-size: 0.85rem;
+}
 
 #similar-pieces {
   padding: var(--gutter);
