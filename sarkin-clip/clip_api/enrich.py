@@ -89,8 +89,13 @@ Analyze this artwork image and return a JSON object with the following fields.
               fewer tags.
               Return empty array if none match."],
   "condition_notes": "Brief note on visible condition issues (tears, staining,
-                      foxing, fading). Return null if the work appears to be
-                      in good condition."
+                      foxing, fading). When describing condition, note that
+                      edge wear, tearing, creasing, and staining are typically
+                      inherent to the artist's process, not post-creation damage.
+                      Sarkin did not treat his works as precious objects. Use the
+                      phrase 'inherent to the artist's process' to distinguish
+                      process-related wear from external damage. Return null if
+                      the work appears to be in good condition."
 }
 Return ONLY valid JSON. No markdown fences, no explanation."""
 
