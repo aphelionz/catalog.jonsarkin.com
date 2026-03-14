@@ -180,7 +180,8 @@ $this->headTitle($heading);
             $thumbUrl = $result['thumb_url'] ?? null;
 
             if ($item) {
-                $label = $item->displayTitle() ?: $label;
+                $catalogNum = $item->value('dcterms:identifier');
+                $label = $catalogNum ? (string) $catalogNum : ($item->displayTitle() ?: $label);
                 if ($siteSlug !== '') {
                     $linkUrl = $item->siteUrl($siteSlug);
                 }

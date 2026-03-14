@@ -155,7 +155,8 @@ class SimilarController extends AbstractActionController
                 $original = null;
                 if ($item) {
                     $url = $siteSlug ? $item->siteUrl($siteSlug) : $item->url();
-                    $title = $item->displayTitle();
+                    $catalogNum = $item->value('dcterms:identifier');
+                    $title = $catalogNum ? (string) $catalogNum : $item->displayTitle();
                     $pm = $item->primaryMedia();
                     if ($pm) {
                         $thumbnail = $pm->thumbnailUrl('medium');
