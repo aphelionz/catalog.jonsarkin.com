@@ -7,6 +7,10 @@
  */
 $this->htmlElement('body')->appendAttribute('class', 'enrich-queue');
 $runUrl = $this->url('admin/enrich-queue/run');
+$batchUrl = $this->url('admin/enrich-queue/batch');
+$batchStatusUrl = $this->url('admin/enrich-queue/batch-status');
+$batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
+$applyCacheUrl = $this->url('admin/enrich-queue/apply-cache');
 ?>
 
 <?php echo $this->pageTitle('Enrich Queue') ?>
@@ -19,14 +23,50 @@ $runUrl = $this->url('admin/enrich-queue/run');
     </p>
 </div>
 
-<?php if (!empty($unenriched)): ?>
-<div style="margin-bottom: 1em;">
+<!-- Action buttons -->
+<div style="margin-bottom: 1.5em; display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center;">
+    <?php if (!empty($unenriched)): ?>
     <button type="button" id="enrich-all-btn" class="button">
         Enrich All (<?= count($unenriched) ?> items)
     </button>
-    <span id="enrich-batch-status" style="margin-left: 1em; color: #666;"></span>
+
+    <select id="batch-model-select" style="padding: 0.4em;">
+        <option value="haiku">Haiku (fast, cheapest)</option>
+        <option value="sonnet">Sonnet (balanced)</option>
+        <option value="opus">Opus (best quality)</option>
+    </select>
+
+    <button type="button" id="batch-submit-btn" class="button">
+        Submit Batch (50% cheaper)
+    </button>
+    <?php endif; ?>
+
+    <button type="button" id="apply-cache-btn" class="button">
+        Apply Cached Results
+    </button>
+
+    <span id="action-status" style="margin-left: 0.5em; color: #666;"></span>
 </div>
 
+<!-- Batch status panel -->
+<div id="batch-panel" style="margin-bottom: 1.5em; display: none;">
+    <h3>Batch Jobs</h3>
+    <table class="tablesaw" style="width: 100%;">
+        <thead>
+            <tr>
+                <th>Batch ID</th>
+                <th>Model</th>
+                <th>Items</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="batch-rows"></tbody>
+    </table>
+</div>
+
+<?php if (!empty($unenriched)): ?>
 <table class="tablesaw" style="width: 100%;">
     <thead>
         <tr>
@@ -58,32 +98,122 @@ $runUrl = $this->url('admin/enrich-queue/run');
 
 <script>
 (function() {
-    var btn = document.getElementById('enrich-all-btn');
-    var status = document.getElementById('enrich-batch-status');
-    if (!btn) return;
+    var status = document.getElementById('action-status');
+    var urls = {
+        run: <?= json_encode($runUrl) ?>,
+        batch: <?= json_encode($batchUrl) ?>,
+        batchStatus: <?= json_encode($batchStatusUrl) ?>,
+        batchCollect: <?= json_encode($batchCollectUrl) ?>,
+        applyCache: <?= json_encode($applyCacheUrl) ?>
+    };
 
-    btn.addEventListener('click', function() {
+    function postAction(url, body, btn) {
         btn.disabled = true;
-        status.textContent = 'Submitting batch job...';
-
-        fetch(<?= json_encode($runUrl) ?>, {
+        status.textContent = 'Working...';
+        return fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({})
+            body: JSON.stringify(body || {})
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
+            btn.disabled = false;
             if (data.error) {
                 status.textContent = 'Error: ' + data.error;
-            } else {
-                status.textContent = 'Job dispatched for ' + data.count + ' items. Check Admin > Jobs for progress.';
             }
-            btn.disabled = false;
+            return data;
         })
         .catch(function(e) {
-            status.textContent = 'Error: ' + e.message;
             btn.disabled = false;
+            status.textContent = 'Error: ' + e.message;
         });
-    });
+    }
+
+    // Enrich All (real-time, one by one)
+    var enrichBtn = document.getElementById('enrich-all-btn');
+    if (enrichBtn) {
+        enrichBtn.addEventListener('click', function() {
+            postAction(urls.run, {}, enrichBtn).then(function(data) {
+                if (data && !data.error) {
+                    status.textContent = 'Job dispatched for ' + data.count + ' items. Check Admin > Jobs.';
+                }
+            });
+        });
+    }
+
+    // Submit Batch (Anthropic Batch API)
+    var batchBtn = document.getElementById('batch-submit-btn');
+    if (batchBtn) {
+        batchBtn.addEventListener('click', function() {
+            var model = document.getElementById('batch-model-select').value;
+            postAction(urls.batch, { model: model }, batchBtn).then(function(data) {
+                if (data && !data.error) {
+                    status.textContent = 'Batch submitted for ' + data.count + ' items (50% discount). Check status below.';
+                    loadBatchStatus();
+                }
+            });
+        });
+    }
+
+    // Apply Cache
+    var cacheBtn = document.getElementById('apply-cache-btn');
+    if (cacheBtn) {
+        cacheBtn.addEventListener('click', function() {
+            postAction(urls.applyCache, {}, cacheBtn).then(function(data) {
+                if (data && !data.error) {
+                    status.textContent = 'Applying ' + data.cached_count + ' cached results. Check Admin > Jobs.';
+                }
+            });
+        });
+    }
+
+    // Batch status
+    function loadBatchStatus() {
+        fetch(urls.batchStatus, {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var batches = data.batches || [];
+            var panel = document.getElementById('batch-panel');
+            var tbody = document.getElementById('batch-rows');
+            if (!batches.length) {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'block';
+            tbody.innerHTML = '';
+            batches.forEach(function(b) {
+                var tr = document.createElement('tr');
+                var collectBtn = '';
+                if (b.status !== 'collected') {
+                    collectBtn = '<button class="button button-small batch-collect-btn" data-batch="' + b.batch_id + '">Collect</button>';
+                }
+                tr.innerHTML = '<td><code>' + b.batch_id.substring(0, 20) + '...</code></td>'
+                    + '<td>' + (b.model || '?') + '</td>'
+                    + '<td>' + (b.item_count || '?') + '</td>'
+                    + '<td>' + (b.status || '?') + '</td>'
+                    + '<td>' + (b.created_at || '?') + '</td>'
+                    + '<td>' + collectBtn + '</td>';
+                tbody.appendChild(tr);
+            });
+
+            // Bind collect buttons
+            document.querySelectorAll('.batch-collect-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var batchId = btn.getAttribute('data-batch');
+                    postAction(urls.batchCollect, { batch_id: batchId }, btn).then(function(data) {
+                        if (data && !data.error) {
+                            status.textContent = 'Collecting batch ' + batchId.substring(0, 20) + '... Check Admin > Jobs.';
+                            setTimeout(loadBatchStatus, 2000);
+                        }
+                    });
+                });
+            });
+        });
+    }
+
+    // Load batch status on page load
+    loadBatchStatus();
 })();
 </script>

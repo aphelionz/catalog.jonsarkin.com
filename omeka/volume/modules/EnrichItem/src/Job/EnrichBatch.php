@@ -2,11 +2,13 @@
 
 namespace EnrichItem\Job;
 
+use EnrichItem\Service\AnthropicClient;
+use EnrichItem\Service\EnrichmentCache;
 use Laminas\Http\Client as HttpClient;
 use Omeka\Job\AbstractJob;
 
 /**
- * Background job: enrich + ingest a list of items via clip-api.
+ * Background job: enrich items via Claude + ingest into Qdrant.
  *
  * Args: ['item_ids' => [int, ...]]
  */
@@ -29,10 +31,12 @@ class EnrichBatch extends AbstractJob
         $api = $services->get('Omeka\ApiManager');
         $logger = $services->get('Omeka\Logger');
         $httpClient = $services->get('Omeka\HttpClient');
+        $anthropicClient = $services->get(AnthropicClient::class);
+        $cache = $services->get(EnrichmentCache::class);
         $config = $services->get('Config');
         $moduleConfig = $config['enrich_item'] ?? [];
         $baseUrl = rtrim($moduleConfig['clip_api_base_url'] ?? 'http://clip-api:8000', '/');
-        $timeout = (int) ($moduleConfig['timeout'] ?? 30);
+        $timeout = (int) ($moduleConfig['timeout'] ?? 120);
 
         $itemIds = $this->getArg('item_ids', []);
         $total = count($itemIds);
@@ -45,7 +49,7 @@ class EnrichBatch extends AbstractJob
             }
 
             try {
-                $this->processItem($itemId, $api, $httpClient, $baseUrl, $timeout, $logger);
+                $this->processItem($itemId, $api, $anthropicClient, $cache, $httpClient, $baseUrl, $timeout, $logger);
                 $logger->info(sprintf('EnrichBatch: [%d/%d] item %d done', $i + 1, $total, $itemId));
             } catch (\Throwable $e) {
                 $logger->err(sprintf('EnrichBatch: item %d failed: %s', $itemId, $e->getMessage()));
@@ -55,8 +59,16 @@ class EnrichBatch extends AbstractJob
         $logger->info(sprintf('EnrichBatch: completed %d items', $total));
     }
 
-    private function processItem(int $itemId, $api, HttpClient $httpClient, string $baseUrl, int $timeout, $logger): void
-    {
+    private function processItem(
+        int $itemId,
+        $api,
+        AnthropicClient $anthropicClient,
+        EnrichmentCache $cache,
+        HttpClient $httpClient,
+        string $baseUrl,
+        int $timeout,
+        $logger
+    ): void {
         $itemRepr = $api->read('items', $itemId)->getContent();
         $itemJson = json_decode(json_encode($itemRepr), true);
 
@@ -89,30 +101,20 @@ class EnrichBatch extends AbstractJob
             return;
         }
 
-        // Step 1: Enrich
-        $client = clone $httpClient;
-        $client->resetParameters(true);
-        $client->setUri($baseUrl . '/v1/enrich');
-        $client->setMethod('POST');
-        $client->setHeaders(['Content-Type' => 'application/json', 'Accept' => 'application/json']);
-        $client->setRawBody(json_encode(['image_url' => $mediaUrl, 'model' => 'haiku']));
-        $client->setOptions(['timeout' => $timeout]);
-
-        $response = $client->send();
-        if (!$response->isSuccess()) {
-            throw new \RuntimeException('Enrich HTTP ' . $response->getStatusCode());
-        }
-
-        $enrichment = json_decode($response->getBody(), true);
+        // Step 1: Enrich (check cache first, then Claude)
+        $promptVersion = AnthropicClient::PROMPT_VERSION;
+        $enrichment = $cache->get($itemId, $promptVersion);
         if (!$enrichment) {
-            throw new \RuntimeException('Invalid enrichment response');
+            $enrichment = $anthropicClient->analyze($mediaUrl, 'haiku');
+            unset($enrichment['usage']);
+            $cache->put($itemId, $promptVersion, $enrichment);
         }
 
         // Step 2: Apply enrichment (only empty fields)
         $payload = $this->buildPatchPayload($itemJson, $enrichment);
         $api->update('items', $itemId, $payload);
 
-        // Step 3: Ingest into search index
+        // Step 3: Ingest into search index (still via clip-api)
         $subjects = [];
         foreach (($itemJson['dcterms:subject'] ?? []) as $v) {
             $val = $v['@value'] ?? '';
@@ -141,14 +143,14 @@ class EnrichBatch extends AbstractJob
             $ingestBody['year'] = (int) $m[1];
         }
 
-        $client2 = clone $httpClient;
-        $client2->resetParameters(true);
-        $client2->setUri($baseUrl . '/v1/ingest/' . $itemId);
-        $client2->setMethod('POST');
-        $client2->setHeaders(['Content-Type' => 'application/json', 'Accept' => 'application/json']);
-        $client2->setRawBody(json_encode($ingestBody));
-        $client2->setOptions(['timeout' => $timeout]);
-        $client2->send();
+        $client = clone $httpClient;
+        $client->resetParameters(true);
+        $client->setUri($baseUrl . '/v1/ingest/' . $itemId);
+        $client->setMethod('POST');
+        $client->setHeaders(['Content-Type' => 'application/json', 'Accept' => 'application/json']);
+        $client->setRawBody(json_encode($ingestBody));
+        $client->setOptions(['timeout' => $timeout]);
+        $client->send();
     }
 
     private function buildPatchPayload(array $item, array $enrichment): array
@@ -186,7 +188,6 @@ class EnrichBatch extends AbstractJob
             $term = $props['term'];
             $propId = $props['property_id'];
 
-            // Check if field is currently empty
             $currentValues = $payload[$term] ?? [];
             $hasValue = false;
             foreach ($currentValues as $v) {

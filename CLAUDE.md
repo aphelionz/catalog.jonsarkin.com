@@ -4,9 +4,9 @@ Catalog raisonné for artist Jon Sarkin (catalog.jonsarkin.com). A monorepo comb
 
 ## Architecture
 - **Omeka S** (PHP) — catalog CMS, MariaDB backend, serves the public site
-- **FastAPI** (Python) — CLIP-based similarity search + hybrid text search API
+- **FastAPI** (Python) — CLIP-based similarity search, hybrid text search, and Qdrant ingest API
 - **Qdrant** — vector database storing 512-dim CLIP embeddings (visual + text)
-- **Claude API** — OCR and metadata enrichment for catalog items
+- **Claude API** — OCR and metadata enrichment (called directly from PHP via EnrichItem module)
 - **SQLite FTS** — full-text search index, built during ingestion
 
 ## Directory map
@@ -14,10 +14,11 @@ Catalog raisonné for artist Jon Sarkin (catalog.jonsarkin.com). A monorepo comb
   - `omeka/volume/themes/sarkin-jeppesen/` — custom theme (the only one we edit)
   - `omeka/volume/modules/FacetedBrowse/` — forked faceted browse module (customized controller + GROUP BY counts)
   - `omeka/volume/modules/SimilarPieces/` — custom similarity UI module
+  - `omeka/volume/modules/EnrichItem/` — Claude-based enrichment module (direct Anthropic API calls, batch API, cache)
 - `sarkin-clip/` — Python CLIP service: FastAPI app, embeddings, tests
-  - `sarkin-clip/clip_api/` — FastAPI application code
+  - `sarkin-clip/clip_api/` — FastAPI application code (search, similarity, ingest only — no enrichment)
   - `sarkin-clip/tests/` — pytest suite
-- `scripts/` — enrichment pipeline (Claude-based OCR + metadata)
+- `scripts/` — utility scripts
 - `docker-compose.prod.yml` — production Docker Compose (Traefik + MariaDB + Omeka + Qdrant + clip-api)
 
 ## Ports
@@ -32,13 +33,16 @@ Run `make` with no args to see all targets. Key ones:
 ```
 make local                              # start omeka + qdrant + clip-api
 make down / make logs                   # stop / tail logs
-make enrich ARGS="--dry-run"            # preview enrichment
-make enrich ARGS="--model haiku"        # run enrichment (costs money)
-make process-new ARGS="--dry-run"       # enrich + ingest (preview)
-make process-new ARGS="--model haiku"   # enrich + ingest (full run)
 make sync                               # pull new items from prod + ingest locally
 make ingest                             # re-index Qdrant (incremental)
 ```
+
+### Enrichment
+Enrichment is now in the Omeka admin UI: **Admin > Enrich Queue**.
+- **Single item:** Item show page > Enrich tab > Analyze > Apply
+- **Batch (real-time):** Enrich Queue > Enrich All
+- **Batch API (50% cheaper):** Enrich Queue > Submit Batch > (wait ~1hr) > Collect
+- **Re-apply cache:** Enrich Queue > Apply Cached Results (zero API cost, use after `make pull`)
 
 ## Testing
 - **Python:** `docker compose exec clip-api pytest` — never run pytest locally from venv
@@ -52,7 +56,7 @@ make ingest                             # re-index Qdrant (incremental)
 ## Data flow (prod ↔ dev)
 - **Code + schema**: dev → prod only (`make deploy`, `make push-schema`)
 - **New items**: prod → dev (`make pull-new`, `make pull-files`)
-- **Enrichment**: local laptop → prod API (`make enrich ARGS="--target prod"`); requires confirmation to write
+- **Enrichment**: Omeka admin UI (EnrichItem module calls Claude API directly); cached results survive DB resets
 - **Full DB reset**: prod → dev (`make pull`)
 - **Files**: prod → dev (`make pull-files`); dev → prod only for dev-created media via rsync
 
@@ -60,7 +64,7 @@ make ingest                             # re-index Qdrant (incremental)
 
 ## Guardrails
 ### Never without my explicit approval
-- `make enrich` / `make process-new` (without `--dry-run`) — hit Claude API, cost money (always preview with `ARGS="--dry-run"` first)
+- Enrichment actions in Omeka admin (hit Claude API, cost money)
 - `make deploy`, `make pull`, or anything touching production data
 - Modifying Docker Compose files
 - Modifying Ansible/deploy configurations

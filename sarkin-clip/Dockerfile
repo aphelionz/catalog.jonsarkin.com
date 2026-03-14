@@ -22,7 +22,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install --upgrade pip && \
     pip3 install --no-cache-dir \
         open_clip_torch==3.2.0 \
-        anthropic>=0.40.0 \
         qdrant-client==1.16.1 \
         pillow==10.4.0 \
         requests==2.32.5 \

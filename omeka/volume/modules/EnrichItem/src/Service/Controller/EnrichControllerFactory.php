@@ -3,6 +3,8 @@
 namespace EnrichItem\Service\Controller;
 
 use EnrichItem\Controller\EnrichController;
+use EnrichItem\Service\AnthropicClient;
+use EnrichItem\Service\EnrichmentCache;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -16,6 +18,8 @@ class EnrichControllerFactory implements FactoryInterface
         $api = $container->get('Omeka\ApiManager');
         $entityManager = $container->get('Omeka\EntityManager');
         $jobDispatcher = $container->get('Omeka\Job\Dispatcher');
+        $anthropicClient = $container->get(AnthropicClient::class);
+        $enrichmentCache = $container->get(EnrichmentCache::class);
 
         if ($container->has('Omeka\\Logger')) {
             $logger = $container->get('Omeka\\Logger');
@@ -28,6 +32,6 @@ class EnrichControllerFactory implements FactoryInterface
         $config = $container->get('Config');
         $moduleConfig = $config['enrich_item'] ?? [];
 
-        return new EnrichController($httpClient, $api, $logger, $moduleConfig, $entityManager, $jobDispatcher);
+        return new EnrichController($httpClient, $api, $logger, $moduleConfig, $entityManager, $jobDispatcher, $anthropicClient, $enrichmentCache);
     }
 }

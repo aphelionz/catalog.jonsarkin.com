@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry enrich process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key
 
 .DEFAULT_GOAL := help
 
@@ -16,8 +16,8 @@ help: ## Show available targets
 	@echo "  Dev"
 	@grep -E '^(local|down|logs|doctor):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
-	@echo "  Enrich & Ingest"
-	@grep -E '^(enrich|ingest|ingest-full|ingest-dry|process-new):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "  Ingest"
+	@grep -E '^(ingest|ingest-full|ingest-dry|process-new):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Data Sync"
 	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy|push-schema):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -25,18 +25,7 @@ help: ## Show available targets
 	@echo "  Utilities"
 	@grep -E '^(backup-db|restore-db|ensure-api-key):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
-	@echo "  Enrich ARGS (combine as needed):"
-	@echo "    --dry-run              Preview without writing"
-	@echo "    --model haiku|sonnet   Claude model (default: sonnet)"
-	@echo "    --limit N              Process at most N items"
-	@echo "    --item-id ID           Process a single item"
-	@echo "    --target local|prod    Target Omeka instance (default: local)"
-	@echo "    --batch                Submit to Batch API (50% cheaper, ~1hr)"
-	@echo "    --batch-status         Check pending batch progress"
-	@echo "    --batch-collect        Collect batch results and apply"
-	@echo "    --apply-cache          Re-apply cached results (no API cost)"
-	@echo "    --force                Re-enrich items that already have data"
-	@echo "    --skip-filter          Include non-artwork templates"
+	@echo "  Enrichment is now in the Omeka admin UI: Admin > Enrich Queue"
 	@echo ""
 
 # ── Dev ──────────────────────────────────────────────────────────────
@@ -63,9 +52,6 @@ doctor: ## Check local dev prerequisites
 
 # ── Enrich & Ingest ──────────────────────────────────────────────────
 
-enrich: ## Enrich items via Claude (ARGS passed through, e.g. ARGS="--dry-run --limit 5")
-	python3 scripts/enrich_metadata.py $(ARGS)
-
 ingest: ## Incremental ingest: only new/updated items into Qdrant (CPU)
 	docker compose run --rm ingest
 
@@ -75,8 +61,7 @@ ingest-full: ## Full re-ingest: reprocess all items into Qdrant (CPU)
 ingest-dry: ## Preview what incremental ingest would process
 	docker compose run --rm ingest --dry-run
 
-process-new: ## Enrich unenriched items + re-index search (ARGS passed to enrich)
-	python3 scripts/enrich_metadata.py $(ARGS)
+process-new: ## Re-index search (enrichment now via Omeka admin UI)
 	docker compose run --rm ingest
 
 # ── Data Sync ────────────────────────────────────────────────────────

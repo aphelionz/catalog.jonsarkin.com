@@ -54,6 +54,7 @@ services:
       OMEKA_ADMIN_EMAIL: ${OMEKA_ADMIN_EMAIL:-admin@example.com}
       OMEKA_SITE_TITLE: "Jon Sarkin Catalog"
       OMEKA_ENVIRONMENT: production
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     labels:
       traefik.enable: "true"
       traefik.http.routers.omeka-http.entrypoints: "web"
@@ -87,7 +88,6 @@ services:
       SEARCH_MODE: hybrid
       SEARCH_DB_PATH: /app/search_index/index.sqlite
       DEFAULT_LIMIT: 50
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - search_index:/app/search_index
 

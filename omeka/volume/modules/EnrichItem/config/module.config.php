@@ -65,10 +65,52 @@ return [
                                     ],
                                 ],
                             ],
+                            'apply-cache' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/apply-cache',
+                                    'defaults' => [
+                                        'action' => 'applyCache',
+                                    ],
+                                ],
+                            ],
+                            'batch' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/batch',
+                                    'defaults' => [
+                                        'action' => 'batchSubmit',
+                                    ],
+                                ],
+                            ],
+                            'batch-status' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/batch-status',
+                                    'defaults' => [
+                                        'action' => 'batchStatus',
+                                    ],
+                                ],
+                            ],
+                            'batch-collect' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/batch-collect',
+                                    'defaults' => [
+                                        'action' => 'batchCollect',
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],
             ],
+        ],
+    ],
+    'service_manager' => [
+        'factories' => [
+            Service\AnthropicClient::class => Service\AnthropicClientFactory::class,
+            Service\EnrichmentCache::class => Service\EnrichmentCacheFactory::class,
         ],
     ],
     'controllers' => [
@@ -83,7 +125,7 @@ return [
     ],
     'enrich_item' => [
         'clip_api_base_url' => 'http://clip-api:8000',
-        'timeout' => 30,
+        'timeout' => 120,
         'resource_template_id' => 2,
         'default_model' => 'haiku',
     ],

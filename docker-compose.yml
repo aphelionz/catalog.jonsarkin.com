@@ -33,6 +33,7 @@ services:
       OMEKA_ADMIN_PASSWORD: admin-admin
       OMEKA_SITE_TITLE: "Jon Sarkin Catalog"
       OMEKA_ENVIRONMENT: development
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     restart: on-failure:5
 
   qdrant:

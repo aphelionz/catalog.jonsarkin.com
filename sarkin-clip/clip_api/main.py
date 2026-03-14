@@ -12,8 +12,6 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from clip_api import embeddings
 from clip_api.config import Settings, load_settings
 from clip_api.models import (
-    EnrichRequest,
-    EnrichResponse,
     IconographyBatchItem,
     IconographyBatchResponse,
     IconographyResponse,
@@ -844,29 +842,7 @@ async def image_search(
     return ImageSearchResponse(matches=matches)
 
 
-# ── Enrichment & single-item ingest ──────────────────────────────────────────
-
-
-@app.post("/v1/enrich", response_model=EnrichResponse)
-async def enrich_item(req: EnrichRequest) -> EnrichResponse:
-    """Analyze an artwork image with Claude and return structured metadata."""
-    import os
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured")
-
-    from clip_api.enrich import analyze_artwork
-
-    import sys
-    print(f"[enrich] request: model={req.model} image_url={req.image_url[:120]}", file=sys.stderr, flush=True)
-    try:
-        result = await analyze_artwork(req.image_url, model=req.model)
-    except Exception as exc:
-        print(f"[enrich] FAILED for {req.image_url[:120]}: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
-        raise HTTPException(status_code=502, detail=f"Enrichment failed: {type(exc).__name__}: {exc}") from exc
-
-    usage = result.get("usage", {})
-    print(f"[enrich] OK: model={usage.get('model','?')} in={usage.get('input_tokens',0)} out={usage.get('output_tokens',0)}", file=sys.stderr, flush=True)
-    return EnrichResponse(**result)
+# ── Single-item ingest ──────────────────────────────────────────────────────
 
 
 @app.post("/v1/ingest/{omeka_id}", response_model=IngestResponse)
