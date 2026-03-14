@@ -192,13 +192,6 @@ $isNotMime = function ($str) {
         .preview-card .card-info {
             padding: 8px 10px;
         }
-        .preview-card .card-id {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--secondary);
-            margin-bottom: 2px;
-        }
         .preview-card .card-title {
             font-size: 0.75rem;
             font-weight: 700;
@@ -359,10 +352,7 @@ $isNotMime = function ($str) {
                         </div>
                     </div>
                     <div class="card-info">
-                        <?php if ($catId): ?>
-                            <div class="card-id"><?php echo $catId; ?></div>
-                        <?php endif; ?>
-                        <div class="card-title"><?php echo $escape($title); ?></div>
+                        <div class="card-title"><?php echo $catId ? strtoupper($catId) : $escape($title); ?></div>
                         <?php if ($mediumDisplay): ?>
                             <div class="card-medium"><?php echo $mediumDisplay; ?></div>
                         <?php endif; ?>
