@@ -69,9 +69,11 @@ try {
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </button>
                 </form>
+                <?php try { $advancedUrl = $this->url('site/visual-search', ['site-slug' => $site->slug()]); ?>
                 <div class="site-search-advanced">
-                    <a href="<?php echo $this->url('site/visual-search', ['site-slug' => $site->slug()]); ?>" class="pill-button">[advanced]</a>
+                    <a href="<?php echo $advancedUrl; ?>" class="pill-button">[advanced]</a>
                 </div>
+                <?php } catch (\Exception $e) { /* SimilarPieces not installed */ } ?>
             </div>
             <button class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="site-nav">
                 <span></span><span></span><span></span>

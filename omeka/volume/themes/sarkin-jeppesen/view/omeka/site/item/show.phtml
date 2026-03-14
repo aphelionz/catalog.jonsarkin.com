@@ -475,7 +475,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                      hidden>
                 <h3 id="similar-heading">Similar pieces</h3>
                 <div class="similar-grid"></div>
-                <a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>" class="similar-more">View all</a>
+                <?php try { ?><a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>" class="similar-more">View all</a><?php } catch (\Exception $e) { /* SimilarPieces not installed */ } ?>
             </section>
 
             <div class="collector-details">

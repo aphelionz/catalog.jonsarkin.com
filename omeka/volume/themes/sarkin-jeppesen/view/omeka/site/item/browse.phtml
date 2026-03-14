@@ -9,19 +9,21 @@
  * page with that item set pre-selected instead of showing a plain list.
  */
 
-// Redirect item-set show to faceted browse with set pre-selected
+// Redirect item-set show to faceted browse with set pre-selected (if module active)
 if (isset($itemSet)):
-    $fbPageId     = 2;
-    $fbCategoryId = 2;
-    $fbBaseUrl = $this->url('site/faceted-browse', [
-        'site-slug' => $this->currentSite()->slug(),
-        'page-id'   => $fbPageId,
-    ]);
-    $redirectUrl = $fbBaseUrl . '?item_set_id[]=' . (int)$itemSet->id()
-        . '&faceted_browse_category_id=' . (int)$fbCategoryId;
-    echo '<script>window.location.replace(' . json_encode($redirectUrl) . ');</script>';
-    echo '<p>Redirecting to <a href="' . $this->escapeHtml($redirectUrl) . '">browse</a>…</p>';
-    return;
+    try {
+        $fbPageId     = 2;
+        $fbCategoryId = 2;
+        $fbBaseUrl = $this->url('site/faceted-browse', [
+            'site-slug' => $this->currentSite()->slug(),
+            'page-id'   => $fbPageId,
+        ]);
+        $redirectUrl = $fbBaseUrl . '?item_set_id[]=' . (int)$itemSet->id()
+            . '&faceted_browse_category_id=' . (int)$fbCategoryId;
+        echo '<script>window.location.replace(' . json_encode($redirectUrl) . ');</script>';
+        echo '<p>Redirecting to <a href="' . $this->escapeHtml($redirectUrl) . '">browse</a>…</p>';
+        return;
+    } catch (\Exception $e) { /* FacetedBrowse not installed — fall through to default browse */ }
 endif;
 
 $escape    = $this->plugin('escapeHtml');
