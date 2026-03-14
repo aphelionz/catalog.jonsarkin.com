@@ -41,69 +41,58 @@ CONDITIONS = ["Excellent", "Good", "Fair", "Poor", "Not Examined"]
 
 # ── Claude prompt ────────────────────────────────────────────────────────────
 
-ANALYSIS_PROMPT_TEMPLATE = """You are cataloging artworks by Jon Sarkin (1953–2024) for a catalog raisonné.
-
+ANALYSIS_PROMPT = """\
+You are cataloging artworks by Jon Sarkin (1953–2024) for a catalog raisonné.
 Analyze this artwork image and return a JSON object with the following fields.
-Be precise and conservative — only report what you can clearly see.
-
-{{
-  "transcription": "Complete transcription of ALL visible text in the artwork.
-                     Preserve line breaks, capitalization, and punctuation.
-                     Include title text, marginal text, labels — everything
-                     legible. For repeated words/phrases, transcribe once then
-                     note the count (e.g. 'AUM ×47'). Do NOT write out every
-                     repetition. Omit text you cannot read clearly.
+{
+  "transcription": "Transcribe ALL visible text exactly as written by the artist.
+                     Do not correct spelling, grammar, punctuation, or capitalization.
+                     Do not normalize or interpret — reproduce what is on the surface.
+                     Include all words, phrases, letter sequences, and isolated characters.
+                     Transcribe every instance of repeated sequences individually
+                     (e.g., 'eee eee eee eee eee' not 'eee ×5').
+                     Include text fragments, cultural references, and symbols that
+                     function as text (describe symbols in brackets: [circle with cross]).
+                     Do NOT include the artist's signature or date — these are captured
+                     in separate fields. The signature is usually 'JMS' followed by a
+                     two-digit year, typically in the lower right.
+                     Organize spatially: top to bottom, left to right. Use line breaks
+                     to separate distinct text areas.
+                     Use [illegible] for unreadable portions.
                      Return null if no text is visible.",
-
-  "signature": "Return a SINGLE character indicating where the signature
-                appears on the artwork. Must be exactly one of:
-                ↖ ↑ ↗ ← → ↙ ↓ ↘ ∅
+  "signature": "Return a SINGLE character indicating where the signature appears.
+                Must be exactly one of: ↖ ↑ ↗ ← → ↙ ↓ ↘ ∅
                 Use ∅ if unsigned or no signature visible.
-                Do NOT include initials, dates, or any other text — just
-                the one arrow character or ∅.",
-
+                Return ONLY the one arrow character or ∅ — no other text.",
   "date": "Year the work was created, if determinable from the signature or
            text in the artwork. Return as a string: '2005', 'c. 2005', etc.
            Return null if not determinable.",
-
   "medium": "Materials/media ONLY — do NOT include the support surface.
              Examples: 'Marker', 'Ink and marker', 'Acrylic and collage',
              'Mixed media', 'Graphite', 'Oil paint'.
-             The support (paper, cardboard, etc.) is captured separately.
              Return null if uncertain.",
-
-  "support": "The surface/substrate. Must be one of: Paper, Cardboard, Canvas,
-              Board, Wood, Found Object, Envelope, Album Sleeve, Other.
+  "support": "The surface/substrate. Must be one of:
+              Cardboard album sleeve, Paper, Canvas, Board, Wood,
+              Found Object, Envelope, Other.
+              If the work is square (approximately 12.5 × 12.5 inches),
+              the support is almost certainly 'Cardboard album sleeve.'
+              Do not override to 'Paper' or 'Cardboard' unless clearly
+              not an album sleeve.
               Return null if uncertain.",
-
   "work_type": "Must be one of: Drawing, Painting, Collage, Mixed Media,
                 Sculpture, Print, Other. Return null if uncertain.",
-
-  "motifs": ["Array of visual motifs present. Choose from: Eyes, Fish, Faces,
-              Hands, Text Fragments, Grids, Circles, Patterns, Animals,
-              Names/Words, Maps, Numbers. Only include motifs clearly present.
+  "motifs": ["Visual motifs present. Choose from: Eyes, Fish, Faces, Hands,
+              Text Fragments, Grids, Circles, Patterns, Animals, Names/Words,
+              Maps, Numbers, Desert, Boats, Creatures.
+              ERR ON THE SIDE OF INCLUSION. If a motif is arguably present,
+              include it. This field is additive — more tags are better than
+              fewer tags.
               Return empty array if none match."],
-
   "condition_notes": "Brief note on visible condition issues (tears, staining,
                       foxing, fading). Return null if the work appears to be
-                      in good condition or if condition cannot be assessed
-                      from the image."
-}}
-{field_guidance}
+                      in good condition."
+}
 Return ONLY valid JSON. No markdown fences, no explanation."""
-
-
-def build_prompt(field_guidance: dict[str, str] | None = None) -> str:
-    """Build the analysis prompt, optionally injecting per-field guidance."""
-    guidance_lines = ""
-    if field_guidance:
-        parts = []
-        for field, text in field_guidance.items():
-            if text:
-                parts.append(f"  {field}: {text}")
-        if parts:
-            guidance_lines = "\nAdditional cataloguer guidance:\n" + "\n".join(parts) + "\n"
-    return ANALYSIS_PROMPT_TEMPLATE.format(field_guidance=guidance_lines)
 
 IMAGE_MAX_DIM = 1024
 IMAGE_QUALITY = 85
@@ -213,15 +202,11 @@ def validate_enrichment(data: dict) -> dict:
 async def analyze_artwork(
     image_url: str,
     model: str = "sonnet",
-    field_guidance: dict[str, str] | None = None,
 ) -> dict:
     """Send artwork image to Claude for structured analysis.
 
     Returns a dict with enrichment fields plus a ``usage`` key containing
     input_tokens, output_tokens, model, and estimated cost in USD.
-
-    ``field_guidance`` is an optional dict of field_name → guidance text
-    (sourced from resource template alternate_comment fields).
     """
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -229,7 +214,7 @@ async def analyze_artwork(
 
     model_id = MODEL_MAP.get(model, model)
     b64_image, media_type = await fetch_and_encode_image(image_url)
-    prompt_text = build_prompt(field_guidance)
+    print(f"[enrich] prompt:\n{ANALYSIS_PROMPT}", flush=True)
 
     client = anthropic.AsyncAnthropic(api_key=api_key)
     response = await client.messages.create(
@@ -239,7 +224,7 @@ async def analyze_artwork(
             "role": "user",
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64_image}},
-                {"type": "text", "text": prompt_text},
+                {"type": "text", "text": ANALYSIS_PROMPT},
             ],
         }],
     )

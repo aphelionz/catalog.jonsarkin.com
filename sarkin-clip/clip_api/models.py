@@ -77,7 +77,6 @@ class ImageSearchResponse(BaseModel):
 class EnrichRequest(BaseModel):
     image_url: str = Field(..., description="URL of the artwork image to analyze")
     model: str = Field("sonnet", description="Claude model: haiku, sonnet, or opus")
-    field_guidance: Optional[dict] = Field(None, description="Per-field guidance text from resource template")
 
 
 class UsageInfo(BaseModel):

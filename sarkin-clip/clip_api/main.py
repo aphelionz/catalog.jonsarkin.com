@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 from pathlib import Path
+
+logger = logging.getLogger("uvicorn.error")
 
 from fastapi import FastAPI, HTTPException, UploadFile
 
@@ -853,11 +856,16 @@ async def enrich_item(req: EnrichRequest) -> EnrichResponse:
 
     from clip_api.enrich import analyze_artwork
 
+    import sys
+    print(f"[enrich] request: model={req.model} image_url={req.image_url[:120]}", file=sys.stderr, flush=True)
     try:
-        result = await analyze_artwork(req.image_url, model=req.model, field_guidance=req.field_guidance)
+        result = await analyze_artwork(req.image_url, model=req.model)
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Enrichment failed: {exc}") from exc
+        print(f"[enrich] FAILED for {req.image_url[:120]}: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
+        raise HTTPException(status_code=502, detail=f"Enrichment failed: {type(exc).__name__}: {exc}") from exc
 
+    usage = result.get("usage", {})
+    print(f"[enrich] OK: model={usage.get('model','?')} in={usage.get('input_tokens',0)} out={usage.get('output_tokens',0)}", file=sys.stderr, flush=True)
     return EnrichResponse(**result)
 
 
