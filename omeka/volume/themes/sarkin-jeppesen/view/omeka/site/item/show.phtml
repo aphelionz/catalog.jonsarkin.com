@@ -440,7 +440,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <?php if ($condition): ?>
             <div class="item-condition">
                 <h3>Condition</h3>
-                <p><?php echo $escape(strip_tags($condition)); ?></p>
+                <p><?php echo strip_tags($condition); ?></p>
             </div>
             <?php endif; ?>
 
