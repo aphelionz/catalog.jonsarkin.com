@@ -15,6 +15,7 @@ venv/
 
 # ML / caches
 .hf_cache/
+sarkin-clip/segments/
 .omeka_media_cache/
 .ocr_cache.json
 .search_index.sqlite
