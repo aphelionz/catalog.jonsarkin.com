@@ -225,14 +225,28 @@ def _segment_and_embed_sync(
 ) -> tuple:
     """Synchronous CPU-heavy work: SAM segmentation + DINOv2 embedding + JPEG saving.
 
+    Classifies image density and uses the appropriate SAM preset.
     Returns (points, meta_entries) or (None, None) if no segments produced.
     """
     import json
     import os
     from PIL import Image
     from clip_api import dino, sam
+    from clip_api.density import classify_density, get_boundaries, open_density_db, upsert_density, get_tier
 
-    segments = sam.segment_image(image_bytes)
+    # Classify density and store result
+    try:
+        conn = open_density_db()
+        bounds = get_boundaries(conn)
+        density_result = classify_density(image_bytes, boundaries=bounds)
+        tier = density_result["tier"]
+        upsert_density(conn, omeka_item_id, density_result)
+        conn.close()
+    except Exception:
+        logger.warning("Density classification failed for item %d, using 'medium'", omeka_item_id)
+        tier = "medium"
+
+    segments = sam.segment_image(image_bytes, tier=tier)
     if not segments:
         return None, None
 
@@ -269,6 +283,7 @@ def _segment_and_embed_sync(
                 "segment_url": segment_url,
                 "bbox": list(seg["bbox"]),
                 "area": seg["area"],
+                "density_tier": tier,
             },
         })
 
@@ -278,6 +293,7 @@ def _segment_and_embed_sync(
             "area": seg["area"],
             "area_pct": seg["area_pct"],
             "stability_score": seg["stability_score"],
+            "density_tier": tier,
         })
 
     # Free segment mask arrays — they're large and no longer needed

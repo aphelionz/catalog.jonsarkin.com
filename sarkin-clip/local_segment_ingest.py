@@ -5,12 +5,17 @@ Runs NATIVELY on macOS (not in Docker) to use MPS acceleration.
 Requires: sam2, torch (with MPS), clip_api package on PYTHONPATH.
 
 Subcommands:
-    segment [--force]   Segment all artworks with SAM 2.1 + DINOv2 CLS
-    push                Push segment JPEGs + Qdrant vectors to production
+    segment [--force] [--test] [--tier TIER] [--id ID]
+        Segment artworks with SAM 2.1 + DINOv2 CLS, using density-tiered presets.
+    push
+        Push segment JPEGs + Qdrant vectors to production.
 
 Usage:
     python local_segment_ingest.py segment          # incremental
-    python local_segment_ingest.py segment --force   # re-segment all
+    python local_segment_ingest.py segment --force   # re-segment all (recreates collection)
+    python local_segment_ingest.py segment --test    # segment ~20 test items for tuning
+    python local_segment_ingest.py segment --tier sparse  # only sparse items
+    python local_segment_ingest.py segment --id 1234      # single item
     python local_segment_ingest.py push              # push to prod
 """
 
@@ -21,6 +26,7 @@ import io
 import json
 import logging
 import os
+import random
 import signal
 import subprocess
 import sys
@@ -95,6 +101,26 @@ def ensure_collection(qdrant_url: str = QDRANT_URL):
     )
     resp.raise_for_status()
     logger.info("Created collection %s", SEGMENT_COLLECTION)
+
+
+def recreate_collection(qdrant_url: str = QDRANT_URL):
+    """Delete and recreate the segment collection (fresh start)."""
+    _load_models()
+    url = f"{qdrant_url}/collections/{SEGMENT_COLLECTION}"
+    resp = httpx.delete(url, timeout=10)
+    if resp.is_success:
+        logger.info("Deleted collection %s", SEGMENT_COLLECTION)
+    resp = httpx.put(
+        url,
+        json={
+            "vectors": {"size": dino.DINO_DIM, "distance": "Cosine"},
+            "quantization_config": {"scalar": {"type": "int8", "quantile": 0.99, "always_ram": True}},
+            "optimizers_config": {"memmap_threshold": 20000},
+        },
+        timeout=10,
+    )
+    resp.raise_for_status()
+    logger.info("Recreated collection %s", SEGMENT_COLLECTION)
 
 
 def get_all_items(qdrant_url: str = QDRANT_URL) -> list[dict]:
@@ -238,14 +264,18 @@ def get_image_url(omeka_item_id: int, thumb_url: str) -> str:
 # Segment processing (SAM + DINOv2 + JPEG + Qdrant)
 # ---------------------------------------------------------------------------
 
-def process_item(item: dict) -> bool:
-    """Download image, segment, embed each segment, save JPEGs, upsert to Qdrant."""
+def process_item(item: dict, tier: str = "medium", skip_qdrant: bool = False,
+                 output_dir: str | None = None) -> dict:
+    """Download image, segment, embed each segment, save JPEGs, upsert to Qdrant.
+
+    Returns dict with keys: ok (bool), segments_raw (int), segments_filtered (int), tier (str).
+    """
     _load_models()
     omeka_id = int(item["omeka_item_id"])
     image_url = get_image_url(omeka_id, item.get("thumb_url", ""))
     if not image_url:
         logger.warning("No image URL for item %d, skipping", omeka_id)
-        return False
+        return {"ok": False, "segments_raw": 0, "segments_filtered": 0, "tier": tier}
 
     try:
         resp = httpx.get(image_url, timeout=60, follow_redirects=True)
@@ -253,22 +283,23 @@ def process_item(item: dict) -> bool:
         image_bytes = resp.content
     except Exception as exc:
         logger.warning("Failed to download image for item %d: %s", omeka_id, exc)
-        return False
+        return {"ok": False, "segments_raw": 0, "segments_filtered": 0, "tier": tier}
 
-    # Segment with SAM 2.1 (or MobileSAM fallback)
+    # Segment with density-tiered SAM preset
     try:
-        segments = sam.segment_image(image_bytes)
+        segments = sam.segment_image(image_bytes, tier=tier)
     except Exception as exc:
         logger.warning("SAM segmentation failed for item %d: %s", omeka_id, exc)
-        return False
+        return {"ok": False, "segments_raw": 0, "segments_filtered": 0, "tier": tier}
 
     if not segments:
         logger.info("Item %d produced 0 segments, skipping", omeka_id)
-        return True
+        return {"ok": True, "segments_raw": 0, "segments_filtered": 0, "tier": tier}
 
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
-    segment_dir = os.path.join(SEGMENT_DIR, str(omeka_id))
+    seg_dir = output_dir or SEGMENT_DIR
+    segment_dir = os.path.join(seg_dir, str(omeka_id))
     os.makedirs(segment_dir, exist_ok=True)
 
     points = []
@@ -306,6 +337,7 @@ def process_item(item: dict) -> bool:
                 "segment_url": segment_url,
                 "bbox": list(seg["bbox"]),
                 "area": seg["area"],
+                "density_tier": tier,
             },
         })
 
@@ -315,31 +347,37 @@ def process_item(item: dict) -> bool:
             "area": seg["area"],
             "area_pct": seg["area_pct"],
             "stability_score": seg["stability_score"],
+            "density_tier": tier,
         })
 
     if not points:
         logger.warning("Item %d: all segments failed embedding", omeka_id)
-        return False
+        return {"ok": False, "segments_raw": len(segments), "segments_filtered": 0, "tier": tier}
 
     # Save metadata JSON
     meta_path = os.path.join(segment_dir, "meta.json")
     with open(meta_path, "w") as f:
-        json.dump({"omeka_item_id": omeka_id, "segments": meta_entries}, f)
+        json.dump({"omeka_item_id": omeka_id, "density_tier": tier, "segments": meta_entries}, f)
 
-    # Delete existing segments for this item, then upsert new ones
-    httpx.post(
-        f"{QDRANT_URL}/collections/{SEGMENT_COLLECTION}/points/delete",
-        json={"filter": {"must": [{"key": "omeka_item_id", "match": {"value": omeka_id}}]}},
-        timeout=30,
+    if not skip_qdrant:
+        # Delete existing segments for this item, then upsert new ones
+        httpx.post(
+            f"{QDRANT_URL}/collections/{SEGMENT_COLLECTION}/points/delete",
+            json={"filter": {"must": [{"key": "omeka_item_id", "match": {"value": omeka_id}}]}},
+            timeout=30,
+        )
+        resp = httpx.put(
+            f"{QDRANT_URL}/collections/{SEGMENT_COLLECTION}/points",
+            json={"points": points},
+            timeout=60,
+        )
+        resp.raise_for_status()
+
+    logger.info(
+        "Item %d: tier=%s segments=%d time=ok",
+        omeka_id, tier, len(points),
     )
-    resp = httpx.put(
-        f"{QDRANT_URL}/collections/{SEGMENT_COLLECTION}/points",
-        json={"points": points},
-        timeout=60,
-    )
-    resp.raise_for_status()
-    logger.info("Item %d: %d segments ingested", omeka_id, len(points))
-    return True
+    return {"ok": True, "segments_raw": len(segments), "segments_filtered": len(points), "tier": tier}
 
 
 # ---------------------------------------------------------------------------
@@ -347,18 +385,96 @@ def process_item(item: dict) -> bool:
 # ---------------------------------------------------------------------------
 
 def cmd_segment(args: argparse.Namespace):
-    """Run SAM 2.1 segmentation + DINOv2 embedding on all artworks."""
+    """Run SAM 2.1 segmentation + DINOv2 embedding on artworks."""
+    from clip_api.density import get_all_tiers, get_tier, open_density_db
+
     logger.info("Backend: %s", sam.SAM_BACKEND if sam else "(loading...)")
     logger.info("Qdrant: %s", QDRANT_URL)
     logger.info("Omeka: %s", OMEKA_BASE_URL)
     logger.info("Segment dir: %s", SEGMENT_DIR)
 
     os.makedirs(SEGMENT_DIR, exist_ok=True)
-    ensure_collection()
+
+    # Open density DB
+    density_conn = open_density_db()
+    all_tiers = get_all_tiers(density_conn)
+
+    # Handle --id: single item
+    if args.id:
+        ensure_collection()
+        _load_models()
+        dino._get_dino()
+        sam._get_model()
+        tier = all_tiers.get(args.id, "medium")
+        if args.id not in all_tiers:
+            logger.warning("Item %d has no density classification, using 'medium'", args.id)
+        item = {"omeka_item_id": args.id, "omeka_url": "", "thumb_url": ""}
+        result = process_item(item, tier=tier)
+        density_conn.close()
+        return
+
+    # Handle --test: sample ~20 items across tiers
+    if args.test:
+        test_dir = os.path.join(os.path.dirname(__file__), "segments_test")
+        os.makedirs(test_dir, exist_ok=True)
+        logger.info("Test mode: saving to %s (no Qdrant writes)", test_dir)
+
+        # Group items by tier
+        by_tier: dict[str, list[int]] = {"sparse": [], "medium": [], "dense": []}
+        for omeka_id, tier in all_tiers.items():
+            by_tier[tier].append(omeka_id)
+
+        sample_ids = []
+        for tier in ("sparse", "medium", "dense"):
+            pool = by_tier[tier]
+            n = min(7, len(pool))
+            sample_ids.extend((tid, tier) for tid in random.sample(pool, n))
+            logger.info("Tier '%s': %d items available, sampling %d", tier, len(pool), n)
+
+        if not sample_ids:
+            logger.error("No classified items found. Run 'make classify' first.")
+            density_conn.close()
+            return
+
+        _load_models()
+        dino._get_dino()
+        sam._get_model()
+
+        for omeka_id, tier in sample_ids:
+            item = {"omeka_item_id": omeka_id, "omeka_url": "", "thumb_url": ""}
+            result = process_item(item, tier=tier, skip_qdrant=True, output_dir=test_dir)
+            logger.info(
+                "  omeka_id=%d tier=%s masks_filtered=%d",
+                omeka_id, tier, result["segments_filtered"],
+            )
+
+        density_conn.close()
+        logger.info("Test complete. Inspect segment images in %s", test_dir)
+        return
+
+    # Full/incremental segment run
+    if args.force:
+        logger.info("Force mode: recreating segment collection")
+        recreate_collection()
+    else:
+        ensure_collection()
 
     logger.info("Fetching items from CLIP collection...")
     items = get_all_items()
     logger.info("Found %d items", len(items))
+
+    # Check classification completeness
+    unclassified = [i for i in items if int(i["omeka_item_id"]) not in all_tiers]
+    if unclassified:
+        logger.warning(
+            "%d items have no density classification (will use 'medium'). Run 'make classify' first.",
+            len(unclassified),
+        )
+
+    # Filter by tier if requested
+    if args.tier:
+        items = [i for i in items if all_tiers.get(int(i["omeka_item_id"])) == args.tier]
+        logger.info("Filtered to %d items in tier '%s'", len(items), args.tier)
 
     if not args.force:
         existing = get_existing_item_ids()
@@ -368,25 +484,32 @@ def cmd_segment(args: argparse.Namespace):
 
     if not items:
         logger.info("Nothing to segment")
+        density_conn.close()
         return
 
     # Warm up models
     logger.info("Loading SAM + DINOv2 models (first run downloads weights)...")
     _load_models()
     dino._get_dino()
-    sam._get_sam()
+    sam._get_model()
     logger.info("Models loaded (SAM backend: %s)", sam.SAM_BACKEND)
 
     success = 0
     failed = 0
+    tier_counts = {"sparse": 0, "medium": 0, "dense": 0}
+    tier_segments = {"sparse": 0, "medium": 0, "dense": 0}
     t_start = time.time()
 
     for idx, item in enumerate(items):
-        omeka_id = item["omeka_item_id"]
+        omeka_id = int(item["omeka_item_id"])
+        tier = all_tiers.get(omeka_id, "medium")
+
         try:
-            ok = process_item(item)
-            if ok:
+            result = process_item(item, tier=tier)
+            if result["ok"]:
                 success += 1
+                tier_counts[tier] = tier_counts.get(tier, 0) + 1
+                tier_segments[tier] = tier_segments.get(tier, 0) + result["segments_filtered"]
             else:
                 failed += 1
         except Exception as exc:
@@ -405,6 +528,14 @@ def cmd_segment(args: argparse.Namespace):
 
     elapsed = time.time() - t_start
     logger.info("Done: %d succeeded, %d failed in %.1f minutes", success, failed, elapsed / 60)
+    logger.info("Per-tier breakdown:")
+    for tier in ("sparse", "medium", "dense"):
+        count = tier_counts.get(tier, 0)
+        segs = tier_segments.get(tier, 0)
+        avg = segs / count if count > 0 else 0
+        logger.info("  %s: %d items, %d segments (avg %.1f/item)", tier, count, segs, avg)
+
+    density_conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -500,7 +631,10 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     seg_parser = subparsers.add_parser("segment", help="Segment artworks with SAM 2.1")
-    seg_parser.add_argument("--force", action="store_true", help="Re-segment all items")
+    seg_parser.add_argument("--force", action="store_true", help="Re-segment all items (recreates collection)")
+    seg_parser.add_argument("--test", action="store_true", help="Segment ~20 test items for tuning (no Qdrant)")
+    seg_parser.add_argument("--tier", choices=["sparse", "medium", "dense"], help="Only segment items in this tier")
+    seg_parser.add_argument("--id", type=int, help="Segment a single item by omeka_id")
 
     subparsers.add_parser("push", help="Push segments to production")
 

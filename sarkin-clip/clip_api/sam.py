@@ -40,20 +40,67 @@ except ImportError:
 SAM_AVAILABLE = SAM_BACKEND != "unavailable"
 
 # ---------------------------------------------------------------------------
-# Parameters — tuned per backend for Sarkin's dense, layered outsider art
+# Density-tiered SAM presets
 # ---------------------------------------------------------------------------
 
-# SAM 2.1 Hiera Large (quality-maximizing)
-_SAM2_PARAMS = dict(
-    points_per_side=32,
-    pred_iou_thresh=0.86,
-    stability_score_thresh=0.90,
-    min_mask_region_area=500,
-    crop_n_layers=1,
-    crop_n_points_downscale_factor=1,
-)
+# Each preset has SAM generator params + post-filtering params.
+# Generator params are passed to SAM2AutomaticMaskGenerator / SamAutomaticMaskGenerator.
+# Post-filtering params (min_area_pct, max_area_pct, max_segments) are applied after.
+SAM_PRESETS = {
+    "sparse": {
+        # Clear backgrounds, isolated elements, small motifs (cow skulls, stick figures)
+        "points_per_side": 32,
+        "pred_iou_thresh": 0.88,
+        "stability_score_thresh": 0.92,
+        "min_mask_region_area": 200,
+        "crop_n_layers": 1,
+        "crop_n_points_downscale_factor": 2,
+        # Post-filtering
+        "min_area_pct": 0.002,
+        "max_area_pct": 0.50,
+        "max_segments": 60,
+    },
+    "medium": {
+        # Moderate overlap, mixed elements — close to previous defaults
+        "points_per_side": 24,
+        "pred_iou_thresh": 0.86,
+        "stability_score_thresh": 0.90,
+        "min_mask_region_area": 500,
+        "crop_n_layers": 1,
+        "crop_n_points_downscale_factor": 2,
+        # Post-filtering
+        "min_area_pct": 0.005,
+        "max_area_pct": 0.40,
+        "max_segments": 40,
+    },
+    "dense": {
+        # Packed, layered, overlapping — aggressive prompting + filtering
+        "points_per_side": 32,
+        "pred_iou_thresh": 0.82,
+        "stability_score_thresh": 0.85,
+        "min_mask_region_area": 800,
+        "crop_n_layers": 2,
+        "crop_n_points_downscale_factor": 2,
+        # Post-filtering
+        "min_area_pct": 0.008,
+        "max_area_pct": 0.35,
+        "max_segments": 40,
+    },
+}
 
-# MobileSAM ViT-T (lightweight fallback)
+# Keys that are SAM generator constructor args (vs post-filtering)
+_GENERATOR_KEYS = {
+    "points_per_side", "pred_iou_thresh", "stability_score_thresh",
+    "min_mask_region_area", "crop_n_layers", "crop_n_points_downscale_factor",
+}
+
+MAX_DIM = 1024
+
+# ---------------------------------------------------------------------------
+# Legacy parameter dicts (kept for reference / MobileSAM fallback)
+# ---------------------------------------------------------------------------
+
+_SAM2_PARAMS = {k: v for k, v in SAM_PRESETS["medium"].items() if k in _GENERATOR_KEYS}
 _MOBILE_SAM_PARAMS = dict(
     points_per_side=16,
     pred_iou_thresh=0.86,
@@ -63,18 +110,12 @@ _MOBILE_SAM_PARAMS = dict(
     crop_n_points_downscale_factor=1,
 )
 
-# Post-filtering (shared)
-MIN_AREA_PCT = 0.005   # discard segments < 0.5% of image area
-MAX_AREA_PCT = 0.40    # discard segments > 40% of image area
-MAX_SEGMENTS_PER_IMAGE_SAM2 = 60
-MAX_SEGMENTS_PER_IMAGE_MOBILE = 40
-MAX_DIM = 1024
-
 # ---------------------------------------------------------------------------
-# Singleton model cache
+# Singleton model cache — model loaded once, generators cached per tier
 # ---------------------------------------------------------------------------
 
-_sam_cache: Tuple[Any, Any] | None = None  # (model, mask_generator)
+_model_cache: Any | None = None
+_generator_cache: Dict[str, Any] = {}
 _sam_lock = threading.Lock()
 
 
@@ -107,12 +148,12 @@ def _get_sam2_checkpoint() -> Tuple[str, str]:
     return model_cfg, checkpoint_path
 
 
-def _get_sam() -> Tuple[Any, Any]:
-    """Lazy-load SAM model and mask generator (singleton, thread-safe)."""
-    global _sam_cache
+def _get_model() -> Any:
+    """Lazy-load the SAM model (singleton, thread-safe). Returns model only."""
+    global _model_cache
     with _sam_lock:
-        if _sam_cache is not None:
-            return _sam_cache
+        if _model_cache is not None:
+            return _model_cache
 
         if not SAM_AVAILABLE:
             raise RuntimeError(
@@ -122,17 +163,16 @@ def _get_sam() -> Tuple[Any, Any]:
         import torch
 
         if SAM_BACKEND == "sam2":
-            _sam_cache = _load_sam2(torch)
+            _model_cache = _load_sam2_model(torch)
         else:
-            _sam_cache = _load_mobile_sam(torch)
+            _model_cache = _load_mobile_sam_model(torch)
 
-        return _sam_cache
+        return _model_cache
 
 
-def _load_sam2(torch: Any) -> Tuple[Any, Any]:
-    """Load SAM 2.1 Hiera Large with MPS support."""
+def _load_sam2_model(torch: Any) -> Any:
+    """Load SAM 2.1 Hiera Large model (without generator)."""
     from sam2.build_sam import build_sam2
-    from sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
 
     model_cfg, checkpoint = _get_sam2_checkpoint()
 
@@ -144,41 +184,68 @@ def _load_sam2(torch: Any) -> Tuple[Any, Any]:
         device = torch.device("cpu")
 
     model = build_sam2(model_cfg, checkpoint, device=device)
-    mask_generator = SAM2AutomaticMaskGenerator(
-        model=model,
-        **_SAM2_PARAMS,
-    )
-
     logger.info("SAM 2.1 Hiera Large loaded on %s", device)
-    return (model, mask_generator)
+    return model
 
 
-def _load_mobile_sam(torch: Any) -> Tuple[Any, Any]:
-    """Load MobileSAM ViT-T (CPU-only fallback)."""
-    from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator
+def _load_mobile_sam_model(torch: Any) -> Any:
+    """Load MobileSAM ViT-T model (without generator)."""
+    from mobile_sam import sam_model_registry
 
     checkpoint = _get_mobile_sam_checkpoint()
-    # MobileSAM on CPU: MPS lacks float64 support, small GPUs OOM
     device = "cpu"
     model = sam_model_registry["vit_t"](checkpoint=checkpoint)
     model.to(device)
     model.eval()
-
-    mask_generator = SamAutomaticMaskGenerator(
-        model=model,
-        **_MOBILE_SAM_PARAMS,
-    )
-
     logger.info("MobileSAM loaded on %s", device)
-    return (model, mask_generator)
+    return model
+
+
+def _get_generator(tier: str = "medium") -> Any:
+    """Get or create a mask generator for the given density tier."""
+    with _sam_lock:
+        if tier in _generator_cache:
+            return _generator_cache[tier]
+
+    model = _get_model()
+    preset = SAM_PRESETS.get(tier, SAM_PRESETS["medium"])
+    gen_params = {k: v for k, v in preset.items() if k in _GENERATOR_KEYS}
+
+    with _sam_lock:
+        # Double-check after acquiring lock
+        if tier in _generator_cache:
+            return _generator_cache[tier]
+
+        if SAM_BACKEND == "sam2":
+            from sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
+            generator = SAM2AutomaticMaskGenerator(model=model, **gen_params)
+        else:
+            from mobile_sam import SamAutomaticMaskGenerator
+            # MobileSAM uses its own fixed params regardless of tier
+            generator = SamAutomaticMaskGenerator(model=model, **_MOBILE_SAM_PARAMS)
+
+        _generator_cache[tier] = generator
+        logger.info("Created %s mask generator for tier '%s'", SAM_BACKEND, tier)
+        return generator
+
+
+def _get_sam() -> Tuple[Any, Any]:
+    """Legacy API: return (model, default_generator) for backward compat."""
+    model = _get_model()
+    generator = _get_generator("medium")
+    return (model, generator)
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
-def segment_image(image_bytes: bytes) -> List[Dict[str, Any]]:
+def segment_image(image_bytes: bytes, tier: str = "medium") -> List[Dict[str, Any]]:
     """Run automatic segmentation on an image.
+
+    Args:
+        image_bytes: raw image bytes (JPEG, PNG, etc.)
+        tier: density tier ('sparse', 'medium', 'dense') — selects SAM preset
 
     Returns a list of filtered segments, each containing:
         - mask: np.ndarray (H, W) bool
@@ -189,7 +256,8 @@ def segment_image(image_bytes: bytes) -> List[Dict[str, Any]]:
     """
     from PIL import Image
 
-    _, mask_generator = _get_sam()
+    mask_generator = _get_generator(tier)
+    preset = SAM_PRESETS.get(tier, SAM_PRESETS["medium"])
 
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
@@ -206,18 +274,16 @@ def segment_image(image_bytes: bytes) -> List[Dict[str, Any]]:
     with torch.no_grad():
         raw_masks = mask_generator.generate(image_array)
 
-    # Post-filter
-    max_segments = (
-        MAX_SEGMENTS_PER_IMAGE_SAM2
-        if SAM_BACKEND == "sam2"
-        else MAX_SEGMENTS_PER_IMAGE_MOBILE
-    )
+    # Post-filter using tier-specific thresholds
+    min_area_pct = preset.get("min_area_pct", 0.005)
+    max_area_pct = preset.get("max_area_pct", 0.40)
+    max_segments = preset.get("max_segments", 40)
 
     filtered = []
     for m in raw_masks:
         area = m["area"]
         area_pct = area / total_area
-        if area_pct < MIN_AREA_PCT or area_pct > MAX_AREA_PCT:
+        if area_pct < min_area_pct or area_pct > max_area_pct:
             continue
         filtered.append({
             "mask": m["segmentation"],  # bool ndarray (H, W)
