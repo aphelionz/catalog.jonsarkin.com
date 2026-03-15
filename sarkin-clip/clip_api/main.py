@@ -1225,6 +1225,132 @@ async def segment_ingest_single_item(omeka_id: int, req: SegmentIngestRequest) -
     return IngestResponse(status="ok", omeka_item_id=omeka_id, elapsed_seconds=round(elapsed, 2))
 
 
+# ---------------------------------------------------------------------------
+# Density classification endpoints
+# ---------------------------------------------------------------------------
+
+from pydantic import BaseModel as _BaseModel
+
+
+class DensityItem(_BaseModel):
+    omeka_id: int
+    title: str = ""
+    thumb_url: str = ""
+    tier: str
+    edge_density: float
+    white_pct: float
+    color_std: float
+    override: bool = False
+
+
+class DensityListResponse(_BaseModel):
+    total: int
+    page: int
+    per_page: int
+    distribution: Dict[str, int]
+    items: list[DensityItem]
+
+
+class DensityOverrideRequest(_BaseModel):
+    tier: str
+
+
+class DensityOverrideResponse(_BaseModel):
+    omeka_id: int
+    tier: str
+    override: bool
+
+
+@app.get("/v1/density", response_model=DensityListResponse)
+async def list_density(
+    tier: Optional[str] = None,
+    sort: str = "edge_density",
+    order: str = "desc",
+    page: int = 1,
+    per_page: int = 50,
+):
+    """List density classifications with pagination, filtering, and sorting."""
+    from clip_api.density import get_density_page, get_stats, open_density_db
+
+    conn = open_density_db()
+    try:
+        rows, total = get_density_page(conn, tier=tier, sort=sort, order=order, page=page, per_page=per_page)
+        stats = get_stats(conn)
+    finally:
+        conn.close()
+
+    # Enrich with titles and thumb_urls from Qdrant
+    settings = _settings()
+    omeka_ids = [r["omeka_id"] for r in rows]
+    metadata = {}
+    if omeka_ids:
+        try:
+            resp = request_json(
+                "POST",
+                f"{settings.qdrant_url}/collections/{settings.qdrant_collection}/points",
+                json={"ids": omeka_ids, "with_payload": ["omeka_item_id", "thumb_url", "omeka_description"], "with_vector": False},
+            )
+            for pt in resp.json().get("result", []):
+                payload = pt.get("payload", {})
+                oid = int(payload.get("omeka_item_id", pt.get("id")))
+                metadata[oid] = {
+                    "thumb_url": payload.get("thumb_url", ""),
+                    "title": (payload.get("omeka_description") or "")[:80],
+                }
+        except Exception:
+            pass
+
+    items = []
+    for r in rows:
+        oid = r["omeka_id"]
+        meta = metadata.get(oid, {})
+        items.append(DensityItem(
+            omeka_id=oid,
+            title=meta.get("title", ""),
+            thumb_url=meta.get("thumb_url", ""),
+            tier=r["tier"],
+            edge_density=r["edge_density"],
+            white_pct=r["white_pct"],
+            color_std=r["color_std"],
+            override=bool(r.get("override", 0)),
+        ))
+
+    # Total unclassified = items in qdrant but not in density table
+    total_classified = sum(stats.values())
+
+    return DensityListResponse(
+        total=total,
+        page=page,
+        per_page=per_page,
+        distribution={
+            "sparse": stats.get("sparse", 0),
+            "medium": stats.get("medium", 0),
+            "dense": stats.get("dense", 0),
+        },
+        items=items,
+    )
+
+
+@app.patch("/v1/density/{omeka_id}", response_model=DensityOverrideResponse)
+async def override_density(omeka_id: int, req: DensityOverrideRequest):
+    """Manually override an item's density tier."""
+    from clip_api.density import open_density_db, set_override
+
+    if req.tier not in ("sparse", "medium", "dense"):
+        raise HTTPException(status_code=400, detail=f"Invalid tier: {req.tier}")
+
+    conn = open_density_db()
+    try:
+        ok = set_override(conn, omeka_id, req.tier)
+    finally:
+        conn.close()
+
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Item {omeka_id} not found in density table")
+
+    return DensityOverrideResponse(omeka_id=omeka_id, tier=req.tier, override=True)
+
+
 if __name__ == "__main__":
     import uvicorn
 

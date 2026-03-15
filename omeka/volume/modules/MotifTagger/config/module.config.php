@@ -73,6 +73,27 @@ return [
                                     ],
                                 ],
                             ],
+                            'density' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/density',
+                                    'defaults' => [
+                                        'action' => 'density',
+                                    ],
+                                ],
+                            ],
+                            'density-override' => [
+                                'type' => 'Segment',
+                                'options' => [
+                                    'route' => '/density-override/:id',
+                                    'defaults' => [
+                                        'action' => 'densityOverride',
+                                    ],
+                                    'constraints' => [
+                                        'id' => '\d+',
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],
