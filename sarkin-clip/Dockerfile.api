@@ -9,11 +9,30 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends git && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY requirements.api.txt /app/requirements.api.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r /app/requirements.api.txt && \
     pip cache purge
 
 COPY clip_api /app/clip_api
+COPY batch_dino_ingest.py /app/batch_dino_ingest.py
+COPY batch_segment_ingest.py /app/batch_segment_ingest.py
 
-CMD ["uvicorn", "clip_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN mkdir -p /app/segments
+
+# Pre-download DINOv2 weights so the container doesn't need internet at runtime
+RUN python -c "import torch; torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg', pretrained=True)" || true
+
+# Pre-download MobileSAM checkpoint (sam.py looks in TORCH_HOME or .hf_cache)
+RUN python -c "\
+import urllib.request, os; \
+ckpt_dir = os.path.join(os.getcwd(), '.hf_cache'); \
+os.makedirs(ckpt_dir, exist_ok=True); \
+ckpt = os.path.join(ckpt_dir, 'mobile_sam.pt'); \
+urllib.request.urlretrieve('https://github.com/ChaoningZhang/MobileSAM/raw/master/weights/mobile_sam.pt', ckpt); \
+print('MobileSAM checkpoint downloaded to', ckpt)" || true
+
+CMD ["uvicorn", "clip_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "300"]

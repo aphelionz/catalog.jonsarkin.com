@@ -60,6 +60,14 @@ services:
       TEXT_VECTOR_NAME: text_vec_clip
       SEARCH_MODE: hybrid
       DEFAULT_LIMIT: 50
+      DINO_COLLECTION: sarkin_motif_patches_518
+      DINO_ENABLED: "true"
+      SEGMENT_COLLECTION: sarkin_motif_segments
+      SEGMENT_ENABLED: "true"
+      SEGMENT_DIR: /app/segments
+    volumes:
+      - segment_data:/app/segments
+      - ./sarkin-clip/clip_api:/app/clip_api
     restart: unless-stopped
 
   ingest:
@@ -81,3 +89,4 @@ services:
 volumes:
   dbdata:
   qdrant_data:
+  segment_data:

@@ -31,7 +31,7 @@ def _get_clip() -> Tuple[str, Any, Any, Any]:
         import open_clip  # local import to keep optional for tests
         import torch
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
         model, _, preprocess = open_clip.create_model_and_transforms(
             MODEL_NAME, pretrained=PRETRAINED, cache_dir=os.environ["HF_HOME"]
         )

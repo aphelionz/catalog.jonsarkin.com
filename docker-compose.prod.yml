@@ -88,6 +88,8 @@ services:
       SEARCH_MODE: hybrid
       SEARCH_DB_PATH: /app/search_index/index.sqlite
       DEFAULT_LIMIT: 50
+      DINO_COLLECTION: sarkin_motif_patches_518
+      DINO_ENABLED: "true"
     volumes:
       - search_index:/app/search_index
 

@@ -6,11 +6,13 @@ and search_index.upsert_document for FTS.
 
 from __future__ import annotations
 
+import io
 import logging
 import time
 from typing import Any, Dict, List, Optional
 
 import httpx
+import numpy as np
 
 from clip_api import embeddings
 from clip_api.config import Settings
@@ -118,6 +120,32 @@ async def ingest_item(
         "text_blob": text_blob,
     })
 
+    # DINOv2 patch embeddings (optional, non-blocking)
+    if settings.dino_enabled:
+        try:
+            await ingest_dino_patches(
+                settings,
+                omeka_item_id,
+                image_bytes=image_bytes,
+                omeka_url=omeka_url,
+                thumb_url=thumb_url,
+            )
+        except Exception:
+            logger.warning("DINOv2 patch ingest failed for item %d", omeka_item_id, exc_info=True)
+
+    # SAM segment embeddings (optional, non-blocking)
+    if settings.segment_enabled:
+        try:
+            await ingest_segments(
+                settings,
+                omeka_item_id,
+                image_bytes=image_bytes,
+                omeka_url=omeka_url,
+                thumb_url=thumb_url,
+            )
+        except Exception:
+            logger.warning("Segment ingest failed for item %d", omeka_item_id, exc_info=True)
+
     elapsed = time.perf_counter() - t_start
     logger.info("Ingested item %d in %.2fs", omeka_item_id, elapsed)
 
@@ -126,3 +154,205 @@ async def ingest_item(
         "omeka_item_id": omeka_item_id,
         "elapsed_seconds": round(elapsed, 2),
     }
+
+
+async def ingest_dino_patches(
+    settings: Settings,
+    omeka_item_id: int,
+    *,
+    image_bytes: Optional[bytes] = None,
+    image_url: str = "",
+    omeka_url: str = "",
+    thumb_url: str = "",
+) -> None:
+    """Extract DINOv2 patch embeddings and upsert to the motif patches collection."""
+    from clip_api import dino
+
+    if image_bytes is None:
+        image_bytes = await fetch_image_bytes(image_url)
+
+    patch_vectors, grid_h, grid_w = dino.extract_patches(image_bytes)
+
+    # Delete existing patches for this item (idempotent re-ingest)
+    collection = settings.dino_collection
+    qdrant_url = settings.qdrant_url
+    async with httpx.AsyncClient(timeout=30) as client:
+        await client.post(
+            f"{qdrant_url}/collections/{collection}/points/delete",
+            json={
+                "filter": {
+                    "must": [{"key": "omeka_item_id", "match": {"value": omeka_item_id}}]
+                }
+            },
+        )
+
+    # Build points: ID = omeka_id * 10000 + patch_index
+    points = [
+        {
+            "id": omeka_item_id * 10000 + i,
+            "vector": patch_vec,
+            "payload": {
+                "omeka_item_id": omeka_item_id,
+                "omeka_url": omeka_url,
+                "thumb_url": thumb_url,
+                "patch_index": i,
+            },
+        }
+        for i, patch_vec in enumerate(patch_vectors)
+    ]
+
+    # Upsert all patches in a single request
+    async with httpx.AsyncClient(timeout=60) as client:
+        resp = await client.put(
+            f"{qdrant_url}/collections/{collection}/points",
+            json={"points": points},
+        )
+        resp.raise_for_status()
+
+    logger.info(
+        "DINOv2: ingested %d patches for item %d",
+        len(points),
+        omeka_item_id,
+    )
+
+
+def _segment_and_embed_sync(
+    image_bytes: bytes,
+    omeka_item_id: int,
+    segment_dir_base: str,
+    omeka_url: str,
+    thumb_url: str,
+) -> tuple:
+    """Synchronous CPU-heavy work: SAM segmentation + DINOv2 embedding + JPEG saving.
+
+    Returns (points, meta_entries) or (None, None) if no segments produced.
+    """
+    import json
+    import os
+    from PIL import Image
+    from clip_api import dino, sam
+
+    segments = sam.segment_image(image_bytes)
+    if not segments:
+        return None, None
+
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+    segment_dir = os.path.join(segment_dir_base, str(omeka_item_id))
+    os.makedirs(segment_dir, exist_ok=True)
+
+    points = []
+    meta_entries = []
+
+    for idx, seg in enumerate(segments):
+        embedding = dino.embed_segment(image, seg["mask"], seg["bbox"])
+
+        x, y, w, h = seg["bbox"]
+        mask_crop = seg["mask"][y:y + h, x:x + w]
+        crop_array = np.array(image.crop((x, y, x + w, y + h)))
+        gray_bg = np.full_like(crop_array, 128)
+        masked = np.where(mask_crop[:, :, None], crop_array, gray_bg)
+        seg_image = Image.fromarray(masked)
+        seg_path = os.path.join(segment_dir, f"{idx}.jpg")
+        seg_image.save(seg_path, "JPEG", quality=85)
+
+        segment_url = f"/segments/{omeka_item_id}/{idx}.jpg"
+
+        points.append({
+            "id": omeka_item_id * 1000 + idx,
+            "vector": embedding,
+            "payload": {
+                "omeka_item_id": omeka_item_id,
+                "omeka_url": omeka_url,
+                "thumb_url": thumb_url,
+                "segment_index": idx,
+                "segment_url": segment_url,
+                "bbox": list(seg["bbox"]),
+                "area": seg["area"],
+            },
+        })
+
+        meta_entries.append({
+            "segment_index": idx,
+            "bbox": list(seg["bbox"]),
+            "area": seg["area"],
+            "area_pct": seg["area_pct"],
+            "stability_score": seg["stability_score"],
+        })
+
+    # Free segment mask arrays — they're large and no longer needed
+    for seg in segments:
+        del seg["mask"]
+    del segments
+
+    meta_path = os.path.join(segment_dir, "meta.json")
+    with open(meta_path, "w") as f:
+        json.dump({"omeka_item_id": omeka_item_id, "segments": meta_entries}, f)
+
+    # Force garbage collection to prevent OOM in long batch runs
+    import gc
+    gc.collect()
+
+    return points, meta_entries
+
+
+async def ingest_segments(
+    settings: Settings,
+    omeka_item_id: int,
+    *,
+    image_bytes: Optional[bytes] = None,
+    image_url: str = "",
+    omeka_url: str = "",
+    thumb_url: str = "",
+) -> int:
+    """Segment image with MobileSAM, embed each segment with DINOv2 CLS, upsert to Qdrant.
+
+    Returns the number of segments ingested.
+    """
+    import json
+    import os
+    from PIL import Image
+    from clip_api import dino, sam
+
+    import asyncio
+
+    if image_bytes is None:
+        image_bytes = await fetch_image_bytes(image_url)
+
+    # CPU-heavy work (SAM + DINOv2) runs in a thread to avoid blocking the event loop
+    points, meta_entries = await asyncio.to_thread(
+        _segment_and_embed_sync,
+        image_bytes, omeka_item_id, settings.segment_dir, omeka_url, thumb_url,
+    )
+
+    if points is None:
+        logger.info("Segments: item %d produced 0 segments, skipping", omeka_item_id)
+        return 0
+
+    # Delete existing segments for this item
+    collection = settings.segment_collection
+    qdrant_url = settings.qdrant_url
+    async with httpx.AsyncClient(timeout=30) as client:
+        await client.post(
+            f"{qdrant_url}/collections/{collection}/points/delete",
+            json={
+                "filter": {
+                    "must": [{"key": "omeka_item_id", "match": {"value": omeka_item_id}}]
+                }
+            },
+        )
+
+    # Upsert all segment points
+    async with httpx.AsyncClient(timeout=60) as client:
+        resp = await client.put(
+            f"{qdrant_url}/collections/{collection}/points",
+            json={"points": points},
+        )
+        resp.raise_for_status()
+
+    logger.info(
+        "Segments: ingested %d segments for item %d",
+        len(points),
+        omeka_item_id,
+    )
+    return len(points)

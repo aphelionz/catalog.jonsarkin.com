@@ -1,6 +1,7 @@
 .hf_cache
 .omeka_media_cache
 venv
+.venv-native
 .env
 .ocr_cache.json
 .search_index.sqlite
