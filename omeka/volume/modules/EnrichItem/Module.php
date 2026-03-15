@@ -2,8 +2,6 @@
 
 namespace EnrichItem;
 
-use Laminas\EventManager\Event;
-use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Loader\StandardAutoloader;
 use Laminas\Mvc\MvcEvent;
 use Laminas\Permissions\Acl\Resource\GenericResource as Resource;
@@ -40,94 +38,5 @@ class Module extends AbstractModule
         }
         // Only editors and above can enrich
         $acl->allow(['editor', 'global_admin', 'site_admin'], $resourceId);
-    }
-
-    public function attachListeners(SharedEventManagerInterface $sharedEventManager): void
-    {
-        // Inject the enrich panel on admin item show pages
-        $sharedEventManager->attach(
-            'Omeka\Controller\Admin\Item',
-            'view.show.section_nav',
-            [$this, 'addEnrichSectionNav']
-        );
-        $sharedEventManager->attach(
-            'Omeka\Controller\Admin\Item',
-            'view.show.after',
-            [$this, 'appendEnrichPanel']
-        );
-
-        // Auto-trigger enrichment on item create
-        $sharedEventManager->attach(
-            'Omeka\Api\Adapter\ItemAdapter',
-            'api.create.post',
-            [$this, 'onItemCreate']
-        );
-    }
-
-    public function addEnrichSectionNav(Event $event): void
-    {
-        $sectionNav = $event->getParam('section_nav');
-        $sectionNav['enrich'] = 'Enrich';
-        $event->setParam('section_nav', $sectionNav);
-    }
-
-    public function appendEnrichPanel(Event $event): void
-    {
-        $view = $event->getTarget();
-        $item = $view->item;
-        $itemId = $item->id();
-
-        // Load controlled vocabularies from custom_vocab table
-        $services = $this->getServiceLocator();
-        $em = $services->get('Omeka\EntityManager');
-        $conn = $em->getConnection();
-        $vocabRows = $conn->fetchAllAssociative(
-            "SELECT label, terms FROM custom_vocab WHERE label IN ('Work Type','Support','Motifs','Condition','Signature')"
-        );
-        $vocabularies = [];
-        foreach ($vocabRows as $row) {
-            $key = strtolower(str_replace(' ', '_', $row['label']));
-            $vocabularies[$key] = json_decode($row['terms'], true) ?: [];
-        }
-
-        echo $view->partial('enrich-item/enrich/panel', [
-            'itemId' => $itemId,
-            'item' => $item,
-            'vocabularies' => $vocabularies,
-        ]);
-    }
-
-    public function onItemCreate(Event $event): void
-    {
-        $request = $event->getParam('request');
-        $response = $event->getParam('response');
-        $item = $response->getContent();
-
-        // Only auto-enrich items with the Artwork template
-        $resourceTemplate = $item->getResourceTemplate();
-        if (!$resourceTemplate) {
-            return;
-        }
-
-        $services = $this->getServiceLocator();
-        $config = $services->get('Config');
-        $moduleConfig = $config['enrich_item'] ?? [];
-        $templateId = (int) ($moduleConfig['resource_template_id'] ?? 2);
-
-        if ($resourceTemplate->getId() !== $templateId) {
-            return;
-        }
-
-        // Check if item has media
-        $media = $item->getMedia();
-        if ($media->isEmpty()) {
-            return;
-        }
-
-        // Dispatch background enrichment job
-        $dispatcher = $services->get('Omeka\Job\Dispatcher');
-        $dispatcher->dispatch(Job\EnrichBatch::class, [
-            'item_ids' => [$item->getId()],
-        ]);
     }
 }

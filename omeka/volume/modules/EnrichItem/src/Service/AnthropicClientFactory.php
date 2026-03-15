@@ -11,10 +11,7 @@ class AnthropicClientFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $apiKey = getenv('ANTHROPIC_API_KEY');
-        if (!$apiKey) {
-            throw new \RuntimeException('ANTHROPIC_API_KEY environment variable is not set');
-        }
+        $apiKey = getenv('ANTHROPIC_API_KEY') ?: '';
 
         $config = $container->get('Config');
         $moduleConfig = $config['enrich_item'] ?? [];

@@ -4,7 +4,7 @@ namespace EnrichItem\Controller;
 
 use EnrichItem\Service\AnthropicClient;
 use EnrichItem\Service\EnrichmentCache;
-use Laminas\Http\Client as HttpClient;
+use EnrichItem\Service\FieldInstructions;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\JsonModel;
 use Laminas\View\Model\ViewModel;
@@ -12,19 +12,6 @@ use Omeka\Api\Manager as ApiManager;
 
 class EnrichController extends AbstractActionController
 {
-    /** Map Claude field names → Omeka property terms + IDs */
-    private const FIELD_MAP = [
-        'transcription'   => ['term' => 'bibo:content',              'property_id' => 91],
-        'signature'        => ['term' => 'schema:distinguishingSign', 'property_id' => 476],
-        'date'             => ['term' => 'dcterms:date',              'property_id' => 7],
-        'medium'           => ['term' => 'dcterms:medium',            'property_id' => 26],
-        'support'          => ['term' => 'schema:artworkSurface',     'property_id' => 931],
-        'work_type'        => ['term' => 'dcterms:type',              'property_id' => 8],
-        'motifs'           => ['term' => 'dcterms:subject',           'property_id' => 3],
-        'condition_notes'  => ['term' => 'schema:itemCondition',      'property_id' => 1579],
-    ];
-
-    private HttpClient $httpClient;
     private ApiManager $api;
     private $logger;
     private array $config;
@@ -32,18 +19,18 @@ class EnrichController extends AbstractActionController
     private $jobDispatcher;
     private AnthropicClient $anthropicClient;
     private EnrichmentCache $cache;
+    private FieldInstructions $fieldInstructions;
 
     public function __construct(
-        HttpClient $httpClient,
         ApiManager $api,
         $logger,
         array $config,
         $entityManager,
         $jobDispatcher,
         AnthropicClient $anthropicClient,
-        EnrichmentCache $cache
+        EnrichmentCache $cache,
+        FieldInstructions $fieldInstructions
     ) {
-        $this->httpClient = $httpClient;
         $this->api = $api;
         $this->logger = $logger;
         $this->config = $config;
@@ -51,282 +38,273 @@ class EnrichController extends AbstractActionController
         $this->jobDispatcher = $jobDispatcher;
         $this->anthropicClient = $anthropicClient;
         $this->cache = $cache;
+        $this->fieldInstructions = $fieldInstructions;
     }
 
     /**
-     * POST /admin/enrich/:item_id — analyze item with Claude.
-     */
-    public function analyzeAction(): JsonModel
-    {
-        $itemId = (int) $this->params('item_id');
-        $body = json_decode($this->getRequest()->getContent(), true) ?? [];
-        $model = $body['model'] ?? ($this->config['default_model'] ?? 'haiku');
-        $force = !empty($body['force']);
-
-        $item = $this->api->read('items', $itemId)->getContent();
-
-        $mediaUrl = $this->getOriginalMediaUrl($item);
-        if (!$mediaUrl) {
-            return new JsonModel(['error' => 'Item has no media']);
-        }
-
-        // Check cache first (unless force)
-        $promptVersion = AnthropicClient::PROMPT_VERSION;
-        $usage = null;
-        if (!$force) {
-            $cached = $this->cache->get($itemId, $promptVersion);
-            if ($cached) {
-                $enrichment = $cached;
-                $usage = ['model' => 'cache', 'input_tokens' => 0, 'output_tokens' => 0, 'cost_usd' => 0];
-                $diff = $this->buildDiff($item, $enrichment);
-                return new JsonModel([
-                    'enrichment' => $enrichment,
-                    'diff' => $diff,
-                    'usage' => $usage,
-                ]);
-            }
-        }
-
-        // Convert to Docker-internal URL for image download
-        $mediaUrl = $this->internalizeUrl($mediaUrl);
-
-        try {
-            $enrichment = $this->anthropicClient->analyze($mediaUrl, $model);
-        } catch (\Throwable $e) {
-            $this->logger->err(sprintf(
-                'EnrichItem: Claude analysis failed for item %d: %s',
-                $itemId, $e->getMessage()
-            ));
-            return new JsonModel([
-                'error' => 'Enrichment failed: ' . $e->getMessage(),
-            ]);
-        }
-
-        // Extract usage info before building diff and caching
-        $usage = $enrichment['usage'] ?? null;
-        unset($enrichment['usage']);
-
-        // Cache the result
-        $this->cache->put($itemId, $promptVersion, $enrichment);
-
-        $diff = $this->buildDiff($item, $enrichment);
-
-        return new JsonModel([
-            'enrichment' => $enrichment,
-            'diff' => $diff,
-            'usage' => $usage,
-        ]);
-    }
-
-    /**
-     * POST /admin/enrich/:item_id/apply — apply selected enrichment fields.
-     */
-    public function applyAction(): JsonModel
-    {
-        $itemId = (int) $this->params('item_id');
-        $body = json_decode($this->getRequest()->getContent(), true);
-        $fields = $body['fields'] ?? [];
-
-        if (empty($fields)) {
-            return new JsonModel(['error' => 'No fields to apply']);
-        }
-
-        $itemRepr = $this->api->read('items', $itemId)->getContent();
-        $itemJson = json_decode(json_encode($itemRepr), true);
-
-        $payload = $this->buildPatchPayload($itemJson, $fields);
-
-        try {
-            $this->api->update('items', $itemId, $payload);
-        } catch (\Exception $e) {
-            $this->logger->err(sprintf('EnrichItem: PATCH failed for item %d: %s', $itemId, $e->getMessage()));
-            return new JsonModel(['error' => 'Failed to update item: ' . $e->getMessage()]);
-        }
-
-        return new JsonModel(['status' => 'ok', 'item_id' => $itemId]);
-    }
-
-    /**
-     * POST /admin/enrich/:item_id/ingest — re-index single item in search.
-     * Still proxied through clip-api (CLIP vectors require Python).
-     */
-    public function ingestAction(): JsonModel
-    {
-        $itemId = (int) $this->params('item_id');
-        $itemRepr = $this->api->read('items', $itemId)->getContent();
-
-        $mediaUrl = $this->getOriginalMediaUrl($itemRepr);
-        if (!$mediaUrl) {
-            return new JsonModel(['error' => 'Item has no media']);
-        }
-        $mediaUrl = $this->internalizeUrl($mediaUrl);
-
-        $itemJson = json_decode(json_encode($itemRepr), true);
-
-        $baseUrl = rtrim($this->config['clip_api_base_url'] ?? 'http://clip-api:8000', '/');
-        $timeout = (int) ($this->config['timeout'] ?? 120);
-
-        $subjects = [];
-        foreach (($itemJson['dcterms:subject'] ?? []) as $v) {
-            $val = $v['@value'] ?? '';
-            if ($val) {
-                $subjects[] = $val;
-            }
-        }
-
-        $ingestBody = [
-            'image_url' => $mediaUrl,
-            'title' => $itemJson['o:title'] ?? '',
-            'description' => $this->extractValue($itemJson, 'dcterms:description'),
-            'subjects' => $subjects,
-            'omeka_url' => '/s/catalog/item/' . $itemId,
-            'thumb_url' => $itemJson['o:thumbnail_urls']['square'] ?? '',
-        ];
-
-        $dateStr = $this->extractValue($itemJson, 'dcterms:date');
-        if (preg_match('/\b((?:19|20)\d{2})\b/', $dateStr, $m)) {
-            $ingestBody['year'] = (int) $m[1];
-        }
-
-        $client = clone $this->httpClient;
-        $client->resetParameters(true);
-        $client->setUri($baseUrl . '/v1/ingest/' . $itemId);
-        $client->setMethod('POST');
-        $client->setHeaders([
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ]);
-        $client->setRawBody(json_encode($ingestBody));
-        $client->setOptions(['timeout' => $timeout]);
-
-        $response = $client->send();
-        if (!$response->isSuccess()) {
-            return new JsonModel([
-                'error' => 'Ingest failed: HTTP ' . $response->getStatusCode(),
-            ]);
-        }
-
-        return new JsonModel(json_decode($response->getBody(), true));
-    }
-
-    /**
-     * GET /admin/enrich-queue — show unenriched items.
+     * GET /admin/enrich-queue — render the field-level enrichment page.
      */
     public function queueAction(): ViewModel
     {
-        $templateId = (int) ($this->config['resource_template_id'] ?? 2);
-
-        $conn = $this->entityManager->getConnection();
-        $sql = "
-            SELECT r.id, r.title,
-                   (SELECT v.value FROM value v WHERE v.resource_id = r.id AND v.property_id = 91 LIMIT 1) AS transcription
-            FROM resource r
-            JOIN item i ON i.id = r.id
-            WHERE r.resource_template_id = :template_id
-            ORDER BY r.id DESC
-        ";
-        $rows = $conn->fetchAllAssociative($sql, ['template_id' => $templateId]);
-
-        $unenriched = [];
-        $enriched = [];
-        foreach ($rows as $row) {
-            if (empty(trim($row['transcription'] ?? ''))) {
-                $unenriched[] = $row;
-            } else {
-                $enriched[] = $row;
-            }
-        }
-
-        return new ViewModel([
-            'unenriched' => $unenriched,
-            'enrichedCount' => count($enriched),
-            'totalCount' => count($rows),
-        ]);
+        return new ViewModel();
     }
 
     /**
-     * POST /admin/enrich-queue/run — dispatch batch enrichment job.
+     * GET /admin/enrich-queue/fields — JSON: template properties with metadata.
+     */
+    public function fieldsAction(): JsonModel
+    {
+        $templateId = (int) ($this->config['resource_template_id'] ?? 2);
+        $conn = $this->entityManager->getConnection();
+
+        // Get all properties for the template
+        $properties = $conn->fetchAllAssociative("
+            SELECT rtp.property_id, p.local_name, p.label,
+                   CONCAT(v.prefix, ':', p.local_name) AS term,
+                   rtp.data_type
+            FROM resource_template_property rtp
+            JOIN property p ON rtp.property_id = p.id
+            JOIN vocabulary v ON p.vocabulary_id = v.id
+            WHERE rtp.resource_template_id = ?
+            ORDER BY rtp.position
+        ", [$templateId]);
+
+        // Load saved instructions
+        $savedInstructions = $this->fieldInstructions->getAll();
+
+        // Build result with vocab terms and missing counts
+        $fields = [];
+        foreach ($properties as $prop) {
+            $propId = (int) $prop['property_id'];
+            $field = [
+                'property_id' => $propId,
+                'label' => $prop['label'],
+                'local_name' => $prop['local_name'],
+                'term' => $prop['term'],
+                'data_type' => $prop['data_type'],
+                'vocab_terms' => null,
+                'saved_instructions' => null,
+                'saved_model' => null,
+                'missing_count' => 0,
+                'total_count' => 0,
+            ];
+
+            // Check for controlled vocabulary
+            $dataTypes = $this->parseDataTypes($prop['data_type'] ?? '');
+            foreach ($dataTypes as $dt) {
+                $dt = trim($dt);
+                if (str_starts_with($dt, 'customvocab:')) {
+                    $vocabId = (int) substr($dt, strlen('customvocab:'));
+                    $vocabRow = $conn->fetchAssociative(
+                        'SELECT terms FROM custom_vocab WHERE id = ?',
+                        [$vocabId]
+                    );
+                    if ($vocabRow && $vocabRow['terms']) {
+                        $field['vocab_terms'] = json_decode($vocabRow['terms'], true);
+                    }
+                    break;
+                }
+            }
+
+            // Saved instructions
+            if (isset($savedInstructions[$propId])) {
+                $field['saved_instructions'] = $savedInstructions[$propId]['instructions'];
+                $field['saved_model'] = $savedInstructions[$propId]['model'];
+            }
+
+            // Count items missing this field
+            $counts = $conn->fetchAssociative("
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN v.value IS NULL OR TRIM(v.value) = '' THEN 1 ELSE 0 END) AS missing
+                FROM resource r
+                JOIN item i ON i.id = r.id
+                LEFT JOIN value v ON v.resource_id = r.id AND v.property_id = ?
+                WHERE r.resource_template_id = ?
+            ", [$propId, $templateId]);
+
+            $field['total_count'] = (int) ($counts['total'] ?? 0);
+            $field['missing_count'] = (int) ($counts['missing'] ?? 0);
+
+            $fields[] = $field;
+        }
+
+        return new JsonModel(['fields' => $fields]);
+    }
+
+    /**
+     * POST /admin/enrich-queue/save — save instructions for a field.
+     */
+    public function saveInstructionsAction(): JsonModel
+    {
+        $body = json_decode($this->getRequest()->getContent(), true) ?? [];
+        $propertyId = (int) ($body['property_id'] ?? 0);
+        $instructions = trim($body['instructions'] ?? '');
+        $model = $body['model'] ?? 'haiku';
+
+        if (!$propertyId || !$instructions) {
+            return new JsonModel(['error' => 'property_id and instructions are required']);
+        }
+
+        $this->fieldInstructions->save($propertyId, $instructions, $model);
+        return new JsonModel(['status' => 'saved']);
+    }
+
+    /**
+     * POST /admin/enrich-queue/run — dispatch real-time batch enrichment job.
      */
     public function runBatchAction(): JsonModel
     {
-        $body = json_decode($this->getRequest()->getContent(), true);
-        $itemIds = $body['item_ids'] ?? [];
+        $body = json_decode($this->getRequest()->getContent(), true) ?? [];
+        $propertyId = (int) ($body['property_id'] ?? 0);
+        $force = !empty($body['force']);
 
-        if (empty($itemIds)) {
-            $templateId = (int) ($this->config['resource_template_id'] ?? 2);
-            $conn = $this->entityManager->getConnection();
-            $sql = "
-                SELECT r.id
-                FROM resource r
-                JOIN item i ON i.id = r.id
-                LEFT JOIN value v ON v.resource_id = r.id AND v.property_id = 91
-                WHERE r.resource_template_id = :template_id
-                  AND (v.value IS NULL OR TRIM(v.value) = '')
-                ORDER BY r.id
-            ";
-            $rows = $conn->fetchAllAssociative($sql, ['template_id' => $templateId]);
-            $itemIds = array_column($rows, 'id');
+        if (!$propertyId) {
+            return new JsonModel(['error' => 'property_id is required']);
         }
 
+        // Load instructions
+        $saved = $this->fieldInstructions->get($propertyId);
+        if (!$saved) {
+            return new JsonModel(['error' => 'No saved instructions for this field']);
+        }
+
+        // Find items
+        $itemIds = $this->getItemIds($propertyId, $force);
         if (empty($itemIds)) {
             return new JsonModel(['status' => 'nothing_to_do', 'count' => 0]);
         }
 
-        $this->jobDispatcher->dispatch(\EnrichItem\Job\EnrichBatch::class, [
+        // Get field metadata for prompt building
+        $fieldMeta = $this->getFieldMeta($propertyId);
+
+        $this->jobDispatcher->dispatch(\EnrichItem\Job\EnrichFieldBatch::class, [
+            'property_id' => $propertyId,
+            'term' => $fieldMeta['term'],
+            'field_label' => $fieldMeta['label'],
+            'instructions' => $saved['instructions'],
+            'model' => $saved['model'],
+            'vocab_terms' => $fieldMeta['vocab_terms'],
             'item_ids' => $itemIds,
+            'force' => $force,
         ]);
 
         return new JsonModel(['status' => 'dispatched', 'count' => count($itemIds)]);
     }
 
     /**
-     * POST /admin/enrich-queue/apply-cache — re-apply cached enrichments.
-     * Dispatches a background job that applies cached results to unenriched items.
+     * POST /admin/enrich-queue/preview — enrich a single random item for preview.
      */
-    public function applyCacheAction(): JsonModel
+    public function previewAction(): JsonModel
     {
-        $this->jobDispatcher->dispatch(\EnrichItem\Job\ApplyCache::class, [
-            'prompt_version' => AnthropicClient::PROMPT_VERSION,
-        ]);
+        $body = json_decode($this->getRequest()->getContent(), true) ?? [];
+        $propertyId = (int) ($body['property_id'] ?? 0);
 
-        $count = $this->cache->countForVersion(AnthropicClient::PROMPT_VERSION);
-        return new JsonModel(['status' => 'dispatched', 'cached_count' => $count]);
+        if (!$propertyId) {
+            return new JsonModel(['error' => 'property_id is required']);
+        }
+
+        $saved = $this->fieldInstructions->get($propertyId);
+        if (!$saved) {
+            return new JsonModel(['error' => 'No saved instructions for this field']);
+        }
+
+        // Pick a random item missing this field
+        $itemIds = $this->getItemIds($propertyId, false);
+        if (empty($itemIds)) {
+            return new JsonModel(['error' => 'No items missing this field']);
+        }
+        $itemId = $itemIds[array_rand($itemIds)];
+
+        try {
+            $itemRepr = $this->api->read('items', $itemId)->getContent();
+            $itemJson = json_decode(json_encode($itemRepr), true);
+            $title = $itemJson['o:title'] ?? '(untitled)';
+
+            $mediaUrl = $this->getOriginalMediaUrl($itemJson);
+            if (!$mediaUrl) {
+                return new JsonModel(['error' => 'Item has no media']);
+            }
+            $mediaUrl = $this->internalizeUrl($mediaUrl);
+
+            $fieldMeta = $this->getFieldMeta($propertyId);
+            $systemPrompt = AnthropicClient::buildSystemPrompt(
+                $fieldMeta['label'],
+                $saved['instructions'],
+                $fieldMeta['vocab_terms']
+            );
+            $userPrompt = "Analyze this artwork and provide the value for: {$fieldMeta['label']}";
+
+            $result = $this->anthropicClient->enrichField($mediaUrl, $systemPrompt, $userPrompt, $saved['model']);
+
+            // Validate against vocab
+            $value = $result['value'];
+            $vocabWarning = null;
+            if (!empty($fieldMeta['vocab_terms']) && $value !== '') {
+                if (!in_array($value, $fieldMeta['vocab_terms'], true)) {
+                    // Try case-insensitive match
+                    $matched = false;
+                    foreach ($fieldMeta['vocab_terms'] as $term) {
+                        if (strcasecmp($term, $value) === 0) {
+                            $value = $term;
+                            $matched = true;
+                            break;
+                        }
+                    }
+                    if (!$matched) {
+                        $vocabWarning = "Value \"{$value}\" is not in the controlled vocabulary";
+                    }
+                }
+            }
+
+            return new JsonModel([
+                'item_id' => $itemId,
+                'item_title' => $title,
+                'suggested_value' => $value,
+                'usage' => $result['usage'],
+                'vocab_warning' => $vocabWarning,
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger->err(sprintf('EnrichItem preview failed for item %d: %s', $itemId, $e->getMessage()));
+            return new JsonModel(['error' => 'Preview failed: ' . $e->getMessage()]);
+        }
     }
 
     /**
-     * POST /admin/enrich-queue/batch — submit items to Anthropic Batch API.
+     * POST /admin/enrich-queue/batch — submit to Anthropic Batch API.
      */
     public function batchSubmitAction(): JsonModel
     {
         $body = json_decode($this->getRequest()->getContent(), true) ?? [];
-        $model = $body['model'] ?? ($this->config['default_model'] ?? 'haiku');
-        $itemIds = $body['item_ids'] ?? [];
+        $propertyId = (int) ($body['property_id'] ?? 0);
+        $force = !empty($body['force']);
 
-        if (empty($itemIds)) {
-            // Find all unenriched items
-            $templateId = (int) ($this->config['resource_template_id'] ?? 2);
-            $conn = $this->entityManager->getConnection();
-            $sql = "
-                SELECT r.id
-                FROM resource r
-                JOIN item i ON i.id = r.id
-                LEFT JOIN value v ON v.resource_id = r.id AND v.property_id = 91
-                WHERE r.resource_template_id = :template_id
-                  AND (v.value IS NULL OR TRIM(v.value) = '')
-                ORDER BY r.id
-            ";
-            $rows = $conn->fetchAllAssociative($sql, ['template_id' => $templateId]);
-            $itemIds = array_column($rows, 'id');
+        if (!$propertyId) {
+            return new JsonModel(['error' => 'property_id is required']);
         }
 
+        $saved = $this->fieldInstructions->get($propertyId);
+        if (!$saved) {
+            return new JsonModel(['error' => 'No saved instructions for this field']);
+        }
+
+        $itemIds = $this->getItemIds($propertyId, $force);
         if (empty($itemIds)) {
             return new JsonModel(['status' => 'nothing_to_do', 'count' => 0]);
         }
 
-        $this->jobDispatcher->dispatch(\EnrichItem\Job\EnrichBatchApi::class, [
+        $fieldMeta = $this->getFieldMeta($propertyId);
+
+        $this->jobDispatcher->dispatch(\EnrichItem\Job\EnrichFieldBatchApi::class, [
             'mode' => 'submit',
+            'property_id' => $propertyId,
+            'term' => $fieldMeta['term'],
+            'field_label' => $fieldMeta['label'],
+            'instructions' => $saved['instructions'],
+            'model' => $saved['model'],
+            'vocab_terms' => $fieldMeta['vocab_terms'],
             'item_ids' => $itemIds,
-            'model' => $model,
+            'force' => $force,
         ]);
 
         return new JsonModel(['status' => 'dispatched', 'count' => count($itemIds)]);
@@ -338,16 +316,13 @@ class EnrichController extends AbstractActionController
     public function batchStatusAction(): JsonModel
     {
         $conn = $this->entityManager->getConnection();
-
-        // Check if table exists
         try {
             $rows = $conn->fetchAllAssociative(
-                'SELECT batch_id, model, item_count, status, created_at, collected_at FROM enrich_batch_meta ORDER BY created_at DESC LIMIT 20'
+                'SELECT batch_id, model, item_count, property_id, status, created_at, collected_at FROM enrich_batch_meta ORDER BY created_at DESC LIMIT 20'
             );
         } catch (\Throwable $e) {
-            return new JsonModel(['batches' => [], 'error' => 'Batch table not ready']);
+            return new JsonModel(['batches' => []]);
         }
-
         return new JsonModel(['batches' => $rows]);
     }
 
@@ -363,7 +338,7 @@ class EnrichController extends AbstractActionController
             return new JsonModel(['error' => 'batch_id required']);
         }
 
-        $this->jobDispatcher->dispatch(\EnrichItem\Job\EnrichBatchApi::class, [
+        $this->jobDispatcher->dispatch(\EnrichItem\Job\EnrichFieldBatchApi::class, [
             'mode' => 'collect',
             'batch_id' => $batchId,
         ]);
@@ -373,9 +348,103 @@ class EnrichController extends AbstractActionController
 
     // ── Private helpers ─────────────────────────────────────────────
 
-    private function getOriginalMediaUrl($item): ?string
+    /**
+     * Get item IDs for enrichment. If force=false, only items missing the field.
+     * If force=true, all items with the template.
+     */
+    private function getItemIds(int $propertyId, bool $force): array
     {
-        $itemJson = json_decode(json_encode($item), true);
+        $templateId = (int) ($this->config['resource_template_id'] ?? 2);
+        $conn = $this->entityManager->getConnection();
+
+        if ($force) {
+            $sql = "
+                SELECT r.id
+                FROM resource r
+                JOIN item i ON i.id = r.id
+                WHERE r.resource_template_id = ?
+                ORDER BY r.id
+            ";
+            $rows = $conn->fetchAllAssociative($sql, [$templateId]);
+        } else {
+            $sql = "
+                SELECT r.id
+                FROM resource r
+                JOIN item i ON i.id = r.id
+                LEFT JOIN value v ON v.resource_id = r.id AND v.property_id = ?
+                WHERE r.resource_template_id = ?
+                  AND (v.value IS NULL OR TRIM(v.value) = '')
+                ORDER BY r.id
+            ";
+            $rows = $conn->fetchAllAssociative($sql, [$propertyId, $templateId]);
+        }
+
+        return array_map(fn($r) => (int) $r['id'], $rows);
+    }
+
+    /**
+     * Get field metadata (label, term, vocab_terms) for a property ID.
+     */
+    private function getFieldMeta(int $propertyId): array
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $prop = $conn->fetchAssociative("
+            SELECT p.label, p.local_name,
+                   CONCAT(v.prefix, ':', p.local_name) AS term,
+                   rtp.data_type
+            FROM property p
+            JOIN vocabulary v ON p.vocabulary_id = v.id
+            LEFT JOIN resource_template_property rtp
+                ON rtp.property_id = p.id AND rtp.resource_template_id = ?
+            WHERE p.id = ?
+        ", [(int) ($this->config['resource_template_id'] ?? 2), $propertyId]);
+
+        $vocabTerms = null;
+        if ($prop && $prop['data_type']) {
+            $dataTypes = $this->parseDataTypes($prop['data_type']);
+            foreach ($dataTypes as $dt) {
+                $dt = trim($dt);
+                if (str_starts_with($dt, 'customvocab:')) {
+                    $vocabId = (int) substr($dt, strlen('customvocab:'));
+                    $vocabRow = $conn->fetchAssociative(
+                        'SELECT terms FROM custom_vocab WHERE id = ?',
+                        [$vocabId]
+                    );
+                    if ($vocabRow && $vocabRow['terms']) {
+                        $vocabTerms = json_decode($vocabRow['terms'], true);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return [
+            'label' => $prop['label'] ?? '',
+            'term' => $prop['term'] ?? '',
+            'vocab_terms' => $vocabTerms,
+        ];
+    }
+
+    /**
+     * Parse Omeka's data_type column, which is stored as a JSON array (e.g. '["customvocab:7"]').
+     */
+    private function parseDataTypes(string $raw): array
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+        // Fallback: plain comma-separated string
+        return array_map('trim', explode(',', $raw));
+    }
+
+    private function getOriginalMediaUrl(array $itemJson): ?string
+    {
         $mediaRefs = $itemJson['o:media'] ?? [];
         if (empty($mediaRefs)) {
             return null;
@@ -396,101 +465,5 @@ class EnrichController extends AbstractActionController
             'http://omeka:80',
             $url
         );
-    }
-
-    private function extractValue(array $item, string $term): string
-    {
-        $values = $item[$term] ?? [];
-        if (empty($values)) {
-            return '';
-        }
-        return $values[0]['@value'] ?? $values[0]['o:label'] ?? '';
-    }
-
-    private function buildDiff($item, array $enrichment): array
-    {
-        $itemJson = json_decode(json_encode($item), true);
-        $diff = [];
-
-        foreach (self::FIELD_MAP as $field => $props) {
-            $term = $props['term'];
-            $suggested = $enrichment[$field] ?? null;
-
-            if ($field === 'motifs') {
-                $current = [];
-                foreach (($itemJson[$term] ?? []) as $v) {
-                    $val = $v['@value'] ?? '';
-                    if ($val) {
-                        $current[] = $val;
-                    }
-                }
-                $diff[$field] = [
-                    'term' => $term,
-                    'current' => $current,
-                    'suggested' => is_array($suggested) ? $suggested : [],
-                    'empty' => empty($current),
-                ];
-            } else {
-                $current = $this->extractValue($itemJson, $term);
-                $diff[$field] = [
-                    'term' => $term,
-                    'current' => $current,
-                    'suggested' => $suggested,
-                    'empty' => empty(trim($current)),
-                ];
-            }
-        }
-
-        return $diff;
-    }
-
-    private function buildPatchPayload(array $item, array $fields): array
-    {
-        $payload = [];
-
-        foreach ($item as $key => $val) {
-            if (strpos($key, ':') !== false && strpos($key, 'o:') !== 0 && is_array($val)) {
-                $payload[$key] = array_map([$this, 'cleanValue'], $val);
-            }
-        }
-
-        foreach (['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site'] as $sysKey) {
-            if (isset($item[$sysKey])) {
-                $payload[$sysKey] = $item[$sysKey];
-            }
-        }
-
-        foreach ($fields as $field => $value) {
-            if (!isset(self::FIELD_MAP[$field]) || $value === null || $value === '') {
-                continue;
-            }
-            $props = self::FIELD_MAP[$field];
-            $term = $props['term'];
-            $propId = $props['property_id'];
-
-            if ($field === 'motifs' && is_array($value)) {
-                $payload[$term] = array_map(function ($v) use ($propId) {
-                    return ['type' => 'literal', 'property_id' => $propId, '@value' => $v];
-                }, $value);
-            } else {
-                $payload[$term] = [
-                    ['type' => 'literal', 'property_id' => $propId, '@value' => (string) $value],
-                ];
-            }
-        }
-
-        return $payload;
-    }
-
-    private function cleanValue(array $v): array
-    {
-        $writeKeys = ['type', 'property_id', '@value', '@id', '@language', 'o:label', 'value_resource_id', 'uri', 'o:is_public'];
-        $clean = [];
-        foreach ($writeKeys as $k) {
-            if (array_key_exists($k, $v)) {
-                $clean[$k] = $v[$k];
-            }
-        }
-        return $clean;
     }
 }

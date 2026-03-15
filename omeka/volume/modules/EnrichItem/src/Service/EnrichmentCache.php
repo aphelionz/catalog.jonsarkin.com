@@ -5,9 +5,9 @@ namespace EnrichItem\Service;
 use Doctrine\DBAL\Connection;
 
 /**
- * DB-backed cache for enrichment results.
+ * DB-backed cache for per-field enrichment results.
  *
- * Stores Claude enrichment JSON keyed by (item_id, prompt_version) so results
+ * Stores Claude enrichment values keyed by (item_id, property_id) so results
  * survive `make pull` and can be re-applied without API cost.
  */
 class EnrichmentCache
@@ -22,87 +22,69 @@ class EnrichmentCache
     public function ensureTable(): void
     {
         $this->conn->executeStatement("
-            CREATE TABLE IF NOT EXISTS enrich_cache (
+            CREATE TABLE IF NOT EXISTS enrich_field_cache (
                 item_id INT NOT NULL,
-                prompt_version INT NOT NULL,
-                enrichment JSON NOT NULL,
+                property_id INT NOT NULL,
+                value TEXT NOT NULL,
+                model VARCHAR(32) NOT NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (item_id, prompt_version)
+                PRIMARY KEY (item_id, property_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ");
     }
 
-    public function get(int $itemId, int $promptVersion): ?array
+    public function get(int $itemId, int $propertyId): ?string
     {
         $row = $this->conn->fetchAssociative(
-            'SELECT enrichment FROM enrich_cache WHERE item_id = ? AND prompt_version = ?',
-            [$itemId, $promptVersion]
+            'SELECT value FROM enrich_field_cache WHERE item_id = ? AND property_id = ?',
+            [$itemId, $propertyId]
         );
-        if (!$row) {
-            return null;
-        }
-        return json_decode($row['enrichment'], true);
+        return $row ? $row['value'] : null;
     }
 
-    public function put(int $itemId, int $promptVersion, array $enrichment): void
+    public function put(int $itemId, int $propertyId, string $value, string $model): void
     {
-        // Remove usage info before caching
-        unset($enrichment['usage']);
-
-        $json = json_encode($enrichment, JSON_UNESCAPED_UNICODE);
         $this->conn->executeStatement(
-            'INSERT INTO enrich_cache (item_id, prompt_version, enrichment, created_at)
-             VALUES (?, ?, ?, NOW())
-             ON DUPLICATE KEY UPDATE enrichment = VALUES(enrichment), created_at = NOW()',
-            [$itemId, $promptVersion, $json]
+            'INSERT INTO enrich_field_cache (item_id, property_id, value, model, created_at)
+             VALUES (?, ?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE value = VALUES(value), model = VALUES(model), created_at = NOW()',
+            [$itemId, $propertyId, $value, $model]
         );
     }
 
     /**
-     * Return item IDs from the given list that do NOT have a cache entry.
-     */
-    public function getUncachedItemIds(array $itemIds, int $promptVersion): array
-    {
-        if (empty($itemIds)) {
-            return [];
-        }
-        $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
-        $params = array_merge($itemIds, [$promptVersion]);
-        $cached = $this->conn->fetchFirstColumn(
-            "SELECT item_id FROM enrich_cache WHERE item_id IN ($placeholders) AND prompt_version = ?",
-            $params
-        );
-        $cachedSet = array_flip($cached);
-        return array_values(array_filter($itemIds, fn($id) => !isset($cachedSet[$id])));
-    }
-
-    /**
-     * Return all cached enrichments for a given prompt version.
+     * Return all cached values for a given property.
      *
-     * @return array<int, array> Keyed by item_id
+     * @return array<int, string> Keyed by item_id
      */
-    public function getAllForVersion(int $promptVersion): array
+    public function getAllForProperty(int $propertyId): array
     {
         $rows = $this->conn->fetchAllAssociative(
-            'SELECT item_id, enrichment FROM enrich_cache WHERE prompt_version = ?',
-            [$promptVersion]
+            'SELECT item_id, value FROM enrich_field_cache WHERE property_id = ?',
+            [$propertyId]
         );
         $result = [];
         foreach ($rows as $row) {
-            $result[(int) $row['item_id']] = json_decode($row['enrichment'], true);
+            $result[(int) $row['item_id']] = $row['value'];
         }
         return $result;
     }
 
     /**
-     * Count cached entries for a prompt version.
+     * Return item IDs from the given list that do NOT have a cache entry for this property.
      */
-    public function countForVersion(int $promptVersion): int
+    public function getUncachedItemIds(array $itemIds, int $propertyId): array
     {
-        return (int) $this->conn->fetchOne(
-            'SELECT COUNT(*) FROM enrich_cache WHERE prompt_version = ?',
-            [$promptVersion]
+        if (empty($itemIds)) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
+        $params = array_merge($itemIds, [$propertyId]);
+        $cached = $this->conn->fetchFirstColumn(
+            "SELECT item_id FROM enrich_field_cache WHERE item_id IN ($placeholders) AND property_id = ?",
+            $params
         );
+        $cachedSet = array_flip($cached);
+        return array_values(array_filter($itemIds, fn($id) => !isset($cachedSet[$id])));
     }
-
 }

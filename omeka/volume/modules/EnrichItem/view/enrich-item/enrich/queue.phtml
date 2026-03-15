@@ -1,114 +1,123 @@
 <?php
 /**
- * Admin page: Enrich Queue — lists unenriched items.
- * @var array $unenriched
- * @var int $enrichedCount
- * @var int $totalCount
+ * Admin page: Enrich Fields — field-level enrichment with Claude.
  */
 $this->htmlElement('body')->appendAttribute('class', 'enrich-queue');
+$fieldsUrl = $this->url('admin/enrich-queue/fields');
+$saveUrl = $this->url('admin/enrich-queue/save');
 $runUrl = $this->url('admin/enrich-queue/run');
+$previewUrl = $this->url('admin/enrich-queue/preview');
 $batchUrl = $this->url('admin/enrich-queue/batch');
 $batchStatusUrl = $this->url('admin/enrich-queue/batch-status');
 $batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
-$applyCacheUrl = $this->url('admin/enrich-queue/apply-cache');
 ?>
 
-<?php echo $this->pageTitle('Enrich Queue') ?>
+<?php echo $this->pageTitle('Enrich Fields') ?>
 
-<div style="margin-bottom: 1em;">
-    <p>
-        <strong><?= count($unenriched) ?></strong> unenriched items
-        out of <strong><?= $totalCount ?></strong> total
-        (<?= $enrichedCount ?> already enriched).
-    </p>
+<div id="enrich-app">
+    <div style="margin-bottom: 1.5em;">
+        <div style="display: flex; gap: 1em; align-items: flex-start; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px;">
+                <label for="field-select"><strong>Field</strong></label>
+                <select id="field-select" style="width: 100%; padding: 0.4em; margin-top: 0.25em;">
+                    <option value="">Loading fields...</option>
+                </select>
+                <div id="field-info" style="margin-top: 0.25em; color: #666; font-size: 0.9em;"></div>
+            </div>
+            <div style="min-width: 150px;">
+                <label for="model-select"><strong>Model</strong></label>
+                <select id="model-select" style="width: 100%; padding: 0.4em; margin-top: 0.25em;">
+                    <option value="haiku">Haiku (fast, cheapest)</option>
+                    <option value="sonnet">Sonnet (balanced)</option>
+                    <option value="opus">Opus (best quality)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 1.5em;">
+        <label for="instructions-text"><strong>Instructions</strong></label>
+        <textarea id="instructions-text" rows="6"
+            style="width: 100%; padding: 0.5em; margin-top: 0.25em; font-family: inherit; resize: vertical;"
+            placeholder="Write instructions for how Claude should populate this field..."></textarea>
+    </div>
+
+    <div id="vocab-display" style="margin-bottom: 1em; display: none;">
+        <strong>Allowed values:</strong>
+        <span id="vocab-terms" style="color: #666;"></span>
+    </div>
+
+    <div style="margin-bottom: 1.5em; display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 0.3em; cursor: pointer;">
+            <input type="checkbox" id="force-check">
+            <span>Force (re-enrich items that already have a value)</span>
+        </label>
+    </div>
+
+    <div style="margin-bottom: 1.5em; display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center;">
+        <button type="button" id="save-btn" class="button" disabled>Save Instructions</button>
+        <button type="button" id="preview-btn" class="button" disabled>Preview (1 item)</button>
+        <button type="button" id="enrich-btn" class="button" disabled>Enrich All</button>
+        <button type="button" id="batch-btn" class="button" disabled>Submit Batch (50% off)</button>
+        <span id="action-status" style="margin-left: 0.5em; color: #666;"></span>
+    </div>
+
+    <!-- Preview result -->
+    <div id="preview-panel" style="margin-bottom: 1.5em; display: none; padding: 1em; border: 1px solid #ddd; background: #f9f9f9;">
+        <h3 style="margin-top: 0;">Preview Result</h3>
+        <div id="preview-content"></div>
+    </div>
+
+    <!-- Batch status panel -->
+    <div id="batch-panel" style="margin-bottom: 1.5em; display: none;">
+        <h3>Batch Jobs</h3>
+        <table class="tablesaw" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Batch ID</th>
+                    <th>Model</th>
+                    <th>Items</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="batch-rows"></tbody>
+        </table>
+    </div>
 </div>
-
-<!-- Action buttons -->
-<div style="margin-bottom: 1.5em; display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center;">
-    <?php if (!empty($unenriched)): ?>
-    <button type="button" id="enrich-all-btn" class="button">
-        Enrich All (<?= count($unenriched) ?> items)
-    </button>
-
-    <select id="batch-model-select" style="padding: 0.4em;">
-        <option value="haiku">Haiku (fast, cheapest)</option>
-        <option value="sonnet">Sonnet (balanced)</option>
-        <option value="opus">Opus (best quality)</option>
-    </select>
-
-    <button type="button" id="batch-submit-btn" class="button">
-        Submit Batch (50% cheaper)
-    </button>
-    <?php endif; ?>
-
-    <button type="button" id="apply-cache-btn" class="button">
-        Apply Cached Results
-    </button>
-
-    <span id="action-status" style="margin-left: 0.5em; color: #666;"></span>
-</div>
-
-<!-- Batch status panel -->
-<div id="batch-panel" style="margin-bottom: 1.5em; display: none;">
-    <h3>Batch Jobs</h3>
-    <table class="tablesaw" style="width: 100%;">
-        <thead>
-            <tr>
-                <th>Batch ID</th>
-                <th>Model</th>
-                <th>Items</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="batch-rows"></tbody>
-    </table>
-</div>
-
-<?php if (!empty($unenriched)): ?>
-<table class="tablesaw" style="width: 100%;">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach ($unenriched as $row): ?>
-        <tr>
-            <td><?= $this->escapeHtml($row['id']) ?></td>
-            <td>
-                <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'show', 'id' => $row['id']]) ?>">
-                    <?= $this->escapeHtml($row['title'] ?: '(untitled)') ?>
-                </a>
-            </td>
-            <td>
-                <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'show', 'id' => $row['id']]) ?>#enrich"
-                   class="button button-small">Enrich</a>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
-<?php else: ?>
-<p>All items are enriched.</p>
-<?php endif; ?>
 
 <script>
 (function() {
+    var fields = [];
+    var selectedField = null;
     var status = document.getElementById('action-status');
     var urls = {
+        fields: <?= json_encode($fieldsUrl) ?>,
+        save: <?= json_encode($saveUrl) ?>,
         run: <?= json_encode($runUrl) ?>,
+        preview: <?= json_encode($previewUrl) ?>,
         batch: <?= json_encode($batchUrl) ?>,
         batchStatus: <?= json_encode($batchStatusUrl) ?>,
-        batchCollect: <?= json_encode($batchCollectUrl) ?>,
-        applyCache: <?= json_encode($applyCacheUrl) ?>
+        batchCollect: <?= json_encode($batchCollectUrl) ?>
     };
 
-    function postAction(url, body, btn) {
-        btn.disabled = true;
+    var fieldSelect = document.getElementById('field-select');
+    var modelSelect = document.getElementById('model-select');
+    var instructionsText = document.getElementById('instructions-text');
+    var fieldInfo = document.getElementById('field-info');
+    var vocabDisplay = document.getElementById('vocab-display');
+    var vocabTerms = document.getElementById('vocab-terms');
+    var forceCheck = document.getElementById('force-check');
+    var saveBtn = document.getElementById('save-btn');
+    var previewBtn = document.getElementById('preview-btn');
+    var enrichBtn = document.getElementById('enrich-btn');
+    var batchBtn = document.getElementById('batch-btn');
+    var previewPanel = document.getElementById('preview-panel');
+    var previewContent = document.getElementById('preview-content');
+
+    function postJson(url, body, btn) {
+        if (btn) btn.disabled = true;
         status.textContent = 'Working...';
         return fetch(url, {
             method: 'POST',
@@ -117,61 +126,170 @@ $applyCacheUrl = $this->url('admin/enrich-queue/apply-cache');
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            btn.disabled = false;
+            if (btn) btn.disabled = false;
             if (data.error) {
                 status.textContent = 'Error: ' + data.error;
             }
             return data;
         })
         .catch(function(e) {
-            btn.disabled = false;
+            if (btn) btn.disabled = false;
             status.textContent = 'Error: ' + e.message;
         });
     }
 
-    // Enrich All (real-time, one by one)
-    var enrichBtn = document.getElementById('enrich-all-btn');
-    if (enrichBtn) {
-        enrichBtn.addEventListener('click', function() {
-            postAction(urls.run, {}, enrichBtn).then(function(data) {
-                if (data && !data.error) {
-                    status.textContent = 'Job dispatched for ' + data.count + ' items. Check Admin > Jobs.';
-                }
+    function updateButtons() {
+        var hasField = !!selectedField;
+        var hasInstructions = instructionsText.value.trim().length > 0;
+        saveBtn.disabled = !hasField || !hasInstructions;
+        previewBtn.disabled = !hasField || !hasInstructions;
+        enrichBtn.disabled = !hasField || !hasInstructions;
+        batchBtn.disabled = !hasField || !hasInstructions;
+
+        if (selectedField) {
+            var count = forceCheck.checked ? selectedField.total_count : selectedField.missing_count;
+            enrichBtn.textContent = 'Enrich All (' + count + ' items)';
+            batchBtn.textContent = 'Submit Batch (' + count + ' items, 50% off)';
+        }
+    }
+
+    function loadFields() {
+        fetch(urls.fields, { headers: { 'Accept': 'application/json' } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            fields = data.fields || [];
+            fieldSelect.innerHTML = '<option value="">— Select a field —</option>';
+            fields.forEach(function(f) {
+                var opt = document.createElement('option');
+                opt.value = f.property_id;
+                opt.textContent = f.label + ' (' + f.term + ') — ' + f.missing_count + ' missing';
+                fieldSelect.appendChild(opt);
             });
         });
     }
 
-    // Submit Batch (Anthropic Batch API)
-    var batchBtn = document.getElementById('batch-submit-btn');
-    if (batchBtn) {
-        batchBtn.addEventListener('click', function() {
-            var model = document.getElementById('batch-model-select').value;
-            postAction(urls.batch, { model: model }, batchBtn).then(function(data) {
-                if (data && !data.error) {
-                    status.textContent = 'Batch submitted for ' + data.count + ' items (50% discount). Check status below.';
-                    loadBatchStatus();
-                }
-            });
-        });
-    }
+    fieldSelect.addEventListener('change', function() {
+        var propId = parseInt(fieldSelect.value, 10);
+        selectedField = fields.find(function(f) { return f.property_id === propId; }) || null;
 
-    // Apply Cache
-    var cacheBtn = document.getElementById('apply-cache-btn');
-    if (cacheBtn) {
-        cacheBtn.addEventListener('click', function() {
-            postAction(urls.applyCache, {}, cacheBtn).then(function(data) {
-                if (data && !data.error) {
-                    status.textContent = 'Applying ' + data.cached_count + ' cached results. Check Admin > Jobs.';
-                }
-            });
+        if (selectedField) {
+            instructionsText.value = selectedField.saved_instructions || '';
+            modelSelect.value = selectedField.saved_model || 'haiku';
+            fieldInfo.textContent = selectedField.missing_count + ' of ' + selectedField.total_count + ' items missing this field';
+
+            if (selectedField.vocab_terms && selectedField.vocab_terms.length) {
+                vocabTerms.textContent = selectedField.vocab_terms.join(', ');
+                vocabDisplay.style.display = 'block';
+            } else {
+                vocabDisplay.style.display = 'none';
+            }
+        } else {
+            instructionsText.value = '';
+            fieldInfo.textContent = '';
+            vocabDisplay.style.display = 'none';
+        }
+
+        previewPanel.style.display = 'none';
+        status.textContent = '';
+        updateButtons();
+    });
+
+    instructionsText.addEventListener('input', updateButtons);
+    forceCheck.addEventListener('change', updateButtons);
+
+    // Save Instructions
+    saveBtn.addEventListener('click', function() {
+        if (!selectedField) return;
+        postJson(urls.save, {
+            property_id: selectedField.property_id,
+            instructions: instructionsText.value.trim(),
+            model: modelSelect.value
+        }, saveBtn).then(function(data) {
+            if (data && !data.error) {
+                status.textContent = 'Instructions saved.';
+                selectedField.saved_instructions = instructionsText.value.trim();
+                selectedField.saved_model = modelSelect.value;
+            }
         });
-    }
+    });
+
+    // Preview
+    previewBtn.addEventListener('click', function() {
+        if (!selectedField) return;
+        // Auto-save before preview
+        postJson(urls.save, {
+            property_id: selectedField.property_id,
+            instructions: instructionsText.value.trim(),
+            model: modelSelect.value
+        }).then(function() {
+            return postJson(urls.preview, {
+                property_id: selectedField.property_id
+            }, previewBtn);
+        }).then(function(data) {
+            if (data && !data.error) {
+                var html = '<p><strong>Item #' + data.item_id + '</strong> "' + escapeHtml(data.item_title) + '"</p>';
+                html += '<p>Suggested: <code>' + escapeHtml(data.suggested_value || '(empty)') + '</code></p>';
+                if (data.vocab_warning) {
+                    html += '<p style="color: #c00;">' + escapeHtml(data.vocab_warning) + '</p>';
+                }
+                if (data.usage) {
+                    html += '<p style="color: #666; font-size: 0.9em;">'
+                        + data.usage.input_tokens + ' in / ' + data.usage.output_tokens + ' out — $'
+                        + data.usage.cost_usd.toFixed(4)
+                        + ' (' + data.usage.model + ')</p>';
+                }
+                previewContent.innerHTML = html;
+                previewPanel.style.display = 'block';
+                status.textContent = '';
+            }
+        });
+    });
+
+    // Enrich All (real-time)
+    enrichBtn.addEventListener('click', function() {
+        if (!selectedField) return;
+        if (!confirm('Enrich ' + (forceCheck.checked ? selectedField.total_count : selectedField.missing_count) + ' items with Claude? This will call the API.')) return;
+        // Auto-save before enriching
+        postJson(urls.save, {
+            property_id: selectedField.property_id,
+            instructions: instructionsText.value.trim(),
+            model: modelSelect.value
+        }).then(function() {
+            return postJson(urls.run, {
+                property_id: selectedField.property_id,
+                force: forceCheck.checked
+            }, enrichBtn);
+        }).then(function(data) {
+            if (data && !data.error) {
+                status.textContent = 'Job dispatched for ' + data.count + ' items. Check Admin > Jobs.';
+            }
+        });
+    });
+
+    // Submit Batch (50% off)
+    batchBtn.addEventListener('click', function() {
+        if (!selectedField) return;
+        if (!confirm('Submit batch for ' + (forceCheck.checked ? selectedField.total_count : selectedField.missing_count) + ' items? (50% cheaper, async)')) return;
+        postJson(urls.save, {
+            property_id: selectedField.property_id,
+            instructions: instructionsText.value.trim(),
+            model: modelSelect.value
+        }).then(function() {
+            return postJson(urls.batch, {
+                property_id: selectedField.property_id,
+                force: forceCheck.checked
+            }, batchBtn);
+        }).then(function(data) {
+            if (data && !data.error) {
+                status.textContent = 'Batch submitted for ' + data.count + ' items. Check status below.';
+                loadBatchStatus();
+            }
+        });
+    });
 
     // Batch status
     function loadBatchStatus() {
-        fetch(urls.batchStatus, {
-            headers: { 'Accept': 'application/json' }
-        })
+        fetch(urls.batchStatus, { headers: { 'Accept': 'application/json' } })
         .then(function(r) { return r.json(); })
         .then(function(data) {
             var batches = data.batches || [];
@@ -198,11 +316,10 @@ $applyCacheUrl = $this->url('admin/enrich-queue/apply-cache');
                 tbody.appendChild(tr);
             });
 
-            // Bind collect buttons
             document.querySelectorAll('.batch-collect-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     var batchId = btn.getAttribute('data-batch');
-                    postAction(urls.batchCollect, { batch_id: batchId }, btn).then(function(data) {
+                    postJson(urls.batchCollect, { batch_id: batchId }, btn).then(function(data) {
                         if (data && !data.error) {
                             status.textContent = 'Collecting batch ' + batchId.substring(0, 20) + '... Check Admin > Jobs.';
                             setTimeout(loadBatchStatus, 2000);
@@ -213,7 +330,14 @@ $applyCacheUrl = $this->url('admin/enrich-queue/apply-cache');
         });
     }
 
-    // Load batch status on page load
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Init
+    loadFields();
     loadBatchStatus();
 })();
 </script>

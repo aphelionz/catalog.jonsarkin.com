@@ -2,48 +2,11 @@
 
 namespace EnrichItem;
 
-use Laminas\Router\Http\Segment;
-
 return [
     'router' => [
         'routes' => [
             'admin' => [
                 'child_routes' => [
-                    'enrich-item' => [
-                        'type' => Segment::class,
-                        'options' => [
-                            'route' => '/enrich/:item_id',
-                            'constraints' => [
-                                'item_id' => '\\d+',
-                            ],
-                            'defaults' => [
-                                '__NAMESPACE__' => 'EnrichItem\\Controller',
-                                'controller' => Controller\EnrichController::class,
-                                'action' => 'analyze',
-                            ],
-                        ],
-                        'may_terminate' => true,
-                        'child_routes' => [
-                            'apply' => [
-                                'type' => 'Literal',
-                                'options' => [
-                                    'route' => '/apply',
-                                    'defaults' => [
-                                        'action' => 'apply',
-                                    ],
-                                ],
-                            ],
-                            'ingest' => [
-                                'type' => 'Literal',
-                                'options' => [
-                                    'route' => '/ingest',
-                                    'defaults' => [
-                                        'action' => 'ingest',
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
                     'enrich-queue' => [
                         'type' => 'Literal',
                         'options' => [
@@ -56,6 +19,24 @@ return [
                         ],
                         'may_terminate' => true,
                         'child_routes' => [
+                            'fields' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/fields',
+                                    'defaults' => [
+                                        'action' => 'fields',
+                                    ],
+                                ],
+                            ],
+                            'save' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/save',
+                                    'defaults' => [
+                                        'action' => 'saveInstructions',
+                                    ],
+                                ],
+                            ],
                             'run' => [
                                 'type' => 'Literal',
                                 'options' => [
@@ -65,12 +46,12 @@ return [
                                     ],
                                 ],
                             ],
-                            'apply-cache' => [
+                            'preview' => [
                                 'type' => 'Literal',
                                 'options' => [
-                                    'route' => '/apply-cache',
+                                    'route' => '/preview',
                                     'defaults' => [
-                                        'action' => 'applyCache',
+                                        'action' => 'preview',
                                     ],
                                 ],
                             ],
@@ -111,6 +92,7 @@ return [
         'factories' => [
             Service\AnthropicClient::class => Service\AnthropicClientFactory::class,
             Service\EnrichmentCache::class => Service\EnrichmentCacheFactory::class,
+            Service\FieldInstructions::class => Service\FieldInstructionsFactory::class,
         ],
     ],
     'controllers' => [
@@ -132,7 +114,7 @@ return [
     'navigation' => [
         'AdminModule' => [
             [
-                'label' => 'Enrich Queue',
+                'label' => 'Enrich Fields',
                 'route' => 'admin/enrich-queue',
                 'resource' => Controller\EnrichController::class,
             ],

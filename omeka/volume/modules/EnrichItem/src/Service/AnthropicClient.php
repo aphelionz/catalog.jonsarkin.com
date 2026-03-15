@@ -5,39 +5,18 @@ namespace EnrichItem\Service;
 use Laminas\Http\Client as HttpClient;
 
 /**
- * Direct Anthropic API client for artwork enrichment.
+ * Anthropic API client for field-level artwork enrichment.
  *
- * Downloads an artwork image, resizes it, sends it to Claude for structured
- * analysis, validates the response against controlled vocabularies, and
- * returns the enrichment result with usage/cost info.
+ * Downloads an artwork image, resizes it, sends it to Claude with dynamic
+ * per-field instructions, and returns the enrichment result with usage/cost info.
  */
 class AnthropicClient
 {
-    public const PROMPT_VERSION = 4;
-
     private const IMAGE_MAX_DIM = 1024;
     private const IMAGE_QUALITY = 85;
     private const API_URL = 'https://api.anthropic.com/v1/messages';
     private const API_VERSION = '2023-06-01';
     private const MAX_TOKENS = 4096;
-
-    public const WORK_TYPES = [
-        'Drawing', 'Painting', 'Collage', 'Mixed Media',
-        'Sculpture', 'Print', 'Other',
-    ];
-
-    public const SUPPORTS = [
-        'Paper', 'Cardboard', 'Cardboard album sleeve', 'Canvas', 'Board', 'Wood',
-        'Found Object', 'Envelope', 'Album Sleeve', 'Other',
-    ];
-
-    public const MOTIFS = [
-        'Eyes', 'Fish', 'Faces', 'Hands', 'Text Fragments',
-        'Grids', 'Circles', 'Patterns', 'Animals', 'Names/Words',
-        'Maps', 'Numbers',
-    ];
-
-    public const CONDITIONS = ['Excellent', 'Good', 'Fair', 'Poor', 'Not Examined'];
 
     public const MODEL_MAP = [
         'haiku'  => 'claude-haiku-4-5-20251001',
@@ -51,65 +30,6 @@ class AnthropicClient
         'claude-sonnet-4-6'         => ['input' => 3.00,  'output' => 15.00],
         'claude-opus-4-6'           => ['input' => 15.00, 'output' => 75.00],
     ];
-
-    public const ANALYSIS_PROMPT = <<<'PROMPT'
-You are cataloging artworks by Jon Sarkin (1953–2024) for a catalog raisonné.
-Analyze this artwork image and return a JSON object with the following fields.
-{
-  "transcription": "Transcribe ALL visible text exactly as written by the artist.
-                     Do not correct spelling, grammar, punctuation, or capitalization.
-                     Do not normalize or interpret — reproduce what is on the surface.
-                     Include all words, phrases, letter sequences, and isolated characters.
-                     Transcribe every instance of repeated sequences individually
-                     (e.g., 'eee eee eee eee eee' not 'eee ×5').
-                     Include text fragments, cultural references, and symbols that
-                     function as text (describe symbols in brackets: [circle with cross]).
-                     Do NOT include the artist's signature or date — these are captured
-                     in separate fields. The signature is usually 'JMS' followed by a
-                     two-digit year, typically in the lower right.
-                     Organize spatially: top to bottom, left to right. Use line breaks
-                     to separate distinct text areas.
-                     Use [illegible] for unreadable portions.
-                     Return null if no text is visible.",
-  "signature": "Return a SINGLE character indicating where the signature appears.
-                Must be exactly one of: ↖ ↑ ↗ ← → ↙ ↓ ↘ ∅
-                Use ∅ if unsigned or no signature visible.
-                Return ONLY the one arrow character or ∅ — no other text.",
-  "date": "Year the work was created, if determinable from the signature or
-           text in the artwork. Return as a string: '2005', 'c. 2005', etc.
-           Return null if not determinable.",
-  "medium": "Materials/media ONLY — do NOT include the support surface.
-             Examples: 'Marker', 'Ink and marker', 'Acrylic and collage',
-             'Mixed media', 'Graphite', 'Oil paint'.
-             Return null if uncertain.",
-  "support": "The surface/substrate. Must be one of:
-              Cardboard album sleeve, Paper, Canvas, Board, Wood,
-              Found Object, Envelope, Other.
-              If the work is square (approximately 12.5 × 12.5 inches),
-              the support is almost certainly 'Cardboard album sleeve.'
-              Do not override to 'Paper' or 'Cardboard' unless clearly
-              not an album sleeve.
-              Return null if uncertain.",
-  "work_type": "Must be one of: Drawing, Painting, Collage, Mixed Media,
-                Sculpture, Print, Other. Return null if uncertain.",
-  "motifs": ["Visual motifs present. Choose from: Eyes, Fish, Faces, Hands,
-              Text Fragments, Grids, Circles, Patterns, Animals, Names/Words,
-              Maps, Numbers, Desert, Boats, Creatures.
-              ERR ON THE SIDE OF INCLUSION. If a motif is arguably present,
-              include it. This field is additive — more tags are better than
-              fewer tags.
-              Return empty array if none match."],
-  "condition_notes": "Brief note on visible condition issues (tears, staining,
-                      foxing, fading). When describing condition, note that
-                      edge wear, tearing, creasing, and staining are typically
-                      inherent to the artist's process, not post-creation damage.
-                      Sarkin did not treat his works as precious objects. Use the
-                      phrase 'inherent to the artist's process' to distinguish
-                      process-related wear from external damage. Return null if
-                      the work appears to be in good condition."
-}
-Return ONLY valid JSON. No markdown fences, no explanation.
-PROMPT;
 
     private string $apiKey;
     private string $defaultModel;
@@ -129,12 +49,20 @@ PROMPT;
     }
 
     /**
-     * Analyze an artwork image via Claude.
+     * Enrich a single field for an artwork image.
      *
-     * @return array Enrichment fields + 'usage' key with token counts and cost
+     * @param string $imageUrl  URL of the artwork image (internal Docker URL)
+     * @param string $systemPrompt  Dynamic system prompt with instructions + vocab constraints
+     * @param string $userPrompt  Short trigger prompt (e.g. "Analyze this artwork...")
+     * @param string|null $model  Model short name (haiku/sonnet/opus)
+     * @return array{value: string, usage: array{input_tokens: int, output_tokens: int, model: string, cost_usd: float}}
      */
-    public function analyze(string $imageUrl, ?string $model = null): array
+    public function enrichField(string $imageUrl, string $systemPrompt, string $userPrompt, ?string $model = null): array
     {
+        if (!$this->apiKey) {
+            throw new \RuntimeException('ANTHROPIC_API_KEY environment variable is not set');
+        }
+
         $model = $model ?? $this->defaultModel;
         $modelId = self::MODEL_MAP[$model] ?? $model;
 
@@ -143,6 +71,7 @@ PROMPT;
         $requestBody = [
             'model' => $modelId,
             'max_tokens' => self::MAX_TOKENS,
+            'system' => $systemPrompt,
             'messages' => [
                 [
                     'role' => 'user',
@@ -157,7 +86,7 @@ PROMPT;
                         ],
                         [
                             'type' => 'text',
-                            'text' => self::ANALYSIS_PROMPT,
+                            'text' => $userPrompt,
                         ],
                     ],
                 ],
@@ -188,22 +117,66 @@ PROMPT;
         }
 
         $apiResponse = json_decode($response->getBody(), true);
-        $rawText = $apiResponse['content'][0]['text'] ?? '';
-        $parsed = $this->parseResponse($rawText);
-        $result = $this->validateEnrichment($parsed);
+        $rawText = trim($apiResponse['content'][0]['text'] ?? '');
 
-        // Attach usage info
+        // Strip markdown fences if present
+        if (str_starts_with($rawText, '```')) {
+            $lines = explode("\n", $rawText);
+            $lines = array_filter($lines, fn($l) => !str_starts_with(trim($l), '```'));
+            $rawText = trim(implode("\n", $lines));
+        }
+
+        // Treat "NULL" response as empty
+        if (strtoupper($rawText) === 'NULL') {
+            $rawText = '';
+        }
+
         $usage = $apiResponse['usage'] ?? [];
         $inputTokens = $usage['input_tokens'] ?? 0;
         $outputTokens = $usage['output_tokens'] ?? 0;
-        $result['usage'] = [
-            'input_tokens' => $inputTokens,
-            'output_tokens' => $outputTokens,
-            'model' => $modelId,
-            'cost_usd' => $this->estimateCost($modelId, $inputTokens, $outputTokens),
+
+        return [
+            'value' => $rawText,
+            'usage' => [
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens,
+                'model' => $modelId,
+                'cost_usd' => $this->estimateCost($modelId, $inputTokens, $outputTokens),
+            ],
+        ];
+    }
+
+    /**
+     * Build the system prompt for a field enrichment call.
+     *
+     * @param string $fieldLabel  Human-readable field name
+     * @param string $instructions  User-written instructions
+     * @param array|null $vocabTerms  Controlled vocabulary terms, if any
+     * @return string
+     */
+    public static function buildSystemPrompt(string $fieldLabel, string $instructions, ?array $vocabTerms = null): string
+    {
+        $parts = [
+            "You are cataloging artworks by Jon Sarkin (1953-2024) for a catalog raisonne.",
+            "",
+            "Your task is to determine the value for the field: \"{$fieldLabel}\".",
+            "",
+            $instructions,
         ];
 
-        return $result;
+        if (!empty($vocabTerms)) {
+            $termList = implode("\n- ", $vocabTerms);
+            $parts[] = "";
+            $parts[] = "IMPORTANT: Your response MUST be exactly one of these allowed values:";
+            $parts[] = "- " . $termList;
+            $parts[] = "Do not invent new values. Pick the closest match from this list.";
+        }
+
+        $parts[] = "";
+        $parts[] = "Return ONLY the value. No JSON wrapping, no markdown, no explanation.";
+        $parts[] = "If you cannot determine the value, return the single word: NULL";
+
+        return implode("\n", $parts);
     }
 
     /**
@@ -255,107 +228,6 @@ PROMPT;
         return [base64_encode($jpegData), 'image/jpeg'];
     }
 
-    public function parseResponse(string $rawText): array
-    {
-        $rawText = trim($rawText);
-
-        // Strip markdown fences
-        if (str_starts_with($rawText, '```')) {
-            $lines = explode("\n", $rawText);
-            $lines = array_filter($lines, fn($l) => !str_starts_with(trim($l), '```'));
-            $rawText = implode("\n", $lines);
-        }
-
-        $data = json_decode($rawText, true);
-        if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
-            return $data;
-        }
-
-        // Attempt to repair truncated JSON
-        $repaired = $this->repairTruncatedJson($rawText);
-        if ($repaired !== null) {
-            $this->logger->warn('EnrichItem: repaired truncated JSON (max_tokens likely hit)');
-            return $repaired;
-        }
-
-        $this->logger->warn('EnrichItem: invalid JSON from Claude: ' . substr($rawText, 0, 300));
-        return [];
-    }
-
-    public function repairTruncatedJson(string $text): ?array
-    {
-        $text = rtrim($text, '\\');
-
-        // Close any open string
-        if (substr_count($text, '"') % 2 === 1) {
-            $text .= '"';
-        }
-
-        // Balance braces/brackets
-        $stack = [];
-        $inString = false;
-        $escape = false;
-        $len = strlen($text);
-        for ($i = 0; $i < $len; $i++) {
-            $ch = $text[$i];
-            if ($escape) {
-                $escape = false;
-                continue;
-            }
-            if ($ch === '\\') {
-                $escape = true;
-                continue;
-            }
-            if ($ch === '"') {
-                $inString = !$inString;
-                continue;
-            }
-            if ($inString) {
-                continue;
-            }
-            if ($ch === '{' || $ch === '[') {
-                $stack[] = ($ch === '{') ? '}' : ']';
-            } elseif (($ch === '}' || $ch === ']') && !empty($stack)) {
-                array_pop($stack);
-            }
-        }
-
-        $text .= implode('', array_reverse($stack));
-
-        $data = json_decode($text, true);
-        return (json_last_error() === JSON_ERROR_NONE && is_array($data)) ? $data : null;
-    }
-
-    public function validateEnrichment(array $data): array
-    {
-        $result = [];
-
-        // String fields — trim or null
-        foreach (['transcription', 'signature', 'date', 'medium', 'condition_notes'] as $key) {
-            $val = $data[$key] ?? null;
-            $result[$key] = ($val !== null && is_string($val)) ? trim($val) : null;
-            if ($result[$key] === '') {
-                $result[$key] = null;
-            }
-        }
-
-        // Controlled vocab: work_type
-        $workType = $data['work_type'] ?? null;
-        $result['work_type'] = in_array($workType, self::WORK_TYPES, true) ? $workType : null;
-
-        // Controlled vocab: support
-        $support = $data['support'] ?? null;
-        $result['support'] = in_array($support, self::SUPPORTS, true) ? $support : null;
-
-        // Controlled vocab: motifs (filtered list)
-        $motifs = $data['motifs'] ?? [];
-        $result['motifs'] = is_array($motifs)
-            ? array_values(array_filter($motifs, fn($m) => in_array($m, self::MOTIFS, true)))
-            : [];
-
-        return $result;
-    }
-
     public function estimateCost(string $modelId, int $inputTokens, int $outputTokens): float
     {
         $prices = self::PRICING[$modelId] ?? ['input' => 3.0, 'output' => 15.0];
@@ -366,8 +238,8 @@ PROMPT;
         );
     }
 
-    public function getPromptVersion(): int
+    public function getApiKey(): string
     {
-        return self::PROMPT_VERSION;
+        return $this->apiKey;
     }
 }
