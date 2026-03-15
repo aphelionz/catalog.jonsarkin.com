@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key segment segment-force push-segments
 
 .DEFAULT_GOAL := help
 
@@ -21,6 +21,9 @@ help: ## Show available targets
 	@echo ""
 	@echo "  Data Sync"
 	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy|push-schema):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "  Segmentation (local M4/MPS)"
+	@grep -E '^(segment|segment-force|push-segments):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Utilities"
 	@grep -E '^(backup-db|restore-db|ensure-api-key):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -136,6 +139,17 @@ push-schema: ## Push local schema, site pages, item sets, and config to producti
 			    SELECT COUNT(*) AS site_pages FROM site_page; \
 			    SELECT COUNT(*) AS item_sets FROM item_set;"'
 	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages, 18 item_sets."
+
+# ── Segmentation (local M4/MPS — not in Docker) ────────────────────
+
+segment: ## Run SAM 2.1 segmentation locally (incremental)
+	cd sarkin-clip && python local_segment_ingest.py segment
+
+segment-force: ## Re-segment all items with SAM 2.1
+	cd sarkin-clip && python local_segment_ingest.py segment --force
+
+push-segments: ## Push segment JPEGs + Qdrant vectors to production
+	cd sarkin-clip && python local_segment_ingest.py push
 
 # ── Utilities ────────────────────────────────────────────────────────
 

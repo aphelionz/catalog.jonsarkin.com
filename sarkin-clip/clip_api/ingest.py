@@ -134,7 +134,7 @@ async def ingest_item(
             logger.warning("DINOv2 patch ingest failed for item %d", omeka_item_id, exc_info=True)
 
     # SAM segment embeddings (optional, non-blocking)
-    if settings.segment_enabled:
+    if settings.segment_ingest_enabled:
         try:
             await ingest_segments(
                 settings,

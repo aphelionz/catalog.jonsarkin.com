@@ -160,18 +160,22 @@ def _warm_text_model() -> None:
 
 @app.on_event("startup")
 def _warm_segment_models() -> None:
-    """Pre-load SAM + DINOv2 at startup to avoid OOM from concurrent lazy-loading."""
+    """Pre-load segment models at startup to avoid OOM from concurrent lazy-loading."""
     settings = _settings()
-    if not settings.segment_enabled:
-        return
-    try:
-        from clip_api import sam, dino
-        sam._get_sam()
-        logger.info("SAM model pre-loaded")
-        dino._get_dino()
-        logger.info("DINOv2 model pre-loaded")
-    except Exception as e:
-        logger.warning("Failed to pre-load segment models: %s", e)
+    if settings.segment_enabled:
+        try:
+            from clip_api import dino
+            dino._get_dino()
+            logger.info("DINOv2 model pre-loaded (segment query)")
+        except Exception as e:
+            logger.warning("Failed to pre-load DINOv2: %s", e)
+    if settings.segment_ingest_enabled:
+        try:
+            from clip_api import sam
+            sam._get_sam()
+            logger.info("SAM model pre-loaded (segment ingest)")
+        except Exception as e:
+            logger.warning("Failed to pre-load SAM: %s", e)
 
 
 @app.on_event("shutdown")
@@ -1193,13 +1197,16 @@ async def segment_search(
 
 @app.post("/v1/segment/ingest/{omeka_id}", response_model=IngestResponse)
 async def segment_ingest_single_item(omeka_id: int, req: SegmentIngestRequest) -> IngestResponse:
-    """Segment a single item with MobileSAM and embed segments with DINOv2 CLS."""
+    """Segment a single item with SAM and embed segments with DINOv2 CLS."""
     from clip_api.ingest import fetch_image_bytes, ingest_segments
     import time
 
     settings = _settings()
-    if not settings.segment_enabled:
-        raise HTTPException(status_code=503, detail="Segment ingest is disabled")
+    if not settings.segment_ingest_enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Segment ingest is disabled on this instance; run segmentation locally",
+        )
 
     t_start = time.perf_counter()
     try:

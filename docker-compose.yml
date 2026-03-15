@@ -64,6 +64,7 @@ services:
       DINO_ENABLED: "true"
       SEGMENT_COLLECTION: sarkin_motif_segments
       SEGMENT_ENABLED: "true"
+      SEGMENT_INGEST_ENABLED: "true"
       SEGMENT_DIR: /app/segments
     volumes:
       - segment_data:/app/segments
