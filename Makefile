@@ -143,13 +143,13 @@ push-schema: ## Push local schema, site pages, item sets, and config to producti
 # ── Segmentation (local M4/MPS — not in Docker) ────────────────────
 
 segment: ## Run SAM 2.1 segmentation locally (incremental)
-	cd sarkin-clip && python local_segment_ingest.py segment
+	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment
 
 segment-force: ## Re-segment all items with SAM 2.1
-	cd sarkin-clip && python local_segment_ingest.py segment --force
+	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --force
 
 push-segments: ## Push segment JPEGs + Qdrant vectors to production
-	cd sarkin-clip && python local_segment_ingest.py push
+	cd sarkin-clip && .venv/bin/python local_segment_ingest.py push
 
 # ── Utilities ────────────────────────────────────────────────────────
 
