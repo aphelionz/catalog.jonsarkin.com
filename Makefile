@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key segment segment-force push-segments
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key classify classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments
 
 .DEFAULT_GOAL := help
 
@@ -22,8 +22,8 @@ help: ## Show available targets
 	@echo "  Data Sync"
 	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy|push-schema):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
-	@echo "  Segmentation (local M4/MPS)"
-	@grep -E '^(segment|segment-force|push-segments):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "  Classification & Segmentation (local M4/MPS)"
+	@grep -E '^(classify|classify-stats|reclassify|segment|segment-force|segment-test|segment-tier|segment-id|push-segments):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Utilities"
 	@grep -E '^(backup-db|restore-db|ensure-api-key):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -140,13 +140,31 @@ push-schema: ## Push local schema, site pages, item sets, and config to producti
 			    SELECT COUNT(*) AS item_sets FROM item_set;"'
 	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages, 18 item_sets."
 
-# ── Segmentation (local M4/MPS — not in Docker) ────────────────────
+# ── Classification & Segmentation (local M4/MPS — not in Docker) ──
 
-segment: ## Run SAM 2.1 segmentation locally (incremental)
+classify: ## Classify all items then reclassify by percentile
+	cd sarkin-clip && .venv/bin/python classify.py $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH))
+
+classify-stats: ## Show density tier distribution
+	cd sarkin-clip && .venv/bin/python classify.py --stats
+
+reclassify: ## Reclassify tiers from stored metrics (no image download)
+	cd sarkin-clip && .venv/bin/python classify.py --reclassify $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH))
+
+segment: ## Run SAM 2.1 segmentation locally (incremental, density-tiered)
 	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment
 
-segment-force: ## Re-segment all items with SAM 2.1
+segment-force: ## Re-segment all items with SAM 2.1 (recreates collection)
 	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --force
+
+segment-test: ## Segment ~20 test items (mix of tiers) for parameter tuning
+	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --test
+
+segment-tier: ## Segment items in a specific tier (usage: make segment-tier TIER=sparse)
+	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --tier $(TIER)
+
+segment-id: ## Segment a single item (usage: make segment-id ID=1234)
+	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --id $(ID)
 
 push-segments: ## Push segment JPEGs + Qdrant vectors to production
 	cd sarkin-clip && .venv/bin/python local_segment_ingest.py push
