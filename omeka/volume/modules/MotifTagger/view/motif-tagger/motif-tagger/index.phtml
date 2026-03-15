@@ -192,6 +192,35 @@ echo $this->pageTitle('Motif Tagger');
     z-index: 2;
 }
 
+/* Tabs */
+.mt-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 1.5rem;
+}
+.mt-tab {
+    padding: 0.6em 1.2em;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: none;
+    font-size: 1em;
+    color: #666;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+}
+.mt-tab:hover { color: #333; }
+.mt-tab.active {
+    color: #333;
+    border-color: #ddd;
+    background: #fff;
+    font-weight: 600;
+}
+.mt-tab-panel { display: none; }
+.mt-tab-panel.active { display: block; }
+
 /* Spinner */
 .mt-spinner {
     display: inline-block;
@@ -206,7 +235,15 @@ echo $this->pageTitle('Motif Tagger');
 @keyframes mt-spin { to { transform: rotate(360deg); } }
 </style>
 
-<!-- Section 1: Upload & Search -->
+<!-- Tabs -->
+<div class="mt-tabs">
+    <button type="button" class="mt-tab active" data-tab="search">Search</button>
+    <button type="button" class="mt-tab" data-tab="admin">Admin</button>
+</div>
+
+<!-- Search Tab -->
+<div class="mt-tab-panel active" data-panel="search">
+
 <div id="mt-upload-section">
     <div id="mt-dropzone">
         <p>Drag a motif crop here, or click to select a file</p>
@@ -234,7 +271,38 @@ echo $this->pageTitle('Motif Tagger');
     <div id="mt-search-status"></div>
 </div>
 
-<!-- Ingestion -->
+<!-- Results Grid -->
+<div id="mt-results-section" style="display:none">
+    <div id="mt-results-toolbar">
+        <button type="button" id="mt-select-all" class="button small">Select All Visible</button>
+        <button type="button" id="mt-deselect-all" class="button small">Deselect All</button>
+        <span id="mt-match-count"></span>
+    </div>
+    <div id="mt-results-grid"></div>
+</div>
+
+<!-- Sticky Footer -->
+<div id="mt-footer" style="display:none">
+    <select id="mt-motif-select">
+        <option value="">-- Select motif --</option>
+        <?php foreach ($terms as $t): ?>
+        <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?></option>
+        <?php endforeach; ?>
+    </select>
+    <div class="mt-footer-sep"></div>
+    <input type="text" id="mt-new-term" placeholder="New term...">
+    <button type="button" id="mt-add-term-btn" class="button small">Add Term</button>
+    <div class="mt-footer-sep"></div>
+    <span id="mt-selected-count">0 selected</span>
+    <button type="button" id="mt-tag-btn" class="button" disabled>Tag Selected</button>
+    <span id="mt-tag-status"></span>
+</div>
+
+</div><!-- /search tab panel -->
+
+<!-- Admin Tab -->
+<div class="mt-tab-panel" data-panel="admin">
+
 <fieldset id="mt-ingest-section" style="margin-bottom:1.5rem; padding:1rem; border:1px solid #ddd; border-radius:4px;">
     <legend style="font-weight:600; padding:0 0.5em;">Ingestion</legend>
     <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
@@ -246,7 +314,6 @@ echo $this->pageTitle('Motif Tagger');
     </div>
 </fieldset>
 
-<!-- Qdrant Stats -->
 <fieldset id="mt-qdrant-section" style="margin-bottom:1.5rem; padding:1rem; border:1px solid #ddd; border-radius:4px;">
     <legend style="font-weight:600; padding:0 0.5em;">Qdrant Collections</legend>
     <?php if (isset($qdrantStats['error'])): ?>
@@ -297,35 +364,20 @@ echo $this->pageTitle('Motif Tagger');
     <?php endif; ?>
 </fieldset>
 
-<!-- Section 2: Results Grid -->
-<div id="mt-results-section" style="display:none">
-    <div id="mt-results-toolbar">
-        <button type="button" id="mt-select-all" class="button small">Select All Visible</button>
-        <button type="button" id="mt-deselect-all" class="button small">Deselect All</button>
-        <span id="mt-match-count"></span>
-    </div>
-    <div id="mt-results-grid"></div>
-</div>
-
-<!-- Section 3: Sticky Footer -->
-<div id="mt-footer" style="display:none">
-    <select id="mt-motif-select">
-        <option value="">-- Select motif --</option>
-        <?php foreach ($terms as $t): ?>
-        <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?></option>
-        <?php endforeach; ?>
-    </select>
-    <div class="mt-footer-sep"></div>
-    <input type="text" id="mt-new-term" placeholder="New term...">
-    <button type="button" id="mt-add-term-btn" class="button small">Add Term</button>
-    <div class="mt-footer-sep"></div>
-    <span id="mt-selected-count">0 selected</span>
-    <button type="button" id="mt-tag-btn" class="button" disabled>Tag Selected</button>
-    <span id="mt-tag-status"></span>
-</div>
+</div><!-- /admin tab panel -->
 
 <script>
 (function() {
+    // --- Tabs ---
+    document.querySelectorAll('.mt-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.mt-tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.mt-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            tab.classList.add('active');
+            document.querySelector('[data-panel="' + tab.dataset.tab + '"]').classList.add('active');
+        });
+    });
+
     var searchUrl = <?= json_encode($searchUrl) ?>;
     var tagUrl = <?= json_encode($tagUrl) ?>;
     var addTermUrl = <?= json_encode($addTermUrl) ?>;
