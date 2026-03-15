@@ -19,14 +19,14 @@ $batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
         <div style="display: flex; gap: 1em; align-items: flex-start; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 250px;">
                 <label for="field-select"><strong>Field</strong></label>
-                <select id="field-select" style="width: 100%; padding: 0.4em; margin-top: 0.25em;">
+                <select id="field-select" style="width: 100%; margin-top: 0.25em;">
                     <option value="">Loading fields...</option>
                 </select>
                 <div id="field-info" style="margin-top: 0.25em; color: #666; font-size: 0.9em;"></div>
             </div>
-            <div style="min-width: 150px;">
+            <div style="min-width: 200px;">
                 <label for="model-select"><strong>Model</strong></label>
-                <select id="model-select" style="width: 100%; padding: 0.4em; margin-top: 0.25em;">
+                <select id="model-select" style="width: 100%; margin-top: 0.25em;">
                     <option value="haiku">Haiku (fast, cheapest)</option>
                     <option value="sonnet">Sonnet (balanced)</option>
                     <option value="opus">Opus (best quality)</option>
