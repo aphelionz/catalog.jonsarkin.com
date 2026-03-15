@@ -221,7 +221,7 @@ def segment_image(image_bytes: bytes) -> List[Dict[str, Any]]:
             continue
         filtered.append({
             "mask": m["segmentation"],  # bool ndarray (H, W)
-            "bbox": tuple(m["bbox"]),   # (x, y, w, h)
+            "bbox": tuple(int(v) for v in m["bbox"]),  # (x, y, w, h)
             "area": area,
             "area_pct": round(area_pct, 4),
             "stability_score": round(m["stability_score"], 4),
