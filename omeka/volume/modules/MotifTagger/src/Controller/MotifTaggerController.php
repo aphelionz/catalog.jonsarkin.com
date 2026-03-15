@@ -53,7 +53,7 @@ class MotifTaggerController extends AbstractActionController
         $view = new ViewModel([
             'terms' => $terms,
             'defaultLimit' => (int) $this->getSetting('default_limit', 100),
-            'defaultThreshold' => (float) $this->getSetting('default_threshold', 0.5),
+            'defaultThreshold' => (float) $this->getSetting('default_threshold', 0.75),
             'searchUrl' => $this->url()->fromRoute('admin/motif-tagger/search'),
             'tagUrl' => $this->url()->fromRoute('admin/motif-tagger/tag'),
             'addTermUrl' => $this->url()->fromRoute('admin/motif-tagger/add-term'),

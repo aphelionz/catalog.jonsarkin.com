@@ -152,7 +152,7 @@ echo $this->pageTitle('Motif Tagger');
 #mt-footer {
     position: fixed;
     bottom: 0;
-    left: 0;
+    left: var(--mt-content-left, 0px);
     right: 0;
     background: #fff;
     border-top: 2px solid #ddd;
@@ -256,8 +256,8 @@ echo $this->pageTitle('Motif Tagger');
     <div id="mt-search-controls">
         <label>Mode:
             <select id="mt-search-mode">
-                <option value="dino" selected>Motif (DINOv2)</option>
-                <option value="segment">Segment (SAM)</option>
+                <option value="dino">Motif (DINOv2)</option>
+                <option value="segment" selected>Segment (SAM)</option>
                 <option value="clip">Global (CLIP)</option>
             </select>
         </label>
@@ -368,6 +368,16 @@ echo $this->pageTitle('Motif Tagger');
 
 <script>
 (function() {
+    // --- Footer offset to respect admin sidebar ---
+    var contentEl = document.getElementById('content');
+    if (contentEl) {
+        var setFooterLeft = function() {
+            document.documentElement.style.setProperty('--mt-content-left', contentEl.getBoundingClientRect().left + 'px');
+        };
+        setFooterLeft();
+        window.addEventListener('resize', setFooterLeft);
+    }
+
     // --- Tabs ---
     document.querySelectorAll('.mt-tab').forEach(function(tab) {
         tab.addEventListener('click', function() {
@@ -480,6 +490,7 @@ echo $this->pageTitle('Motif Tagger');
             }
         });
         matchCount.textContent = visible + ' of ' + matches.length + ' results shown';
+        setSearchStatus(visible + ' results found' + (visible < matches.length ? ' (' + matches.length + ' before threshold)' : ''));
         updateSelectedCount();
     }
 
@@ -505,7 +516,6 @@ echo $this->pageTitle('Motif Tagger');
                     return;
                 }
                 matches = data.matches || [];
-                setSearchStatus(matches.length + ' results found');
                 renderResults();
             })
             .catch(function(e) {
