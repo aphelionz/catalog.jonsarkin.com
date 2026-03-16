@@ -136,6 +136,16 @@ make ingest             # Incremental ingest (new/updated items)
 make ingest-full        # Full re-ingest all items
 make ingest-dry         # Preview what would be ingested
 
+# Classification & Segmentation (local M4/MPS)
+make classify           # Metadata-derived density classification
+make classify-opencv    # OpenCV-based density classification (downloads images)
+make classify-stats     # Show density tier distribution
+make reclassify         # Reclassify tiers from stored scores by percentile
+make segment            # SAM 2.1 segmentation (incremental, density-tiered)
+make segment-force      # Full re-segment all items
+make push-segments      # Push segment JPEGs + Qdrant vectors to prod
+make sam-playground     # Interactive SAM parameter playground (Gradio)
+
 # Deployment (dev → prod)
 make deploy             # Rsync code + restart omeka
 make push-schema        # Push resource templates, vocabs, item sets
@@ -202,7 +212,13 @@ Password-protected landing page with:
 
 ### MotifTagger
 
-Batch motif tagging using visual similarity. Queries clip-api to find items visually similar to reference motif images, then applies motif tags to matching items.
+Batch motif tagging using visual similarity. Three search modes:
+
+- **Motif (DINOv2)** — patch-level similarity via DINOv2 embeddings
+- **Segment (SAM)** — object-level similarity via SAM 2.1 segments embedded with DINOv2
+- **Global (CLIP)** — full-image similarity via CLIP embeddings
+
+Includes a **Density** tab for corpus-wide density analysis with filtering, tier overrides, and per-item statistics.
 
 ## CLIP Search Service
 
@@ -222,10 +238,16 @@ The `sarkin-clip/` directory contains a FastAPI service that provides visual and
 | GET | `/healthz` | Service health check |
 | GET | `/v1/omeka/items/{id}/similar` | Find visually similar items |
 | GET | `/v1/omeka/search?q=...` | Hybrid search (semantic + lexical) |
-| POST | `/v1/omeka/images/search` | Visual search by uploaded image |
+| POST | `/v1/omeka/images/search` | Visual search by uploaded image (CLIP) |
+| POST | `/v1/omeka/images/motif-search` | Motif search by uploaded image (DINOv2 patches) |
+| POST | `/v1/omeka/images/segment-search` | Segment search by uploaded image (DINOv2 + SAM) |
 | GET | `/v1/omeka/items/{id}/iconography` | Iconographic rarity profile |
 | GET | `/v1/omeka/items/iconography/batch` | Batch iconography lookup |
-| POST | `/v1/ingest/{id}` | Ingest a single item |
+| GET | `/v1/density` | Corpus-wide density statistics |
+| GET | `/v1/density/{id}` | Per-item density detail |
+| POST | `/v1/ingest/{id}` | Ingest a single item (CLIP) |
+| POST | `/v1/dino/ingest/{id}` | Ingest a single item (DINOv2 patches) |
+| POST | `/v1/segment/ingest/{id}` | Ingest a single item (SAM segments) |
 
 ## Data Model
 

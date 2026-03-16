@@ -66,17 +66,50 @@ This does two things:
 1. **rsync** segment JPEGs to `prod:/opt/catalog/segments/` (bind-mounted into clip-api container)
 2. **SSH tunnel** to prod Qdrant, scrolls local segment vectors, upserts to prod collection
 
-## SAM parameters (tuned for Sarkin's outsider art)
+## Density classification
 
-| Parameter | SAM 2.1 | MobileSAM (Docker fallback) |
-|-----------|---------|---------------------------|
-| `points_per_side` | 32 | 16 |
-| `pred_iou_thresh` | 0.86 | 0.86 |
-| `stability_score_thresh` | 0.90 | 0.92 |
-| `crop_n_layers` | 1 | 0 |
-| `max_segments_per_image` | 60 | 40 |
-| Post-filter: min area | 0.5% | 0.5% |
-| Post-filter: max area | 40% | 40% |
+Items are classified into density tiers before segmentation. Two modes:
+
+- **Metadata-derived** (`make classify`) — fast, uses item set membership and motif counts from MariaDB
+- **OpenCV-based** (`make classify-opencv`) — downloads each image and computes edge density + white space percentage
+
+Tiers are assigned by percentile thresholds (default: p_low=33, p_high=67):
+
+| Tier | Density | SAM behavior |
+|------|---------|-------------|
+| `sparse` | Low edge density / few motifs | Fewer points, higher thresholds |
+| `medium` | Moderate | Balanced preset |
+| `dense` | High edge density / many motifs | More points, lower thresholds, multi-layer crops |
+
+Use `make classify-stats` to see the distribution and `make reclassify` to re-tier from stored scores.
+
+## SAM parameters (density-tiered presets)
+
+Each density tier uses a different SAM preset:
+
+| Parameter | Sparse | Medium | Dense |
+|-----------|--------|--------|-------|
+| `points_per_side` | 16 | 24 | 48 |
+| `pred_iou_thresh` | 0.88 | 0.86 | 0.82 |
+| `stability_score_thresh` | 0.92 | 0.90 | 0.88 |
+| `crop_n_layers` | 0 | 1 | 2 |
+| `crop_n_points_downscale_factor` | 2 | 2 | 1 |
+| `min_mask_region_area` | 500 | 500 | 300 |
+| Post-filter: min area % | 0.8% | 0.8% | 0.5% |
+| Post-filter: max area % | 40% | 40% | 40% |
+| `max_segments` | 40 | 60 | 100 |
+
+## SAM playground
+
+Interactive Gradio UI for experimenting with SAM parameters on individual images:
+
+```bash
+make sam-playground    # opens at http://localhost:7860
+```
+
+Two tabs:
+- **Automatic Masks** — full SamAutomaticMaskGenerator with adjustable presets (sparse/medium/dense/custom), post-filtering, and mask overlay visualization
+- **Prompted Prediction** — click to place point prompts, SamPredictor returns up to 3 candidate masks with IoU scores
 
 ## Prod deployment
 
