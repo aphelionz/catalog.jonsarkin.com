@@ -1,11 +1,13 @@
-"""Automatic segmentation for artwork decomposition.
+"""Segmentation for artwork decomposition.
 
 Supports three backends (checked in order):
   1. SAM 2.1 (sam2 package) — best quality, MPS support
   2. MobileSAM (mobile_sam package) — lightweight fallback for Docker
   3. Unavailable — import-safe, raises RuntimeError if called
 
-Only needed during batch segmentation and single-item ingest — NOT at query time.
+Two modes:
+  - Automatic mask generation: segment_image() / segment_image_custom()
+  - Prompted prediction (SAM2 only): predict_from_prompts()
 """
 
 from __future__ import annotations
@@ -116,6 +118,7 @@ _MOBILE_SAM_PARAMS = dict(
 
 _model_cache: Any | None = None
 _generator_cache: Dict[str, Any] = {}
+_predictor_cache: Any | None = None
 _sam_lock = threading.Lock()
 
 
@@ -299,3 +302,126 @@ def segment_image(image_bytes: bytes, tier: str = "medium") -> List[Dict[str, An
     filtered = filtered[:max_segments]
 
     return filtered
+
+
+def segment_image_custom(
+    image_array: np.ndarray,
+    generator_params: Dict[str, Any],
+    min_area_pct: float = 0.005,
+    max_area_pct: float = 0.40,
+    max_segments: int = 40,
+) -> Tuple[List[Dict[str, Any]], int]:
+    """Run automatic segmentation with arbitrary generator params.
+
+    Unlike segment_image(), this builds a fresh generator each call (the heavy
+    model is still cached).  Intended for interactive parameter tuning.
+
+    Returns (filtered_segments, raw_mask_count).
+    """
+    model = _get_model()
+
+    if SAM_BACKEND == "sam2":
+        from sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
+        generator = SAM2AutomaticMaskGenerator(model=model, **generator_params)
+    else:
+        from mobile_sam import SamAutomaticMaskGenerator
+        generator = SamAutomaticMaskGenerator(model=model, **generator_params)
+
+    total_area = image_array.shape[0] * image_array.shape[1]
+
+    import torch
+    with torch.no_grad():
+        raw_masks = generator.generate(image_array)
+
+    raw_count = len(raw_masks)
+    filtered = []
+    for m in raw_masks:
+        area = m["area"]
+        pct = area / total_area
+        if pct < min_area_pct or pct > max_area_pct:
+            continue
+        filtered.append({
+            "mask": m["segmentation"],
+            "bbox": tuple(int(v) for v in m["bbox"]),
+            "area": area,
+            "area_pct": round(pct, 4),
+            "stability_score": round(m["stability_score"], 4),
+        })
+    del raw_masks
+
+    filtered.sort(key=lambda s: s["area"], reverse=True)
+    filtered = filtered[:max_segments]
+    return filtered, raw_count
+
+
+# ---------------------------------------------------------------------------
+# Prompted prediction (SAM2 only)
+# ---------------------------------------------------------------------------
+
+PREDICTOR_AVAILABLE = SAM_BACKEND == "sam2"
+
+
+def get_predictor() -> Any:
+    """Lazy-load SAM2ImagePredictor (singleton, thread-safe).
+
+    Raises RuntimeError if the backend is not SAM2.
+    """
+    global _predictor_cache
+    if not PREDICTOR_AVAILABLE:
+        raise RuntimeError(
+            "Prompted prediction requires SAM2 (sam2 package). "
+            "MobileSAM only supports automatic mask generation."
+        )
+    with _sam_lock:
+        if _predictor_cache is not None:
+            return _predictor_cache
+
+    model = _get_model()
+
+    from sam2.sam2_image_predictor import SAM2ImagePredictor
+    with _sam_lock:
+        if _predictor_cache is None:
+            _predictor_cache = SAM2ImagePredictor(model)
+            logger.info("SAM2ImagePredictor created")
+        return _predictor_cache
+
+
+def predict_from_prompts(
+    image_array: np.ndarray,
+    point_coords: np.ndarray | None = None,
+    point_labels: np.ndarray | None = None,
+    box: np.ndarray | None = None,
+    multimask_output: bool = True,
+) -> List[Dict[str, Any]]:
+    """Run prompted prediction on an image.
+
+    Args:
+        image_array: (H, W, 3) uint8 RGB array
+        point_coords: (N, 2) array of (x, y) points, or None
+        point_labels: (N,) array of 1=foreground / 0=background, or None
+        box: (4,) array [x1, y1, x2, y2], or None
+        multimask_output: if True returns 3 candidate masks, else 1
+
+    Returns list of dicts with mask (bool H,W), score, area.
+    """
+    predictor = get_predictor()
+
+    import torch
+    with torch.inference_mode():
+        predictor.set_image(image_array)
+        masks, scores, _ = predictor.predict(
+            point_coords=point_coords,
+            point_labels=point_labels,
+            box=box,
+            multimask_output=multimask_output,
+        )
+
+    results = []
+    for i in range(masks.shape[0]):
+        results.append({
+            "mask": masks[i],
+            "score": float(scores[i]),
+            "area": int(masks[i].sum()),
+        })
+    results.sort(key=lambda r: r["score"], reverse=True)
+    return results

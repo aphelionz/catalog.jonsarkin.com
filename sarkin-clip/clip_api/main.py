@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 from pathlib import Path
@@ -1241,6 +1242,10 @@ class DensityItem(_BaseModel):
     white_pct: float
     color_std: float
     override: bool = False
+    motif_count: int = 0
+    transcription_length: int = 0
+    density_score: float = 0.0
+    source: str = "opencv"
 
 
 class DensityListResponse(_BaseModel):
@@ -1264,7 +1269,7 @@ class DensityOverrideResponse(_BaseModel):
 @app.get("/v1/density", response_model=DensityListResponse)
 async def list_density(
     tier: Optional[str] = None,
-    sort: str = "edge_density",
+    sort: str = "density_score",
     order: str = "desc",
     page: int = 1,
     per_page: int = 50,
@@ -1300,19 +1305,49 @@ async def list_density(
         except Exception:
             pass
 
+    # Fallback: fetch titles/thumbs from Omeka API for items not in Qdrant
+    missing_ids = [oid for oid in omeka_ids if oid not in metadata]
+    if missing_ids:
+        omeka_base = os.environ.get("OMEKA_URL", "http://omeka").rstrip("/")
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                # Batch fetch in pages of 50 using Omeka's id[] filter
+                for i in range(0, len(missing_ids), 50):
+                    batch = missing_ids[i:i + 50]
+                    params = [("id[]", str(oid)) for oid in batch]
+                    params.append(("per_page", "50"))
+                    try:
+                        r = await client.get(f"{omeka_base}/api/items", params=params)
+                        if r.status_code == 200:
+                            for item_data in r.json():
+                                oid = item_data.get("o:id")
+                                thumb = (item_data.get("thumbnail_display_urls") or {}).get("large", "") or ""
+                                title = (item_data.get("o:title") or "")[:80]
+                                if oid:
+                                    metadata[oid] = {"thumb_url": thumb, "title": title}
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
     items = []
     for r in rows:
         oid = r["omeka_id"]
         meta = metadata.get(oid, {})
         items.append(DensityItem(
             omeka_id=oid,
-            title=meta.get("title", ""),
-            thumb_url=meta.get("thumb_url", ""),
+            title=meta.get("title") or "",
+            thumb_url=meta.get("thumb_url") or "",
             tier=r["tier"],
             edge_density=r["edge_density"],
             white_pct=r["white_pct"],
             color_std=r["color_std"],
             override=bool(r.get("override", 0)),
+            motif_count=r.get("motif_count", 0) or 0,
+            transcription_length=r.get("transcription_length", 0) or 0,
+            density_score=r.get("density_score", 0.0) or 0.0,
+            source=r.get("source", "opencv") or "opencv",
         ))
 
     # Total unclassified = items in qdrant but not in density table

@@ -166,7 +166,7 @@ class MotifTaggerController extends AbstractActionController
             // Rewrite internal container URLs to browser-reachable URLs
             if (isset($match['thumb_url'])) {
                 $match['thumb_url'] = preg_replace(
-                    '#https?://(?:omeka:\d+|localhost:\d+|catalog\.jonsarkin\.com)#',
+                    '#https?://(?:omeka(?::\d+)?|localhost:\d+|catalog\.jonsarkin\.com)#',
                     $browserBase,
                     $match['thumb_url']
                 );

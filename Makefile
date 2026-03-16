@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key classify classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key classify classify-opencv classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments sam-playground
 
 .DEFAULT_GOAL := help
 
@@ -23,7 +23,7 @@ help: ## Show available targets
 	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy|push-schema):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Classification & Segmentation (local M4/MPS)"
-	@grep -E '^(classify|classify-stats|reclassify|segment|segment-force|segment-test|segment-tier|segment-id|push-segments):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(classify|classify-opencv|classify-stats|reclassify|segment|segment-force|segment-test|segment-tier|segment-id|push-segments|sam-playground):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Utilities"
 	@grep -E '^(backup-db|restore-db|ensure-api-key):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -142,13 +142,16 @@ push-schema: ## Push local schema, site pages, item sets, and config to producti
 
 # ── Classification & Segmentation (local M4/MPS — not in Docker) ──
 
-classify: ## Classify all items then reclassify by percentile
-	cd sarkin-clip && .venv/bin/python classify.py $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH))
+classify: ## Metadata-derived density classification (fast, uses MariaDB)
+	cd sarkin-clip && .venv/bin/python classify.py $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH)) $(if $(DB_HOST),--db-host $(DB_HOST))
 
-classify-stats: ## Show density tier distribution
+classify-opencv: ## OpenCV-based density classification (downloads images)
+	cd sarkin-clip && .venv/bin/python classify.py --opencv $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH))
+
+classify-stats: ## Show density tier distribution with per-source breakdown
 	cd sarkin-clip && .venv/bin/python classify.py --stats
 
-reclassify: ## Reclassify tiers from stored metrics (no image download)
+reclassify: ## Reclassify tiers from stored scores by percentile
 	cd sarkin-clip && .venv/bin/python classify.py --reclassify $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH))
 
 segment: ## Run SAM 2.1 segmentation locally (incremental, density-tiered)
@@ -168,6 +171,9 @@ segment-id: ## Segment a single item (usage: make segment-id ID=1234)
 
 push-segments: ## Push segment JPEGs + Qdrant vectors to production
 	cd sarkin-clip && .venv/bin/python local_segment_ingest.py push
+
+sam-playground: ## Interactive SAM parameter playground (local, MPS)
+	cd sarkin-clip && uv run --python .venv/bin/python sam_playground.py
 
 # ── Utilities ────────────────────────────────────────────────────────
 

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Classify artworks by visual density for SAM parameter tuning.
 
-Runs NATIVELY on macOS (not in Docker). Downloads full-resolution originals
-from the local Omeka instance and computes edge density, white pixel %, and
-color variance to assign each artwork a tier (sparse/medium/dense).
+Runs NATIVELY on macOS (not in Docker). Two modes:
+  --metadata (default): derives density from motif count + transcription length in MariaDB
+  --opencv: downloads images and computes edge density / white pixel % / color std
 
 Usage:
-    python classify.py              # classify all items
-    python classify.py --id 1234    # classify a single item
-    python classify.py --stats      # show distribution
+    python classify.py                  # metadata-derived classification (fast)
+    python classify.py --opencv         # OpenCV-based classification (slow, downloads images)
+    python classify.py --reclassify     # re-tier from stored scores
+    python classify.py --stats          # show distribution
 """
 
 from __future__ import annotations
@@ -20,7 +21,6 @@ import sys
 import time
 
 import httpx
-import numpy as np
 
 # Ensure clip_api is importable when running from sarkin-clip/
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -30,9 +30,12 @@ from clip_api.density import (
     get_boundaries,
     get_override_ids,
     get_stats,
+    get_stats_by_source,
     open_density_db,
     reclassify_all,
+    reclassify_metadata,
     upsert_density,
+    upsert_metadata_density,
 )
 
 logging.basicConfig(
@@ -46,9 +49,54 @@ OMEKA_BASE_URL = os.getenv("OMEKA_BASE_URL", "http://localhost:8888")
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333").rstrip("/")
 CLIP_COLLECTION = os.getenv("QDRANT_COLLECTION", "omeka_items")
 
+# MariaDB connection defaults (same as docker-compose)
+DB_HOST = os.getenv("OMEKA_DB_HOST", "localhost")
+DB_PORT = int(os.getenv("OMEKA_DB_PORT", "3306"))
+DB_USER = os.getenv("OMEKA_DB_USER", "omeka")
+DB_PASS = os.getenv("OMEKA_DB_PASS", "omeka")
+DB_NAME = os.getenv("OMEKA_DB_NAME", "omeka")
+
+# Density scoring formula
+MOTIF_WEIGHT = 5
+TRANSCRIPTION_CAP = 20
+TRANSCRIPTION_DIVISOR = 100
+
+# Confirmed property IDs from this Omeka installation
+PROP_SUBJECT = 3    # dcterms:subject (motifs)
+PROP_CONTENT = 91   # bibo:content (transcription)
+
+# resource_class_id 225 = schema:VisualArtwork (excludes writings/CreativeWork)
+RESOURCE_CLASS_ARTWORK = 225
+
+METADATA_SCORE_SQL = f"""
+SELECT
+    r.id as omeka_id,
+    COALESCE(motifs.motif_count, 0) as motif_count,
+    COALESCE(LENGTH(transcription.value), 0) as transcription_length
+FROM resource r
+JOIN item i ON r.id = i.id
+LEFT JOIN (
+    SELECT v.resource_id, COUNT(*) as motif_count
+    FROM value v
+    WHERE v.property_id = {PROP_SUBJECT}
+    GROUP BY v.resource_id
+) motifs ON motifs.resource_id = r.id
+LEFT JOIN (
+    SELECT v.resource_id, v.value
+    FROM value v
+    WHERE v.property_id = {PROP_CONTENT}
+) transcription ON transcription.resource_id = r.id
+WHERE r.resource_class_id = {RESOURCE_CLASS_ARTWORK}
+"""
+
+
+def compute_density_score(motif_count: int, transcription_length: int) -> float:
+    """Compute density score: motifs weighted, transcription capped."""
+    return (motif_count * MOTIF_WEIGHT) + min(transcription_length / TRANSCRIPTION_DIVISOR, TRANSCRIPTION_CAP)
+
 
 # ---------------------------------------------------------------------------
-# Omeka helpers
+# Omeka helpers (for OpenCV mode)
 # ---------------------------------------------------------------------------
 
 
@@ -96,14 +144,12 @@ def download_original(omeka_id: int) -> bytes | None:
         if not media_resp.is_success:
             return None
         media_data = media_resp.json()
-        # Prefer original for classification accuracy
         url = media_data.get("o:original_url")
         if not url:
             thumbs = media_data.get("o:thumbnail_urls", {})
             url = thumbs.get("large")
         if not url:
             return None
-        # Rewrite URL to local
         from urllib.parse import urlparse
         parsed = urlparse(url)
         base_parsed = urlparse(OMEKA_BASE_URL)
@@ -121,8 +167,96 @@ def download_original(omeka_id: int) -> bytes | None:
 # ---------------------------------------------------------------------------
 
 
-def cmd_classify_all(args: argparse.Namespace):
-    """Classify all items."""
+def _fetch_metadata_rows_docker() -> list[dict]:
+    """Fetch metadata via docker compose exec (when MariaDB port isn't exposed)."""
+    import subprocess
+
+    logger.info("Querying MariaDB via docker compose exec...")
+    result = subprocess.run(
+        ["docker", "compose", "exec", "-T", "db",
+         "mariadb", "-uomeka", "-pomeka", "omeka",
+         "--batch", "--skip-column-names", "-e", METADATA_SCORE_SQL],
+        capture_output=True, text=True, timeout=60,
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"docker compose exec failed: {result.stderr.strip()}")
+
+    rows = []
+    for line in result.stdout.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) == 3:
+            rows.append({
+                "omeka_id": int(parts[0]),
+                "motif_count": int(parts[1]),
+                "transcription_length": int(parts[2]),
+            })
+    return rows
+
+
+def cmd_metadata(args: argparse.Namespace):
+    """Classify using metadata from MariaDB (motif count + transcription length)."""
+    rows = None
+
+    # Try direct pymysql connection first
+    db_host = args.db_host or DB_HOST
+    try:
+        import pymysql
+
+        logger.info("Connecting to MariaDB at %s:%d...", db_host, DB_PORT)
+        maria = pymysql.connect(
+            host=db_host, port=DB_PORT, user=DB_USER, password=DB_PASS,
+            database=DB_NAME, cursorclass=pymysql.cursors.DictCursor,
+            connect_timeout=5,
+        )
+        with maria.cursor() as cur:
+            cur.execute(METADATA_SCORE_SQL)
+            rows = cur.fetchall()
+        maria.close()
+    except Exception as exc:
+        logger.info("Direct MariaDB connection failed (%s), falling back to docker exec", exc)
+
+    if rows is None:
+        rows = _fetch_metadata_rows_docker()
+
+    logger.info("Fetched %d artwork items from MariaDB", len(rows))
+
+    conn = open_density_db()
+
+    # Remove any non-artwork items from previous runs
+    artwork_ids = {row["omeka_id"] for row in rows}
+    existing = {r[0] for r in conn.execute("SELECT omeka_id FROM image_density").fetchall()}
+    stale = existing - artwork_ids
+    if stale:
+        placeholders = ",".join("?" * len(stale))
+        conn.execute(f"DELETE FROM image_density WHERE omeka_id IN ({placeholders})", list(stale))
+        conn.commit()
+        logger.info("Removed %d non-artwork items from density table", len(stale))
+
+    t_start = time.time()
+    updated = 0
+
+    for row in rows:
+        motif_count = row["motif_count"]
+        transcription_length = row["transcription_length"]
+        score = compute_density_score(motif_count, transcription_length)
+        # Tier assigned later by reclassify_metadata; use 'medium' as placeholder
+        upsert_metadata_density(conn, row["omeka_id"], "medium", motif_count, transcription_length, score)
+        updated += 1
+
+    elapsed = time.time() - t_start
+    logger.info("Scored %d items in %.1fs", updated, elapsed)
+
+    # Reclassify using percentile boundaries on density_score
+    logger.info("Reclassifying by density_score percentile (P%d/P%d)...", args.p_low, args.p_high)
+    reclassify_metadata(conn, p_low=args.p_low, p_high=args.p_high)
+
+    _print_stats(conn)
+    conn.close()
+
+
+def cmd_opencv(args: argparse.Namespace):
+    """Classify using OpenCV (downloads images)."""
     conn = open_density_db()
 
     if args.id:
@@ -132,7 +266,6 @@ def cmd_classify_all(args: argparse.Namespace):
         omeka_ids = get_all_omeka_ids()
         logger.info("Found %d items", len(omeka_ids))
 
-    # Respect manual overrides unless --force
     if not args.force and not args.id:
         override_ids = get_override_ids(conn)
         if override_ids:
@@ -165,13 +298,11 @@ def cmd_classify_all(args: argparse.Namespace):
             failed += 1
 
         if not args.id and (idx + 1) % 100 == 0:
-            elapsed = time.time() - t_start
             logger.info("Progress: %d/%d (%.0f%%) | %d ok, %d failed", idx + 1, len(omeka_ids), 100 * (idx + 1) / len(omeka_ids), success, failed)
 
     elapsed = time.time() - t_start
     logger.info("Done: %d classified, %d failed in %.1fs", success, failed, elapsed)
 
-    # Auto-reclassify using percentile boundaries
     logger.info("Reclassifying tiers by percentile (P%d/P%d)...", args.p_low, args.p_high)
     reclassify_all(conn, p_low=args.p_low, p_high=args.p_high)
 
@@ -188,8 +319,15 @@ def cmd_reclassify(args: argparse.Namespace):
         conn.close()
         return
 
-    logger.info("Reclassifying %d items by edge_density percentile (P%d/P%d)...", total, args.p_low, args.p_high)
-    reclassify_all(conn, p_low=args.p_low, p_high=args.p_high)
+    # Use metadata reclassify if we have density_score data, otherwise edge_density
+    has_scores = conn.execute("SELECT COUNT(*) FROM image_density WHERE density_score > 0").fetchone()[0]
+    if has_scores > 0:
+        logger.info("Reclassifying %d items by density_score percentile (P%d/P%d)...", has_scores, args.p_low, args.p_high)
+        reclassify_metadata(conn, p_low=args.p_low, p_high=args.p_high)
+    else:
+        logger.info("Reclassifying %d items by edge_density percentile (P%d/P%d)...", total, args.p_low, args.p_high)
+        reclassify_all(conn, p_low=args.p_low, p_high=args.p_high)
+
     _print_stats(conn)
     conn.close()
 
@@ -213,6 +351,10 @@ def _print_stats(conn):
     if bounds:
         print(f"\n  Boundaries: sparse < {bounds[0]:.4f} | medium | {bounds[1]:.4f} < dense")
 
+    source_stats = get_stats_by_source(conn)
+    if source_stats:
+        print(f"\n  Sources: {', '.join(f'{k}={v}' for k, v in sorted(source_stats.items()))}")
+
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -223,18 +365,22 @@ def main():
     parser = argparse.ArgumentParser(description="Classify artworks by visual density")
     parser.add_argument("--id", type=int, help="Classify a single item by omeka_id")
     parser.add_argument("--force", action="store_true", help="Recompute all, including manual overrides")
-    parser.add_argument("--stats", action="store_true", help="Show distribution only (no classification)")
-    parser.add_argument("--reclassify", action="store_true", help="Reclassify tiers from stored metrics (no download)")
+    parser.add_argument("--stats", action="store_true", help="Show distribution only")
+    parser.add_argument("--opencv", action="store_true", help="Use OpenCV classification (downloads images)")
+    parser.add_argument("--reclassify", action="store_true", help="Reclassify tiers from stored metrics")
     parser.add_argument("--p-low", type=int, default=15, help="Lower percentile boundary (default: 15)")
     parser.add_argument("--p-high", type=int, default=65, help="Upper percentile boundary (default: 65)")
+    parser.add_argument("--db-host", type=str, default=None, help="MariaDB host (default: localhost)")
     args = parser.parse_args()
 
     if args.stats:
         cmd_stats(args)
     elif args.reclassify:
         cmd_reclassify(args)
+    elif args.opencv:
+        cmd_opencv(args)
     else:
-        cmd_classify_all(args)
+        cmd_metadata(args)
 
 
 if __name__ == "__main__":
