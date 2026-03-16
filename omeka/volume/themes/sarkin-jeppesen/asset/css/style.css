@@ -2446,3 +2446,6 @@ nav.pagination span.row-count {
   .record-value { break-inside: avoid; }
   article { page-break-after: always; }
 }
+
+/* Hide prev/next pagination on site pages (About, Contact) */
+.site-page-pagination { display: none; }
