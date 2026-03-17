@@ -162,61 +162,31 @@ async function apiPatch(path, body) {
   return resp.json();
 }
 
-async function fetchCustomVocabs() {
-  try {
-    const { json: vocabs } = await apiGet('custom_vocabs');
-    const byLabel = {};
-    for (const v of vocabs) byLabel[v['o:label']] = v['o:terms'] || [];
-    if (byLabel['Work Type']?.length) WORK_TYPES = byLabel['Work Type'];
-    if (byLabel['Support']?.length) SUPPORTS = byLabel['Support'];
-    if (byLabel['Motifs']?.length) MOTIFS = byLabel['Motifs'];
-    if (byLabel['Condition']?.length) CONDITIONS = byLabel['Condition'];
-    // Signature: keep grid layout order, but validate against vocab
-    if (byLabel['Signature']?.length) {
-      const vocabSet = new Set(byLabel['Signature']);
-      SIGNATURE_ARROWS = SIGNATURE_ARROWS.filter(a => vocabSet.has(a));
-    }
-  } catch (err) {
-    console.warn('Failed to fetch custom vocabs, using defaults:', err);
-  }
-}
-
-async function fetchItemSets() {
-  try {
-    const { json } = await apiGet('item_sets', { per_page: 200 });
-    availableItemSets = json.map(s => ({
-      id: s['o:id'],
-      label: s['o:title'] || `Set ${s['o:id']}`,
-    }));
-  } catch (err) {
-    console.warn('Failed to fetch item sets:', err);
-  }
-}
-
 // ── Data loading ────────────────────────────────────────────────────────────
 
-async function fetchAllItems() {
-  const perPage = 500;
-  let page = 1;
-  let total = null;
-  allItems = [];
+async function fetchAllData() {
+  dom.loadingText.textContent = 'Loading items…';
 
-  while (true) {
-    const { json, headers } = await apiGet('items', {
-      resource_template_id: RESOURCE_TEMPLATE_ID,
-      per_page: perPage,
-      page,
-    });
-    if (total === null) {
-      total = parseInt(headers.get('Omeka-S-Total-Results') || '0', 10);
-    }
-    allItems.push(...json);
-    dom.loadingText.textContent = `Loading items… ${allItems.length} / ${total}`;
-    if (json.length < perPage) break;
-    page++;
+  const resp = await fetch('/admin/rapid-editor/data');
+  if (!resp.ok) throw new Error(`Data endpoint ${resp.status}`);
+  const data = await resp.json();
+
+  // Apply custom vocabs
+  const vocabs = data.vocabs || {};
+  if (vocabs['Work Type']?.length) WORK_TYPES = vocabs['Work Type'];
+  if (vocabs['Support']?.length) SUPPORTS = vocabs['Support'];
+  if (vocabs['Motifs']?.length) MOTIFS = vocabs['Motifs'];
+  if (vocabs['Condition']?.length) CONDITIONS = vocabs['Condition'];
+  if (vocabs['Signature']?.length) {
+    const vocabSet = new Set(vocabs['Signature']);
+    SIGNATURE_ARROWS = SIGNATURE_ARROWS.filter(a => vocabSet.has(a));
   }
 
-  // Validate each item
+  // Item sets
+  availableItemSets = data.item_sets || [];
+
+  // Items
+  allItems = data.items || [];
   for (const item of allItems) {
     item._issues = validateItem(item);
     item._identifier = extractValue(item, 'dcterms:identifier') || `item-${item['o:id']}`;
@@ -2554,7 +2524,13 @@ function setupSprintButtons() {
 
 async function init() {
   cacheDom();
-  await Promise.all([fetchCustomVocabs(), fetchItemSets()]);
+  try {
+    await fetchAllData();
+  } catch (err) {
+    dom.loadingText.textContent = `Failed to load: ${err.message}`;
+    return;
+  }
+
   initFieldSprints();
   setupSelects();
   setupDatePills();
@@ -2577,13 +2553,6 @@ async function init() {
     btn.classList.toggle('active', btn.dataset.filter === filterMode);
   }
   dom.boxSelect.classList.toggle('hidden', filterMode !== 'box');
-
-  try {
-    await fetchAllItems();
-  } catch (err) {
-    dom.loadingText.textContent = `Failed to load: ${err.message}`;
-    return;
-  }
 
   setupBoxSelect();
 

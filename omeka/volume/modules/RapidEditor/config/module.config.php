@@ -23,6 +23,13 @@ return [
                         ],
                         'may_terminate' => true,
                         'child_routes' => [
+                            'data' => [
+                                'type' => Literal::class,
+                                'options' => [
+                                    'route' => '/data',
+                                    'defaults' => ['action' => 'data'],
+                                ],
+                            ],
                             'patch' => [
                                 'type' => Segment::class,
                                 'options' => [
