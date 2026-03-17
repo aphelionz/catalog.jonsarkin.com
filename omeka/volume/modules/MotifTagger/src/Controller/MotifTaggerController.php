@@ -553,7 +553,7 @@ class MotifTaggerController extends AbstractActionController
         }
 
         // Preserve system keys
-        foreach (['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site'] as $sysKey) {
+        foreach (['o:resource_class', 'o:resource_template', 'o:item_set', 'o:media', 'o:is_public', 'o:site'] as $sysKey) {
             if (isset($item[$sysKey])) {
                 $payload[$sysKey] = $item[$sysKey];
             }

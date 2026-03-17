@@ -375,7 +375,7 @@ class EnrichFieldBatchApi extends AbstractJob
             }
         }
 
-        foreach (['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site'] as $sysKey) {
+        foreach (['o:resource_class', 'o:resource_template', 'o:item_set', 'o:media', 'o:is_public', 'o:site'] as $sysKey) {
             if (isset($itemJson[$sysKey])) {
                 $payload[$sysKey] = $itemJson[$sysKey];
             }
