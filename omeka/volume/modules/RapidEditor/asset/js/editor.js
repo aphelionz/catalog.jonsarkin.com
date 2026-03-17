@@ -526,8 +526,8 @@ function buildPayload(item, formState) {
     }
   }
 
-  // 2. Copy system keys (NOT o:resource_template — causes 422)
-  for (const sysKey of ['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
+  // 2. Copy system keys
+  for (const sysKey of ['o:resource_class', 'o:resource_template', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
     if (sysKey in item) payload[sysKey] = item[sysKey];
   }
 
@@ -1067,7 +1067,7 @@ function buildBasePayload(item) {
       payload[key] = val.filter(v => typeof v === 'object').map(cleanValue);
     }
   }
-  for (const sysKey of ['o:resource_class', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
+  for (const sysKey of ['o:resource_class', 'o:resource_template', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
     if (sysKey in item) payload[sysKey] = item[sysKey];
   }
   return payload;
