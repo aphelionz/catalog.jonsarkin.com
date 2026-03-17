@@ -79,6 +79,7 @@ let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
+let stickyText = {}; // persist text field values across cards (keyed by term)
 let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint'
 
 // Bucket sort state
@@ -1921,6 +1922,7 @@ function initFieldSprints() {
       filterFn: item => !extractValue(item, 'dcterms:spatial'),
       inputType: 'text',
       placeholder: 'e.g. Studio, Gloucester MA',
+      sticky: true,
     },
     box: {
       label: 'Box',
@@ -2234,9 +2236,10 @@ function renderSprintInput(card, item, config) {
       input.type = 'text';
       input.className = 'sprint-text';
       input.placeholder = config.placeholder || '';
-      // Pre-fill with existing value, or suggest one
+      // Pre-fill with existing value, sticky value, or suggestion
       const existing = extractValue(item, config.term);
       if (existing) input.value = existing;
+      else if (config.sticky && stickyText[config.term]) input.value = stickyText[config.term];
       else if (config.suggestValue) input.value = config.suggestValue(item);
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -2370,6 +2373,8 @@ async function sprintSaveAndAdvance(itemId, config, value) {
     } else {
       // Single value
       payload[config.term] = value ? [literalValue(config.term, value)] : [];
+      // Persist sticky text fields for next card
+      if (config.sticky && value) stickyText[config.term] = value;
     }
 
     const updated = await apiPatch(`items/${itemId}`, payload);
