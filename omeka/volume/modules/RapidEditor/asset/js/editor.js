@@ -79,8 +79,7 @@ let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
-let filterMode = 'issues'; // 'issues' | 'all' | 'box' | 'curate' | 'sprint'
-let boxFilter = '';
+let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint'
 
 // Bucket sort state
 let bucketMode = false;
@@ -117,7 +116,6 @@ function cacheDom() {
   dom.itemLink = $('#item-link');
   dom.countIssues = $('#count-issues');
   dom.countAll = $('#count-all');
-  dom.boxSelect = $('#box-select');
   dom.progressFill = $('#progress-fill');
   dom.image = $('#item-image');
   dom.imageLoading = $('#image-loading');
@@ -191,7 +189,6 @@ async function fetchAllData() {
   for (const item of allItems) {
     item._issues = validateItem(item);
     item._identifier = extractValue(item, 'dcterms:identifier') || `item-${item['o:id']}`;
-    item._box = extractValue(item, 'schema:box') || '';
   }
 }
 
@@ -317,10 +314,6 @@ function buildQueue() {
     queue = allItems
       .filter(it => it._issues.some(i => i.level === 'error'))
       .sort((a, b) => b._issues.length - a._issues.length);
-  } else if (filterMode === 'box') {
-    queue = boxFilter
-      ? allItems.filter(it => it._box === boxFilter).sort((a, b) => a._identifier.localeCompare(b._identifier))
-      : [];
   } else {
     queue = [...allItems].sort((a, b) => a._identifier.localeCompare(b._identifier));
   }
@@ -598,7 +591,6 @@ async function saveCurrentItem() {
       allItems[idx] = updated;
       allItems[idx]._issues = validateItem(updated);
       allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
-      allItems[idx]._box = extractValue(updated, 'schema:box') || '';
     }
 
     snapshot = captureFormState();
@@ -707,7 +699,6 @@ function savePosition() {
     const state = {
       index: queueIndex,
       filter: filterMode,
-      box: boxFilter,
       sprintField: sprintField,
     };
     if (filterMode === 'curate' && bucketConfig) {
@@ -723,7 +714,6 @@ function restorePosition() {
   try {
     const saved = JSON.parse(localStorage.getItem('rapid-editor') || '{}');
     if (saved.filter) filterMode = saved.filter;
-    if (saved.box) boxFilter = saved.box;
     if (saved.sprintField) sprintField = saved.sprintField;
     if (typeof saved.index === 'number') queueIndex = saved.index;
     if (saved.bucketConfig) {
@@ -731,11 +721,12 @@ function restorePosition() {
       bucketSetup = saved.bucketSetup !== false;
       if (typeof saved.bucketIndex === 'number') bucketIndex = saved.bucketIndex;
     }
-    // Migrate old 'dates' filter to sprint mode
+    // Migrate removed filter modes
     if (filterMode === 'dates') {
       filterMode = 'sprint';
       sprintField = 'date';
     }
+    if (filterMode === 'box') filterMode = 'issues';
   } catch { /* ignore */ }
 }
 
@@ -857,20 +848,6 @@ function setupSignatureGrid() {
   }
 }
 
-function setupBoxSelect() {
-  const boxes = [...new Set(allItems.map(it => it._box).filter(Boolean))].sort();
-  for (const box of boxes) {
-    dom.boxSelect.add(new Option(box, box));
-  }
-  dom.boxSelect.addEventListener('change', () => {
-    boxFilter = dom.boxSelect.value;
-    queueIndex = 0;
-    buildQueue();
-    updateNav();
-    if (queue.length) loadItem(0);
-  });
-}
-
 function setupFilterButtons() {
   for (const btn of $$('.filter-btn')) {
     btn.addEventListener('click', () => {
@@ -891,7 +868,7 @@ function setupFilterButtons() {
       for (const b of $$('.filter-btn')) b.classList.remove('active');
       btn.classList.add('active');
       filterMode = btn.dataset.filter;
-      dom.boxSelect.classList.toggle('hidden', filterMode !== 'box');
+
       queueIndex = 0;
       buildQueue();
       updateNav();
@@ -1108,7 +1085,7 @@ function enterBucketMode(resumeSwiping = false) {
   for (const b of $$('.filter-btn')) {
     b.classList.toggle('active', b.dataset.filter === 'curate');
   }
-  dom.boxSelect.classList.add('hidden');
+
 
   if (resumeSwiping && bucketConfig && !bucketSetup) {
     // Resume swiping with existing config
@@ -1688,7 +1665,6 @@ async function applyBucketAction(itemId, bucket, direction) {
       allItems[idx] = updated;
       allItems[idx]._issues = validateItem(updated);
       allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
-      allItems[idx]._box = extractValue(updated, 'schema:box') || '';
     }
 
     bucketLastAction = { itemId, direction, oldFieldValues, addedSets };
@@ -1735,7 +1711,6 @@ async function bucketUndo() {
       allItems[idx] = updatedItem;
       allItems[idx]._issues = validateItem(updatedItem);
       allItems[idx]._identifier = extractValue(updatedItem, 'dcterms:identifier') || `item-${updatedItem['o:id']}`;
-      allItems[idx]._box = extractValue(updatedItem, 'schema:box') || '';
     }
 
     showToast('Undone');
@@ -2012,7 +1987,7 @@ function enterSprintMode(fieldKey) {
 
   // Update nav buttons
   for (const b of $$('.filter-btn')) b.classList.remove('active');
-  dom.boxSelect.classList.add('hidden');
+
 
   const config = FIELD_SPRINTS[fieldKey];
   $('#sprint-field-label').textContent = config.label;
@@ -2382,7 +2357,6 @@ async function sprintSaveAndAdvance(itemId, config, value) {
       allItems[idx] = updated;
       allItems[idx]._issues = validateItem(updated);
       allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
-      allItems[idx]._box = extractValue(updated, 'schema:box') || '';
     }
 
     showToast(`✓ ${config.label} saved`);
@@ -2489,7 +2463,6 @@ async function sprintUndo() {
       allItems[idx] = updatedItem;
       allItems[idx]._issues = validateItem(updatedItem);
       allItems[idx]._identifier = extractValue(updatedItem, 'dcterms:identifier') || `item-${updatedItem['o:id']}`;
-      allItems[idx]._box = extractValue(updatedItem, 'schema:box') || '';
     }
   } catch (err) {
     showToast(`Undo error: ${err.message}`, true);
@@ -2570,9 +2543,6 @@ async function init() {
   for (const btn of $$('.filter-btn')) {
     btn.classList.toggle('active', btn.dataset.filter === filterMode);
   }
-  dom.boxSelect.classList.toggle('hidden', filterMode !== 'box');
-
-  setupBoxSelect();
 
   dom.loading.classList.add('hidden');
 
