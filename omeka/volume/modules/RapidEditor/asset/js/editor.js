@@ -79,7 +79,6 @@ let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
-let nextCatalogT = 0; // next available T-number for catalog IDs
 let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint'
 
 // Bucket sort state
@@ -191,7 +190,6 @@ async function fetchAllData() {
     item._issues = validateItem(item);
     item._identifier = extractValue(item, 'dcterms:identifier') || `item-${item['o:id']}`;
   }
-  initNextCatalogT();
 }
 
 // ── Value extraction ────────────────────────────────────────────────────────
@@ -210,21 +208,11 @@ function extractAllValues(item, term) {
 
 // ── Catalog ID helpers ──────────────────────────────────────────────────────
 
-function initNextCatalogT() {
-  let maxT = 0;
-  for (const item of allItems) {
-    const id = extractValue(item, 'dcterms:identifier');
-    const m = id && id.match(/^JS-.*-T(\d+)$/);
-    if (m) maxT = Math.max(maxT, Number(m[1]));
-  }
-  nextCatalogT = maxT + 1;
-}
-
 function suggestCatalogId(item) {
   const dateVal = extractValue(item, 'dcterms:date');
   const yearMatch = dateVal && dateVal.match(/\d{4}/);
   const year = yearMatch ? yearMatch[0] : '0000';
-  return `JS-${year}-T${nextCatalogT}`;
+  return `JS-${year}-T${item['o:id']}`;
 }
 
 // ── Client-side validation (mirrors doctor_catalog.py) ──────────────────────
@@ -626,11 +614,6 @@ async function saveCurrentItem() {
     const wEl = $('[data-term="schema:width"]');
     if (hEl?.value) stickyDims.height = hEl.value;
     if (wEl?.value) stickyDims.width = wEl.value;
-    // Increment catalog T-number after assigning an identifier
-    const savedId = extractValue(updated, 'dcterms:identifier');
-    const tMatch = savedId && savedId.match(/-T(\d+)$/);
-    if (tMatch) nextCatalogT = Math.max(nextCatalogT, Number(tMatch[1]) + 1);
-
     dom.formPanel.classList.remove('dirty');
     flashSave();
     showToast(`Saved ${extractValue(updated, 'dcterms:identifier')}`);
@@ -2387,11 +2370,6 @@ async function sprintSaveAndAdvance(itemId, config, value) {
     } else {
       // Single value
       payload[config.term] = value ? [literalValue(config.term, value)] : [];
-      // Increment catalog T-number after assigning an identifier
-      if (config.term === 'dcterms:identifier' && value) {
-        const tMatch = value.match(/-T(\d+)$/);
-        if (tMatch) nextCatalogT = Math.max(nextCatalogT, Number(tMatch[1]) + 1);
-      }
     }
 
     const updated = await apiPatch(`items/${itemId}`, payload);
