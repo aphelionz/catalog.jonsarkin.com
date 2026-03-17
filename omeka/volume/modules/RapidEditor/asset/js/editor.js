@@ -78,6 +78,7 @@ let currentItem = null;   // Full item JSON for the item being edited
 let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
+let stickyDims = { height: '', width: '' }; // persist dimensions across cards
 let filterMode = 'issues'; // 'issues' | 'all' | 'box' | 'curate' | 'sprint'
 let boxFilter = '';
 
@@ -409,6 +410,14 @@ function populateForm(item) {
     }
   }
 
+  // Sticky dimensions: prefill empty height/width from last-used values
+  for (const [term, key] of [['schema:height', 'height'], ['schema:width', 'width']]) {
+    const el = $(`[data-term="${term}"]`);
+    if (el && !el.value && stickyDims[key]) {
+      el.value = stickyDims[key];
+    }
+  }
+
   // Date pills
   const dateVal = extractValue(item, 'dcterms:date');
   for (const pill of $$('.date-pill')) {
@@ -593,6 +602,12 @@ async function saveCurrentItem() {
     }
 
     snapshot = captureFormState();
+    // Persist dimensions for next card
+    const hEl = $('[data-term="schema:height"]');
+    const wEl = $('[data-term="schema:width"]');
+    if (hEl?.value) stickyDims.height = hEl.value;
+    if (wEl?.value) stickyDims.width = wEl.value;
+
     dom.formPanel.classList.remove('dirty');
     flashSave();
     showToast(`Saved ${extractValue(updated, 'dcterms:identifier')}`);
@@ -2252,14 +2267,14 @@ function renderSprintInput(card, item, config) {
       const hInput = document.createElement('input');
       hInput.type = 'text';
       hInput.placeholder = 'Height';
-      hInput.value = extractValue(item, 'schema:height') || '';
+      hInput.value = extractValue(item, 'schema:height') || stickyDims.height;
       const xLabel = document.createElement('span');
       xLabel.className = 'dims-x';
       xLabel.textContent = '×';
       const wInput = document.createElement('input');
       wInput.type = 'text';
       wInput.placeholder = 'Width';
-      wInput.value = extractValue(item, 'schema:width') || '';
+      wInput.value = extractValue(item, 'schema:width') || stickyDims.width;
       wrap.appendChild(hInput);
       wrap.appendChild(xLabel);
       wrap.appendChild(wInput);
@@ -2348,6 +2363,9 @@ async function sprintSaveAndAdvance(itemId, config, value) {
       for (const [term, val] of Object.entries(value)) {
         payload[term] = val ? [literalValue(term, val)] : [];
       }
+      // Persist dimensions for next card
+      if (value['schema:height']) stickyDims.height = value['schema:height'];
+      if (value['schema:width']) stickyDims.width = value['schema:width'];
     } else if (config.multiSelect) {
       // Multi-value (motifs)
       payload[config.term] = value.map(v => literalValue(config.term, v));
