@@ -79,6 +79,7 @@ let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
 let saving = false;
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
+let nextCatalogT = 0; // next available T-number for catalog IDs
 let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint'
 
 // Bucket sort state
@@ -190,6 +191,7 @@ async function fetchAllData() {
     item._issues = validateItem(item);
     item._identifier = extractValue(item, 'dcterms:identifier') || `item-${item['o:id']}`;
   }
+  initNextCatalogT();
 }
 
 // ── Value extraction ────────────────────────────────────────────────────────
@@ -204,6 +206,25 @@ function extractAllValues(item, term) {
   return (item[term] || [])
     .map(v => (v['@value'] || v['o:label'] || '').trim())
     .filter(Boolean);
+}
+
+// ── Catalog ID helpers ──────────────────────────────────────────────────────
+
+function initNextCatalogT() {
+  let maxT = 0;
+  for (const item of allItems) {
+    const id = extractValue(item, 'dcterms:identifier');
+    const m = id && id.match(/^JS-.*-T(\d+)$/);
+    if (m) maxT = Math.max(maxT, Number(m[1]));
+  }
+  nextCatalogT = maxT + 1;
+}
+
+function suggestCatalogId(item) {
+  const dateVal = extractValue(item, 'dcterms:date');
+  const yearMatch = dateVal && dateVal.match(/\d{4}/);
+  const year = yearMatch ? yearMatch[0] : '0000';
+  return `JS-${year}-T${nextCatalogT}`;
 }
 
 // ── Client-side validation (mirrors doctor_catalog.py) ──────────────────────
@@ -411,6 +432,12 @@ function populateForm(item) {
     }
   }
 
+  // Suggest catalog ID for items missing one
+  const idEl = $('[data-term="dcterms:identifier"]');
+  if (idEl && !idEl.value) {
+    idEl.value = suggestCatalogId(item);
+  }
+
   // Date pills
   const dateVal = extractValue(item, 'dcterms:date');
   for (const pill of $$('.date-pill')) {
@@ -599,6 +626,10 @@ async function saveCurrentItem() {
     const wEl = $('[data-term="schema:width"]');
     if (hEl?.value) stickyDims.height = hEl.value;
     if (wEl?.value) stickyDims.width = wEl.value;
+    // Increment catalog T-number after assigning an identifier
+    const savedId = extractValue(updated, 'dcterms:identifier');
+    const tMatch = savedId && savedId.match(/-T(\d+)$/);
+    if (tMatch) nextCatalogT = Math.max(nextCatalogT, Number(tMatch[1]) + 1);
 
     dom.formPanel.classList.remove('dirty');
     flashSave();
@@ -1787,6 +1818,14 @@ function initFieldSprints() {
   ];
 
   FIELD_SPRINTS = {
+    identifier: {
+      label: 'Catalog #',
+      term: 'dcterms:identifier',
+      filterFn: item => !extractValue(item, 'dcterms:identifier'),
+      inputType: 'text',
+      placeholder: 'e.g. JS-2020-T1234',
+      suggestValue: item => suggestCatalogId(item),
+    },
     date: {
       label: 'Date',
       term: 'dcterms:date',
@@ -2212,9 +2251,10 @@ function renderSprintInput(card, item, config) {
       input.type = 'text';
       input.className = 'sprint-text';
       input.placeholder = config.placeholder || '';
-      // Pre-fill with existing value
+      // Pre-fill with existing value, or suggest one
       const existing = extractValue(item, config.term);
       if (existing) input.value = existing;
+      else if (config.suggestValue) input.value = config.suggestValue(item);
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -2347,6 +2387,11 @@ async function sprintSaveAndAdvance(itemId, config, value) {
     } else {
       // Single value
       payload[config.term] = value ? [literalValue(config.term, value)] : [];
+      // Increment catalog T-number after assigning an identifier
+      if (config.term === 'dcterms:identifier' && value) {
+        const tMatch = value.match(/-T(\d+)$/);
+        if (tMatch) nextCatalogT = Math.max(nextCatalogT, Number(tMatch[1]) + 1);
+      }
     }
 
     const updated = await apiPatch(`items/${itemId}`, payload);
