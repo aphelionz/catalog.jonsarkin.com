@@ -116,7 +116,11 @@ class EnrichController extends AbstractActionController
             $counts = $conn->fetchAssociative("
                 SELECT
                     COUNT(*) AS total,
-                    SUM(CASE WHEN v.value IS NULL OR TRIM(v.value) = '' THEN 1 ELSE 0 END) AS missing
+                    SUM(CASE WHEN v.id IS NULL THEN 1
+                             WHEN v.value IS NOT NULL AND TRIM(v.value) != '' THEN 0
+                             WHEN v.value_resource_id IS NOT NULL THEN 0
+                             WHEN v.uri IS NOT NULL AND TRIM(v.uri) != '' THEN 0
+                             ELSE 1 END) AS missing
                 FROM resource r
                 JOIN item i ON i.id = r.id
                 LEFT JOIN value v ON v.resource_id = r.id AND v.property_id = ?
