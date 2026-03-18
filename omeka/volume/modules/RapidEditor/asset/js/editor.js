@@ -1915,6 +1915,7 @@ function initFieldSprints() {
       filterFn: item => !extractValue(item, 'bibo:owner'),
       inputType: 'text',
       placeholder: 'e.g. Estate of Jon Sarkin',
+      sticky: true,
     },
     location: {
       label: 'Location',
