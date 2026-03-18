@@ -202,10 +202,7 @@ $isNotMime = function ($str) {
                         </div>
                     </div>
                     <div class="card-info">
-                        <?php if ($catId): ?>
-                            <div class="card-id"><?php echo $catId; ?></div>
-                        <?php endif; ?>
-                        <div class="card-title"><?php echo $escape($heading); ?></div>
+                        <div class="card-title"><?php echo $catId ?: $escape($heading); ?></div>
                         <?php if ($mediumDisplay): ?>
                             <div class="card-medium"><?php echo $mediumDisplay; ?></div>
                         <?php endif; ?>

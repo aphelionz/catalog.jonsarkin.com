@@ -62,6 +62,16 @@ $pageUrl = function ($p) use ($query) {
         $dateRaw = $val($item, 'dcterms:date', '') ?: $val($item, 'schema:dateCreated', '');
         $date    = $isArtworkDate($dateRaw) ? $dateRaw : '';
         $catId   = $val($item, 'dcterms:identifier');
+        $height  = $val($item, 'schema:height', '');
+        $width   = $val($item, 'schema:width', '');
+        $extent  = $val($item, 'dcterms:extent', '');
+        if ($height && $width) {
+            $dims = $height . ' × ' . $width;
+        } elseif ($extent) {
+            $dims = $extent;
+        } else {
+            $dims = '';
+        }
         $primaryMedia = $item->primaryMedia();
         $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
     ?>
@@ -82,12 +92,12 @@ $pageUrl = function ($p) use ($query) {
                     <div class="card-fact-value"><?php echo $date ?: '—'; ?></div>
                 </div>
                 <div class="card-fact">
-                    <div class="card-fact-label">ID</div>
-                    <div class="card-fact-value"><?php echo $catId ?: '—'; ?></div>
+                    <div class="card-fact-label">Size</div>
+                    <div class="card-fact-value"><?php echo $dims ?: "\xE2\x80\x94"; ?></div>
                 </div>
             </div>
             <div class="card-info">
-                <div class="card-title"><?php echo $escape($title); ?></div>
+                <div class="card-title"><?php echo $catId ?: $escape($title); ?></div>
             </div>
         </a>
     </li>
