@@ -4,7 +4,7 @@ namespace RapidEditor;
 
 use Laminas\Router\Http\Literal;
 use Laminas\Router\Http\Segment;
-use Laminas\ServiceManager\Factory\InvokableFactory;
+use RapidEditor\Service\Controller\EditorControllerFactory;
 
 return [
     'router' => [
@@ -46,7 +46,7 @@ return [
     ],
     'controllers' => [
         'factories' => [
-            Controller\EditorController::class => InvokableFactory::class,
+            Controller\EditorController::class => EditorControllerFactory::class,
         ],
     ],
     'view_manager' => [
