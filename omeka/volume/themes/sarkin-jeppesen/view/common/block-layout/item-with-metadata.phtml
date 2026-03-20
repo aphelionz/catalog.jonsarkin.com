@@ -1,0 +1,78 @@
+<?php
+/**
+ * Custom itemWithMetadata block for the About page.
+ * Layout: photo left, name / role / bio right.
+ */
+?>
+<div class="item-with-metadata">
+    <?php foreach ($attachments as $attachment): ?>
+        <?php
+            $item = $attachment->item();
+            if (empty($item)) continue;
+
+            $primaryMedia = $item->primaryMedia();
+            $jobTitle = $item->value('schema:jobTitle');
+            $description = $item->value('dcterms:description');
+        ?>
+
+        <?php
+            // Collect up to 4 media (primary + 3 more)
+            $allMedia = $item->media();
+            $mediaToShow = [];
+            if ($primaryMedia) {
+                $mediaToShow[] = $primaryMedia;
+            }
+            foreach ($allMedia as $m) {
+                if (count($mediaToShow) >= 4) break;
+                if ($primaryMedia && $m->id() === $primaryMedia->id()) continue;
+                $mediaToShow[] = $m;
+            }
+        ?>
+
+        <?php if ($mediaToShow): ?>
+            <div class="item-with-metadata__photos">
+                <div class="item-with-metadata__track">
+                    <?php foreach ($mediaToShow as $media): ?>
+                        <figure class="item-with-metadata__photo">
+                            <?php echo $this->thumbnail($media, 'large'); ?>
+                            <?php
+                                $mediaTitle = $media->displayTitle();
+                                if ($mediaTitle && !preg_match('/\.\w{3,4}$/', $mediaTitle)):
+                            ?>
+                                <figcaption class="item-with-metadata__credit"><?php echo $this->escapeHtml($mediaTitle); ?></figcaption>
+                            <?php endif; ?>
+                        </figure>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (count($mediaToShow) > 1): ?>
+                    <div class="item-with-metadata__dots">
+                        <?php for ($i = 0; $i < count($mediaToShow); $i++): ?>
+                            <span class="item-with-metadata__dot<?php echo $i === 0 ? ' active' : ''; ?>"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="item-with-metadata__info">
+            <h3 class="item-with-metadata__name"><?php echo $item->displayTitle(); ?></h3>
+            <?php if ($jobTitle): ?>
+                <p class="item-with-metadata__role"><?php echo $this->escapeHtml($jobTitle); ?></p>
+            <?php endif; ?>
+            <?php if ($description): ?>
+                <div class="item-with-metadata__desc"><?php echo nl2br($this->escapeHtml($description)); ?></div>
+            <?php endif; ?>
+        </div>
+
+    <?php endforeach; ?>
+</div>
+<script>
+document.querySelectorAll('.item-with-metadata__track').forEach(function(track) {
+    var dots = track.parentElement.querySelectorAll('.item-with-metadata__dot');
+    if (!dots.length) return;
+    track.addEventListener('scroll', function() {
+        var idx = Math.round(track.scrollLeft / track.offsetWidth);
+        dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+    }, {passive: true});
+});
+</script>
