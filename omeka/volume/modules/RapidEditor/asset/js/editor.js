@@ -2331,7 +2331,8 @@ async function sprintSaveAndAdvance(itemId, config, value) {
   sprintLastAction = { itemId, field: sprintField, oldValues };
   updateSprintProgress();
 
-  // Animate card off
+  // Animate card off — unlock input immediately so next Enter isn't blocked
+  sprintActing = false;
   if (topCard) {
     topCard.classList.add('fly-off');
     const vw = window.innerWidth;
@@ -2339,10 +2340,7 @@ async function sprintSaveAndAdvance(itemId, config, value) {
     topCard.addEventListener('transitionend', () => {
       topCard.remove();
       promoteSprintBackCard();
-      sprintActing = false;
     }, { once: true });
-  } else {
-    sprintActing = false;
   }
 
   // API save in background
