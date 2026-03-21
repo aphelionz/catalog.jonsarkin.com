@@ -798,7 +798,7 @@ abbr[title] {
 .item-with-metadata {
   display: flex;
   gap: 2rem;
-  padding: 1.5rem 0;
+  padding: 0 0 1.5rem;
 }
 
 .item-with-metadata__photos {
@@ -2062,6 +2062,7 @@ abbr[title] {
 }
 
 .page .block { margin-bottom: calc(var(--gutter) * 3); }
+.page .block.block-pageTitle { margin-bottom: 0; }
 
 .page .block h2 {
   font-size: 1.1rem;

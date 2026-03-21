@@ -20,10 +20,23 @@ $fbBaseUrl = $this->url('site/faceted-browse', [
 ]);
 
 $this->htmlElement('body')->appendAttribute('class', 'item-set browse');
+
+// Use dcterms:type filter value as heading if present
+$pageTitle = 'Collections';
+$params = $this->params()->fromQuery();
+if (!empty($params['property'])) {
+    foreach ($params['property'] as $p) {
+        if (isset($p['property']) && in_array($p['property'], ['8', 'dcterms:type', 'dcterms%3Atype'])
+            && !empty($p['text'])) {
+            $pageTitle = $p['text'] . 's';
+            break;
+        }
+    }
+}
 ?>
 
 <div class="page-title-row">
-    <h1><?php echo $translate('Collections'); ?></h1>
+    <h1><?php echo $escape($pageTitle); ?></h1>
 </div>
 
 <?php $this->trigger('view.browse.before'); ?>
@@ -33,6 +46,14 @@ $this->htmlElement('body')->appendAttribute('class', 'item-set browse');
     <?php foreach ($itemSets as $itemSet):
         $thumb = $itemSet->thumbnail();
         $thumbUrl = $thumb ? $thumb->assetUrl() : null;
+        // Fallback: use the first item's primary media thumbnail
+        if (!$thumbUrl) {
+            $items = $this->api()->search('items', ['item_set_id' => $itemSet->id(), 'per_page' => 1, 'has_media' => true])->getContent();
+            if ($items) {
+                $media = $items[0]->primaryMedia();
+                if ($media) $thumbUrl = $media->thumbnailUrl('medium');
+            }
+        }
         $desc = $itemSet->value('dcterms:description', ['default' => null]);
         $href = $fbBaseUrl . '?' . http_build_query([
             'item_set_id' => [$itemSet->id()],
