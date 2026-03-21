@@ -719,6 +719,7 @@ abbr[title] {
 
 .item-with-metadata__photos {
   flex: 0 0 200px;
+  max-width: 200px;
 }
 
 .item-with-metadata__track {
