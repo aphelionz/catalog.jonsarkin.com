@@ -1819,10 +1819,7 @@ function initFieldSprints() {
     type: {
       label: 'Type',
       term: 'dcterms:type',
-      filterFn: item => {
-        const v = extractValue(item, 'dcterms:type');
-        return !v || !WORK_TYPES.includes(v);
-      },
+      filterFn: item => !extractValue(item, 'dcterms:type'),
       inputType: 'pills',
       options: WORK_TYPES.map(t => ({ value: t, label: t })),
       autoAdvance: true,
@@ -1830,10 +1827,7 @@ function initFieldSprints() {
     support: {
       label: 'Support',
       term: 'schema:artworkSurface',
-      filterFn: item => {
-        const v = extractValue(item, 'schema:artworkSurface');
-        return !v || !SUPPORTS.includes(v);
-      },
+      filterFn: item => !extractValue(item, 'schema:artworkSurface'),
       inputType: 'pills',
       options: SUPPORTS.map(s => ({ value: s, label: s })),
       autoAdvance: true,
