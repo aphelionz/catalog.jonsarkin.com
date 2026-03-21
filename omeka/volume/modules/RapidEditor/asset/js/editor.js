@@ -229,8 +229,6 @@ function validateItem(item) {
   const type = extractValue(item, 'dcterms:type');
   if (!type) {
     issues.push({ field: 'Type', level: 'error', msg: 'missing' });
-  } else if (!WORK_TYPES.includes(type)) {
-    issues.push({ field: 'Type', level: 'error', msg: `invalid "${type}"` });
   }
 
   if (!extractValue(item, 'dcterms:medium')) {
@@ -240,8 +238,6 @@ function validateItem(item) {
   const support = extractValue(item, 'schema:artworkSurface');
   if (!support) {
     issues.push({ field: 'Support', level: 'error', msg: 'missing' });
-  } else if (!SUPPORTS.includes(support)) {
-    issues.push({ field: 'Support', level: 'error', msg: `invalid "${support}"` });
   }
 
   for (const [term, label] of [['schema:height', 'Height'], ['schema:width', 'Width']]) {
