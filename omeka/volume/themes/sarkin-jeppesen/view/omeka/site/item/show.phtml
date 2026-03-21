@@ -524,19 +524,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     <section class="record-value" aria-labelledby="collector-context-heading">
         <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
 
-        <?php
-        // Fetch artist bio from the Jon Sarkin Person item (id:3)
-        $creatorBio = '';
-        try {
-            $creatorItem = $this->api()->read('items', 3)->getContent();
-            $bioVal = $creatorItem->value('dcterms:description', ['default' => null]);
-            if ($bioVal) $creatorBio = $escape(trim((string) $bioVal));
-        } catch (\Exception $e) { /* item not found or no access */ }
-        ?>
         <div class="biography">
-            <?php if ($creatorBio): ?>
-                <p><?php echo $creatorBio; ?></p>
-            <?php endif; ?>
             <?php if ($description): ?>
                 <p><?php echo $description; ?></p>
             <?php endif; ?>
