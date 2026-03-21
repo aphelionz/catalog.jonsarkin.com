@@ -301,9 +301,92 @@ abbr[title] {
   transform: translateY(-6px) rotate(-45deg);
 }
 
-/* Sub-nav (nested menus) — flatten for Jeppesen look */
+/* ---------- Sub-nav (click-to-toggle dropdowns) ---------- */
+
+.site-nav li:has(> ul) {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.site-nav li:has(> ul) > a {
+  flex: 1 1 auto;
+}
+
+.submenu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  background: var(--primary);
+  color: var(--surface);
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.submenu-toggle:hover,
+.submenu-toggle:focus-visible {
+  background: #252a3b;
+}
+
+.submenu-toggle::after {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.2s;
+}
+
+.submenu-open > .submenu-toggle::after {
+  transform: rotate(-135deg);
+}
+
 .site-nav ul ul {
   display: none;
+  position: absolute;
+  top: 100%;
+  left: -2px;
+  min-width: calc(100% + 2px);
+  z-index: 100;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: var(--border);
+  border-top: none;
+}
+
+.site-nav .submenu-open > ul {
+  display: flex;
+}
+
+.site-nav ul ul li {
+  border-right: none;
+  border-bottom: 1px solid #c8cad2;
+  flex: none;
+}
+
+.site-nav ul ul li:last-child {
+  border-bottom: none;
+}
+
+.site-nav ul ul a {
+  text-align: left;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  padding: calc(var(--gutter) * 0.75) calc(var(--gutter) * 1.5);
+  background: #252a3b;
+}
+
+.site-nav ul ul a:hover,
+.site-nav ul ul a:focus-visible {
+  background: #333a4f;
 }
 
 /* ---------- Site Footer ---------- */
@@ -2526,6 +2609,20 @@ nav.pagination span.row-count {
   .site-nav ul { flex-direction: column; }
   .site-nav li { border-right: none; border-bottom: 2px solid #252a3b; }
   .site-nav li:last-child { border-bottom: none; }
+
+  .site-nav ul ul {
+    position: static;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .site-nav ul ul a {
+    padding-left: calc(var(--gutter) * 3);
+    text-align: left;
+  }
+  .site-nav ul ul li {
+    border-bottom: 1px solid #c8cad2;
+  }
+  .site-nav ul ul li:last-child { border-bottom: none; }
 }
 
 @media (max-width: 480px) {

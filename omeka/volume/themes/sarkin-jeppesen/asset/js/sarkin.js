@@ -21,6 +21,62 @@
         });
     }
 
+    // ── Submenu click-to-toggle ──
+    var parentItems = document.querySelectorAll('.site-nav li');
+    parentItems.forEach(function (li) {
+        var sub = li.querySelector(':scope > ul');
+        if (!sub) return;
+
+        var btn = document.createElement('button');
+        btn.className = 'submenu-toggle';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Toggle submenu');
+        var parentLink = li.querySelector(':scope > a');
+        parentLink.after(btn);
+
+        function toggleSubmenu(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var wasOpen = li.classList.contains('submenu-open');
+
+            // close all other open submenus
+            document.querySelectorAll('.site-nav .submenu-open').forEach(function (el) {
+                el.classList.remove('submenu-open');
+                el.querySelector(':scope > .submenu-toggle').setAttribute('aria-expanded', 'false');
+            });
+
+            if (!wasOpen) {
+                li.classList.add('submenu-open');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        btn.addEventListener('click', toggleSubmenu);
+        parentLink.addEventListener('click', toggleSubmenu);
+    });
+
+    // close submenus on outside click
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.site-nav')) {
+            document.querySelectorAll('.site-nav .submenu-open').forEach(function (el) {
+                el.classList.remove('submenu-open');
+                el.querySelector(':scope > .submenu-toggle').setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+
+    // close submenus on Escape
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.site-nav .submenu-open').forEach(function (el) {
+                el.classList.remove('submenu-open');
+                var toggle = el.querySelector(':scope > .submenu-toggle');
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.focus();
+            });
+        }
+    });
+
     // ── CITE button: copy Chicago-style citation ──
     var citeBtn = document.getElementById('copy-citation');
     if (citeBtn) {
