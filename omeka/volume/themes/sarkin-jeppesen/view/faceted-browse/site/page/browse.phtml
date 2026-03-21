@@ -62,7 +62,7 @@ $isNotMime = function ($str) {
         }
 
         $primaryMedia = $item->primaryMedia();
-        $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
+        $thumbUrl = $primaryMedia ? $primaryMedia->originalUrl() : null;
     ?>
     <li class="chart-card">
         <a href="<?php echo $escape($item->url()); ?>">
