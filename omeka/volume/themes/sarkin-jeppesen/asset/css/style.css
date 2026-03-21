@@ -264,7 +264,8 @@ abbr[title] {
   text-decoration: none;
 }
 
-.site-nav .active > a {
+.site-nav .active > a,
+.site-nav .active > .submenu-toggle {
   background: var(--surface);
   color: var(--primary);
 }

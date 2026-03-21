@@ -21,6 +21,18 @@
         });
     }
 
+    // ── Mark parent nav active when a subnav link matches the current URL ──
+    (function () {
+        var loc = window.location.pathname + window.location.search;
+        document.querySelectorAll('.site-nav li > ul a').forEach(function (a) {
+            var href = a.getAttribute('href');
+            if (href && loc === href) {
+                var parentLi = a.closest('.site-nav > ul > li');
+                if (parentLi) parentLi.classList.add('active');
+            }
+        });
+    })();
+
     // ── Submenu click-to-toggle ──
     var parentItems = document.querySelectorAll('.site-nav li');
     parentItems.forEach(function (li) {
