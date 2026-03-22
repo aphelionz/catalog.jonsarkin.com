@@ -12,11 +12,25 @@ return [
         ],
     ],
 
-    // ImageMagick is the typical choice in container builds.
-    // The Thumbnailer alias is set by the IccThumbnailer module.
+    // IccThumbnailer wraps ImageMagick to preserve ICC profiles + HDR gain maps.
+    // Must register factory here because Omeka's module manager doesn't merge
+    // third-party module service_manager configs into the global config.
+    // The closure lazy-loads the class files since the module autoloader isn't
+    // registered when local.config.php is first parsed.
     'service_manager' => [
+        'factories' => [
+            'IccThumbnailer\Thumbnailer' => function ($container) {
+                $moduleDir = OMEKA_PATH . '/modules/IccThumbnailer/src';
+                require_once $moduleDir . '/Thumbnailer.php';
+                return new \IccThumbnailer\Thumbnailer(
+                    $container->get('Omeka\Cli'),
+                    $container->get('Omeka\File\TempFileFactory')
+                );
+            },
+        ],
         'aliases' => [
             'Omeka\File\Store' => 'Omeka\File\Store\Local',
+            'Omeka\File\Thumbnailer' => 'IccThumbnailer\Thumbnailer',
         ],
     ],
 ];
