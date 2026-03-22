@@ -1,0 +1,19 @@
+<?php
+$this->headScript()->appendScript('');
+$this->htmlElement('body')->appendAttribute('class', 'icc-thumbnailer');
+?>
+
+<h2>ICC Thumbnailer</h2>
+<p>Regenerate all thumbnails using the ICC-preserving thumbnailer. This replaces <code>large</code>, <code>medium</code>, and <code>square</code> derivatives with versions that retain embedded color profiles (Display P3, sRGB, etc.).</p>
+
+<?php if ($running): ?>
+    <p><strong>Job in progress</strong> (started <?= $this->escapeHtml($runningJob->getStarted()->format('Y-m-d H:i:s')) ?>). Check the Jobs log for progress.</p>
+<?php else: ?>
+    <?php if ($lastJob): ?>
+        <p>Last run: <?= $this->escapeHtml($lastJob->getEnded() ? $lastJob->getEnded()->format('Y-m-d H:i:s') : 'unknown') ?> — status: <strong><?= $this->escapeHtml($lastJob->getStatus()) ?></strong></p>
+    <?php endif; ?>
+
+    <form method="post" action="<?= $this->url('admin/icc-thumbnailer/regenerate') ?>">
+        <button type="submit" class="button">Regenerate All Thumbnails</button>
+    </form>
+<?php endif; ?>

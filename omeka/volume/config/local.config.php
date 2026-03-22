@@ -13,10 +13,10 @@ return [
     ],
 
     // ImageMagick is the typical choice in container builds.
+    // The Thumbnailer alias is set by the IccThumbnailer module.
     'service_manager' => [
         'aliases' => [
             'Omeka\File\Store' => 'Omeka\File\Store\Local',
-            'Omeka\File\Thumbnailer' => 'Omeka\File\Thumbnailer\ImageMagick',
         ],
     ],
 ];
