@@ -15,6 +15,8 @@ Catalog raisonné for artist Jon Sarkin (catalog.jonsarkin.com). A monorepo comb
   - `omeka/volume/modules/FacetedBrowse/` — forked faceted browse module (customized controller + GROUP BY counts)
   - `omeka/volume/modules/SimilarPieces/` — custom similarity UI module
   - `omeka/volume/modules/EnrichItem/` — Claude-based enrichment module (direct Anthropic API calls, batch API, cache)
+  - `omeka/volume/modules/IccThumbnailer/` — ICC-preserving thumbnailer with HDR gain map re-embedding
+  - `omeka/volume/modules/RapidEditor/` — sprint-mode metadata editor for bulk cataloging
 - `sarkin-clip/` — Python CLIP service: FastAPI app, embeddings, tests
   - `sarkin-clip/clip_api/` — FastAPI application code (search, similarity, ingest only — no enrichment)
   - `sarkin-clip/tests/` — pytest suite
@@ -68,7 +70,7 @@ Enrichment is now in the Omeka admin UI: **Admin > Enrich Queue**.
 - `make deploy`, `make pull`, or anything touching production data
 - Modifying Docker Compose files
 - Modifying Ansible/deploy configurations
-- Installing third-party Omeka modules (only edit sarkin-jeppesen theme, FacetedBrowse, and SimilarPieces)
+- Installing third-party Omeka modules (only edit sarkin-jeppesen theme, FacetedBrowse, SimilarPieces, IccThumbnailer, and RapidEditor)
 
 ### Credentials
 - Never include Omeka API credentials or `ANTHROPIC_API_KEY` in commits or output
@@ -99,6 +101,8 @@ Enrichment is now in the Omeka admin UI: **Admin > Enrich Queue**.
 - **Docker symlinks:** Docker volumes don't follow host symlinks. Copy module files rather than symlinking them.
 - **BulkImportFiles needs smalot/pdfparser:** the module eagerly loads its PDF extractor even for JPEG imports. Run `composer require smalot/pdfparser` inside `omeka/volume/modules/BulkImportFiles/` (or in the container at that path). Without it, all bulk imports 500.
 - **PHP max_file_uploads:** default is 20. For bulk uploads >20 files, add `max_file_uploads = 100` to `/usr/local/etc/php/conf.d/uploads.ini` inside the Omeka container and restart.
+- **IccThumbnailer wiring:** Omeka's module manager does NOT merge third-party `service_manager` configs into the global config. The factory + alias must live in `local.config.php` with a `require_once` for lazy class loading. Do not try to set them in the module's `module.config.php` alone.
+- **Prod files path:** prod files are at `/var/www/omeka-s/files/` (Docker volume), NOT `/opt/catalog/omeka/volume/files/`.
 
 ## Communication
 - What changed and why — skip the obvious, don't restate my instructions
