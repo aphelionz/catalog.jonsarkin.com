@@ -72,7 +72,8 @@ class PageController extends AbstractActionController
                 ['site_id' => $siteId]
             );
             $response = $this->api()->search($page->resourceType(), $query);
-            $this->paginator($response->getTotalResults(), $this->params()->fromQuery('page'));
+            $totalResults = $response->getTotalResults();
+            $this->paginator($totalResults, $this->params()->fromQuery('page'));
             $items = $response->getContent();
 
             $sortings = $this->facetedBrowse()->getSortings($category);
@@ -98,6 +99,7 @@ class PageController extends AbstractActionController
         $view->setVariable('columns', $columns);
         $view->setVariable('query', $query);
         $view->setVariable('activeFilters', $activeFilters);
+        $view->setVariable('totalResults', $totalResults ?? 0);
         return $view;
     }
 

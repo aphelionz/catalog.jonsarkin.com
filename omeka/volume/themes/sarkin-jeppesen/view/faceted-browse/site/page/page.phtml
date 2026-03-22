@@ -103,11 +103,6 @@ $isNotMime = function ($str) {
     <?php // ── CONTENT: Browse results ── ?>
     <div id="section-content">
     <?php if ($category): ?>
-        <div class="browse-controls">
-            <?php echo $this->pagination(); ?>
-            <?php echo $this->sortSelector($sortings); ?>
-        </div>
-
         <?php
         // Build export query from category base + active URL filters
         $exportQuery = [];
@@ -119,10 +114,43 @@ $isNotMime = function ($str) {
         }
         $apiExportUrl = $this->url('api/default', ['resource' => 'items'], ['query' => $exportQuery + ['per_page' => 5000]]);
         ?>
-        <div class="export-bar">
-            <span class="export-label"><?php echo $translate('Export'); ?></span>
-            <a href="#" class="button export-csv-btn"><?php echo $translate('CSV'); ?></a>
-            <a href="<?php echo $escape($apiExportUrl); ?>" class="button" target="_blank"><?php echo $translate('JSON'); ?></a>
+        <?php
+        // Derive heading from active TYPE filter (resource_class_id[])
+        $typeLabels = [225 => 'Artwork', 118 => 'Writing'];
+        $activeClassIds = (array)($this->params()->fromQuery('resource_class_id', []));
+        $activeClassId = count($activeClassIds) === 1 ? (int)reset($activeClassIds) : null;
+        $typeLabel = $activeClassId && isset($typeLabels[$activeClassId])
+            ? $typeLabels[$activeClassId]
+            : $escape($page->title());
+        $worksLabel = $totalResults === 1 ? 'work' : 'works';
+        ?>
+        <?php
+        // Detect non-type filters (anything besides resource_class_id)
+        $hasNonTypeFilters = !empty($activeFilters['item_set_id'])
+            || !empty($activeFilters['resource_template_id'])
+            || !empty($activeFilters['property'])
+            || !empty($activeFilters['fulltext_search']);
+        // Build reset URL: keep only resource_class_id (if any)
+        $resetParams = [];
+        if ($activeClassId) {
+            $resetParams['resource_class_id[]'] = $activeClassId;
+        }
+        $resetUrl = $this->url(null, [], ['query' => $resetParams], true);
+        ?>
+        <div class="browse-heading">
+            <h2><?php echo $typeLabel; ?> <span class="browse-heading-count">(<?php echo number_format($totalResults); ?> <?php echo $worksLabel; ?>)</span></h2>
+            <div class="export-bar">
+                <?php if ($hasNonTypeFilters): ?>
+                    <a href="<?php echo $escape($resetUrl); ?>" class="pill-button pill-button--danger">[x remove filters]</a>
+                <?php endif; ?>
+                <a href="#" class="pill-button export-csv-btn">[export csv]</a>
+                <a href="<?php echo $escape($apiExportUrl); ?>" class="pill-button" target="_blank">[export json]</a>
+            </div>
+        </div>
+
+        <div class="browse-controls">
+            <?php echo $this->pagination(); ?>
+            <?php echo $this->sortSelector($sortings); ?>
         </div>
 
         <?php if ($items): ?>
@@ -202,9 +230,6 @@ $isNotMime = function ($str) {
                     </div>
                     <div class="card-info">
                         <div class="card-title"><?php echo $catId ?: $escape($heading); ?></div>
-                        <?php if ($mediumDisplay): ?>
-                            <div class="card-medium"><?php echo $mediumDisplay; ?></div>
-                        <?php endif; ?>
                     </div>
                 </a>
             </li>

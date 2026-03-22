@@ -565,6 +565,10 @@ abbr[title] {
 .pill-button:hover,
 .pill-button:focus-visible { color: var(--primary); }
 
+.pill-button--danger { color: #8b4049; }
+.pill-button--danger:hover,
+.pill-button--danger:focus-visible { color: #6b2830; }
+
 /* --- Action Nav --- */
 
 .metadata-bottom { border-top: var(--border); }
@@ -1397,6 +1401,7 @@ abbr[title] {
 
 .card-info {
   padding: var(--gutter);
+  text-align: center;
 }
 
 .card-id {
@@ -1810,20 +1815,30 @@ abbr[title] {
   align-items: center;
 }
 
-/* Export bar */
-.faceted-browse-page .export-bar {
+/* Browse heading + export bar */
+.faceted-browse-page .browse-heading {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-end;
   margin-bottom: var(--gutter);
 }
-.faceted-browse-page .export-label {
+.faceted-browse-page .browse-heading h2 {
   font-family: var(--font);
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.faceted-browse-page .browse-heading-count {
+  font-weight: 400;
+  font-size: 0.8rem;
   color: var(--secondary);
+  letter-spacing: 0.02em;
+}
+.faceted-browse-page .export-bar {
+  display: flex;
+  gap: 8px;
 }
 .faceted-browse-page .bulk-export { display: contents; }
 .faceted-browse-page .bulk-export ul.exporters {
