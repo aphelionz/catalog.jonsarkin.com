@@ -255,7 +255,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <div class="record-header-right">
             <h1 id="record-title"><?php echo $escape($pageLabel); ?></h1>
             <div class="icon-actions">
-                <button type="button" class="pill-button" data-action="share">[share]</button>
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
             </div>
         </div>
@@ -364,7 +363,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <div class="icon-actions">
                 <button type="button" class="pill-button" id="copy-citation">[cite]</button>
                 <button type="button" class="pill-button" onclick="window.print();">[print]</button>
-                <button type="button" class="pill-button" data-action="share">[share]</button>
+
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>" class="pill-button">[rights]</a>
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
             </div>
@@ -404,7 +403,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <div class="icon-actions">
                 <button type="button" class="pill-button" id="copy-citation">[cite]</button>
                 <button type="button" class="pill-button" onclick="window.print();">[print]</button>
-                <button type="button" class="pill-button" data-action="share">[share]</button>
+
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>" class="pill-button">[rights]</a>
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
             </div>

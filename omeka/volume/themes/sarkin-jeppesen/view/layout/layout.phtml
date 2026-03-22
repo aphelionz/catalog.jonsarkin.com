@@ -71,7 +71,8 @@ try {
                 </form>
                 <?php try { $advancedUrl = $this->url('site/visual-search', ['site-slug' => $site->slug()]); ?>
                 <div class="site-search-advanced">
-                    <a href="<?php echo $advancedUrl; ?>" class="pill-button">[advanced]</a>
+                    <a href="#" class="pill-button" id="global-share">[share]</a>
+                    <a href="<?php echo $advancedUrl; ?>" class="pill-button">[visual search]</a>
                 </div>
                 <?php } catch (\Exception $e) { /* SimilarPieces not installed */ } ?>
             </div>

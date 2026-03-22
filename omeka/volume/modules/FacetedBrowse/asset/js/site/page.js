@@ -62,19 +62,6 @@ const enableModal = function() {
     });
 };
 
-// Show that a copy to clipboard was successful.
-const showClipboardCopySuccessful = () => {
-    // Indicate successful copy here
-    $('.permalink .success').addClass('active').show();
-    $('.permalink .default').addClass('inactive');
-    setTimeout(function() {
-        $('.permalink .success').fadeOut(1000, function() {
-            $(this).removeClass('active');
-            $('.permalink .default').removeClass('inactive');
-        });
-    }, 1500);
-};
-
 /**
  * Apply a previous state to the page.
  */
@@ -87,14 +74,6 @@ const applyPreviousState = function() {
 };
 
 /**
- * Set the permalink fragment.
- */
-const setPermalinkFragment = function() {
-    const fragment = encodeURIComponent(JSON.stringify(FacetedBrowse.state))
-    $('.permalink').data('fragment', fragment);
-};
-
-/**
  * Render the categories of this page.
  */
 const renderCategories = function() {
@@ -102,7 +81,7 @@ const renderCategories = function() {
         sectionSidebar.html(html);
         $.get(urlBrowse).done(function(html) {
             sectionContent.html(html);
-            setPermalinkFragment();
+    
         }).fail(failBrowse);
     }).fail(failCategory);
 };
@@ -124,7 +103,7 @@ FacetedBrowse.setStateChangeHandler(function(facetsQuery, sortBy, sortOrder, pag
     sectionContent.text(Omeka.jsTranslate('Loading results…')).addClass('loading');
     $.get(`${urlBrowse}?${queries.join('&')}`).done(function(html) {
         sectionContent.html(html).removeClass('loading');
-        setPermalinkFragment();
+
     }).fail(failBrowse);
 });
 
@@ -162,7 +141,7 @@ container.on('click', '.category', function(e) {
         queries.push(`faceted_browse_category_id=${thisCategory.data('categoryId')}`);
         $.get(`${urlBrowse}?${queries.join('&')}`).done(function(html) {
             sectionContent.html(html);
-            setPermalinkFragment();
+    
         }).fail(failBrowse);
     }).fail(failFacet);
 });
@@ -207,7 +186,7 @@ container.on('submit', '.pagination form', function(e) {
     FacetedBrowse.setPaginationState(thisForm.find('input[name="page"]').val());
     $.get(`${urlBrowse}?${$(this).serialize()}`, {}, function(html) {
         sectionContent.html(html);
-        setPermalinkFragment();
+
     });
 });
 
@@ -221,30 +200,8 @@ container.on('submit', 'form.sorting', function(e) {
     );
     $.get(`${urlBrowse}?${$(this).serialize()}`, {}, function(html) {
         sectionContent.html(html);
-        setPermalinkFragment();
+
     });
-});
-
-// Handle permalink button (copy to clipboard button).
-container.on('click', '.permalink', function(e) {
-    e.preventDefault();
-    const thisButton = $(this);
-    const permalink = `${thisButton.data('url')}#${thisButton.data('fragment')}`;
-
-    if (navigator.clipboard && window.isSecureContext) {
-        // Use the browser's clipboard API if possible.
-        navigator.clipboard.writeText(permalink).then(function() {
-            showClipboardCopySuccessful();
-        });
-    } else {
-        // Fall back on the temporary input / execCommand('copy') hack.
-        const tempInput = $('<input>');
-        $('body').append(tempInput);
-        tempInput.val(permalink).select();
-        document.execCommand('copy');
-        tempInput.remove();
-        showClipboardCopySuccessful();
-    }
 });
 
 enableModal('#section-content', '#section-sidebar', '#section-sidebar-modal-toggle');

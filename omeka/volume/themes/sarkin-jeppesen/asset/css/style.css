@@ -220,6 +220,8 @@ abbr[title] {
 
 .site-search-advanced {
   margin-top: 2px;
+  display: flex;
+  gap: 6px;
 }
 
 /* ---------- Site Navigation ---------- */
@@ -1757,11 +1759,10 @@ abbr[title] {
 .faceted-browse-page .browse-controls .pagination input[type="text"] {
   font-family: var(--font);
   font-size: 0.8rem;
-  width: 4ch;
+  width: 3ch;
   text-align: center;
   border: none;
-  border-right: var(--border);
-  padding: 6px;
+  padding: 6px 2px;
 }
 
 .faceted-browse-page .browse-controls .pagination .next,
@@ -1786,6 +1787,18 @@ abbr[title] {
   background: var(--bg);
 }
 
+.faceted-browse-page .browse-controls .pagination .pagination-buttons > :last-child {
+  border-right: none;
+}
+
+.faceted-browse-page .browse-controls .pagination .previous,
+.faceted-browse-page .browse-controls .pagination .next {
+  font-size: 1.3rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
 .faceted-browse-page .browse-controls .pagination .row-count {
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -1796,27 +1809,6 @@ abbr[title] {
   display: flex;
   align-items: center;
 }
-
-/* Permalink button */
-.faceted-browse-page .permalink.button {
-  font-family: var(--font);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  text-decoration: none;
-  padding: 6px 12px;
-  border: var(--border);
-  background: transparent;
-  color: var(--primary);
-  cursor: pointer;
-  white-space: nowrap;
-  position: relative;
-}
-
-.faceted-browse-page .permalink.button:hover { background: var(--bg); }
-.faceted-browse-page .button.permalink .success { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.faceted-browse-page .button.permalink .success.active { display: block; }
-.faceted-browse-page .button.permalink .default.inactive { opacity: 0; }
 
 /* Export bar */
 .faceted-browse-page .export-bar {
@@ -2442,7 +2434,7 @@ nav.pagination span.page-count {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0 var(--gutter);
+  padding: 0 var(--gutter) 0 4px;
   border-right: none;
   white-space: nowrap;
 }
@@ -2473,8 +2465,8 @@ nav.pagination .pagination-buttons .next.inactive {
   cursor: default;
 }
 
-nav.pagination .pagination-buttons .previous::before { content: "‹"; }
-nav.pagination .pagination-buttons .next::before { content: "›"; }
+nav.pagination .pagination-buttons .previous::before { content: "‹"; position: relative; top: -2px; }
+nav.pagination .pagination-buttons .next::before { content: "›"; position: relative; top: -2px; }
 
 nav.pagination span.row-count {
   display: inline;

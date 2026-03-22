@@ -117,20 +117,18 @@
         });
     }
 
-    // ── Share button ──
-    var shareBtn = document.querySelector('[data-action="share"]');
+    // ── Global share button (header) ──
+    var shareBtn = document.getElementById('global-share');
     if (shareBtn) {
-        shareBtn.addEventListener('click', function () {
+        shareBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var url = window.location.href;
             if (navigator.share) {
-                navigator.share({
-                    title: document.title,
-                    url: window.location.href
-                });
-            } else {
-                // Fallback: copy URL
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(window.location.href);
-                }
+                navigator.share({ title: document.title, url: url });
+            } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url);
+                shareBtn.textContent = '[copied!]';
+                setTimeout(function () { shareBtn.textContent = '[share]'; }, 1500);
             }
         });
     }

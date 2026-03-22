@@ -32,7 +32,6 @@ $isNotMime = function ($str) {
 ?>
 <div class="browse-controls">
     <?php echo $this->pagination(); ?>
-    <a href="#" class="permalink button" data-url="<?php echo $this->escapeHtml($this->url(null, ['action' => 'page'], ['force_canonical' => true], true)); ?>"><span class="default"><?php echo $translate('Copy permalink'); ?></span><span class="success"><?php echo $translate('Copied!'); ?></span></a>
     <?php echo $this->sortSelector($sortings); ?>
 </div>
 
