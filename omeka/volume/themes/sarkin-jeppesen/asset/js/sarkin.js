@@ -167,40 +167,6 @@
                 });
 
                 similarSection.removeAttribute('hidden');
-
-                // Easter egg: preload hi-res originals, crossfade on hover
-                if (!('ontouchstart' in window)) {
-                    var cards = grid.querySelectorAll('.similar-card');
-                    cards.forEach(function (card, i) {
-                        var original = results[i] && results[i].original;
-                        if (!original) return;
-
-                        var thumb = card.querySelector('img');
-                        thumb.style.position = 'relative';
-
-                        // Create overlay image for crossfade
-                        var overlay = document.createElement('img');
-                        overlay.className = 'similar-hires';
-                        overlay.alt = thumb.alt;
-                        overlay.draggable = false;
-                        thumb.parentNode.insertBefore(overlay, thumb.nextSibling);
-
-                        // Preload then set src
-                        var preload = new Image();
-                        preload.onload = function () {
-                            overlay.src = original;
-                            card.dataset.hiresReady = '1';
-                        };
-                        preload.src = original;
-
-                        card.addEventListener('mouseenter', function () {
-                            if (card.dataset.hiresReady) overlay.style.opacity = '1';
-                        });
-                        card.addEventListener('mouseleave', function () {
-                            overlay.style.opacity = '';
-                        });
-                    });
-                }
             })
             .catch(function () { /* service down — section stays hidden */ });
     }

@@ -621,7 +621,7 @@ abbr[title] {
 }
 
 .artwork-figure { margin: 0; }
-.artwork-figure img { max-width: 100%; display: block; }
+.artwork-figure img { width: 100%; display: block; }
 .artwork-figure figcaption {
   font-size: 0.8rem;
   color: var(--secondary);
@@ -1236,18 +1236,6 @@ abbr[title] {
   aspect-ratio: 1 / 1;
   object-fit: cover;
   display: block;
-}
-
-.similar-hires {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
 }
 
 .similar-card span {

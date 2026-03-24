@@ -65,6 +65,8 @@ services:
       traefik.http.routers.omeka.rule: "Host(`catalog.jonsarkin.com`)"
       traefik.http.routers.omeka.tls: "true"
       traefik.http.routers.omeka.tls.certresolver: "letsencrypt"
+      traefik.http.routers.omeka.middlewares: "omeka-headers"
+      traefik.http.middlewares.omeka-headers.headers.customresponseheaders.X-Robots-Tag: "noimageai, noimageindex"
       traefik.http.services.omeka.loadbalancer.server.port: "80"
 
   qdrant:
