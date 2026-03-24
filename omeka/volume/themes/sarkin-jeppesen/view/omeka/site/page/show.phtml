@@ -1,4 +1,43 @@
 <?php
+$this->placeholder('json_ld')->set(
+    '<script type="application/ld+json">' .
+    json_encode([
+        '@context' => 'https://schema.org',
+        '@graph' => [
+            [
+                '@type' => 'Organization',
+                'name' => 'The Jon Sarkin Estate',
+                'url' => 'https://catalog.jonsarkin.com',
+                'description' => 'The official estate of American outsider artist Jon Sarkin (1953–2024), maintaining the catalog raisonné and Fish City Studios in Gloucester, MA.',
+                'contactPoint' => [
+                    '@type' => 'ContactPoint',
+                    'contactType' => 'Estate Manager',
+                    'name' => 'Mark Henderson',
+                    'email' => 'art@jonsarkin.com',
+                    'telephone' => '+1-978-328-4466',
+                ],
+                'sameAs' => [
+                    'https://www.instagram.com/jonsarkin/',
+                    'https://www.facebook.com/jonsarkinart/',
+                    'https://www.threads.net/@jonsarkin',
+                ],
+            ],
+            [
+                '@type' => 'Person',
+                'name' => 'Jon Sarkin',
+                'birthDate' => '1953-04-27',
+                'deathDate' => '2024-07-19',
+                'birthPlace' => 'Newark, New Jersey',
+                'description' => 'American outsider artist (1953–2024). Self-taught, his compulsive art practice emerged after a stroke in 1989. His work is in the collections of the Centre Pompidou, the American Visionary Art Museum, and the MoMA Archives.',
+                'sameAs' => [
+                    'https://en.wikipedia.org/wiki/Jon_Sarkin',
+                    'https://www.wikidata.org/wiki/Q16000730',
+                ],
+            ],
+        ],
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) .
+    '</script>'
+);
 $this->headLink()->appendStylesheet($this->assetUrl('css/page-blocks.css', 'Omeka'));
 $this->htmlElement('body')->appendAttribute('class', $pageBodyClass);
 $this->pageTitle($page->title(), 2);
