@@ -208,7 +208,17 @@ if ($isPerson) {
     if ($date)       $jsonLd['datePublished'] = strip_tags($date);
     if ($genre)      $jsonLd['genre'] = strip_tags($genre);
     if ($fullText)   $jsonLd['articleBody'] = strip_tags($fullText);
-    $jsonLd['copyrightHolder'] = ['@type' => 'Organization', 'name' => 'The Jon Sarkin Estate'];
+    $jsonLd['copyrightHolder'] = [
+        '@type' => 'Organization',
+        'name' => 'The Jon Sarkin Estate',
+        'url' => 'https://catalog.jonsarkin.com',
+        'contactPoint' => [
+            '@type' => 'ContactPoint',
+            'contactType' => 'Estate Manager',
+            'name' => 'Mark Henderson',
+            'email' => 'art@jonsarkin.com',
+        ],
+    ];
     if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
     if ($sourceUrl)  $jsonLd['url'] = strip_tags($sourceUrl);
 } else {
@@ -231,7 +241,17 @@ if ($isPerson) {
     if ($height)     $jsonLd['height'] = strip_tags($height);
     if ($width)      $jsonLd['width'] = strip_tags($width);
     if ($imageUrl)   $jsonLd['image'] = $imageUrl;
-    $jsonLd['copyrightHolder'] = ['@type' => 'Organization', 'name' => 'The Jon Sarkin Estate'];
+    $jsonLd['copyrightHolder'] = [
+        '@type' => 'Organization',
+        'name' => 'The Jon Sarkin Estate',
+        'url' => 'https://catalog.jonsarkin.com',
+        'contactPoint' => [
+            '@type' => 'ContactPoint',
+            'contactType' => 'Estate Manager',
+            'name' => 'Mark Henderson',
+            'email' => 'art@jonsarkin.com',
+        ],
+    ];
     if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
     if ($spatial)    $jsonLd['locationCreated'] = ['@type' => 'Place', 'name' => strip_tags($spatial)];
 }
