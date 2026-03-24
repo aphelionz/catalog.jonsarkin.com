@@ -45,6 +45,7 @@ const PROP = {
   'bibo:content':                  91,
   'bibo:presentedAt':              74,
   'curation:note':               1710,
+  'curation:category':           1698,
 };
 
 // Controlled vocabularies — populated from Omeka custom_vocabs API at init
@@ -297,6 +298,13 @@ function validateItem(item) {
     issues.push({ field: 'Transcription', level: 'error', msg: 'missing' });
   }
 
+  const cat = extractValue(item, 'curation:category');
+  if (!cat) {
+    issues.push({ field: 'Category', level: 'error', msg: 'missing' });
+  } else if (!['A', 'B', 'C', 'D'].includes(cat)) {
+    issues.push({ field: 'Category', level: 'error', msg: 'invalid (must be A–D)' });
+  }
+
   return issues;
 }
 
@@ -386,7 +394,7 @@ function populateForm(item) {
   // Text/select fields
   for (const el of $$('[data-term]')) {
     const term = el.dataset.term;
-    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills')) continue;
+    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills') || el.closest('.category-pills')) continue;
 
     if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
       // For repeatable fields (provenance, inscriptions), join with newline
@@ -441,6 +449,12 @@ function populateForm(item) {
     btn.classList.toggle('active', btn.dataset.val === sigVal);
   }
 
+  // Category pills
+  const catVal = extractValue(item, 'curation:category');
+  for (const btn of $$('#category-pills button')) {
+    btn.classList.toggle('active', btn.dataset.val === catVal);
+  }
+
   // Motif chips
   const motifs = extractAllValues(item, 'dcterms:subject');
   for (const chip of $$('#motif-chips .chip')) {
@@ -466,7 +480,7 @@ function captureFormState() {
   // Text/select fields
   for (const el of $$('[data-term]')) {
     const term = el.dataset.term;
-    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills')) continue;
+    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills') || el.closest('.category-pills')) continue;
     if (el.tagName !== 'INPUT' && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA') continue;
     state[term] = el.value;
   }
@@ -474,6 +488,10 @@ function captureFormState() {
   // Signature
   const activeSig = $('#sig-grid button.active');
   state['schema:distinguishingSign'] = activeSig ? activeSig.dataset.val : '';
+
+  // Category
+  const activeCat = $('#category-pills button.active');
+  state['curation:category'] = activeCat ? activeCat.dataset.val : '';
 
   // Motifs
   state['dcterms:subject'] = Array.from($$('#motif-chips .chip.active'))
@@ -536,6 +554,7 @@ function buildPayload(item, formState) {
     'bibo:owner', 'dcterms:spatial', 'dcterms:rights',
     'schema:creditText', 'bibo:content', 'bibo:presentedAt',
     'dcterms:bibliographicCitation', 'schema:box', 'curation:note',
+    'curation:category',
   ];
 
   for (const term of literalFields) {
@@ -853,6 +872,17 @@ function setupSignatureGrid() {
       // Toggle: if already active, deactivate; otherwise switch
       const wasActive = btn.classList.contains('active');
       for (const b of $$('#sig-grid button')) b.classList.remove('active');
+      if (!wasActive) btn.classList.add('active');
+      updateDirtyState();
+    });
+  }
+}
+
+function setupCategoryPills() {
+  for (const btn of $$('#category-pills button')) {
+    btn.addEventListener('click', () => {
+      const wasActive = btn.classList.contains('active');
+      for (const b of $$('#category-pills button')) b.classList.remove('active');
       if (!wasActive) btn.classList.add('active');
       updateDirtyState();
     });
@@ -1922,6 +1952,17 @@ function initFieldSprints() {
       inputType: 'text',
       placeholder: 'e.g. BOX-A1',
     },
+    category: {
+      label: 'Category',
+      term: 'curation:category',
+      filterFn: item => {
+        const v = extractValue(item, 'curation:category');
+        return !v || !['A', 'B', 'C', 'D'].includes(v);
+      },
+      inputType: 'pills',
+      options: ['A', 'B', 'C', 'D'].map(c => ({ value: c, label: c })),
+      autoAdvance: true,
+    },
   };
 }
 
@@ -2545,6 +2586,7 @@ async function init() {
   setupTranscriptionPills();
   setupMotifChips();
   setupSignatureGrid();
+  setupCategoryPills();
   setupButtons();
   setupKeyboard();
   setupFilterButtons();

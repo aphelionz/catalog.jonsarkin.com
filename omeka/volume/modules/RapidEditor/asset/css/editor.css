@@ -239,6 +239,20 @@
 .rapid-editor-container .sig-grid button:hover { background: #eee; }
 .rapid-editor-container .sig-grid button.active { background: #111; color: #fff; border-color: #111; }
 
+/* ── Category pills ──────────────────────────────────────────────── */
+.rapid-editor-container .category-pills {
+  display: flex; gap: 4px;
+}
+.rapid-editor-container .category-pills button {
+  width: 40px; height: 34px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 3px;
+  background: #fff; color: var(--fg);
+  transition: all 0.1s;
+}
+.rapid-editor-container .category-pills button:hover { background: #eee; }
+.rapid-editor-container .category-pills button.active { background: #111; color: #fff; border-color: #111; }
+
 /* ── Motif chips ──────────────────────────────────────────────────── */
 .rapid-editor-container .chip-group { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .rapid-editor-container .chip {
