@@ -203,7 +203,7 @@ class EditorController extends AbstractActionController
             $item = $response->getContent();
             // Return the updated item as JSON (same shape as REST API response)
             return new JsonModel(json_decode(json_encode($item), true));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->getResponse()->setStatusCode(500);
             return new JsonModel(['error' => 'Update failed: ' . $e->getMessage()]);
         }

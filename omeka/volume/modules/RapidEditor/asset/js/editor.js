@@ -21,6 +21,7 @@ let FIELD_SPRINTS; // initialized in initFieldSprints()
 
 // Property IDs (from enrich_metadata.py)
 const PROP = {
+  'dcterms:title':                  1,
   'dcterms:identifier':            10,
   'dcterms:date':                   7,
   'dcterms:type':                   8,
@@ -1095,6 +1096,12 @@ function buildBasePayload(item) {
   }
   for (const sysKey of ['o:resource_class', 'o:resource_template', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
     if (sysKey in item) payload[sysKey] = item[sysKey];
+  }
+  // Omeka's REST API omits dcterms:title (surfaced as o:title instead).
+  // The internal update API still requires it when the resource template
+  // marks title as required — synthesize it so sprint saves don't 500.
+  if (!payload['dcterms:title'] && item['o:title']) {
+    payload['dcterms:title'] = [{ type: 'literal', property_id: PROP['dcterms:title'], '@value': item['o:title'] }];
   }
   return payload;
 }
