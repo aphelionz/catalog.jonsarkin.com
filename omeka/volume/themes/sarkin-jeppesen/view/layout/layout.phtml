@@ -94,7 +94,10 @@ try {
 
         <footer class="site-footer">
             <div class="footer-line">
-                <p><?php echo $footerText; ?></p>
+                <div class="footer-text">
+                    <p><?php echo $footerText; ?></p>
+                    <p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href="mailto:art@jonsarkin.com">art@jonsarkin.com</a>.</p>
+                </div>
                 <nav class="footer-links" aria-label="Footer">
                     <a href="<?php echo $this->url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'rights']); ?>">Rights &amp; Reproduction</a>
                     <a href="<?php echo $this->url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'contact']); ?>">Contact</a>

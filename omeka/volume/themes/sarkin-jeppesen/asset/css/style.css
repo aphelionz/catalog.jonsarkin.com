@@ -411,7 +411,9 @@ abbr[title] {
 
 .footer-links {
   display: flex;
-  gap: calc(var(--gutter) * 1.5);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
 }
 
 .footer-links a {
