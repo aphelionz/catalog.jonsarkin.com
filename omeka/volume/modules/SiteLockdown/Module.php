@@ -69,6 +69,11 @@ class Module extends AbstractModule
         if (preg_match('#/api(/|$|\?)#', $uri)) {
             return;
         }
+        // Collector submission form — public access
+        if ($routeName === 'site/collector-submit') {
+            return;
+        }
+
         // SimilarPieces module JSON endpoints (similar, iconography, lexical-profile)
         $jsonRoutes = ['similar-pieces', 'iconography', 'iconography-batch', 'lexical-profile', 'similar-search'];
         if (in_array($routeName, $jsonRoutes, true) || strpos($routeName, 'similar-pieces/') === 0) {

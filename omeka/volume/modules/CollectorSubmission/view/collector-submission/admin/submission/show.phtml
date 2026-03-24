@@ -1,0 +1,190 @@
+<?php
+/**
+ * Admin: show a single collector submission.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var array $submission
+ */
+
+$s = $submission;
+$this->htmlElement('body')->appendAttribute('class', 'collector-submissions show');
+$this->headTitle('Submission #' . $s['id']);
+?>
+
+<?= $this->pageTitle('Submission #' . $s['id'] . ' — ' . $this->escapeHtml($s['collector_name'])) ?>
+
+<style>
+.cs-detail {
+    max-width: 800px;
+}
+.cs-detail .meta-group {
+    margin-bottom: 2rem;
+}
+.cs-detail .meta-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #777;
+    margin-bottom: 0.2rem;
+}
+.cs-detail .meta-value {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+.cs-detail .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 2rem;
+}
+.cs-photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+.cs-photos a {
+    display: block;
+    border: 1px solid #ddd;
+}
+.cs-photos img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+.cs-status-form {
+    border-top: 2px solid #333;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+}
+.cs-status-form label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #777;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+.cs-status-form select,
+.cs-status-form textarea {
+    width: 100%;
+    max-width: 400px;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+    font-family: inherit;
+}
+.cs-status-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+.cs-status-form button {
+    background: #333;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 0.4rem 1.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.cs-back {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    color: #777;
+}
+</style>
+
+<a class="cs-back" href="<?= $this->url('admin/collector-submissions') ?>">&larr; All submissions</a>
+
+<div class="cs-detail">
+    <div class="meta-grid">
+        <div>
+            <div class="meta-label">Collector</div>
+            <div class="meta-value"><?= $this->escapeHtml($s['collector_name']) ?></div>
+        </div>
+        <div>
+            <div class="meta-label">Email</div>
+            <div class="meta-value"><a href="mailto:<?= $this->escapeHtmlAttr($s['email']) ?>"><?= $this->escapeHtml($s['email']) ?></a></div>
+        </div>
+        <div>
+            <div class="meta-label">Number of Pieces</div>
+            <div class="meta-value"><?= (int) $s['num_pieces'] ?></div>
+        </div>
+        <div>
+            <div class="meta-label">How Acquired</div>
+            <div class="meta-value"><?= $this->escapeHtml($s['how_acquired']) ?></div>
+        </div>
+        <div>
+            <div class="meta-label">Date Acquired</div>
+            <div class="meta-value"><?= $this->escapeHtml($s['date_acquired'] ?: '—') ?></div>
+        </div>
+        <div>
+            <div class="meta-label">Credit Preference</div>
+            <div class="meta-value"><?= $this->escapeHtml($s['credit_preference']) ?></div>
+        </div>
+        <div>
+            <div class="meta-label">May Contact</div>
+            <div class="meta-value"><?= $s['may_contact'] ? 'Yes' : 'No' ?></div>
+        </div>
+        <div>
+            <div class="meta-label">Submitted</div>
+            <div class="meta-value"><?= $this->escapeHtml($s['created']) ?></div>
+        </div>
+    </div>
+
+    <?php if ($s['description']): ?>
+        <div class="meta-group">
+            <div class="meta-label">Description</div>
+            <div class="meta-value"><?= nl2br($this->escapeHtml($s['description'])) ?></div>
+        </div>
+    <?php endif ?>
+
+    <?php if ($s['exhibition_history']): ?>
+        <div class="meta-group">
+            <div class="meta-label">Exhibition / Publication History</div>
+            <div class="meta-value"><?= nl2br($this->escapeHtml($s['exhibition_history'])) ?></div>
+        </div>
+    <?php endif ?>
+
+    <?php if (!empty($s['files'])): ?>
+        <div class="meta-group">
+            <div class="meta-label">Photos (<?= count($s['files']) ?>)</div>
+            <div class="cs-photos">
+                <?php foreach ($s['files'] as $file): ?>
+                    <?php $fileUrl = $this->basePath('files/' . $file); ?>
+                    <a href="<?= $this->escapeHtmlAttr($fileUrl) ?>" target="_blank">
+                        <?php
+                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        if (in_array($ext, ['jpg', 'jpeg', 'png'], true)):
+                        ?>
+                            <img src="<?= $this->escapeHtmlAttr($fileUrl) ?>"
+                                 alt="<?= $this->escapeHtmlAttr(basename($file)) ?>">
+                        <?php else: ?>
+                            <div style="height:180px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;font-size:0.8rem;color:#777;">
+                                <?= $this->escapeHtml(basename($file)) ?>
+                            </div>
+                        <?php endif ?>
+                    </a>
+                <?php endforeach ?>
+            </div>
+        </div>
+    <?php endif ?>
+
+    <div class="cs-status-form">
+        <form method="post" action="<?= $this->url('admin/collector-submissions/status', ['id' => $s['id']]) ?>">
+            <label for="status">Status</label>
+            <select name="status" id="status">
+                <?php foreach (['new', 'reviewed', 'accepted', 'rejected'] as $st): ?>
+                    <option value="<?= $st ?>" <?= $s['status'] === $st ? 'selected' : '' ?>><?= ucfirst($st) ?></option>
+                <?php endforeach ?>
+            </select>
+
+            <label for="admin_notes">Admin Notes</label>
+            <textarea name="admin_notes" id="admin_notes"><?= $this->escapeHtml($s['admin_notes'] ?? '') ?></textarea>
+
+            <button type="submit">Update Status</button>
+        </form>
+    </div>
+</div>

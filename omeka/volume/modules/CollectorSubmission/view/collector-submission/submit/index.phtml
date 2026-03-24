@@ -1,0 +1,294 @@
+<?php
+/**
+ * Public collector submission form.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \CollectorSubmission\Form\SubmitForm $form
+ * @var array $errors
+ * @var string|null $success
+ * @var \Omeka\Api\Representation\SiteRepresentation $site
+ */
+
+$this->headTitle('Submit Your Collection');
+?>
+
+<style>
+.collector-form {
+    max-width: 640px;
+    margin: calc(var(--gutter) * 3) auto;
+}
+.collector-form h1 {
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+}
+.collector-form .form-intro {
+    font-size: 0.9rem;
+    color: var(--secondary);
+    margin-bottom: calc(var(--gutter) * 3);
+    line-height: 1.6;
+}
+.collector-form .field {
+    margin-bottom: 1.5rem;
+}
+.collector-form label {
+    display: block;
+    font-family: var(--font);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary);
+    margin-bottom: 0.35rem;
+}
+.collector-form label.required::after {
+    content: ' *';
+    color: #8b4049;
+}
+.collector-form input[type="text"],
+.collector-form input[type="email"],
+.collector-form input[type="number"],
+.collector-form select,
+.collector-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.55rem 0.7rem;
+    border: var(--border);
+    background: var(--surface);
+    color: var(--primary);
+    border-radius: 0;
+    -webkit-appearance: none;
+}
+.collector-form input:focus,
+.collector-form select:focus,
+.collector-form textarea:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+.collector-form textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+.collector-form select {
+    cursor: pointer;
+}
+.collector-form input[type="file"] {
+    font-family: var(--font);
+    font-size: 0.85rem;
+    padding: 0.5rem 0;
+}
+.collector-form .checkbox-field {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.collector-form .checkbox-field input[type="checkbox"] {
+    margin-top: 0.15rem;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+}
+.collector-form .checkbox-field label {
+    font-size: 0.85rem;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+}
+.collector-form .field-hint {
+    font-size: 0.75rem;
+    color: var(--secondary);
+    margin-top: 0.25rem;
+}
+.collector-form .field-error {
+    color: #8b4049;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+.collector-form .submit-btn {
+    background: var(--primary);
+    color: var(--surface);
+    border: var(--border);
+    padding: 0.7rem 2.5rem;
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    margin-top: var(--gutter);
+}
+.collector-form .submit-btn:hover {
+    background: #252a3b;
+}
+.collector-form .success-message {
+    border: 2px solid var(--primary);
+    padding: calc(var(--gutter) * 3);
+    text-align: center;
+}
+.collector-form .success-message h2 {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.75rem;
+}
+.collector-form .success-message p {
+    font-size: 0.9rem;
+    color: var(--secondary);
+    line-height: 1.6;
+}
+/* Honeypot: off-screen, not display:none */
+.collector-form .ohnohoney {
+    position: absolute;
+    left: -9999px;
+    height: 0;
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+}
+@media (max-width: 768px) {
+    .collector-form {
+        margin: calc(var(--gutter) * 2) auto;
+    }
+    .collector-form h1 {
+        font-size: 1.15rem;
+    }
+}
+</style>
+
+<div class="collector-form">
+
+<?php if ($success): ?>
+
+    <div class="success-message">
+        <h2>Thank You</h2>
+        <p>Your submission has been received. We will review it and may reach out for additional documentation.</p>
+    </div>
+
+<?php else: ?>
+
+    <h1>Submit Your Collection</h1>
+    <p class="form-intro">
+        If you own one or more works by Jon Sarkin, we'd love to include them in the catalog raisonn&eacute;.
+        Please share what you can — every submission helps build a more complete record of his work.
+    </p>
+
+    <?php
+    $form->prepare();
+    $form->setAttribute('action', $this->url('site/collector-submit', ['site-slug' => $site->slug()]));
+    $form->setAttribute('method', 'post');
+    $form->setAttribute('enctype', 'multipart/form-data');
+    ?>
+
+    <form action="<?= $this->escapeHtmlAttr($form->getAttribute('action')) ?>"
+          method="post" enctype="multipart/form-data">
+
+        <?= $this->formElement($form->get('csrf')) ?>
+
+        <div class="field">
+            <label for="collector_name" class="required">Your Name</label>
+            <input type="text" name="collector_name" id="collector_name"
+                   value="<?= $this->escapeHtmlAttr($form->get('collector_name')->getValue() ?? '') ?>"
+                   placeholder="Full name" required>
+            <?php if ($msg = $form->get('collector_name')->getMessages()): ?>
+                <div class="field-error"><?= $this->escapeHtml(reset($msg)) ?></div>
+            <?php endif ?>
+        </div>
+
+        <div class="field">
+            <label for="email" class="required">Email</label>
+            <input type="email" name="email" id="email"
+                   value="<?= $this->escapeHtmlAttr($form->get('email')->getValue() ?? '') ?>"
+                   placeholder="you@example.com" required>
+            <?php if ($msg = $form->get('email')->getMessages()): ?>
+                <div class="field-error"><?= $this->escapeHtml(reset($msg)) ?></div>
+            <?php endif ?>
+        </div>
+
+        <div class="field">
+            <label for="num_pieces" class="required">Number of Pieces</label>
+            <input type="number" name="num_pieces" id="num_pieces" min="1"
+                   value="<?= $this->escapeHtmlAttr($form->get('num_pieces')->getValue() ?? '1') ?>"
+                   required>
+            <?php if ($msg = $form->get('num_pieces')->getMessages()): ?>
+                <div class="field-error"><?= $this->escapeHtml(reset($msg)) ?></div>
+            <?php endif ?>
+        </div>
+
+        <div class="field">
+            <label for="how_acquired" class="required">How Acquired</label>
+            <select name="how_acquired" id="how_acquired" required>
+                <?php foreach ($form->get('how_acquired')->getValueOptions() as $value => $label): ?>
+                    <option value="<?= $this->escapeHtmlAttr($value) ?>"
+                        <?= ($form->get('how_acquired')->getValue() === $value) ? 'selected' : '' ?>
+                    ><?= $this->escapeHtml($label) ?></option>
+                <?php endforeach ?>
+            </select>
+            <?php if ($msg = $form->get('how_acquired')->getMessages()): ?>
+                <div class="field-error"><?= $this->escapeHtml(reset($msg)) ?></div>
+            <?php endif ?>
+        </div>
+
+        <div class="field">
+            <label for="date_acquired">Approximate Date Acquired</label>
+            <input type="text" name="date_acquired" id="date_acquired"
+                   value="<?= $this->escapeHtmlAttr($form->get('date_acquired')->getValue() ?? '') ?>"
+                   placeholder="e.g. Summer 2015, 2010s">
+        </div>
+
+        <div class="field">
+            <label for="description">Description of Piece(s)</label>
+            <textarea name="description" id="description" rows="4"
+                      placeholder="Medium, size, subject matter, any text or inscriptions…"><?= $this->escapeHtml($form->get('description')->getValue() ?? '') ?></textarea>
+        </div>
+
+        <div class="field">
+            <label for="photos" class="required">Photos</label>
+            <input type="file" name="photos[]" id="photos" multiple
+                   accept="image/jpeg,image/png,image/heic,.jpg,.jpeg,.png,.heic"
+                   required>
+            <div class="field-hint">JPG, PNG, or HEIC. Multiple files accepted.</div>
+            <?php if (!empty($errors['photos'])): ?>
+                <div class="field-error"><?= $this->escapeHtml($errors['photos']) ?></div>
+            <?php endif ?>
+        </div>
+
+        <div class="field">
+            <label for="exhibition_history">Exhibition or Publication History</label>
+            <textarea name="exhibition_history" id="exhibition_history" rows="3"
+                      placeholder="Any known exhibitions, publications, or provenance details…"><?= $this->escapeHtml($form->get('exhibition_history')->getValue() ?? '') ?></textarea>
+        </div>
+
+        <div class="field checkbox-field">
+            <input type="hidden" name="may_contact" value="0">
+            <input type="checkbox" name="may_contact" id="may_contact" value="1"
+                <?= ($form->get('may_contact')->getValue() ?? '1') === '1' ? 'checked' : '' ?>>
+            <label for="may_contact">May we contact you for additional documentation?</label>
+        </div>
+
+        <div class="field">
+            <label for="credit_preference">How Would You Like to Be Credited?</label>
+            <select name="credit_preference" id="credit_preference">
+                <?php foreach ($form->get('credit_preference')->getValueOptions() as $value => $label): ?>
+                    <option value="<?= $this->escapeHtmlAttr($value) ?>"
+                        <?= ($form->get('credit_preference')->getValue() === $value) ? 'selected' : '' ?>
+                    ><?= $this->escapeHtml($label) ?></option>
+                <?php endforeach ?>
+            </select>
+        </div>
+
+        <!-- Honeypot -->
+        <div class="ohnohoney" aria-hidden="true">
+            <label for="website">Website</label>
+            <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <button type="submit" class="submit-btn">Submit</button>
+    </form>
+
+<?php endif ?>
+
+</div>

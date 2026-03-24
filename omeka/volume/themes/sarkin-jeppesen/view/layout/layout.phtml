@@ -71,6 +71,7 @@ try {
                 </form>
                 <?php try { $advancedUrl = $this->url('site/visual-search', ['site-slug' => $site->slug()]); ?>
                 <div class="site-search-advanced">
+                    <a href="<?php echo $this->url('site/collector-submit', ['site-slug' => $site->slug()]); ?>" class="pill-button">[submit]</a>
                     <a href="#" class="pill-button" id="global-share">[share]</a>
                     <a href="<?php echo $advancedUrl; ?>" class="pill-button">[visual search]</a>
                 </div>
