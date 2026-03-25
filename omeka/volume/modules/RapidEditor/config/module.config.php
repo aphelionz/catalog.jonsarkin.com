@@ -30,6 +30,14 @@ return [
                                     'defaults' => ['action' => 'data'],
                                 ],
                             ],
+                            'read' => [
+                                'type' => Segment::class,
+                                'options' => [
+                                    'route' => '/read/:id',
+                                    'constraints' => ['id' => '\d+'],
+                                    'defaults' => ['action' => 'read'],
+                                ],
+                            ],
                             'patch' => [
                                 'type' => Segment::class,
                                 'options' => [

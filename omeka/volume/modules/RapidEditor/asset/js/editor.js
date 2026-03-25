@@ -144,7 +144,14 @@ function apiUrl(path, params = {}) {
 }
 
 async function apiGet(path, params = {}) {
-  const resp = await fetch(apiUrl(path, params));
+  // Route item reads through the module's PHP proxy so private values
+  // (is_public=0) are included.  The public REST API strips them, which
+  // causes saves to silently drop those properties.
+  const itemMatch = path.match(/^items\/(\d+)$/);
+  const url = itemMatch
+    ? `/admin/rapid-editor/read/${itemMatch[1]}`
+    : apiUrl(path, params);
+  const resp = await fetch(url);
   if (!resp.ok) throw new Error(`API ${resp.status}: ${path}`);
   return { json: await resp.json(), headers: resp.headers };
 }
@@ -551,7 +558,7 @@ function cleanValue(v) {
 }
 
 function literalValue(term, val) {
-  return { type: 'literal', property_id: PROP[term], '@value': val };
+  return { type: 'literal', property_id: PROP[term], '@value': val, is_public: true };
 }
 
 function buildPayload(item, formState) {

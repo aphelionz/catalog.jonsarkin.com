@@ -217,6 +217,29 @@ class EditorController extends AbstractActionController
     }
 
     /**
+     * Proxy GET for a single item through Omeka's internal API so private
+     * values (is_public=0) are visible to the editor.  The public REST API
+     * strips them, which causes buildPayload / buildBasePayload to silently
+     * drop those properties on the next save.
+     */
+    public function readAction(): JsonModel
+    {
+        $itemId = (int) $this->params('id');
+        if ($itemId < 1) {
+            return new JsonModel(['error' => 'Invalid item ID']);
+        }
+
+        try {
+            $response = $this->api()->read('items', $itemId);
+            $item = $response->getContent();
+            return new JsonModel(json_decode(json_encode($item), true));
+        } catch (\Throwable $e) {
+            $this->getResponse()->setStatusCode(404);
+            return new JsonModel(['error' => 'Item not found: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Proxy PATCH requests through Omeka's internal API so the JS editor
      * doesn't need REST API credentials — the admin session handles auth.
      */
