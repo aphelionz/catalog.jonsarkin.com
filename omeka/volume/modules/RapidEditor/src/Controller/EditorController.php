@@ -256,7 +256,7 @@ class EditorController extends AbstractActionController
         }
 
         try {
-            $response = $this->api()->update('items', $itemId, $body);
+            $response = $this->api()->update('items', $itemId, $body, [], ['isPartial' => true]);
             $item = $response->getContent();
             // Return the updated item as JSON (same shape as REST API response)
             return new JsonModel(json_decode(json_encode($item), true));

@@ -215,6 +215,6 @@ class EnrichFieldBatch extends AbstractJob
             ];
         }
 
-        $api->update('items', $itemId, $payload);
+        $api->update('items', $itemId, $payload, [], ['isPartial' => true]);
     }
 }
