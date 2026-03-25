@@ -2198,10 +2198,13 @@ function renderExhibitRoundSetup(state) {
     html += `<p>No items in pool.</p>
       <button class="btn btn-nav" id="exhibit-back-list">Back to Exhibitions</button>`;
   } else {
-    if (canResume) {
-      html += `<button class="btn btn-save" id="exhibit-resume">Resume (${progress.bucketIndex} / ${pool.length} reviewed)</button>`;
+    if (pool.length > 2 && pool.length <= 100) {
+      html += `<button class="btn btn-save" id="exhibit-tournament">⚔️ Tournament Mode</button>`;
     }
-    html += `<button class="btn ${canResume ? 'btn-nav' : 'btn-save'}" id="exhibit-start">Start${canResume ? ' Over' : ''}</button>`;
+    if (canResume) {
+      html += `<button class="btn ${pool.length <= 100 ? 'btn-nav' : 'btn-save'}" id="exhibit-resume">Resume (${progress.bucketIndex} / ${pool.length} reviewed)</button>`;
+    }
+    html += `<button class="btn btn-nav" id="exhibit-start">Start${canResume ? ' Over' : ''} Swipe Round</button>`;
     html += `<button class="btn btn-nav" id="exhibit-back-list">Back to Exhibitions</button>`;
   }
 
@@ -2209,6 +2212,9 @@ function renderExhibitRoundSetup(state) {
   stage.innerHTML = html;
 
   // Wire buttons
+  if ($('#exhibit-tournament')) {
+    $('#exhibit-tournament').addEventListener('click', () => enterTournamentMode(state));
+  }
   if ($('#exhibit-start')) {
     $('#exhibit-start').addEventListener('click', () => startExhibitRound(state, round, false));
   }
@@ -2444,12 +2450,17 @@ function persistExhibitRoundProgress() {
 
 async function enterTournamentMode(exhibitSt) {
   const roundData = exhibitSt.rounds.find(r => r.round === exhibitSt.currentRound);
-  if (!roundData) return;
 
-  // Get items in the survivor set
-  const pool = allItems.filter(item =>
-    (item['o:item_set'] || []).some(s => s['o:id'] === roundData.setId)
-  );
+  // Build pool: if current round is complete, use its survivor set;
+  // otherwise use buildExhibitQueue (previous round's survivors / source filter)
+  let pool;
+  if (roundData && roundData.complete) {
+    pool = allItems.filter(item =>
+      (item['o:item_set'] || []).some(s => s['o:id'] === roundData.setId)
+    );
+  } else {
+    pool = buildExhibitQueue(exhibitSt);
+  }
   if (pool.length < 2) {
     showToast('Need at least 2 items for tournament', true);
     return;
