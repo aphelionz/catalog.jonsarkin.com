@@ -1,538 +1,515 @@
-{%- assign limit = section.settings.products | times: section.settings.rows -%}
-{%- assign featuredCollection = collections[section.settings.collection] -%}
-{%- assign totalProducts = featuredCollection.products.size -%}
+{{ 'component-card.css' | asset_url | stylesheet_tag }}
+{{ 'component-price.css' | asset_url | stylesheet_tag }}
 
-<div class="featured-collection collection-template" data-section-id="{{ section.id }}" data-section-type="collection-template">
-  <div class="page-width">
-    <div class="featured-collection__heading grid text-center">
-      <div class="grid__item medium-up--ten-twelfths medium-up--push-one-twelfth">
-        <h2>{{ section.settings.title }}</h2>
-      </div>
+{{ 'component-slider.css' | asset_url | stylesheet_tag }}
+{{ 'template-collection.css' | asset_url | stylesheet_tag }}
+
+{% if section.settings.image_shape == 'blob' %}
+  {{ 'mask-blobs.css' | asset_url | stylesheet_tag }}
+{%- endif -%}
+
+{%- unless section.settings.quick_add == 'none' -%}
+  {{ 'quick-add.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
+{%- endunless -%}
+
+{%- if section.settings.quick_add == 'standard' -%}
+  <script src="{{ 'quick-add.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}
+
+{%- if section.settings.quick_add == 'bulk' -%}
+  <script src="{{ 'quick-add-bulk.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'price-per-item.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'quick-order-list.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+{%- liquid
+  assign products_to_display = section.settings.collection.all_products_count
+
+  if section.settings.collection.all_products_count > section.settings.products_to_show
+    assign products_to_display = section.settings.products_to_show
+    assign more_in_collection = true
+  endif
+
+  assign columns_mobile_int = section.settings.columns_mobile | plus: 0
+  assign show_mobile_slider = false
+  if section.settings.swipe_on_mobile and products_to_display > columns_mobile_int
+    assign show_mobile_slider = true
+  endif
+
+  assign show_desktop_slider = false
+  if section.settings.enable_desktop_slider and products_to_display > section.settings.columns_desktop
+    assign show_desktop_slider = true
+  endif
+-%}
+
+<div
+  class="color-{{ section.settings.color_scheme }} isolate gradient"
+>
+  <div
+    class="collection{% if section.settings.quick_add == 'bulk' %} collection-quick-add-bulk{% endif %} section-{{ section.id }}-padding{% if section.settings.full_width %} collection--full-width{% endif %}"
+    id="collection-{{ section.id }}"
+    data-id="{{ section.id }}"
+  >
+    <div class="collection__title title-wrapper title-wrapper--no-top-margin page-width{% if show_mobile_slider %} title-wrapper--self-padded-tablet-down{% endif %}{% if show_desktop_slider %} collection__title--desktop-slider{% endif %}">
+      {%- if section.settings.title != blank -%}
+        <h2 class="title inline-richtext {{ section.settings.heading_size }}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
+          {{ section.settings.title }}
+        </h2>
+      {%- endif -%}
+      {%- if section.settings.description != blank
+        or section.settings.show_description
+        and section.settings.collection.description != empty
+      -%}
+        <div class="collection__description {{ section.settings.description_style }} rte{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
+          {%- if section.settings.show_description -%}
+            {{ section.settings.collection.description }}
+          {%- else -%}
+            {{ section.settings.description -}}
+          {%- endif %}
+        </div>
+      {%- endif -%}
     </div>
 
-    {%- assign desktopColumns = section.settings.products -%}
-    {%- assign mobileColumns = '1' -%}
+    <slider-component class="slider-mobile-gutter{% if section.settings.full_width %} slider-component-full-width{% endif %}{% if show_mobile_slider == false %} page-width{% endif %}{% if show_desktop_slider == false and section.settings.full_width == false %} page-width-desktop{% endif %}{% if show_desktop_slider %} slider-component-desktop{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
+      <ul
+        id="Slider-{{ section.id }}"
+        data-id="{{ section.id }}"
+        class="grid product-grid contains-card contains-card--product{% if settings.card_style == 'standard' %} contains-card--standard{% endif %} grid--{{ section.settings.columns_desktop }}-col-desktop{% if section.settings.collection == blank %} grid--2-col-tablet-down{% else %} grid--{{ section.settings.columns_mobile }}-col-tablet-down{% endif %}{% if show_mobile_slider or show_desktop_slider %} slider{% if show_desktop_slider %} slider--desktop{% endif %}{% if show_mobile_slider %} slider--tablet grid--peek{% endif %}{% endif %}"
+        role="list"
+        aria-label="{{ 'general.slider.name' | t }}"
+      >
+        {% assign skip_card_product_styles = false %}
 
-    {%- capture gridClasses -%}
-      {% if desktopColumns == 4 %}
-        medium-up--one-quarter
-      {% elsif desktopColumns == 3 %}
-        medium-up--one-third
-      {% elsif desktopColumns == 2 %}
-        medium-up--one-half
-      {% else %}
-        medium-up--one-half
-      {% endif %}
-      {% if mobileColumns == '2' %}small--one-half {% endif %}
-    {%- endcapture -%}
+        {%- if section.settings.collection.products.size > 0 -%}
+          {% paginate section.settings.collection.products by section.settings.products_to_show %}
+            {%- for product in section.settings.collection.products limit: section.settings.products_to_show -%}
+              <li
+                id="Slide-{{ section.id }}-{{ forloop.index }}"
+                class="grid__item{% if show_mobile_slider or show_desktop_slider %} slider__slide{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+                {% if settings.animations_reveal_on_scroll %}
+                  data-cascade
+                  style="--animation-order: {{ forloop.index }};"
+                {% endif %}
+              >
+                {% render 'card-product',
+                  card_product: product,
+                  media_aspect_ratio: section.settings.image_ratio,
+                  image_shape: section.settings.image_shape,
+                  show_secondary_image: section.settings.show_secondary_image,
+                  show_vendor: section.settings.show_vendor,
+                  show_rating: section.settings.show_rating,
+                  skip_styles: skip_card_product_styles,
+                  section_id: section.id,
+                  quick_add: section.settings.quick_add
+                %}
+              </li>
+              {%- assign skip_card_product_styles = true -%}
+            {%- endfor -%}
+          {% endpaginate %}
+        {%- else -%}
+          {%- for i in (1..section.settings.columns_desktop) -%}
+            <li
+              class="grid__item{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+              {% if settings.animations_reveal_on_scroll %}
+                data-cascade
+                style="--animation-order: {{ forloop.index }};"
+              {% endif %}
+            >
+              {% liquid
+                assign ridx = forloop.rindex
+                case ridx
+                  when 5
+                    assign ridx = 1
+                  when 6
+                    assign ridx = 2
+                endcase
+              %}
+              {%- assign placeholder_image = 'product-apparel-' | append: ridx -%}
+              {% render 'card-product',
+                show_vendor: section.settings.show_vendor,
+                media_aspect_ratio: section.settings.image_ratio,
+                image_shape: section.settings.image_shape,
+                placeholder_image: placeholder_image
+              %}
+            </li>
+          {%- endfor -%}
+        {%- endif -%}
+      </ul>
+      {%- if show_mobile_slider or show_desktop_slider -%}
+        <div class="slider-buttons">
+          <button
+            type="button"
+            class="slider-button slider-button--prev"
+            name="previous"
+            aria-label="{{ 'general.slider.previous_slide' | t }}"
+            aria-controls="Slider-{{ section.id }}"
+          >
+            <span class="svg-wrapper">
+              {{- 'icon-caret.svg' | inline_asset_content -}}
+            </span>
+          </button>
+          <div class="slider-counter caption">
+            <span class="slider-counter--current">1</span>
+            <span aria-hidden="true"> / </span>
+            <span class="visually-hidden">{{ 'general.slider.of' | t }}</span>
+            <span class="slider-counter--total">{{ products_to_display }}</span>
+          </div>
+          <button
+            type="button"
+            class="slider-button slider-button--next"
+            name="next"
+            aria-label="{{ 'general.slider.next_slide' | t }}"
+            aria-controls="Slider-{{ section.id }}"
+          >
+            <span class="svg-wrapper">
+              {{- 'icon-caret.svg' | inline_asset_content -}}
+            </span>
+          </button>
+        </div>
+      {%- endif -%}
+    </slider-component>
 
-    <div class="card-list grid" data-desktop-columns="{{ desktopColumns }}" data-mobile-columns="{{ mobileColumns }}" data-grid-style="{{ section.settings.grid_style }}">
-      <div class="card-list__column{% if totalProducts == 1 %} card-list__column--center{% endif %} grid grid__item {{ gridClasses }}">
-        {% unless featuredCollection == blank %}
-          {% for product in featuredCollection.products limit: limit %}
-            {% include 'product-card', product: product, grid_style: section.settings.grid_style %}
-          {% endfor %}
-        {% else %}
-          {% for i in (1..limit) %}
-            <div class="card" data-animate>
-              <a href="{{ product.url | default: '#' }}" class="card__wrapper{% if section.settings.show_spacing %} card__wrapper--padding{% endif %} text-center">
-                <div class="card__image-wrapper{% if settings.product_image_spacing %} card__image-wrapper--padding{% endif %}">
-                  {% capture current %}{% cycle 1, 2, 3, 4, 5, 6 %}{% endcapture %}
-                  {{ 'product-' | append: current | placeholder_svg_tag: 'placeholder-svg' }}
-
-                  <div class="card__info">
-                    {% if section.settings.show_vendor %}
-                      <div class="card__brand">{{ 'homepage.onboarding.product_vendor' | t }}</div>
-                    {% endif %}
-
-                    <div class="card__name h4">{{ 'homepage.onboarding.product_title' | t }}</div>
-                    <div class="card__price">{{ 1999 | money }}</div>
-                  </div>
-                </div>
-              </a>
-            </div>
-          {% endfor %}
-        {% endunless %}
-      </div>
-    </div>
-
-    {% unless section.settings.collection == blank %}
-      {% if totalProducts == 0 %}
-        <p class="text-center">{{ 'collections.general.no_matches' | t }}</p>
-      {% endif %}
-    {% endunless %}
-
-
-    {% if section.settings.show_view_all %}
-      <div class="featured-collection__view-all">
-        <a href="{{ featuredCollection.url }}" class="btn{% if section.settings.use_second_button %} btn--secondary{% endif %}">
-          {{ 'collections.general.view_all' | t }}
+    {%- if section.settings.show_view_all and more_in_collection -%}
+      <div class="center collection__view-all{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
+        <a
+          href="{{ section.settings.collection.url }}"
+          class="{% if section.settings.view_all_style == 'link' %}link underlined-link{% elsif section.settings.view_all_style == 'solid' %}button{% else %}button button--secondary{% endif %}"
+          aria-label="{{ 'sections.featured_collection.view_all_label' | t: collection_name: section.settings.collection.title | escape }}"
+        >
+          {{ 'sections.featured_collection.view_all' | t }}
         </a>
       </div>
-    {% endif %}
+    {%- endif -%}
+    {% if section.settings.image_shape == 'arch' %}
+      {{ 'mask-arch.svg' | inline_asset_content }}
+    {%- endif -%}
   </div>
 </div>
 
 {% schema %}
 {
-  "name": {
-    "cs": "Propagovaná kolekce",
-    "da": "Udvalgt kollektion",
-    "de": "Vorgestellte Kategorie",
-    "en": "Featured collection",
-    "es": "Colección destacada",
-    "fi": "Esittelyssä oleva kokoelma",
-    "fr": "Collection en vedette",
-    "it": "Collezione in evidenza",
-    "ja": "特集コレクション",
-    "ko": "추천 컬렉션",
-    "nb": "Utvalgt samling",
-    "nl": "Uitgelichte collectie",
-    "pl": "Polecana kolekcja",
-    "pt-BR": "Coleção em destaque",
-    "pt-PT": "Coleção em destaque",
-    "sv": "Utvald produktserie",
-    "th": "คอลเลกชันแนะนำ",
-    "tr": "Öne çıkan koleksiyon",
-    "vi": "Bộ sưu tập nổi bật",
-    "zh-CN": "特色产品系列",
-    "zh-TW": "精選商品系列"
+  "name": "t:sections.featured-collection.name",
+  "tag": "section",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
   },
-  "class": "index-section index-section--featured-collection",
   "settings": [
     {
-      "id": "collection",
       "type": "collection",
-      "label": {
-        "cs": "Kolekce",
-        "da": "Kollektion",
-        "de": "Kategorie",
-        "en": "Collection",
-        "es": "Colección",
-        "fi": "Kokoelma",
-        "fr": "Collection",
-        "it": "Collezione",
-        "ja": "コレクション",
-        "ko": "컬렉션",
-        "nb": "Samling",
-        "nl": "Collectie",
-        "pl": "Kolekcja",
-        "pt-BR": "Coleção",
-        "pt-PT": "Coleção",
-        "sv": "Produktserie",
-        "th": "คอลเลกชัน",
-        "tr": "Koleksiyon",
-        "vi": "Bộ sưu tập",
-        "zh-CN": "收藏",
-        "zh-TW": "商品系列"
-      }
+      "id": "collection",
+      "label": "t:sections.featured-collection.settings.collection.label"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 25,
+      "step": 1,
+      "default": 4,
+      "label": "t:sections.featured-collection.settings.products_to_show.label"
+    },     
+    {
+      "type": "header",
+      "content": "t:sections.featured-collection.settings.header_text.content"
+    },   
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "default": "t:sections.featured-collection.settings.title.default",
+      "label": "t:sections.featured-collection.settings.title.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_size.options__1.label"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_size.options__2.label"
+        },
+        {
+          "value": "h0",
+          "label": "t:sections.all.heading_size.options__3.label"
+        },
+        {
+          "value": "hxl",
+          "label": "t:sections.all.heading_size.options__4.label"
+        },
+        {
+          "value": "hxxl",
+          "label": "t:sections.all.heading_size.options__5.label"
+        }
+      ],
+      "default": "h1",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "t:sections.featured-collection.settings.description.label"
     },
     {
       "type": "checkbox",
-      "id": "show_spacing",
-      "label": {
-        "cs": "Povolit rozestupy mezi obrázky",
-        "da": "Aktivér billedafstand",
-        "de": "Bildabstand aktivieren",
-        "en": "Enable image spacing",
-        "es": "Habilitar espaciado de imagen",
-        "fi": "Ota kuvien välistys käyttöön",
-        "fr": "Activer l'espacement des images",
-        "it": "Abilita spaziatura immagini",
-        "ja": "画像の間隔を有効にする",
-        "ko": "이미지 공간 추가",
-        "nb": "Aktiver bildeavstand",
-        "nl": "Afstand tussen afbeeldingen inschakelen",
-        "pl": "Włącz odstępy między obrazami",
-        "pt-BR": "Habilitar espaçamento de imagem",
-        "pt-PT": "Ativar espaçamento de imagens",
-        "sv": "Aktivera bildavstånd",
-        "th": "เปิดใช้การวางตำแหน่งรูปภาพ",
-        "tr": "Görüntü aralığını etkinleştir",
-        "vi": "Bật giãn cách hình ảnh",
-        "zh-CN": "启用图片间距",
-        "zh-TW": "啟用圖片間距"
-      }
+      "id": "show_description",
+      "label": "t:sections.featured-collection.settings.show_description.label",
+      "default": false   
+    },
+    {
+      "type": "select",
+      "id": "description_style",
+      "label": "t:sections.featured-collection.settings.description_style.label",
+      "options": [
+        {
+          "value": "body",
+          "label": "t:sections.featured-collection.settings.description_style.options__1.label"
+        },
+        {
+          "value": "subtitle",
+          "label": "t:sections.featured-collection.settings.description_style.options__2.label"
+        },
+        {
+          "value": "uppercase",
+          "label": "t:sections.featured-collection.settings.description_style.options__3.label"
+        }
+      ],
+      "default": "body"
     },
     {
       "type": "header",
-      "content": {
-        "cs": "Text",
-        "da": "Tekst",
-        "de": "Text",
-        "en": "Text",
-        "es": "Texto",
-        "fi": "Teksti",
-        "fr": "Texte",
-        "it": "Testo",
-        "ja": "テキスト",
-        "ko": "텍스트",
-        "nb": "Tekst",
-        "nl": "Tekst",
-        "pl": "Tekst",
-        "pt-BR": "Texto",
-        "pt-PT": "Texto",
-        "sv": "Text",
-        "th": "ข้อความ",
-        "tr": "Metin",
-        "vi": "Văn bản",
-        "zh-CN": "文本",
-        "zh-TW": "文字"
-      }
-    },
+      "content": "t:sections.featured-collection.settings.header_collection.content"
+    },    
     {
-      "type": "text",
-      "id": "title",
-      "label": {
-        "cs": "Nadpis",
-        "da": "Overskrift",
-        "de": "Titel",
-        "en": "Heading",
-        "es": "Título",
-        "fi": "Otsake",
-        "fr": "Titre",
-        "it": "Heading",
-        "ja": "見出し",
-        "ko": "제목",
-        "nb": "Overskrift",
-        "nl": "Kop",
-        "pl": "Nagłówek",
-        "pt-BR": "Título",
-        "pt-PT": "Título",
-        "sv": "Rubrik",
-        "th": "ส่วนหัว",
-        "tr": "Başlık",
-        "vi": "Tiêu đề",
-        "zh-CN": "标题",
-        "zh-TW": "標題"
-      },
-      "default": {
-        "cs": "Propagovaná kolekce",
-        "da": "Udvalgt kollektion",
-        "de": "Vorgestellte Kategorie",
-        "en": "Featured collection",
-        "es": "Colección destacada",
-        "fi": "Esittelyssä oleva kokoelma",
-        "fr": "Collection en vedette",
-        "it": "Collezione in evidenza",
-        "ja": "特集コレクション",
-        "ko": "추천 컬렉션",
-        "nb": "Fremhevet samling",
-        "nl": "Uitgelichte collectie",
-        "pl": "Polecana kolekcja",
-        "pt-BR": "Coleção em destaque",
-        "pt-PT": "Coleção em destaque",
-        "sv": "Utvald produktserie",
-        "th": "คอลเลกชันแนะนำ",
-        "tr": "Öne çıkan koleksiyon",
-        "vi": "Bộ sưu tập nổi bật",
-        "zh-CN": "特色产品系列",
-        "zh-TW": "精選商品系列"
-      }
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 4,
+      "label": "t:sections.featured-collection.settings.columns_desktop.label"
+    },
+        {
+      "type": "checkbox",
+      "id": "enable_desktop_slider",
+      "label": "t:sections.featured-collection.settings.enable_desktop_slider.label",
+      "default": false
     },
     {
       "type": "checkbox",
-      "id": "show_vendor",
-      "label": {
-        "cs": "Zobrazit dodavatele produktů",
-        "da": "Vis produktleverandører",
-        "de": "Produktanbieter anzeigen",
-        "en": "Show product vendors",
-        "es": "Mostrar proveedores del producto",
-        "fi": "Näytä tuotteen myyjät",
-        "fr": "Afficher les vendeurs",
-        "it": "Mostra fornitori prodotto",
-        "ja": "商品の販売元を表示する",
-        "ko": "제품 공급 업체 표시",
-        "nb": "Vis produktleverandører",
-        "nl": "Productleveranciers weergeven",
-        "pl": "Pokaż dostawców produktu",
-        "pt-BR": "Exibir fabricantes dos produtos",
-        "pt-PT": "Mostrar fornecedores dos produtos",
-        "sv": "Visa produktleverantörer",
-        "th": "แสดงผู้ขายสินค้า",
-        "tr": "Ürün satıcılarını göster",
-        "vi": "Hiển thị nhà cung cấp sản phẩm",
-        "zh-CN": "显示产品厂商",
-        "zh-TW": "顯示產品廠商"
-      },
+      "id": "full_width",
+      "label": "t:sections.featured-collection.settings.full_width.label",
       "default": false
     },
     {
       "type": "checkbox",
       "id": "show_view_all",
-      "label": {
-        "cs": "Zobrazit tlačítko Zobrazit vše",
-        "da": "Vis knappen \"Se flere\"",
-        "de": "'Alle anzeigen' Button anzeigen",
-        "en": "Show 'View all' button",
-        "es": "Mostrar el botón 'Ver todo'",
-        "fi": "Näytä \"Näytä kaikki\" -painike",
-        "fr": "Afficher le bouton « Tout afficher »",
-        "it": "Mostra il pulsante \"Visualizza tutto\"",
-        "ja": "[すべて表示] ボタンを表示する",
-        "ko": "'모두 보기' 버튼 표시",
-        "nb": "Vis «Se alle»-knapp",
-        "nl": "Knop 'Alles weergeven' weergeven",
-        "pl": "Pokaż przycisk „Wyświetl wszystkie”",
-        "pt-BR": "Exibir botão 'Ver tudo'",
-        "pt-PT": "Mostrar botão \"Ver tudo\"",
-        "sv": "Visa \"Visa alla\"-knappen",
-        "th": "แสดงปุ่ม 'ดูทั้งหมด'",
-        "tr": "\"Tümünü görüntüle\" düğmesini göster",
-        "vi": "Hiển thị nút \"View all\" (Xem tất cả)",
-        "zh-CN": "显示“查看全部”按钮",
-        "zh-TW": "顯示「檢視全部」按鈕"
-      },
-      "default": false
-    },
-    {
-      "type": "checkbox",
-      "id": "use_second_button",
-      "label": {
-        "cs": "Použít styl sekundárního tlačítka",
-        "da": "Brug sekundær knaptypografi",
-        "de": "Stil für sekundäre Schaltflächen verwenden",
-        "en": "Use secondary button style",
-        "es": "Utiliza el estilo de botón secundario",
-        "fi": "Käytä toissijaista painikkeen tyyliä",
-        "fr": "Utiliser le style de bouton secondaire",
-        "it": "Usa stile pulsante secondario",
-        "ja": "サブボタンのスタイルを使用する",
-        "ko": "보조 버튼 스타일 사용",
-        "nb": "Bruk sekundær knappestil",
-        "nl": "Secundaire knopstijl gebruiken",
-        "pl": "Użyj dodatkowego stylu przycisku",
-        "pt-BR": "Usar o estilo de botão secundário",
-        "pt-PT": "Utilizar estilo de botão secundário",
-        "sv": "Använd sekundärknappsstil",
-        "th": "ใช้รูปแบบปุ่มรอง",
-        "tr": "İkincil düğme stilini kullan",
-        "vi": "Sử dụng kiểu nút phụ",
-        "zh-CN": "使用辅助按钮样式",
-        "zh-TW": "使用次要按鈕樣式"
-      },
-      "default": false
-    },
-    {
-      "type": "header",
-      "content": {
-        "cs": "Rozvržení",
-        "da": "Layout",
-        "de": "Layout",
-        "en": "Layout",
-        "es": "Diseño",
-        "fi": "Asettelu",
-        "fr": "Mise en page",
-        "it": "Layout",
-        "ja": "レイアウト",
-        "ko": "레이아웃",
-        "nb": "Oppsett",
-        "nl": "Opmaak",
-        "pl": "Układ",
-        "pt-BR": "Layout",
-        "pt-PT": "Esquema",
-        "sv": "Layout",
-        "th": "เลย์เอาต์",
-        "tr": "Düzen",
-        "vi": "Bố cục",
-        "zh-CN": "布局",
-        "zh-TW": "版面配置"
-      }
+      "default": true,
+      "label": "t:sections.featured-collection.settings.show_view_all.label",
+      "info": "t:sections.featured-collection.settings.show_view_all.info"
     },
     {
       "type": "select",
-      "id": "grid_style",
-      "label": {
-        "cs": "Styl mřížky",
-        "da": "Gittertypografi",
-        "de": "Rasterstil",
-        "en": "Grid style",
-        "es": "Estilo de cuadrícula",
-        "fi": "Ruudukkotyyli",
-        "fr": "Style de grille",
-        "it": "Stile griglia",
-        "ja": "グリッドスタイル",
-        "ko": "그리드 스타일",
-        "nb": "Rutenettstil",
-        "nl": "Rasterstijl",
-        "pl": "Styl siatki",
-        "pt-BR": "Estilo da grade",
-        "pt-PT": "Estilo da grelha",
-        "sv": "Rutnätsstil",
-        "th": "รูปแบบกริด",
-        "tr": "Izgara stili",
-        "vi": "Kiểu lưới",
-        "zh-CN": "网格样式",
-        "zh-TW": "網格樣式"
-      },
-      "default": "collage",
+      "id": "view_all_style",
+      "label": "t:sections.featured-collection.settings.view_all_style.label",
       "options": [
         {
-          "value": "collage",
-          "label": {
-            "cs": "Koláž",
-            "da": "Collage",
-            "de": "Collage",
-            "en": "Collage",
-            "es": "Collage",
-            "fi": "Kollaasi",
-            "fr": "Collage",
-            "it": "Collage",
-            "ja": "コラージュ",
-            "ko": "콜라주",
-            "nb": "Fotomontasje",
-            "nl": "Collage",
-            "pl": "Kolaż",
-            "pt-BR": "Colagem",
-            "pt-PT": "Colagem",
-            "sv": "Kollage",
-            "th": "ภาพตัดแปะ",
-            "tr": "Kolaj",
-            "vi": "Ghép",
-            "zh-CN": "拼贴画",
-            "zh-TW": "拼貼"
-          }
+          "value": "link",
+          "label": "t:sections.featured-collection.settings.view_all_style.options__1.label"
         },
         {
-          "value": "grid",
-          "label": {
-            "cs": "Mřížka",
-            "da": "Gitter",
-            "de": "Raster",
-            "en": "Grid",
-            "es": "Cuadrícula",
-            "fi": "Ruudukko",
-            "fr": "Grille",
-            "it": "Griglia",
-            "ja": "グリッド",
-            "ko": "그리드",
-            "nb": "Rutenett",
-            "nl": "Grid",
-            "pl": "Siatka",
-            "pt-BR": "Grade",
-            "pt-PT": "Grelha",
-            "sv": "Rutnät",
-            "th": "กริด",
-            "tr": "Izgara",
-            "vi": "Lưới",
-            "zh-CN": "网格",
-            "zh-TW": "網格"
-          }
+          "value": "outline",
+          "label": "t:sections.featured-collection.settings.view_all_style.options__2.label"
+        },
+        {
+          "value": "solid",
+          "label": "t:sections.featured-collection.settings.view_all_style.options__3.label"
+        }
+      ],
+      "default": "solid"
+    }, 
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:sections.all.colors.label",
+      "info": "t:sections.all.colors.has_cards_info",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.featured-collection.settings.header.content"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "t:sections.featured-collection.settings.image_ratio.options__1.label"
+        },
+        {
+          "value": "portrait",
+          "label": "t:sections.featured-collection.settings.image_ratio.options__2.label"
+        },
+        {
+          "value": "square",
+          "label": "t:sections.featured-collection.settings.image_ratio.options__3.label"
+        }
+      ],
+      "default": "adapt",
+      "label": "t:sections.featured-collection.settings.image_ratio.label"
+    },
+    {
+      "type": "select",
+      "id": "image_shape",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:sections.all.image_shape.options__1.label"
+        },
+        {
+          "value": "arch",
+          "label": "t:sections.all.image_shape.options__2.label"
+        },
+        {
+          "value": "blob",
+          "label": "t:sections.all.image_shape.options__3.label"
+        },
+        {
+          "value": "chevronleft",
+          "label": "t:sections.all.image_shape.options__4.label"
+        },
+        {
+          "value": "chevronright",
+          "label": "t:sections.all.image_shape.options__5.label"
+        },
+        {
+          "value": "diamond",
+          "label": "t:sections.all.image_shape.options__6.label"
+        },
+        {
+          "value": "parallelogram",
+          "label": "t:sections.all.image_shape.options__7.label"
+        },
+        {
+          "value": "round",
+          "label": "t:sections.all.image_shape.options__8.label"
+        }
+      ],
+      "default": "default",
+      "label": "t:sections.all.image_shape.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_secondary_image",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.show_secondary_image.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.show_vendor.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.show_rating.label",
+      "info": "t:sections.featured-collection.settings.show_rating.info"
+    },
+    {
+      "type": "select",
+      "id": "quick_add",
+      "default": "none",
+      "label": "t:sections.main-collection-product-grid.settings.quick_add.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.main-collection-product-grid.settings.quick_add.options.option_1"
+        },
+        {
+          "value": "standard",
+          "label": "t:sections.main-collection-product-grid.settings.quick_add.options.option_2"
+        },
+        {
+          "value": "bulk",
+          "label": "t:sections.main-collection-product-grid.settings.quick_add.options.option_3"
         }
       ]
     },
     {
-      "type": "range",
-      "id": "products",
-      "label": {
-        "cs": "Počet produktů na řádek",
-        "da": "Produkter pr. række",
-        "de": "Produkte per Reihe",
-        "en": "Products per row",
-        "es": "Productos por fila",
-        "fi": "Tuotteita per rivi",
-        "fr": "Produits par rangée",
-        "it": "Prodotti per riga",
-        "ja": "行あたりの商品数",
-        "ko": "열 별 제품",
-        "nb": "Produkter per rad",
-        "nl": "Producten per rij",
-        "pl": "Liczba produktów na wiersz",
-        "pt-BR": "Produtos por linha",
-        "pt-PT": "Produtos por linha",
-        "sv": "Produkter per rad",
-        "th": "สินค้าต่อแถว",
-        "tr": "Satır başına ürün",
-        "vi": "Số sản phẩm trên một hàng",
-        "zh-CN": "每行产品数",
-        "zh-TW": "每列產品數"
-      },
-      "min": 2,
-      "max": 4,
-      "step": 1,
-      "default": 3
+      "type": "header",
+      "content": "t:sections.featured-collection.settings.header_mobile.content"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "default": "2",
+      "label": "t:sections.featured-collection.settings.columns_mobile.label",
+      "options": [
+        {
+          "value": "1",
+          "label": "t:sections.featured-collection.settings.columns_mobile.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:sections.featured-collection.settings.columns_mobile.options__2.label"
+        }
+      ]
+    },    
+    {
+      "type": "checkbox",
+      "id": "swipe_on_mobile",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.swipe_on_mobile.label"
+    },          
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
     },
     {
       "type": "range",
-      "id": "rows",
-      "label": {
-        "cs": "Řádky",
-        "da": "Rækker",
-        "de": "Reihen",
-        "en": "Rows",
-        "es": "Filas",
-        "fi": "Rivit",
-        "fr": "Rangées",
-        "it": "Righe",
-        "ja": "行",
-        "ko": "열",
-        "nb": "Rader",
-        "nl": "Rijen",
-        "pl": "Wiersze",
-        "pt-BR": "Linhas",
-        "pt-PT": "Linhas",
-        "sv": "Rader",
-        "th": "แถว",
-        "tr": "Satırlar",
-        "vi": "Hàng",
-        "zh-CN": "行数",
-        "zh-TW": "列"
-      },
-      "min": 1,
-      "max": 5,
-      "step": 1,
-      "default": 2
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
     }
   ],
   "presets": [
     {
-      "name": {
-        "cs": "Propagovaná kolekce",
-        "da": "Udvalgt kollektion",
-        "de": "Vorgestellte Kategorie",
-        "en": "Featured collection",
-        "es": "Colección destacada",
-        "fi": "Esittelyssä oleva kokoelma",
-        "fr": "Collection en vedette",
-        "it": "Collezione in evidenza",
-        "ja": "特集コレクション",
-        "ko": "추천 컬렉션",
-        "nb": "Utvalgt samling",
-        "nl": "Uitgelichte collectie",
-        "pl": "Polecana kolekcja",
-        "pt-BR": "Coleção em destaque",
-        "pt-PT": "Coleção em destaque",
-        "sv": "Utvald produktserie",
-        "th": "คอลเลกชันแนะนำ",
-        "tr": "Öne çıkan koleksiyon",
-        "vi": "Bộ sưu tập nổi bật",
-        "zh-CN": "特色产品系列",
-        "zh-TW": "精選商品系列"
-      },
-      "category": {
-        "cs": "Kolekce",
-        "da": "Kollektion",
-        "de": "Kategorie",
-        "en": "Collection",
-        "es": "Colección",
-        "fi": "Kokoelma",
-        "fr": "Collection",
-        "it": "Collezione",
-        "ja": "コレクション",
-        "ko": "컬렉션",
-        "nb": "Samling",
-        "nl": "Collectie",
-        "pl": "Kolekcja",
-        "pt-BR": "Coleção",
-        "pt-PT": "Coleção",
-        "sv": "Produktserie",
-        "th": "คอลเลกชัน",
-        "tr": "Koleksiyon",
-        "vi": "Bộ sưu tập",
-        "zh-CN": "收藏",
-        "zh-TW": "商品系列"
-      }
+      "name": "t:sections.featured-collection.presets.name"
     }
   ]
 }

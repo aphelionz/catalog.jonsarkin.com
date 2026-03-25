@@ -1,317 +1,305 @@
-<div class="collection-list collection-list--{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="collection-list">
+{{ 'section-collection-list.css' | asset_url | stylesheet_tag }}
+{{ 'component-card.css' | asset_url | stylesheet_tag }}
+{{ 'component-slider.css' | asset_url | stylesheet_tag }}
 
-  <div class="page-width">
-    {% comment %}
-    {% if section.settings.title != blank %}
-      <div class="featured-collection__heading grid text-center">
-        <div class="grid__item medium-up--ten-twelfths medium-up--push-one-twelfth">
-          <h2>{{ section.settings.title | escape }}</h2>
-        </div>
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+{%- liquid
+  assign columns_mobile_int = section.settings.columns_mobile | plus: 0
+  assign show_mobile_slider = false
+  if section.settings.swipe_on_mobile and section.blocks.size > columns_mobile_int
+    assign show_mobile_slider = true
+  endif
+-%}
+
+<div class="color-{{ section.settings.color_scheme }} gradient">
+  <div class="collection-list-wrapper page-width isolate{% if show_mobile_slider %} page-width-desktop{% endif %}{% if section.settings.title == blank %} no-heading{% endif %}{% if section.settings.show_view_all == false or section.blocks.size > collections.size %} no-mobile-link{% endif %} section-{{ section.id }}-padding">
+    {%- unless section.settings.title == blank -%}
+      <div class="title-wrapper-with-link{% if show_mobile_slider %} title-wrapper--self-padded-tablet-down{% else %} title-wrapper--self-padded-mobile{% endif %} title-wrapper--no-top-margin">
+        <h2
+          id="SectionHeading-{{ section.id }}"
+          class="collection-list-title inline-richtext {{ section.settings.heading_size }}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+        >
+          {{ section.settings.title }}
+        </h2>
+
+        {%- if section.settings.show_view_all and show_mobile_slider -%}
+          <a
+            href="{{ routes.collections_url }}"
+            id="ViewAll-{{ section.id }}"
+            class="link underlined-link large-up-hide{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+            aria-labelledby="ViewAll-{{ section.id }} SectionHeading-{{ section.id }}"
+          >
+            {{- 'sections.collection_list.view_all' | t -}}
+          </a>
+        {%- endif -%}
       </div>
-    {% endif %}
-    {% endcomment %}
+    {%- endunless -%}
 
-    <div class="grid grid--uniform">
-
-      {% for block in section.blocks limit: section.blocks.size %}
-
-        {% case section.settings.grid %}
-          {% when 1 %}
-            {%- assign grid_item_width = 'one-whole' -%}
-          {% when 2 %}
-            {%- assign grid_item_width = 'small--one-half medium-up--one-half' -%}
-          {% when 3 %}
-            {%- assign grid_item_width = 'small--one-half medium-up--one-third' -%}
-          {% when 4 %}
-            {%- assign grid_item_width = 'small--one-half medium-up--one-quarter' -%}
-          {% else %}
-            {%- assign grid_item_width = 'small--one-half medium-up--one-third' -%}
-        {% endcase %}
-
-        {%- assign collection = collections[block.settings.collection] -%}
-
-        {% if collection == empty %}
-          {% comment %}add default state for collection block in storefront editor{% endcomment %}
-          {% capture collection_title %}{{ 'homepage.onboarding.collection_title' | t }}{% endcapture %}
-        {% else %}
-          {% capture collection_title %}{{ collection.title | escape }}{% endcapture %}
-        {% endif %}
-
-        {% if collection.image %}
-          {% assign no_collection_image = false %}
-          {%- assign collection_image = collection.image -%}
-        {% elsif collection.products.first and collection.products.first.media != empty %}
-          {%- assign collection_image = collection.products.first.featured_media.preview_image -%}
-        {% else %}
-          {%- assign collection_image = blank -%}
-        {% endif %}
-
-        <div class="grid__item {{ grid_item_width }}" {{ block.shopify_attributes }}>
-          <div class="collection-list-grid__image-item">
-            <div class="collection-list-grid__image-container">
-              <a href="{{ collection.url }}" class="collection-list-grid__link">
-                <div class="collection-list-grid__image-wrapper">
-                  {% unless collection_image == blank %}
-                    <noscript>
-                      <div class="collection-grid-item__image" style="background-image: url({{ collection_image | img_url: '1024x1024' }})"></div>
-                    </noscript>
-                    <div class="collection-grid-item__image lazyload"
-                      data-bgset="{% include 'bgset', image: collection_image %}"
-                      data-sizes="auto"
-                      data-parent-fit="cover"
-                      style="background-image: url('{{ collection_image | img_url: '300x300' }});">
-                    </div>
-                  {% else %}
-                    {% if collection == empty %}
-                      <div class="collection-grid-item__image">
-                        {% capture current %}{% cycle 1, 2, 3 %}{% endcapture %}
-                        {{ 'collection-' | append: current | placeholder_svg_tag: 'placeholder-svg' }}
-                      </div>
-                    {% else %}
-                      <div class="collection-grid-item__image" style="background-image: url({{ collection_image | img_url: '1024x1024' }})"></div>
-                    {% endif %}
-                  {% endunless %}
-                </div>
-              </a>
-            </div>
-            <div class="collection-grid-item__title">
-              <h3 class="h2 text-title text-center">{{ collection_title }}</h3>
-            </div>
+    <slider-component class="slider-mobile-gutter{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
+      <ul
+        class="collection-list contains-card contains-card--collection{% if settings.card_style == 'standard' %} contains-card--standard{% endif %} grid grid--{{ section.settings.columns_desktop }}-col-desktop grid--{{ section.settings.columns_mobile }}-col-tablet-down{% if section.settings.swipe_on_mobile %} slider slider--tablet grid--peek{% endif %} collection-list--{{ section.blocks.size }}-items"
+        id="Slider-{{ section.id }}"
+        role="list"
+      >
+        {%- liquid
+          assign columns = section.blocks.size
+          if columns > 3
+            assign columns = 3
+          endif
+        -%}
+        {%- for block in section.blocks -%}
+          <li
+            id="Slide-{{ section.id }}-{{ forloop.index }}"
+            class="collection-list__item grid__item{% if show_mobile_slider %} slider__slide{% endif %}{% if block.settings.collection.featured_image == nil %} collection-list__item--no-media{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+            {{ block.shopify_attributes }}
+            {% if settings.animations_reveal_on_scroll %}
+              data-cascade
+              style="--animation-order: {{ forloop.index }};"
+            {% endif %}
+          >
+            {%- assign placeholder_image_index = forloop.index0 | modulo: 4 | plus: 1 -%}
+            {%- assign placeholder_image = 'collection-apparel-' | append: placeholder_image_index -%}
+            {% render 'card-collection',
+              card_collection: block.settings.collection,
+              media_aspect_ratio: section.settings.image_ratio,
+              columns: columns,
+              placeholder_image: placeholder_image
+            %}
+          </li>
+        {%- endfor -%}
+      </ul>
+      {%- if show_mobile_slider -%}
+        <div class="slider-buttons">
+          <button
+            type="button"
+            class="slider-button slider-button--prev"
+            name="previous"
+            aria-label="{{ 'general.slider.previous_slide' | t }}"
+          >
+            <span class="svg-wrapper">
+              {{- 'icon-caret.svg' | inline_asset_content -}}
+            </span>
+          </button>
+          <div class="slider-counter caption">
+            <span class="slider-counter--current">1</span>
+            <span aria-hidden="true"> / </span>
+            <span class="visually-hidden">{{ 'general.slider.of' | t }}</span>
+            <span class="slider-counter--total">{{ section.blocks.size }}</span>
           </div>
+          <button
+            type="button"
+            class="slider-button slider-button--next"
+            name="next"
+            aria-label="{{ 'general.slider.next_slide' | t }}"
+          >
+            <span class="svg-wrapper">
+              {{- 'icon-caret.svg' | inline_asset_content -}}
+            </span>
+          </button>
         </div>
+      {%- endif -%}
+    </slider-component>
 
-      {% endfor %}
-
-    </div>
-
+    {%- if section.settings.show_view_all and section.blocks.size < collections.size -%}
+      <div
+        class="center collection-list-view-all{% if show_mobile_slider %} small-hide medium-hide{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+        {% if settings.animations_reveal_on_scroll %}
+          data-cascade
+        {% endif %}
+      >
+        <a
+          href="{{ routes.collections_url }}"
+          class="button"
+          id="ViewAllButton-{{ section.id }}"
+          aria-labelledby="ViewAllButton-{{ section.id }} SectionHeading-{{ section.id }}"
+        >
+          {{- 'sections.collection_list.view_all' | t -}}
+        </a>
+      </div>
+    {%- endif -%}
   </div>
-
 </div>
 
 {% schema %}
 {
-  "name": {
-    "cs": "Seznam kolekcí",
-    "da": "Kollektionsliste",
-    "de": "Kategorien-Liste",
-    "en": "Collection list",
-    "es": "Lista de colecciones",
-    "fi": "Kokoelmaluettelo",
-    "fr": "Page des collections",
-    "it": "Elenco delle collezioni",
-    "ja": "コレクションリスト",
-    "ko": "컬렉션 목록",
-    "nb": "Samlingsliste",
-    "nl": "Collectielijst",
-    "pl": "Lista kolekcji",
-    "pt-BR": "Lista de coleções",
-    "pt-PT": "Lista de coleção",
-    "sv": "Produktserielista",
-    "th": "รายการคอลเลกชัน",
-    "tr": "Koleksiyon listesi",
-    "vi": "Danh sách bộ sưu tập",
-    "zh-CN": "产品系列列表",
-    "zh-TW": "商品系列清單"
+  "name": "t:sections.collection-list.name",
+  "tag": "section",
+  "class": "section section-collection-list",
+  "max_blocks": 15,
+  "disabled_on": {
+    "groups": ["header", "footer"]
   },
-  "class": "index-section",
-  "max_blocks": 12,
   "settings": [
     {
-      "type": "text",
+      "type": "inline_richtext",
       "id": "title",
-      "label": {
-        "cs": "Nadpis",
-        "da": "Overskrift",
-        "de": "Titel",
-        "en": "Heading",
-        "es": "Título",
-        "fi": "Otsake",
-        "fr": "Titre",
-        "it": "Heading",
-        "ja": "見出し",
-        "ko": "제목",
-        "nb": "Overskrift",
-        "nl": "Kop",
-        "pl": "Nagłówek",
-        "pt-BR": "Título",
-        "pt-PT": "Título",
-        "sv": "Rubrik",
-        "th": "ส่วนหัว",
-        "tr": "Başlık",
-        "vi": "Tiêu đề",
-        "zh-CN": "标题",
-        "zh-TW": "標題"
-      },
-      "default": {
-        "cs": "Seznam kolekcí",
-        "da": "Kollektionsliste",
-        "de": "Kategorien-Liste",
-        "en": "Collection list",
-        "es": "Lista de colecciones",
-        "fi": "Kokoelmaluettelo",
-        "fr": "Page de liste des collections",
-        "it": "Elenco delle collezioni",
-        "ja": "コレクションリスト",
-        "ko": "컬렉션 목록",
-        "nb": "Samlingsliste",
-        "nl": "Collectielijst",
-        "pl": "Lista kolekcji",
-        "pt-BR": "Lista de coleções",
-        "pt-PT": "Lista de coleção",
-        "sv": "Produktserielista",
-        "th": "รายการคอลเลกชัน",
-        "tr": "Koleksiyon listesi",
-        "vi": "Danh sách bộ sưu tập",
-        "zh-CN": "产品系列列表",
-        "zh-TW": "商品系列清單"
-      }
+      "default": "t:sections.collection-list.settings.title.default",
+      "label": "t:sections.collection-list.settings.title.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_size.options__1.label"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_size.options__2.label"
+        },
+        {
+          "value": "h0",
+          "label": "t:sections.all.heading_size.options__3.label"
+        },
+        {
+          "value": "hxl",
+          "label": "t:sections.all.heading_size.options__4.label"
+        },
+        {
+          "value": "hxxl",
+          "label": "t:sections.all.heading_size.options__5.label"
+        }
+      ],
+      "default": "h1",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.collection-list.settings.header_layout.content"
+    },    
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "t:sections.collection-list.settings.image_ratio.options__1.label"
+        },
+        {
+          "value": "portrait",
+          "label": "t:sections.collection-list.settings.image_ratio.options__2.label"
+        },
+        {
+          "value": "square",
+          "label": "t:sections.collection-list.settings.image_ratio.options__3.label"
+        }
+      ],
+      "default": "square",
+      "label": "t:sections.collection-list.settings.image_ratio.label"
     },
     {
       "type": "range",
-      "id": "grid",
-      "label": {
-        "cs": "Počet kolekcí na řádek",
-        "da": "Kollektioner pr. række",
-        "de": "Kategorien per Reihe",
-        "en": "Collections per row",
-        "es": "Colecciones por fila",
-        "fi": "Kokoelmia per rivi",
-        "fr": "Collections par rangée",
-        "it": "Collezioni per riga",
-        "ja": "行あたりのコレクション数",
-        "ko": "열 별 컬렉션",
-        "nb": "Samlinger per rad",
-        "nl": "Collecties per rij",
-        "pl": "Liczba kolekcji na wiersz",
-        "pt-BR": "Coleções por linha",
-        "pt-PT": "Coleções por linha",
-        "sv": "Produktserier per rad",
-        "th": "คอลเลกชันต่อแถว",
-        "tr": "Satır başına koleksiyon",
-        "vi": "Số bộ sưu tập trên mỗi hàng",
-        "zh-CN": "每行产品系列数",
-        "zh-TW": "每列商品系列數"
-      },
-      "min": 2,
-      "max": 4,
+      "id": "columns_desktop",
+      "min": 1,
+      "max": 6,
       "step": 1,
-      "default": 3
+      "default": 3,
+      "label": "t:sections.collection-list.settings.columns_desktop.label"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:sections.all.colors.label",
+      "info": "t:sections.all.colors.has_cards_info",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "default": false,
+      "label": "t:sections.collection-list.settings.show_view_all.label",
+      "info": "t:sections.collection-list.settings.show_view_all.info"   
+    },
+    {
+      "type": "header",
+      "content": "t:sections.collection-list.settings.header_mobile.content"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "options": [
+        {
+          "value": "1",
+          "label": "t:sections.collection-list.settings.columns_mobile.options__1.label"
+        },
+        {
+          "value": "2",
+          "label": "t:sections.collection-list.settings.columns_mobile.options__2.label"
+        }
+      ],
+      "default": "1",
+      "label": "t:sections.collection-list.settings.columns_mobile.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "swipe_on_mobile",
+      "default": false,
+      "label": "t:sections.collection-list.settings.swipe_on_mobile.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
     }
   ],
   "blocks": [
     {
-      "type": "collection",
-      "name": {
-        "cs": "Kolekce",
-        "da": "Kollektion",
-        "de": "Kategorie",
-        "en": "Collection",
-        "es": "Colección",
-        "fi": "Kokoelma",
-        "fr": "Collection",
-        "it": "Collezione",
-        "ja": "コレクション",
-        "ko": "컬렉션",
-        "nb": "Samling",
-        "nl": "Collectie",
-        "pl": "Kolekcja",
-        "pt-BR": "Coleção",
-        "pt-PT": "Coleção",
-        "sv": "Produktserie",
-        "th": "คอลเลกชัน",
-        "tr": "Koleksiyon",
-        "vi": "Bộ sưu tập",
-        "zh-CN": "收藏",
-        "zh-TW": "商品系列"
-      },
+      "type": "featured_collection",
+      "name": "t:sections.collection-list.blocks.featured_collection.name",
       "settings": [
         {
           "type": "collection",
           "id": "collection",
-          "label": {
-            "cs": "Kolekce",
-            "da": "Kollektion",
-            "de": "Kategorie",
-            "en": "Collection",
-            "es": "Colección",
-            "fi": "Kokoelma",
-            "fr": "Collection",
-            "it": "Collezione",
-            "ja": "コレクション",
-            "ko": "컬렉션",
-            "nb": "Samling",
-            "nl": "Collectie",
-            "pl": "Kolekcja",
-            "pt-BR": "Coleção",
-            "pt-PT": "Coleção",
-            "sv": "Produktserie",
-            "th": "คอลเลกชัน",
-            "tr": "Koleksiyon",
-            "vi": "Bộ sưu tập",
-            "zh-CN": "收藏",
-            "zh-TW": "商品系列"
-          }
+          "label": "t:sections.collection-list.blocks.featured_collection.settings.collection.label"
         }
       ]
     }
   ],
   "presets": [
     {
-      "name": {
-        "cs": "Seznam kolekcí",
-        "da": "Kollektionsliste",
-        "de": "Kategorien-Liste",
-        "en": "Collection list",
-        "es": "Lista de colecciones",
-        "fi": "Kokoelmaluettelo",
-        "fr": "Page des collections",
-        "it": "Elenco delle collezioni",
-        "ja": "コレクションリスト",
-        "ko": "컬렉션 목록",
-        "nb": "Samlingsliste",
-        "nl": "Collectielijst",
-        "pl": "Lista kolekcji",
-        "pt-BR": "Lista de coleções",
-        "pt-PT": "Lista de coleção",
-        "sv": "Produktserielista",
-        "th": "รายการคอลเลกชัน",
-        "tr": "Koleksiyon listesi",
-        "vi": "Danh sách bộ sưu tập",
-        "zh-CN": "产品系列列表",
-        "zh-TW": "商品系列清單"
-      },
-      "category": {
-        "cs": "Kolekce",
-        "da": "Kollektion",
-        "de": "Kategorie",
-        "en": "Collection",
-        "es": "Colección",
-        "fi": "Kokoelma",
-        "fr": "Collection",
-        "it": "Collezione",
-        "ja": "コレクション",
-        "ko": "컬렉션",
-        "nb": "Samling",
-        "nl": "Collectie",
-        "pl": "Kolekcja",
-        "pt-BR": "Coleção",
-        "pt-PT": "Coleção",
-        "sv": "Produktserie",
-        "th": "คอลเลกชัน",
-        "tr": "Koleksiyon",
-        "vi": "Bộ sưu tập",
-        "zh-CN": "收藏",
-        "zh-TW": "商品系列"
-      },
+      "name": "t:sections.collection-list.presets.name",
       "blocks": [
         {
-          "type": "collection"
+          "type": "featured_collection"
         },
         {
-          "type": "collection"
+          "type": "featured_collection"
         },
         {
-          "type": "collection"
+          "type": "featured_collection"
         }
       ]
     }

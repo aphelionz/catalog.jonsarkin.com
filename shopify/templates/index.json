@@ -1,0 +1,128 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "image_with_text_jgJeDx": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading_aBdh8j": {
+          "type": "heading",
+          "settings": {
+            "heading": "",
+            "heading_size": "h1"
+          }
+        },
+        "text_PNCEWF": {
+          "type": "text",
+          "settings": {
+            "text": "<p><strong>Jon Sarkin</strong> (1953-2024) was a visionary outsider artist based in Gloucester, MA. Over the decades he created a massive body of work, spanning exhibitions, private sales, and museum placements.</p><p>His final workspace, Fish City Studios, is open to the public and remains a unique destination for visitors. That space, along with this site, are maintained by the official Sarkin Estate.</p><p>Collectors and curators can book concierge viewings both in person or virtually.</p>",
+            "text_style": "body"
+          }
+        },
+        "button_mRG6W4": {
+          "type": "button",
+          "settings": {
+            "button_label": "Book a Private Studio Visit",
+            "button_link": "shopify://pages/book-a-private-studio-appointment",
+            "button_style_secondary": true
+          }
+        }
+      },
+      "block_order": [
+        "heading_aBdh8j",
+        "text_PNCEWF",
+        "button_mRG6W4"
+      ],
+      "settings": {
+        "image": "shopify://shop_images/sarkin_quad_bw_portraits_2d6d736d-393c-44eb-a7c1-ccbbe9f0eff8.jpg",
+        "height": "adapt",
+        "desktop_image_width": "medium",
+        "layout": "text_first",
+        "image_behavior": "ambient",
+        "content_layout": "no-overlap",
+        "desktop_content_position": "top",
+        "desktop_content_alignment": "left",
+        "mobile_content_alignment": "left",
+        "section_color_scheme": "scheme-4",
+        "color_scheme": "scheme-4",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "video_6eiQCa": {
+      "type": "video",
+      "settings": {
+        "heading": "",
+        "heading_size": "h1",
+        "enable_video_looping": false,
+        "video_url": "https://www.youtube.com/watch?v=oohuOTjfWK0",
+        "cover_image": "shopify://shop_images/oohuOTjfWK0-HD.jpg",
+        "description": "",
+        "full_width": false,
+        "color_scheme": "scheme-5",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "image_banner_Ppydtt": {
+      "type": "image-banner",
+      "blocks": {
+        "heading_X3a7LU": {
+          "type": "heading",
+          "settings": {
+            "heading": "Your support keeps the archive growing and free to explore",
+            "heading_size": "h2"
+          }
+        },
+        "text_m9ePGG": {
+          "type": "text",
+          "settings": {
+            "text": "<strong>The Jon Sarkin Memorial Archives</strong> catalog thousands of original works from Jon’s studio in Gloucester, MA. Your donation supports the ongoing archiving and preservation of this legacy for future generations. You can support this effort in two ways:",
+            "text_style": "subtitle"
+          }
+        },
+        "buttons_XcDBJQ": {
+          "type": "buttons",
+          "settings": {
+            "button_label_1": "Donate via Fractured Atlas (Tax-Deductible)",
+            "button_link_1": "https://fundraising.fracturedatlas.org/jon-sarkin-memorial-gallery",
+            "button_style_secondary_1": true,
+            "button_label_2": "Join Patreon (Community Perks)",
+            "button_link_2": "https://www.patreon.com/c/jonsarkin",
+            "button_style_secondary_2": true
+          }
+        }
+      },
+      "block_order": [
+        "heading_X3a7LU",
+        "text_m9ePGG",
+        "buttons_XcDBJQ"
+      ],
+      "settings": {
+        "image": "shopify://shop_images/tempImageNGOdTz.heic",
+        "image_overlay_opacity": 0,
+        "image_height": "medium",
+        "image_behavior": "none",
+        "desktop_content_position": "middle-center",
+        "desktop_content_alignment": "center",
+        "show_text_box": true,
+        "color_scheme": "scheme-5",
+        "stack_images_on_mobile": true,
+        "mobile_content_alignment": "center",
+        "show_text_below": true
+      }
+    }
+  },
+  "order": [
+    "image_with_text_jgJeDx",
+    "video_6eiQCa",
+    "image_banner_Ppydtt"
+  ]
+}

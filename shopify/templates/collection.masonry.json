@@ -1,0 +1,78 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "banner": {
+      "type": "main-collection-banner",
+      "disabled": true,
+      "settings": {
+        "show_collection_description": true,
+        "show_collection_image": false,
+        "color_scheme": "scheme-4"
+      }
+    },
+    "rich_text_7zqL4m": {
+      "type": "rich-text",
+      "blocks": {
+        "heading_4dTUd8": {
+          "type": "heading",
+          "settings": {
+            "heading": "Original artwork, direct from the studio",
+            "heading_size": "h2"
+          }
+        },
+        "text_w46a6e": {
+          "type": "text",
+          "settings": {
+            "text": "<p><strong>Jon Sarkin</strong> is a celebrated outsider artist known for his iconic, obsessive drawings featured in <em>The Boston Globe</em> and <em>Raw Vision</em>. For the backstory, read <a href=\"/pages/about\" title=\"Jon Sarkin was an American visual artist based in Gloucester, MA.\">this</a> or watch <a href=\"https://www.youtube.com/watch?v=oohuOTjfWK0\" title=\"https://www.youtube.com/watch?v=oohuOTjfWK0\">this</a>.</p><p>Looking for something specific? Try filtering by <strong>subject</strong>, <strong>year</strong>, or <strong>color</strong> below.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "heading_4dTUd8",
+        "text_w46a6e"
+      ],
+      "settings": {
+        "desktop_content_position": "left",
+        "content_alignment": "left",
+        "color_scheme": "scheme-5",
+        "full_width": true,
+        "padding_top": 40,
+        "padding_bottom": 52
+      }
+    },
+    "product-grid": {
+      "type": "main-collection-product-grid",
+      "custom_css": [],
+      "settings": {
+        "products_per_page": 36,
+        "columns_desktop": 2,
+        "columns_mobile": "1",
+        "color_scheme": "scheme-4",
+        "image_ratio": "adapt",
+        "image_shape": "default",
+        "show_secondary_image": true,
+        "show_vendor": false,
+        "show_rating": false,
+        "quick_add": "standard",
+        "enable_filtering": true,
+        "filter_type": "vertical",
+        "enable_sorting": true,
+        "padding_top": 12,
+        "padding_bottom": 12
+      }
+    }
+  },
+  "order": [
+    "banner",
+    "rich_text_7zqL4m",
+    "product-grid"
+  ]
+}

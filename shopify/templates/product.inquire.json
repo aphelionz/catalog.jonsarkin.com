@@ -1,0 +1,123 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "text_Wr7mjR": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "This piece is sold by direct inquiry only. Please <a href=\"/pages/book-a-private-studio-appointment\" title=\"Book a Private Studio Appointment\"><strong>book a private studio appointment</strong></a> for more information.",
+            "text_style": "subtitle"
+          }
+        },
+        "share": {
+          "type": "share",
+          "settings": {
+            "share_label": "Share"
+          }
+        }
+      },
+      "block_order": [
+        "title",
+        "description",
+        "text_Wr7mjR",
+        "share"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "color_scheme": "scheme-4",
+        "media_size": "small",
+        "constrain_to_viewport": false,
+        "media_fit": "cover",
+        "gallery_layout": "thumbnail_slider",
+        "mobile_thumbnails": "hide",
+        "media_position": "right",
+        "image_zoom": "lightbox",
+        "hide_variants": true,
+        "enable_video_looping": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "related-products": {
+      "type": "related-products",
+      "disabled": true,
+      "settings": {
+        "heading": "There's even more...",
+        "heading_size": "h2",
+        "products_to_show": 5,
+        "columns_desktop": 5,
+        "columns_mobile": "2",
+        "color_scheme": "scheme-5",
+        "image_ratio": "adapt",
+        "image_shape": "default",
+        "show_secondary_image": false,
+        "show_vendor": false,
+        "show_rating": false,
+        "padding_top": 36,
+        "padding_bottom": 44
+      }
+    },
+    "image_with_text_GDbxih": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading_3YD7L7": {
+          "type": "heading",
+          "settings": {
+            "heading": "About Jon Sarkin",
+            "heading_size": "h1"
+          }
+        },
+        "text_x7zNJn": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Jon Sarkin is a self-taught American artist whose work has appeared in the New Yorker, The Boston Globe, Raw Vision, and galleries around the world.<br/><br/>His process is obsessive, improvisational, and deeply personal - drawing from a transformative brain injury that re-wired the way he sees and creates.</p>",
+            "text_style": "body"
+          }
+        }
+      },
+      "block_order": [
+        "heading_3YD7L7",
+        "text_x7zNJn"
+      ],
+      "settings": {
+        "image": "shopify://shop_images/20240211_103926.jpg",
+        "height": "medium",
+        "desktop_image_width": "medium",
+        "layout": "image_first",
+        "image_behavior": "none",
+        "content_layout": "no-overlap",
+        "desktop_content_position": "top",
+        "desktop_content_alignment": "left",
+        "mobile_content_alignment": "left",
+        "section_color_scheme": "scheme-4",
+        "color_scheme": "scheme-5",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "main",
+    "related-products",
+    "image_with_text_GDbxih"
+  ]
+}
