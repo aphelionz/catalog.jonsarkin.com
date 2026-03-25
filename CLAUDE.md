@@ -103,6 +103,7 @@ Enrichment is now in the Omeka admin UI: **Admin > Enrich Queue**.
 - **PHP max_file_uploads:** default is 20. For bulk uploads >20 files, add `max_file_uploads = 100` to `/usr/local/etc/php/conf.d/uploads.ini` inside the Omeka container and restart.
 - **IccThumbnailer wiring:** Omeka's module manager does NOT merge third-party `service_manager` configs into the global config. The factory + alias must live in `local.config.php` with a `require_once` for lazy class loading. Do not try to set them in the module's `module.config.php` alone.
 - **Prod files path:** prod files are at `/var/www/omeka-s/files/` (Docker volume), NOT `/opt/catalog/omeka/volume/files/`.
+- **Omeka API PATCH considered harmful:** `$this->api()->update('items', $id, $body)` does a **full replacement**, not a merge. Sending `{ 'o:item_set': [...] }` without every other field **deletes all metadata, media, and values**. Never PATCH items to change just one thing. For item set membership, use direct SQL (`INSERT INTO item_item_set`). For field edits, always include the full payload from `readAction` or `buildBasePayload`.
 
 ## Communication
 - What changed and why — skip the obvious, don't restate my instructions
