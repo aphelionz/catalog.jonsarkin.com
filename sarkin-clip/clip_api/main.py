@@ -30,6 +30,9 @@ from clip_api.models import (
     SegmentMatchItem,
     SegmentSearchResponse,
     SimilarResponse,
+    TournamentMatchup,
+    TournamentSeedRequest,
+    TournamentSeedResponse,
 )
 from clip_api.preprocess import PREPROC_VERSION, compose_text_blob, extract_tags_text, tokenize
 from clip_api.qdrant import QdrantError, QdrantUnavailable, close_client, extract_error_message, request_json
@@ -620,6 +623,94 @@ def similar_items(
         matches.append(MatchItem(**match, score=score))
 
     return SimilarResponse(source=source, matches=matches)
+
+
+@app.post(
+    "/v1/tournament/seed",
+    response_model=TournamentSeedResponse,
+)
+def tournament_seed(body: TournamentSeedRequest) -> TournamentSeedResponse:
+    """Pair items by CLIP similarity for tournament bracket seeding.
+
+    Fetches CLIP vectors for all requested items from Qdrant, then greedily
+    pairs the most-similar items first. This ensures the hardest choices
+    (most visually similar pieces) happen in round 1.
+    """
+    settings = _settings()
+    item_ids = body.item_ids
+    if len(item_ids) < 2:
+        return TournamentSeedResponse(matchups=[], byes=item_ids)
+    if len(item_ids) > 200:
+        raise HTTPException(status_code=400, detail="Maximum 200 items per tournament seed")
+
+    # Batch-fetch vectors from Qdrant
+    url = f"{settings.qdrant_url}/collections/{settings.qdrant_collection}/points"
+    resp = request_json(
+        "POST",
+        url,
+        headers=_headers(settings),
+        json={"ids": item_ids, "with_payload": False, "with_vector": True},
+    )
+    if not resp.is_success:
+        raise HTTPException(status_code=502, detail="Failed to fetch vectors from Qdrant")
+
+    points = resp.json().get("result", [])
+
+    # Build id → vector map (handle both flat and named vector formats)
+    vectors: dict[int, list[float]] = {}
+    for pt in points:
+        pid = pt["id"]
+        vec = pt.get("vector")
+        if vec is None:
+            continue
+        if isinstance(vec, dict):
+            # Named vectors — prefer default/clip
+            vec = vec.get("default") or vec.get("clip") or next(iter(vec.values()), None)
+        if vec and isinstance(vec, list):
+            vectors[pid] = vec
+
+    # Items without vectors get byes
+    has_vec = set(vectors.keys())
+    no_vec = [i for i in item_ids if i not in has_vec]
+
+    ids_with_vec = [i for i in item_ids if i in has_vec]
+    if len(ids_with_vec) < 2:
+        return TournamentSeedResponse(matchups=[], byes=item_ids)
+
+    # Compute all pairwise cosine similarities
+    import math
+
+    def cosine_sim(a: list[float], b: list[float]) -> float:
+        dot = sum(x * y for x, y in zip(a, b))
+        na = math.sqrt(sum(x * x for x in a))
+        nb = math.sqrt(sum(x * x for x in b))
+        if na == 0 or nb == 0:
+            return 0.0
+        return dot / (na * nb)
+
+    # Build sorted list of all pairs by similarity (descending)
+    pairs: list[tuple[float, int, int]] = []
+    n = len(ids_with_vec)
+    for i in range(n):
+        for j in range(i + 1, n):
+            sim = cosine_sim(vectors[ids_with_vec[i]], vectors[ids_with_vec[j]])
+            pairs.append((sim, ids_with_vec[i], ids_with_vec[j]))
+    pairs.sort(reverse=True)
+
+    # Greedy matching: pair most-similar first
+    matched: set[int] = set()
+    matchups: list[TournamentMatchup] = []
+    for sim, a, b in pairs:
+        if a in matched or b in matched:
+            continue
+        matchups.append(TournamentMatchup(a=a, b=b, similarity=round(sim, 4)))
+        matched.add(a)
+        matched.add(b)
+
+    # Unmatched items (odd count) become byes
+    byes = no_vec + [i for i in ids_with_vec if i not in matched]
+
+    return TournamentSeedResponse(matchups=matchups, byes=byes)
 
 
 @app.get(

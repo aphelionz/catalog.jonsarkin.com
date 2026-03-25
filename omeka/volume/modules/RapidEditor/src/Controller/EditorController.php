@@ -265,4 +265,40 @@ class EditorController extends AbstractActionController
             return new JsonModel(['error' => 'Update failed: ' . $e->getMessage()]);
         }
     }
+
+    /**
+     * Proxy tournament-seed request to clip-api.
+     * POST body: { "item_ids": [1, 2, 3, ...] }
+     */
+    public function tournamentSeedAction(): JsonModel
+    {
+        $body = json_decode($this->getRequest()->getContent(), true);
+        if (!is_array($body) || empty($body['item_ids'])) {
+            return new JsonModel(['error' => 'item_ids required']);
+        }
+
+        $clipUrl = rtrim(getenv('CLIP_API_URL') ?: 'http://clip-api:8000', '/');
+        $url = $clipUrl . '/v1/tournament/seed';
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($body),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 30,
+        ]);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($result === false) {
+            $this->getResponse()->setStatusCode(502);
+            return new JsonModel(['error' => 'clip-api unreachable: ' . $error]);
+        }
+
+        $this->getResponse()->setStatusCode($httpCode);
+        return new JsonModel(json_decode($result, true) ?? ['error' => 'Invalid response']);
+    }
 }

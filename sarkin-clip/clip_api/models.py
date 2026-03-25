@@ -139,3 +139,18 @@ class SegmentIngestRequest(BaseModel):
     image_url: str = Field(..., description="URL of the artwork image to embed")
     omeka_url: str = ""
     thumb_url: str = ""
+
+
+class TournamentSeedRequest(BaseModel):
+    item_ids: List[int] = Field(..., description="Omeka item IDs to seed into a bracket")
+
+
+class TournamentMatchup(BaseModel):
+    a: int = Field(..., description="First item omeka_id")
+    b: int = Field(..., description="Second item omeka_id")
+    similarity: float = Field(..., description="CLIP cosine similarity between the pair")
+
+
+class TournamentSeedResponse(BaseModel):
+    matchups: List[TournamentMatchup]
+    byes: List[int] = Field(default_factory=list, description="Items with no opponent (odd count)")

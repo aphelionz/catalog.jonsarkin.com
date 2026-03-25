@@ -99,6 +99,10 @@ let availableItemSets = [];    // fetched from API at init
 let exhibitMode = false;
 let exhibitState = null;       // { name, sourceFilter, rounds, currentRound }
 
+// Tournament state (head-to-head bracket within an exhibition)
+let tournamentMode = false;
+let tournamentState = null;    // { bracket, currentMatch, roundNum, survivors, setId, exhibitName }
+
 // Sprint state
 let sprintMode = false;
 let sprintField = null;       // key into FIELD_SPRINTS
@@ -1927,8 +1931,17 @@ function enterExhibitMode() {
     b.classList.toggle('active', b.dataset.filter === 'exhibit');
   }
 
-  // Check for in-progress round to resume
+  // Check for in-progress tournament to resume
   const stored = loadExhibitStorage();
+  if (stored.tournament && stored.tournament.currentMatch < (stored.tournament.bracket || []).length) {
+    if (resumeTournament()) {
+      renderTournamentMatch();
+      savePosition();
+      return;
+    }
+  }
+
+  // Check for in-progress round to resume
   if (stored.roundProgress && stored.roundProgress.bucketIndex > 0) {
     const ex = stored.exhibitions && stored.exhibitions[stored.roundProgress.exhibitName];
     if (ex) {
@@ -1950,6 +1963,7 @@ function exitExhibitMode() {
   exhibitState = null;
   bucketMode = false;
   bucketSetup = true;
+  if (tournamentMode) exitTournamentMode();
   $('#curate-panel').classList.add('hidden');
   dom.main.classList.remove('hidden');
   clearCardStage();
@@ -2376,19 +2390,27 @@ function showExhibitRoundComplete() {
 
   if (kept === 0) {
     html += '<p>No pieces advanced. Exhibition is empty.</p>';
-  } else if (kept <= 40) {
-    html += `<p>${kept} pieces remaining — could be your final selection.</p>`;
+  } else if (kept <= 100 && kept > 2) {
+    html += `<p>${kept} pieces remaining — ready for tournament mode!</p>`;
+  } else if (kept <= 2) {
+    html += `<p>${kept} piece${kept === 1 ? '' : 's'} remaining — your final selection.</p>`;
   }
 
   html += '<div class="exhibit-round-done-actions">';
+  if (kept > 2 && kept <= 100) {
+    html += `<button class="btn btn-save" id="exhibit-tournament">⚔️ Tournament Mode</button>`;
+  }
   if (kept > 0) {
-    html += `<button class="btn btn-save" id="exhibit-next-round">Start Round ${state.currentRound + 1}</button>`;
+    html += `<button class="btn ${kept > 100 ? 'btn-save' : 'btn-nav'}" id="exhibit-next-round">Start Round ${state.currentRound + 1}</button>`;
   }
   html += '<button class="btn btn-nav" id="exhibit-back-list">Back to Exhibitions</button>';
   html += '</div></div>';
 
   stage.innerHTML = html;
 
+  if ($('#exhibit-tournament')) {
+    $('#exhibit-tournament').addEventListener('click', () => enterTournamentMode(state));
+  }
   if ($('#exhibit-next-round')) {
     $('#exhibit-next-round').addEventListener('click', () => startNextExhibitRound(state));
   }
@@ -2414,6 +2436,369 @@ function persistExhibitRoundProgress() {
     queueItemIds: bucketQueue.map(it => it['o:id']),
   };
   saveExhibitStorage(stored);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Tournament Mode — head-to-head bracket within an exhibition ──────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function enterTournamentMode(exhibitSt) {
+  const roundData = exhibitSt.rounds.find(r => r.round === exhibitSt.currentRound);
+  if (!roundData) return;
+
+  // Get items in the survivor set
+  const pool = allItems.filter(item =>
+    (item['o:item_set'] || []).some(s => s['o:id'] === roundData.setId)
+  );
+  if (pool.length < 2) {
+    showToast('Need at least 2 items for tournament', true);
+    return;
+  }
+
+  const stage = $('#card-stage');
+  stage.innerHTML = '<div class="exhibit-round-done"><h2>⚔️ Seeding Tournament...</h2><p>Analyzing visual similarity with CLIP...</p></div>';
+
+  // Call tournament-seed endpoint
+  try {
+    const resp = await fetch('/admin/rapid-editor/tournament-seed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_ids: pool.map(it => it['o:id']) }),
+    });
+    if (!resp.ok) throw new Error(`Seed failed: ${resp.status}`);
+    const seed = await resp.json();
+
+    tournamentMode = true;
+    tournamentState = {
+      exhibitName: exhibitSt.name,
+      setId: roundData.setId,
+      bracket: seed.matchups,     // [{a, b, similarity}, ...]
+      byes: seed.byes || [],      // auto-advance
+      currentMatch: 0,
+      roundNum: 1,
+      survivors: [...(seed.byes || [])],  // byes auto-advance
+      eliminated: [],
+      totalMatches: seed.matchups.length,
+    };
+
+    persistTournamentState();
+    renderTournamentMatch();
+  } catch (err) {
+    showToast(`Tournament error: ${err.message}`, true);
+  }
+}
+
+function renderTournamentMatch() {
+  const ts = tournamentState;
+  if (!ts) return;
+
+  const stage = $('#card-stage');
+
+  // Check if round is complete
+  if (ts.currentMatch >= ts.bracket.length) {
+    showTournamentRoundComplete();
+    return;
+  }
+
+  const matchup = ts.bracket[ts.currentMatch];
+  const itemA = allItems.find(it => it['o:id'] === matchup.a);
+  const itemB = allItems.find(it => it['o:id'] === matchup.b);
+  if (!itemA || !itemB) {
+    // Skip missing items
+    ts.currentMatch++;
+    persistTournamentState();
+    renderTournamentMatch();
+    return;
+  }
+
+  const progress = `Match ${ts.currentMatch + 1} / ${ts.bracket.length}`;
+  const roundLabel = `Tournament Round ${ts.roundNum}`;
+  const simPct = Math.round(matchup.similarity * 100);
+
+  const idA = itemA._identifier || `#${itemA['o:id']}`;
+  const idB = itemB._identifier || `#${itemB['o:id']}`;
+  const medA = extractValue(itemA, 'dcterms:medium') || '';
+  const medB = extractValue(itemB, 'dcterms:medium') || '';
+  const dateA = extractValue(itemA, 'dcterms:date') || '';
+  const dateB = extractValue(itemB, 'dcterms:date') || '';
+
+  stage.innerHTML = `
+    <div class="tournament-arena">
+      <div class="tournament-header">
+        <div class="tournament-round-label">${roundLabel}</div>
+        <div class="tournament-progress">${progress}</div>
+        <div class="tournament-similarity">${simPct}% similar</div>
+      </div>
+      <div class="tournament-matchup">
+        <div class="tournament-card" data-pick="a">
+          <div class="card-img-wrap"><div class="card-img-loading">Loading…</div></div>
+          <div class="tournament-card-meta">
+            <div class="tournament-card-id">${idA}</div>
+            <div class="tournament-card-detail">${[medA, dateA].filter(Boolean).join(', ')}</div>
+          </div>
+        </div>
+        <div class="tournament-vs">VS</div>
+        <div class="tournament-card" data-pick="b">
+          <div class="card-img-wrap"><div class="card-img-loading">Loading…</div></div>
+          <div class="tournament-card-meta">
+            <div class="tournament-card-id">${idB}</div>
+            <div class="tournament-card-detail">${[medB, dateB].filter(Boolean).join(', ')}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tournament-actions">
+        <button class="btn btn-nav" id="tournament-keep-both">Keep Both</button>
+        <button class="btn btn-nav" id="tournament-cut-both">Cut Both</button>
+      </div>
+    </div>
+  `;
+
+  // Load images
+  const cards = stage.querySelectorAll('.tournament-card');
+  loadTournamentCardImage(cards[0], itemA);
+  loadTournamentCardImage(cards[1], itemB);
+
+  // Preload next matchup images
+  preloadTournamentNext();
+
+  // Click handlers: pick a winner
+  cards[0].addEventListener('click', () => tournamentPick('a'));
+  cards[1].addEventListener('click', () => tournamentPick('b'));
+
+  // Keep Both / Cut Both
+  $('#tournament-keep-both').addEventListener('click', () => tournamentPick('both'));
+  $('#tournament-cut-both').addEventListener('click', () => tournamentPick('neither'));
+
+  // Keyboard: 1/left = A, 2/right = B, 3 = both, 0 = neither
+  document.addEventListener('keydown', tournamentKeyHandler);
+}
+
+function tournamentKeyHandler(e) {
+  if (!tournamentMode || !tournamentState) return;
+  if (e.key === '1' || e.key === 'ArrowLeft') { e.preventDefault(); tournamentPick('a'); }
+  else if (e.key === '2' || e.key === 'ArrowRight') { e.preventDefault(); tournamentPick('b'); }
+  else if (e.key === '3') { e.preventDefault(); tournamentPick('both'); }
+  else if (e.key === '0' || e.key === 'Backspace') { e.preventDefault(); tournamentPick('neither'); }
+}
+
+function tournamentPick(choice) {
+  const ts = tournamentState;
+  if (!ts || ts.currentMatch >= ts.bracket.length) return;
+
+  document.removeEventListener('keydown', tournamentKeyHandler);
+
+  const matchup = ts.bracket[ts.currentMatch];
+  const stage = $('#card-stage');
+
+  // Animate the chosen card(s)
+  const cards = stage.querySelectorAll('.tournament-card');
+  if (choice === 'a') {
+    cards[1].classList.add('tournament-eliminated');
+    cards[0].classList.add('tournament-winner');
+    ts.survivors.push(matchup.a);
+    ts.eliminated.push(matchup.b);
+  } else if (choice === 'b') {
+    cards[0].classList.add('tournament-eliminated');
+    cards[1].classList.add('tournament-winner');
+    ts.survivors.push(matchup.b);
+    ts.eliminated.push(matchup.a);
+  } else if (choice === 'both') {
+    cards[0].classList.add('tournament-winner');
+    cards[1].classList.add('tournament-winner');
+    ts.survivors.push(matchup.a, matchup.b);
+  } else {
+    cards[0].classList.add('tournament-eliminated');
+    cards[1].classList.add('tournament-eliminated');
+    ts.eliminated.push(matchup.a, matchup.b);
+  }
+
+  ts.currentMatch++;
+  persistTournamentState();
+
+  // Brief pause for animation, then next match
+  setTimeout(() => renderTournamentMatch(), 350);
+}
+
+async function loadTournamentCardImage(cardEl, item) {
+  const url = await getCardImageUrl(item);
+  if (url) {
+    const imgWrap = cardEl.querySelector('.card-img-wrap');
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = item._identifier || '';
+    img.onload = () => {
+      const loading = imgWrap.querySelector('.card-img-loading');
+      if (loading) loading.remove();
+    };
+    imgWrap.appendChild(img);
+  }
+}
+
+function preloadTournamentNext() {
+  const ts = tournamentState;
+  if (!ts) return;
+  const next = ts.currentMatch + 1;
+  if (next < ts.bracket.length) {
+    const m = ts.bracket[next];
+    const itemA = allItems.find(it => it['o:id'] === m.a);
+    const itemB = allItems.find(it => it['o:id'] === m.b);
+    if (itemA) getCardImageUrl(itemA).then(u => { if (u) { new Image().src = u; } });
+    if (itemB) getCardImageUrl(itemB).then(u => { if (u) { new Image().src = u; } });
+  }
+}
+
+async function showTournamentRoundComplete() {
+  document.removeEventListener('keydown', tournamentKeyHandler);
+  const ts = tournamentState;
+  const stage = $('#card-stage');
+  const survivors = ts.survivors.length;
+  const eliminated = ts.eliminated.length;
+
+  let html = `
+    <div class="exhibit-round-done">
+      <h2>Tournament Round ${ts.roundNum} Complete</h2>
+      <div class="exhibit-round-stats-grid">
+        <div class="exhibit-stat">
+          <div class="exhibit-stat-num">${survivors}</div>
+          <div class="exhibit-stat-label">advancing</div>
+        </div>
+        <div class="exhibit-stat">
+          <div class="exhibit-stat-num">${eliminated}</div>
+          <div class="exhibit-stat-label">eliminated</div>
+        </div>
+      </div>`;
+
+  if (survivors <= 1) {
+    html += '<p>Tournament complete!</p>';
+  } else if (survivors <= 30) {
+    html += `<p>🏆 ${survivors} finalists — could be your exhibition set!</p>`;
+  } else {
+    html += `<p>Still ${survivors} pieces — another round will narrow it down.</p>`;
+  }
+
+  html += '<div class="exhibit-round-done-actions">';
+  if (survivors > 1) {
+    html += '<button class="btn btn-save" id="tournament-next-round">Next Tournament Round</button>';
+  }
+  html += '<button class="btn btn-nav" id="tournament-finish">Finish & Save Survivors</button>';
+  html += '<button class="btn btn-nav" id="tournament-back">Back to Exhibitions</button>';
+  html += '</div></div>';
+
+  stage.innerHTML = html;
+
+  if ($('#tournament-next-round')) {
+    $('#tournament-next-round').addEventListener('click', startNextTournamentRound);
+  }
+  $('#tournament-finish').addEventListener('click', finishTournament);
+  $('#tournament-back').addEventListener('click', () => {
+    exitTournamentMode();
+    renderExhibitList();
+  });
+}
+
+async function startNextTournamentRound() {
+  const ts = tournamentState;
+  if (ts.survivors.length < 2) return;
+
+  const stage = $('#card-stage');
+  stage.innerHTML = '<div class="exhibit-round-done"><h2>⚔️ Re-seeding...</h2><p>Analyzing similarity for next round...</p></div>';
+
+  try {
+    const resp = await fetch('/admin/rapid-editor/tournament-seed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_ids: ts.survivors }),
+    });
+    if (!resp.ok) throw new Error(`Seed failed: ${resp.status}`);
+    const seed = await resp.json();
+
+    ts.bracket = seed.matchups;
+    ts.byes = seed.byes || [];
+    ts.currentMatch = 0;
+    ts.roundNum++;
+    ts.survivors = [...(seed.byes || [])];
+    ts.eliminated = [];
+    ts.totalMatches = seed.matchups.length;
+
+    persistTournamentState();
+    renderTournamentMatch();
+  } catch (err) {
+    showToast(`Tournament error: ${err.message}`, true);
+  }
+}
+
+async function finishTournament() {
+  const ts = tournamentState;
+  if (!ts) return;
+
+  // Create a new item set for tournament survivors
+  const setTitle = `${CURATE_PREFIX}${ts.exhibitName} Tournament`;
+  let setId;
+
+  const existing = availableItemSets.find(s => s.label === setTitle);
+  if (existing) {
+    setId = existing.id;
+  } else {
+    try {
+      const resp = await fetch('/admin/rapid-editor/create-set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: setTitle }),
+      });
+      if (!resp.ok) throw new Error('Failed to create set');
+      const result = await resp.json();
+      setId = result['o:id'];
+      availableItemSets.push({ id: setId, label: setTitle });
+    } catch (err) {
+      showToast(`Error: ${err.message}`, true);
+      return;
+    }
+  }
+
+  // Add survivors to the set
+  let added = 0;
+  for (const itemId of ts.survivors) {
+    const item = allItems.find(it => it['o:id'] === itemId);
+    if (!item) continue;
+    const currentSets = (item['o:item_set'] || []).map(s => ({ 'o:id': s['o:id'] }));
+    if (currentSets.some(s => s['o:id'] === setId)) continue;
+    currentSets.push({ 'o:id': setId });
+    try {
+      await apiPatch(`items/${itemId}`, { 'o:item_set': currentSets });
+      item['o:item_set'] = currentSets.map(s => ({ 'o:id': s['o:id'] }));
+      added++;
+    } catch (err) {
+      console.error(`Failed to add item ${itemId} to set:`, err);
+    }
+  }
+
+  showToast(`${added} pieces saved to "${setTitle}"`);
+  exitTournamentMode();
+  renderExhibitList();
+}
+
+function exitTournamentMode() {
+  document.removeEventListener('keydown', tournamentKeyHandler);
+  tournamentMode = false;
+  tournamentState = null;
+  // Clear persisted tournament
+  const stored = loadExhibitStorage();
+  delete stored.tournament;
+  saveExhibitStorage(stored);
+}
+
+function persistTournamentState() {
+  const stored = loadExhibitStorage();
+  stored.tournament = tournamentState;
+  saveExhibitStorage(stored);
+}
+
+function resumeTournament() {
+  const stored = loadExhibitStorage();
+  if (!stored.tournament) return false;
+  tournamentMode = true;
+  tournamentState = stored.tournament;
+  return true;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
