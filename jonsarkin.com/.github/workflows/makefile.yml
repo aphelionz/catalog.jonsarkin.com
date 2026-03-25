@@ -1,0 +1,26 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Theme Kit and generate config file
+      run: |
+        curl -s https://shopify.dev/themekit.py | sudo python3
+        echo "development": >> config.yml
+        echo "  password: ${{ secrets.THEME_PASSWORD }}" >> config.yml
+        echo "  theme_id: \"142896496870\"" >> config.yml
+        echo "  store: jonsarkin.myshopify.com" >> config.yml
+        cat config.yml
+
+    - name: Run Theme Check
+      run: make check

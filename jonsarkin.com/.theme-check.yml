@@ -1,0 +1,80 @@
+extends: theme-check:recommended
+ignore:
+  - node_modules/**
+DeprecateBgsizes:
+  enabled: false
+  severity: 1
+  # DeprecatedFilter:
+  #   enabled: false
+  #   severity: 1
+DeprecatedTag:
+  enabled: false
+  severity: 1
+ImgWidthAndHeight:
+  enabled: false
+  severity: 0
+JSONSyntaxError:
+  enabled: false
+  severity: 0
+LiquidHTMLSyntaxError:
+  enabled: false
+  severity: 0
+MatchingTranslations:
+  enabled: false
+  severity: 0
+MissingAsset:
+  enabled: false
+  severity: 0
+MissingTemplate:
+  enabled: false
+  severity: 0
+  ignoreMissing: []
+PaginationSize:
+  enabled: false
+  severity: 1
+  minSize: 1
+  maxSize: 50
+ParserBlockingScript:
+  enabled: false
+  severity: 0
+RemoteAsset:
+  enabled: false
+  severity: 1
+RequiredLayoutThemeObject:
+  enabled: false
+  severity: 0
+TranslationKeyExists:
+  enabled: false
+  severity: 0
+UnclosedHTMLElement:
+  enabled: false
+  severity: 1
+UndefinedObject:
+  enabled: false
+  severity: 1
+UniqueStaticBlockId:
+  enabled: false
+  severity: 0
+UnknownFilter:
+  enabled: false
+  severity: 0
+UnusedAssign:
+  enabled: false
+  severity: 1
+ValidHTMLTranslation:
+  enabled: false
+  severity: 1
+ValidJSON:
+  enabled: false
+  severity: 0
+ValidSchema:
+  enabled: false
+  severity: 0
+ValidStaticBlockType:
+  enabled: false
+  severity: 0
+VariableName:
+  enabled: false
+  severity: 1
+  format: snake_case
+# 
