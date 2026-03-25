@@ -2586,6 +2586,7 @@ function renderTournamentMatch() {
 
 function tournamentKeyHandler(e) {
   if (!tournamentMode || !tournamentState) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return; // don't swallow browser shortcuts
   if (e.key === '1' || e.key === 'ArrowLeft') { e.preventDefault(); tournamentPick('a'); }
   else if (e.key === '2' || e.key === 'ArrowRight') { e.preventDefault(); tournamentPick('b'); }
   else if (e.key === '3') { e.preventDefault(); tournamentPick('both'); }
