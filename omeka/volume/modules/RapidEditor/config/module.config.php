@@ -38,6 +38,13 @@ return [
                                     'defaults' => ['action' => 'patch'],
                                 ],
                             ],
+                            'create-set' => [
+                                'type' => Literal::class,
+                                'options' => [
+                                    'route' => '/create-set',
+                                    'defaults' => ['action' => 'createSet'],
+                                ],
+                            ],
                         ],
                     ],
                 ],

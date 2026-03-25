@@ -183,6 +183,40 @@ class EditorController extends AbstractActionController
     }
 
     /**
+     * Create a private item set (used by Exhibition Curation to persist
+     * round survivors).  Expects JSON body: { "title": "[Curate] ..." }
+     */
+    public function createSetAction(): JsonModel
+    {
+        $body = json_decode($this->getRequest()->getContent(), true);
+        $title = trim($body['title'] ?? '');
+
+        if (!str_starts_with($title, '[Curate] ')) {
+            $this->getResponse()->setStatusCode(400);
+            return new JsonModel(['error' => 'Title must start with "[Curate] "']);
+        }
+
+        try {
+            $response = $this->api()->create('item_sets', [
+                'dcterms:title' => [[
+                    'type'        => 'literal',
+                    'property_id' => 1,
+                    '@value'      => $title,
+                ]],
+                'o:is_public' => false,
+            ]);
+            $set = $response->getContent();
+            return new JsonModel([
+                'o:id'    => $set->id(),
+                'o:title' => $title,
+            ]);
+        } catch (\Throwable $e) {
+            $this->getResponse()->setStatusCode(500);
+            return new JsonModel(['error' => 'Create failed: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Proxy PATCH requests through Omeka's internal API so the JS editor
      * doesn't need REST API credentials — the admin session handles auth.
      */

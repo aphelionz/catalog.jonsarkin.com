@@ -82,7 +82,7 @@ let mediaCache = {};      // mediaId → original_url
 let saving = false;
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
 let stickyText = {}; // persist text field values across cards (keyed by term)
-let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint'
+let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint' | 'exhibit'
 
 // Bucket sort state
 let bucketMode = false;
@@ -94,6 +94,10 @@ let bucketLastAction = null;   // { itemId, direction, oldFieldValues, addedSets
 let bucketDragState = null;    // { startX, startY, currentX, currentY, cardEl, pointerId }
 let bucketActing = false;      // prevent double-swipe while fly-off in progress
 let availableItemSets = [];    // fetched from API at init
+
+// Exhibition curation state
+let exhibitMode = false;
+let exhibitState = null;       // { name, sourceFilter, rounds, currentRound }
 
 // Sprint state
 let sprintMode = false;
@@ -737,6 +741,9 @@ function savePosition() {
       state.bucketIndex = bucketIndex;
       state.bucketSetup = bucketSetup;
     }
+    if (filterMode === 'exhibit') {
+      state.exhibitMode = true;
+    }
     localStorage.setItem('rapid-editor', JSON.stringify(state));
   } catch { /* ignore */ }
 }
@@ -895,14 +902,25 @@ function setupFilterButtons() {
     btn.addEventListener('click', () => {
       // Bucket sort mode: special handling
       if (btn.dataset.filter === 'curate') {
-        if (bucketMode) return; // already in bucket mode
+        if (bucketMode && !exhibitMode) return; // already in bucket mode
         if (!confirmIfDirty()) return;
+        if (exhibitMode) exitExhibitMode();
         enterBucketMode();
         return;
       }
 
-      // Leaving bucket/sprint mode — skip dirty check (no editor form to lose)
-      const wasCard = bucketMode || sprintMode;
+      // Exhibition curation mode
+      if (btn.dataset.filter === 'exhibit') {
+        if (exhibitMode) return;
+        if (!confirmIfDirty()) return;
+        if (bucketMode) exitBucketMode();
+        enterExhibitMode();
+        return;
+      }
+
+      // Leaving bucket/sprint/exhibit mode — skip dirty check (no editor form to lose)
+      const wasCard = bucketMode || sprintMode || exhibitMode;
+      if (exhibitMode) exitExhibitMode();
       if (bucketMode) exitBucketMode();
       if (sprintMode) exitSprintMode();
 
@@ -1447,6 +1465,11 @@ function updateBucketProgress() {
 
   const pct = bucketQueue.length > 0 ? (bucketIndex / bucketQueue.length) * 100 : 0;
   dom.progressFill.style.width = `${pct}%`;
+
+  // Persist exhibit round progress on each swipe
+  if (exhibitMode && exhibitState) {
+    persistExhibitRoundProgress();
+  }
 }
 
 // ── Bucket: card rendering ───────────────────────────────────────────────────
@@ -1782,6 +1805,7 @@ async function bucketUndo() {
 // ── Bucket: completion ───────────────────────────────────────────────────────
 
 function showBucketComplete() {
+  if (exhibitMode) { showExhibitRoundComplete(); return; }
   const stage = $('#card-stage');
   stage.innerHTML = `
     <div class="curate-done">
@@ -1815,6 +1839,555 @@ function setupBucketButtons() {
   $('#curate-pass').addEventListener('click', () => triggerBucketSwipe('left'));
   $('#curate-keep').addEventListener('click', () => triggerBucketSwipe('right'));
   $('#curate-undo').addEventListener('click', bucketUndo);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Exhibition Curation Mode ─────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+const EXHIBIT_STORAGE_KEY = 'rapid-editor-exhibit';
+const CURATE_PREFIX = '[Curate] ';
+const CURATE_RE = /^\[Curate\] (.+) R(\d+)$/;
+
+function loadExhibitStorage() {
+  try { return JSON.parse(localStorage.getItem(EXHIBIT_STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function saveExhibitStorage(data) {
+  try { localStorage.setItem(EXHIBIT_STORAGE_KEY, JSON.stringify(data)); }
+  catch { /* ignore */ }
+}
+
+// ── Exhibition: discovery ────────────────────────────────────────────────────
+
+function discoverExhibitions() {
+  const exhibitions = {};
+  for (const set of availableItemSets) {
+    const m = set.label.match(CURATE_RE);
+    if (!m) continue;
+    const name = m[1];
+    const round = parseInt(m[2]);
+    if (!exhibitions[name]) exhibitions[name] = { name, rounds: [] };
+    exhibitions[name].rounds.push({ round, setId: set.id, label: set.label });
+  }
+  for (const ex of Object.values(exhibitions)) {
+    ex.rounds.sort((a, b) => a.round - b.round);
+    ex.maxRound = ex.rounds[ex.rounds.length - 1].round;
+  }
+  return Object.values(exhibitions);
+}
+
+function countItemsInSet(setId) {
+  return allItems.filter(item =>
+    (item['o:item_set'] || []).some(s => s['o:id'] === setId)
+  ).length;
+}
+
+// ── Exhibition: mode entry/exit ──────────────────────────────────────────────
+
+function enterExhibitMode() {
+  exhibitMode = true;
+  bucketMode = true;  // reuse bucket infrastructure
+  filterMode = 'exhibit';
+
+  dom.main.classList.add('hidden');
+  if (sprintMode) exitSprintMode();
+  $('#curate-panel').classList.remove('hidden');
+  $('#curate-actions').classList.add('hidden');
+  $('#curate-progress').classList.add('hidden');
+
+  for (const b of $$('.filter-btn')) {
+    b.classList.toggle('active', b.dataset.filter === 'exhibit');
+  }
+
+  // Check for in-progress round to resume
+  const stored = loadExhibitStorage();
+  if (stored.roundProgress && stored.roundProgress.bucketIndex > 0) {
+    const ex = stored.exhibitions && stored.exhibitions[stored.roundProgress.exhibitName];
+    if (ex) {
+      exhibitState = ex;
+      // Reconcile set IDs with live data
+      reconcileExhibitSets(exhibitState);
+      renderExhibitRoundSetup(exhibitState);
+      savePosition();
+      return;
+    }
+  }
+
+  renderExhibitList();
+  savePosition();
+}
+
+function exitExhibitMode() {
+  exhibitMode = false;
+  exhibitState = null;
+  bucketMode = false;
+  bucketSetup = true;
+  $('#curate-panel').classList.add('hidden');
+  dom.main.classList.remove('hidden');
+  clearCardStage();
+}
+
+// Reconcile stored set IDs with actual item sets (after make pull)
+function reconcileExhibitSets(state) {
+  for (const round of state.rounds) {
+    const expected = `${CURATE_PREFIX}${state.name} R${round.round}`;
+    const live = availableItemSets.find(s => s.label === expected);
+    if (live) round.setId = live.id;
+  }
+}
+
+// ── Exhibition: list screen ──────────────────────────────────────────────────
+
+function renderExhibitList() {
+  const stage = $('#card-stage');
+  stage.style.width = '';
+  stage.style.height = '';
+  const exhibitions = discoverExhibitions();
+
+  let html = '<div class="exhibit-list">';
+  html += '<h2>Exhibition Curation</h2>';
+
+  if (exhibitions.length === 0) {
+    html += '<p class="exhibit-empty">No exhibitions yet. Create one to start curating.</p>';
+  }
+
+  for (const ex of exhibitions) {
+    const lastRound = ex.rounds[ex.rounds.length - 1];
+    const survivors = countItemsInSet(lastRound.setId);
+    const stored = loadExhibitStorage();
+    const storedEx = stored.exhibitions && stored.exhibitions[ex.name];
+    const totalR1 = storedEx && storedEx.rounds[0] ? storedEx.rounds[0].total : '?';
+
+    html += `
+      <button class="exhibit-card" data-exhibit="${ex.name}">
+        <div class="exhibit-card-name">${ex.name}</div>
+        <div class="exhibit-card-stats">
+          Round ${ex.maxRound} · ${survivors} survivors${totalR1 !== '?' ? ` of ${totalR1}` : ''}
+        </div>
+      </button>`;
+  }
+
+  html += `<button class="exhibit-new-btn" id="exhibit-new">+ New Exhibition</button>`;
+  html += '</div>';
+  stage.innerHTML = html;
+
+  // Wire click handlers
+  for (const card of $$('.exhibit-card')) {
+    card.addEventListener('click', () => {
+      const name = card.dataset.exhibit;
+      const ex = exhibitions.find(e => e.name === name);
+      if (!ex) return;
+      // Build exhibitState from discovered data + stored metadata
+      const stored = loadExhibitStorage();
+      const storedEx = stored.exhibitions && stored.exhibitions[name];
+      exhibitState = {
+        name,
+        sourceFilter: storedEx ? storedEx.sourceFilter : { value: 'B' },
+        rounds: ex.rounds.map(r => {
+          const storedRound = storedEx && storedEx.rounds.find(sr => sr.round === r.round);
+          return {
+            round: r.round,
+            setId: r.setId,
+            complete: storedRound ? storedRound.complete : false,
+            kept: storedRound ? storedRound.kept : countItemsInSet(r.setId),
+            total: storedRound ? storedRound.total : 0,
+          };
+        }),
+        currentRound: ex.maxRound,
+      };
+      renderExhibitRoundSetup(exhibitState);
+    });
+  }
+
+  $('#exhibit-new').addEventListener('click', renderNewExhibitForm);
+}
+
+// ── Exhibition: new exhibition form ──────────────────────────────────────────
+
+function renderNewExhibitForm() {
+  const stage = $('#card-stage');
+  stage.innerHTML = `
+    <div class="exhibit-form">
+      <h2>New Exhibition</h2>
+      <label for="exhibit-name">Exhibition Name</label>
+      <input type="text" id="exhibit-name" placeholder="e.g. Spring Show 2026" autofocus>
+      <label>Source Filter — Category</label>
+      <div class="exhibit-source-pills">
+        <button type="button" class="exhibit-src-pill" data-val="A">A</button>
+        <button type="button" class="exhibit-src-pill active" data-val="B">B</button>
+        <button type="button" class="exhibit-src-pill" data-val="C">C</button>
+        <button type="button" class="exhibit-src-pill" data-val="D">D</button>
+      </div>
+      <div id="exhibit-pool-count" class="exhibit-pool-count"></div>
+      <div class="exhibit-form-actions">
+        <button class="btn btn-nav" id="exhibit-back">Back</button>
+        <button class="btn btn-save" id="exhibit-create">Create</button>
+      </div>
+      <div id="exhibit-error" class="exhibit-error hidden"></div>
+    </div>
+  `;
+
+  // Source filter pills
+  let selectedCategory = 'B';
+  const updatePoolCount = () => {
+    const count = allItems.filter(it => extractValue(it, 'curation:category') === selectedCategory).length;
+    $('#exhibit-pool-count').textContent = `${count.toLocaleString()} pieces with Category ${selectedCategory}`;
+  };
+  updatePoolCount();
+
+  for (const pill of $$('.exhibit-src-pill')) {
+    pill.addEventListener('click', () => {
+      for (const p of $$('.exhibit-src-pill')) p.classList.remove('active');
+      pill.classList.add('active');
+      selectedCategory = pill.dataset.val;
+      updatePoolCount();
+    });
+  }
+
+  $('#exhibit-back').addEventListener('click', renderExhibitList);
+
+  $('#exhibit-create').addEventListener('click', async () => {
+    const name = $('#exhibit-name').value.trim();
+    if (!name) {
+      showExhibitError('Please enter an exhibition name.');
+      return;
+    }
+
+    // Check for duplicate
+    const setTitle = `${CURATE_PREFIX}${name} R1`;
+    if (availableItemSets.some(s => s.label === setTitle)) {
+      showExhibitError(`Exhibition "${name}" already exists.`);
+      return;
+    }
+
+    // Create the R1 item set
+    const createBtn = $('#exhibit-create');
+    createBtn.disabled = true;
+    createBtn.textContent = 'Creating…';
+
+    try {
+      const resp = await fetch('/admin/rapid-editor/create-set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: setTitle }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || 'Create failed');
+      }
+      const result = await resp.json();
+
+      // Add to available sets
+      availableItemSets.push({ id: result['o:id'], label: result['o:title'] });
+
+      // Build exhibit state
+      exhibitState = {
+        name,
+        sourceFilter: { value: selectedCategory },
+        rounds: [{ round: 1, setId: result['o:id'], complete: false, kept: 0, total: 0 }],
+        currentRound: 1,
+      };
+
+      // Persist
+      persistExhibitState();
+
+      renderExhibitRoundSetup(exhibitState);
+    } catch (err) {
+      showExhibitError(err.message);
+      createBtn.disabled = false;
+      createBtn.textContent = 'Create';
+    }
+  });
+}
+
+function showExhibitError(msg) {
+  const el = $('#exhibit-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ── Exhibition: round setup screen ───────────────────────────────────────────
+
+function renderExhibitRoundSetup(state) {
+  exhibitState = state;
+  const stage = $('#card-stage');
+  stage.style.width = '';
+  stage.style.height = '';
+
+  const round = state.currentRound;
+  const pool = buildExhibitQueue(state);
+  const roundData = state.rounds.find(r => r.round === round);
+  const isComplete = roundData && roundData.complete;
+
+  // Check for resume
+  const stored = loadExhibitStorage();
+  const progress = stored.roundProgress;
+  const canResume = progress
+    && progress.exhibitName === state.name
+    && progress.round === round
+    && progress.bucketIndex > 0
+    && !isComplete;
+
+  let sourceLabel;
+  if (round === 1) {
+    sourceLabel = `Category ${state.sourceFilter.value} pieces`;
+  } else {
+    sourceLabel = `survivors from Round ${round - 1}`;
+  }
+
+  let html = `
+    <div class="exhibit-round-setup">
+      <h2>${state.name}</h2>
+      <div class="exhibit-round-label">Round ${round}</div>
+      <div class="exhibit-round-pool">${pool.length.toLocaleString()} ${sourceLabel}</div>`;
+
+  if (isComplete) {
+    const kept = roundData.kept || countItemsInSet(roundData.setId);
+    html += `
+      <div class="exhibit-round-complete-badge">
+        Round ${round} complete — kept ${kept} of ${roundData.total || pool.length}
+      </div>`;
+
+    if (kept > 0) {
+      html += `<button class="btn btn-save" id="exhibit-next-round">Start Round ${round + 1}</button>`;
+    }
+    html += `<button class="btn btn-nav" id="exhibit-back-list">Back to Exhibitions</button>`;
+  } else if (pool.length === 0) {
+    html += `<p>No items in pool.</p>
+      <button class="btn btn-nav" id="exhibit-back-list">Back to Exhibitions</button>`;
+  } else {
+    if (canResume) {
+      html += `<button class="btn btn-save" id="exhibit-resume">Resume (${progress.bucketIndex} / ${pool.length} reviewed)</button>`;
+    }
+    html += `<button class="btn ${canResume ? 'btn-nav' : 'btn-save'}" id="exhibit-start">Start${canResume ? ' Over' : ''}</button>`;
+    html += `<button class="btn btn-nav" id="exhibit-back-list">Back to Exhibitions</button>`;
+  }
+
+  html += '</div>';
+  stage.innerHTML = html;
+
+  // Wire buttons
+  if ($('#exhibit-start')) {
+    $('#exhibit-start').addEventListener('click', () => startExhibitRound(state, round, false));
+  }
+  if ($('#exhibit-resume')) {
+    $('#exhibit-resume').addEventListener('click', () => startExhibitRound(state, round, true));
+  }
+  if ($('#exhibit-next-round')) {
+    $('#exhibit-next-round').addEventListener('click', () => startNextExhibitRound(state));
+  }
+  if ($('#exhibit-back-list')) {
+    $('#exhibit-back-list').addEventListener('click', renderExhibitList);
+  }
+}
+
+// ── Exhibition: queue building ────────────────────────────────────────────────
+
+function buildExhibitQueue(state) {
+  if (state.currentRound === 1) {
+    return allItems.filter(item =>
+      extractValue(item, 'curation:category') === state.sourceFilter.value
+    );
+  }
+  // Round N > 1: items in previous round's survivor set
+  const prevRound = state.rounds.find(r => r.round === state.currentRound - 1);
+  if (!prevRound) return [];
+  return allItems.filter(item =>
+    (item['o:item_set'] || []).some(s => s['o:id'] === prevRound.setId)
+  );
+}
+
+// ── Exhibition: start / resume a round ───────────────────────────────────────
+
+function startExhibitRound(state, roundNum, resume) {
+  const roundData = state.rounds.find(r => r.round === roundNum);
+  if (!roundData) return;
+
+  // Build the queue
+  const pool = buildExhibitQueue(state);
+  if (!pool.length) {
+    showToast('No items in pool', true);
+    return;
+  }
+
+  // Store total for stats
+  roundData.total = pool.length;
+
+  // Configure bucket sort for this round
+  bucketConfig = {
+    right: {
+      label: 'Keep',
+      color: '#2a7d2e',
+      actions: [{ type: 'item_set', setId: roundData.setId }],
+    },
+    queueFilter: undefined,
+  };
+
+  bucketQueue = [...pool];
+  bucketSetup = false;
+
+  if (resume) {
+    const stored = loadExhibitStorage();
+    const progress = stored.roundProgress;
+    if (progress && progress.queueItemIds) {
+      // Reconstruct queue order from stored IDs
+      const idSet = new Set(progress.queueItemIds);
+      const idOrder = new Map(progress.queueItemIds.map((id, i) => [id, i]));
+      bucketQueue = pool
+        .filter(it => idSet.has(it['o:id']))
+        .sort((a, b) => (idOrder.get(a['o:id']) || 0) - (idOrder.get(b['o:id']) || 0));
+      bucketIndex = Math.min(progress.bucketIndex, bucketQueue.length);
+    }
+  } else {
+    bucketIndex = 0;
+  }
+
+  // Show swipe UI
+  $('#curate-actions').classList.remove('hidden');
+  $('#curate-progress').classList.remove('hidden');
+
+  const passBtn = $('#curate-pass');
+  const keepBtn = $('#curate-keep');
+  passBtn.textContent = '← Cut';
+  keepBtn.textContent = 'Keep →';
+  passBtn.style.background = '#8b0000';
+  keepBtn.style.background = '#2a7d2e';
+  document.documentElement.style.setProperty('--bucket-right-color', '#2a7d2e');
+  document.documentElement.style.setProperty('--bucket-left-color', '#8b0000');
+
+  // Persist queue order for resume
+  persistExhibitRoundProgress();
+  persistExhibitState();
+
+  updateBucketProgress();
+
+  if (bucketIndex < bucketQueue.length) {
+    renderBucketCards();
+    preloadBucketNext();
+  } else {
+    showBucketComplete();
+  }
+}
+
+// ── Exhibition: next round ───────────────────────────────────────────────────
+
+async function startNextExhibitRound(state) {
+  const nextRound = state.currentRound + 1;
+  const setTitle = `${CURATE_PREFIX}${state.name} R${nextRound}`;
+
+  // Check if set already exists
+  let existing = availableItemSets.find(s => s.label === setTitle);
+  let setId;
+
+  if (existing) {
+    setId = existing.id;
+  } else {
+    try {
+      const resp = await fetch('/admin/rapid-editor/create-set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: setTitle }),
+      });
+      if (!resp.ok) throw new Error('Failed to create round set');
+      const result = await resp.json();
+      setId = result['o:id'];
+      availableItemSets.push({ id: setId, label: setTitle });
+    } catch (err) {
+      showToast(`Error: ${err.message}`, true);
+      return;
+    }
+  }
+
+  state.rounds.push({ round: nextRound, setId, complete: false, kept: 0, total: 0 });
+  state.currentRound = nextRound;
+  persistExhibitState();
+  renderExhibitRoundSetup(state);
+}
+
+// ── Exhibition: round complete ────────────────────────────────────────────────
+
+function showExhibitRoundComplete() {
+  $('#curate-actions').classList.add('hidden');
+  $('#curate-progress').classList.add('hidden');
+
+  const state = exhibitState;
+  const roundData = state.rounds.find(r => r.round === state.currentRound);
+  const kept = countItemsInSet(roundData.setId);
+
+  // Mark round complete
+  roundData.complete = true;
+  roundData.kept = kept;
+  if (!roundData.total) roundData.total = bucketIndex;
+  persistExhibitState();
+
+  // Clear round progress
+  const stored = loadExhibitStorage();
+  delete stored.roundProgress;
+  saveExhibitStorage(stored);
+
+  const stage = $('#card-stage');
+  const pct = roundData.total > 0 ? Math.round((kept / roundData.total) * 100) : 0;
+
+  let html = `
+    <div class="exhibit-round-done">
+      <h2>Round ${state.currentRound} Complete</h2>
+      <div class="exhibit-round-stats-grid">
+        <div class="exhibit-stat">
+          <div class="exhibit-stat-num">${kept}</div>
+          <div class="exhibit-stat-label">kept</div>
+        </div>
+        <div class="exhibit-stat">
+          <div class="exhibit-stat-num">${roundData.total - kept}</div>
+          <div class="exhibit-stat-label">cut</div>
+        </div>
+        <div class="exhibit-stat">
+          <div class="exhibit-stat-num">${pct}%</div>
+          <div class="exhibit-stat-label">kept</div>
+        </div>
+      </div>`;
+
+  if (kept === 0) {
+    html += '<p>No pieces advanced. Exhibition is empty.</p>';
+  } else if (kept <= 40) {
+    html += `<p>${kept} pieces remaining — could be your final selection.</p>`;
+  }
+
+  html += '<div class="exhibit-round-done-actions">';
+  if (kept > 0) {
+    html += `<button class="btn btn-save" id="exhibit-next-round">Start Round ${state.currentRound + 1}</button>`;
+  }
+  html += '<button class="btn btn-nav" id="exhibit-back-list">Back to Exhibitions</button>';
+  html += '</div></div>';
+
+  stage.innerHTML = html;
+
+  if ($('#exhibit-next-round')) {
+    $('#exhibit-next-round').addEventListener('click', () => startNextExhibitRound(state));
+  }
+  $('#exhibit-back-list').addEventListener('click', renderExhibitList);
+}
+
+// ── Exhibition: persistence ──────────────────────────────────────────────────
+
+function persistExhibitState() {
+  const stored = loadExhibitStorage();
+  if (!stored.exhibitions) stored.exhibitions = {};
+  stored.exhibitions[exhibitState.name] = exhibitState;
+  stored.activeExhibition = exhibitState.name;
+  saveExhibitStorage(stored);
+}
+
+function persistExhibitRoundProgress() {
+  const stored = loadExhibitStorage();
+  stored.roundProgress = {
+    exhibitName: exhibitState.name,
+    round: exhibitState.currentRound,
+    bucketIndex,
+    queueItemIds: bucketQueue.map(it => it['o:id']),
+  };
+  saveExhibitStorage(stored);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2613,7 +3186,9 @@ async function init() {
   dom.loading.classList.add('hidden');
 
   // Enter the saved mode
-  if (filterMode === 'curate') {
+  if (filterMode === 'exhibit') {
+    enterExhibitMode();
+  } else if (filterMode === 'curate') {
     enterBucketMode(true);
   } else if (filterMode === 'sprint' && sprintField && FIELD_SPRINTS[sprintField]) {
     enterSprintMode(sprintField);
