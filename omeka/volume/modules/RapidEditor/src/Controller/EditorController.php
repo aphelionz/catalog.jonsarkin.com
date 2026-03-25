@@ -267,6 +267,45 @@ class EditorController extends AbstractActionController
     }
 
     /**
+     * Bulk-add items to an item set via direct SQL.
+     * POST body: { "item_ids": [1,2,3], "set_id": 42 }
+     * This avoids Omeka's full item update which strips unrelated fields.
+     */
+    public function addToSetAction(): JsonModel
+    {
+        $body = json_decode($this->getRequest()->getContent(), true);
+        $setId = (int) ($body['set_id'] ?? 0);
+        $itemIds = $body['item_ids'] ?? [];
+
+        if ($setId < 1 || !is_array($itemIds) || empty($itemIds)) {
+            $this->getResponse()->setStatusCode(400);
+            return new JsonModel(['error' => 'set_id and item_ids required']);
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        // Get existing memberships to avoid duplicates
+        $existing = $conn->executeQuery(
+            'SELECT item_id FROM item_item_set WHERE item_set_id = ?',
+            [$setId]
+        )->fetchFirstColumn();
+        $existingSet = array_flip($existing);
+
+        $added = 0;
+        foreach ($itemIds as $itemId) {
+            $itemId = (int) $itemId;
+            if ($itemId < 1 || isset($existingSet[$itemId])) continue;
+            $conn->executeStatement(
+                'INSERT INTO item_item_set (item_id, item_set_id) VALUES (?, ?)',
+                [$itemId, $setId]
+            );
+            $added++;
+        }
+
+        return new JsonModel(['added' => $added, 'set_id' => $setId]);
+    }
+
+    /**
      * Proxy tournament-seed request to clip-api.
      * POST body: { "item_ids": [1, 2, 3, ...] }
      */

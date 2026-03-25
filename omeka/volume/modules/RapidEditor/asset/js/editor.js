@@ -2767,21 +2767,29 @@ async function finishTournament() {
     }
   }
 
-  // Add survivors to the set
+  // Bulk-add survivors to the set via direct SQL (avoids Omeka's full-update stripping)
   let added = 0;
-  for (const itemId of ts.survivors) {
-    const item = allItems.find(it => it['o:id'] === itemId);
-    if (!item) continue;
-    const currentSets = (item['o:item_set'] || []).map(s => ({ 'o:id': s['o:id'] }));
-    if (currentSets.some(s => s['o:id'] === setId)) continue;
-    currentSets.push({ 'o:id': setId });
-    try {
-      await apiPatch(`items/${itemId}`, { 'o:item_set': currentSets });
-      item['o:item_set'] = currentSets.map(s => ({ 'o:id': s['o:id'] }));
-      added++;
-    } catch (err) {
-      console.error(`Failed to add item ${itemId} to set:`, err);
+  try {
+    const resp = await fetch('/admin/rapid-editor/add-to-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_ids: ts.survivors, set_id: setId }),
+    });
+    if (!resp.ok) throw new Error('Failed to add items to set');
+    const result = await resp.json();
+    added = result.added || 0;
+    // Update local item data
+    for (const itemId of ts.survivors) {
+      const item = allItems.find(it => it['o:id'] === itemId);
+      if (item) {
+        const sets = (item['o:item_set'] || []).map(s => ({ 'o:id': s['o:id'] }));
+        if (!sets.some(s => s['o:id'] === setId)) sets.push({ 'o:id': setId });
+        item['o:item_set'] = sets;
+      }
     }
+  } catch (err) {
+    showToast(`Error saving: ${err.message}`, true);
+    return;
   }
 
   showToast(`${added} pieces saved to "${setTitle}"`);

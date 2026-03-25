@@ -53,6 +53,13 @@ return [
                                     'defaults' => ['action' => 'createSet'],
                                 ],
                             ],
+                            'add-to-set' => [
+                                'type' => Literal::class,
+                                'options' => [
+                                    'route' => '/add-to-set',
+                                    'defaults' => ['action' => 'addToSet'],
+                                ],
+                            ],
                             'tournament-seed' => [
                                 'type' => Literal::class,
                                 'options' => [
