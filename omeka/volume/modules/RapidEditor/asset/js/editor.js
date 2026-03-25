@@ -383,6 +383,25 @@ async function getImageUrl(item) {
   }
 }
 
+// Card modes use large thumbnails instead of originals
+async function getCardImageUrl(item) {
+  const media = (item['o:media'] || [])[0];
+  if (!media) return null;
+  const mediaId = media['o:id'];
+  const cacheKey = `large_${mediaId}`;
+  if (mediaCache[cacheKey]) return mediaCache[cacheKey];
+
+  try {
+    const { json } = await apiGet(`media/${mediaId}`);
+    const url = json['o:thumbnail_urls']?.large || json['o:original_url'] || '';
+    const path = url.replace(/^https?:\/\/[^/]+/, '');
+    mediaCache[cacheKey] = path;
+    return path;
+  } catch {
+    return null;
+  }
+}
+
 // Preload next item's image
 function preloadNext() {
   if (queueIndex + 1 < queue.length) {
@@ -1524,7 +1543,7 @@ async function renderBucketCard(item, zIndex) {
 
   stage.appendChild(card);
 
-  const url = await getImageUrl(item);
+  const url = await getCardImageUrl(item);
   if (url) {
     const imgWrap = card.querySelector('.card-img-wrap');
     const img = document.createElement('img');
@@ -1545,7 +1564,7 @@ async function renderBucketCard(item, zIndex) {
 function preloadBucketNext() {
   const ahead = bucketIndex + 2;
   if (ahead < bucketQueue.length) {
-    getImageUrl(bucketQueue[ahead]).then(url => {
+    getCardImageUrl(bucketQueue[ahead]).then(url => {
       if (url) { const img = new Image(); img.src = url; }
     });
   }
@@ -2746,8 +2765,8 @@ async function renderSprintCard(item, zIndex) {
     renderSprintInput(card, item, config);
   }
 
-  // Load image
-  const url = await getImageUrl(item);
+  // Load image (large thumbnail for card modes)
+  const url = await getCardImageUrl(item);
   if (url) {
     const imgWrap = card.querySelector('.card-img-wrap');
     const img = document.createElement('img');
@@ -2917,7 +2936,7 @@ function renderSprintInput(card, item, config) {
 function preloadSprintNext() {
   const ahead = sprintIndex + 2;
   if (ahead < sprintQueue.length) {
-    getImageUrl(sprintQueue[ahead]).then(url => {
+    getCardImageUrl(sprintQueue[ahead]).then(url => {
       if (url) { const img = new Image(); img.src = url; }
     });
   }
