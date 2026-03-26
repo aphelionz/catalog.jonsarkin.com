@@ -95,13 +95,14 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   color: var(--accent);
 }
 .btn--primary {
-  background: var(--accent);
-  color: var(--bg);
-  border-color: var(--accent);
+  background: transparent;
+  color: var(--link);
+  border-color: var(--link);
+  align-self: flex-start;
 }
 .btn--primary:hover {
-  background: transparent;
   color: var(--accent);
+  border-color: var(--accent);
 }
 .btn--link {
   border: none;
