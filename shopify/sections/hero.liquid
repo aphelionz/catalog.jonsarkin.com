@@ -1,0 +1,50 @@
+{%- assign strip_collection = section.settings.collection | default: collections.all -%}
+{%- if strip_collection.products.size > 0 -%}
+  <section class="artwork-strip">
+    <div class="page-width">
+      <div class="artwork-strip__track">
+        {%- for product in strip_collection.products limit: section.settings.count -%}
+          {%- if product.featured_image -%}
+            <a href="{{ product.url }}" class="artwork-strip__item">
+              <img
+                src="{{ product.featured_image | image_url: width: 360 }}"
+                alt="{{ product.featured_image.alt | default: product.title | escape }}"
+                width="180"
+                height="180"
+                loading="eager"
+                class="artwork-strip__img"
+              >
+            </a>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Artwork strip",
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection to feature"
+    },
+    {
+      "type": "range",
+      "id": "count",
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "default": 5,
+      "label": "Number of works"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Artwork strip"
+    }
+  ]
+}
+{% endschema %}

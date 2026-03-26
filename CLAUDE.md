@@ -105,5 +105,43 @@ Enrichment is now in the Omeka admin UI: **Admin > Enrich Queue**.
 - **Prod files path:** prod files are at `/var/www/omeka-s/files/` (Docker volume), NOT `/opt/catalog/omeka/volume/files/`.
 - **Omeka API PATCH considered harmful:** `$this->api()->update('items', $id, $body)` does a **full replacement**, not a merge. Sending `{ 'o:item_set': [...] }` without every other field **deletes all metadata, media, and values**. Never PATCH items to change just one thing. For item set membership, use direct SQL (`INSERT INTO item_item_set`). For field edits, always include the full payload from `readAction` or `buildBasePayload`.
 
+---
+
+## Shopify (jonsarkin.com)
+The Shopify store runs at jonsarkin.com. Theme source lives in `shopify/`.
+
+### Theme push/pull
+- **ALWAYS `cd shopify/` before running `npx shopify theme push/pull`**. Running from the project root pushes the wrong directory and creates junk files on the remote theme.
+- Theme ID: `157306650854` ("Sarkin Estate v2")
+- Push to live: `cd shopify && npx shopify theme push --theme 157306650854 --allow-live --nodelete`
+- Push specific files: `cd shopify && npx shopify theme push --theme 157306650854 --only sections/header.liquid --allow-live`
+- `--nodelete` prevents removing remote files not in local (safe default). Omit it only for full sync, but beware it will try to delete required files (harmless errors).
+- `settings_data.json` may not update via `--nodelete` push if the theme editor has already "owned" the settings. Use `--only config/settings_data.json` to force.
+- Shopify CLI config is in `shopify/config.yml` (theme access password, not Admin API token).
+
+### Shopify Admin API
+- Access token is in `shopify/.env` (never commit)
+- GraphQL endpoint: `https://jonsarkin.myshopify.com/admin/api/2025-01/graphql.json`
+- Use for: metafield definitions, collection sort order, menu reads, anything the MCP can't do
+- MCP covers: products, customers, orders (with scopes), variants, metafields on products
+
+### MCP limitations
+- The `shopify-mcp` package only covers products, customers, orders, variants, and product metafields
+- No support for: navigation menus, pages, themes, collections (CRUD), metafield definitions
+- For those, use the Admin API directly via curl + GraphQL
+- Orders scope requires `read_orders` — currently may not be enabled
+
+### Metafields
+- Artwork metafields (pinned to product admin): `artwork.catalog_number`, `artwork.catalog_url`, `artwork.medium`, `artwork.dimensions`, `artwork.year`
+- Old namespaces (`sarkin.*`, `custom.*`) have been deleted
+- `shopify.*` system metafields are auto-generated and can't be deleted — they're harmless
+
+### Footguns
+- **Theme push from wrong directory:** `npx shopify theme push` uses CWD as the theme root. Pushing from project root uploads CLAUDE.md, docker-compose.yml, etc. as theme files. Always `cd shopify/` first.
+- **Liquid `sort` filter on collections:** `collection.products | sort: 'price'` does NOT work — it silently returns empty, rendering a blank page. Set collection sort order via Admin API (`collectionUpdate` mutation with `sortOrder: PRICE_ASC`) instead.
+- **`settings_data.json` caching:** Shopify's theme editor stores its own copy. Pushing this file may silently fail to update values. Verify with a pull after pushing settings changes.
+- **`image_tag` and JS image switching:** Shopify's `image_tag` helper generates `<img srcset="...">` with responsive images. Setting `.src` via JS doesn't work because `srcset` takes priority. Use a plain `<img src="...">` tag when you need JS to swap the image source.
+- **SVGs in footer:** Use `stroke="currentColor"` (not `fill`) for Feather-style line icons. The CSS uses `color` inheritance, not `fill`.
+
 ## Communication
 - What changed and why — skip the obvious, don't restate my instructions

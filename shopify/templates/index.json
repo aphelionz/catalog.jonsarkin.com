@@ -1,128 +1,66 @@
-/*
- * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
- * ------------------------------------------------------------
- */
 {
   "sections": {
-    "image_with_text_jgJeDx": {
-      "type": "image-with-text",
-      "blocks": {
-        "heading_aBdh8j": {
-          "type": "heading",
-          "settings": {
-            "heading": "",
-            "heading_size": "h1"
-          }
-        },
-        "text_PNCEWF": {
-          "type": "text",
-          "settings": {
-            "text": "<p><strong>Jon Sarkin</strong> (1953-2024) was a visionary outsider artist based in Gloucester, MA. Over the decades he created a massive body of work, spanning exhibitions, private sales, and museum placements.</p><p>His final workspace, Fish City Studios, is open to the public and remains a unique destination for visitors. That space, along with this site, are maintained by the official Sarkin Estate.</p><p>Collectors and curators can book concierge viewings both in person or virtually.</p>",
-            "text_style": "body"
-          }
-        },
-        "button_mRG6W4": {
-          "type": "button",
-          "settings": {
-            "button_label": "Book a Private Studio Visit",
-            "button_link": "shopify://pages/book-a-private-studio-appointment",
-            "button_style_secondary": true
-          }
-        }
-      },
-      "block_order": [
-        "heading_aBdh8j",
-        "text_PNCEWF",
-        "button_mRG6W4"
-      ],
+    "hero": {
+      "type": "hero",
       "settings": {
-        "image": "shopify://shop_images/sarkin_quad_bw_portraits_2d6d736d-393c-44eb-a7c1-ccbbe9f0eff8.jpg",
-        "height": "adapt",
-        "desktop_image_width": "medium",
-        "layout": "text_first",
-        "image_behavior": "ambient",
-        "content_layout": "no-overlap",
-        "desktop_content_position": "top",
-        "desktop_content_alignment": "left",
-        "mobile_content_alignment": "left",
-        "section_color_scheme": "scheme-4",
-        "color_scheme": "scheme-4",
-        "padding_top": 36,
-        "padding_bottom": 36
+        "count": 5
       }
     },
-    "video_6eiQCa": {
-      "type": "video",
+    "name_ctas": {
+      "type": "rich-text",
       "settings": {
-        "heading": "",
-        "heading_size": "h1",
-        "enable_video_looping": false,
-        "video_url": "https://www.youtube.com/watch?v=oohuOTjfWK0",
-        "cover_image": "shopify://shop_images/oohuOTjfWK0-HD.jpg",
-        "description": "",
-        "full_width": false,
-        "color_scheme": "scheme-5",
-        "padding_top": 36,
-        "padding_bottom": 36
+        "heading": "Jon Sarkin (1953–2024)",
+        "text": "<p>American artist. Gloucester, Massachusetts.</p><p><a href=\"https://catalog.jonsarkin.com\">Explore the Catalog Raisonné →</a></p>",
+        "button_label": "Available Works →",
+        "button_link": "/collections/all"
       }
     },
-    "image_banner_Ppydtt": {
-      "type": "image-banner",
-      "blocks": {
-        "heading_X3a7LU": {
-          "type": "heading",
-          "settings": {
-            "heading": "Your support keeps the archive growing and free to explore",
-            "heading_size": "h2"
-          }
-        },
-        "text_m9ePGG": {
-          "type": "text",
-          "settings": {
-            "text": "<strong>The Jon Sarkin Memorial Archives</strong> catalog thousands of original works from Jon’s studio in Gloucester, MA. Your donation supports the ongoing archiving and preservation of this legacy for future generations. You can support this effort in two ways:",
-            "text_style": "subtitle"
-          }
-        },
-        "buttons_XcDBJQ": {
-          "type": "buttons",
-          "settings": {
-            "button_label_1": "Donate via Fractured Atlas (Tax-Deductible)",
-            "button_link_1": "https://fundraising.fracturedatlas.org/jon-sarkin-memorial-gallery",
-            "button_style_secondary_1": true,
-            "button_label_2": "Join Patreon (Community Perks)",
-            "button_link_2": "https://www.patreon.com/c/jonsarkin",
-            "button_style_secondary_2": true
-          }
-        }
-      },
-      "block_order": [
-        "heading_X3a7LU",
-        "text_m9ePGG",
-        "buttons_XcDBJQ"
-      ],
+    "bio": {
+      "type": "rich-text",
       "settings": {
-        "image": "shopify://shop_images/tempImageNGOdTz.heic",
-        "image_overlay_opacity": 0,
-        "image_height": "medium",
-        "image_behavior": "none",
-        "desktop_content_position": "middle-center",
-        "desktop_content_alignment": "center",
-        "show_text_box": true,
-        "color_scheme": "scheme-5",
-        "stack_images_on_mobile": true,
-        "mobile_content_alignment": "center",
-        "show_text_below": true
+        "show_divider": true,
+        "text": "<p>Jon Sarkin was an outsider artist whose prolific output spanned three decades following a catastrophic stroke in 1989. What began as an uncontrollable compulsion to draw evolved into a body of more than 20,000 works—dense, layered compositions in ink, marker, paint, and collage that drew comparisons to Jean-Michel Basquiat and Jean Dubuffet. His work entered the collections of the Centre Pompidou, the deCordova Sculpture Park and Museum, and the American Visionary Art Museum, and was the subject of a bestselling biography, <em>Shadows Bright as Glass</em> by Amy Ellis Nutt. He died in Gloucester, Massachusetts on July 19, 2024.</p>"
+      }
+    },
+    "advisors": {
+      "type": "rich-text",
+      "settings": {
+        "show_divider": true,
+        "heading": "Advisory Board",
+        "text": "<p><strong>Colin Rhodes</strong> — Distinguished Professor; Contributing Editor, <em>Raw Vision</em><br><strong>Tony Millionaire</strong> — Eisner Award–winning cartoonist<br><strong>Dr. Alice Flaherty</strong> — Harvard Medical School / Massachusetts General Hospital</p>"
+      }
+    },
+    "press": {
+      "type": "rich-text",
+      "settings": {
+        "show_divider": true,
+        "heading": "Selected Press",
+        "text": "<p>The New Yorker · The New York Times · NPR · GQ · Raw Vision · Boston Globe</p>"
+      }
+    },
+    "institutions": {
+      "type": "rich-text",
+      "settings": {
+        "show_divider": true,
+        "heading": "Institutional Holdings",
+        "text": "<p>Centre Pompidou · deCordova Sculpture Park and Museum · American Visionary Art Museum · Museum of Modern Art Archives (Calvin Tomkins Papers)</p>"
+      }
+    },
+    "licensing_contact": {
+      "type": "rich-text",
+      "settings": {
+        "show_divider": true,
+        "text": "<p>Jon Sarkin's work is represented by Artists Rights Society (ARS), New York.</p><p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href=\"mailto:art@jonsarkin.com\">art@jonsarkin.com</a>.</p>"
       }
     }
   },
   "order": [
-    "image_with_text_jgJeDx",
-    "video_6eiQCa",
-    "image_banner_Ppydtt"
+    "hero",
+    "name_ctas",
+    "bio",
+    "advisors",
+    "press",
+    "institutions",
+    "licensing_contact"
   ]
 }

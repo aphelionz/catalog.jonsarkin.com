@@ -1,0 +1,56 @@
+<section class="section">
+  <div class="page-width">
+    <h1>{{ 'sections.cart.title' | t }}</h1>
+
+    {%- if cart.item_count == 0 -%}
+      <div class="cart-empty">
+        <p>{{ 'sections.cart.empty' | t }}</p>
+        <a href="/collections/all" class="btn" style="margin-top: 1.5rem;">{{ 'general.continue_shopping' | t }}</a>
+      </div>
+    {%- else -%}
+      <form action="{{ routes.cart_url }}" method="post">
+        <div class="cart-items">
+          {%- for item in cart.items -%}
+            <div class="cart-item">
+              <a href="{{ item.url }}">
+                {%- if item.image -%}
+                  {{ item.image | image_url: width: 160 | image_tag: class: 'cart-item__image', alt: item.title, loading: 'lazy' }}
+                {%- endif -%}
+              </a>
+              <div>
+                <div class="cart-item__title">
+                  <a href="{{ item.url }}">{{ item.product.title }}</a>
+                </div>
+                <div class="cart-item__price">{{ item.price | money }}</div>
+                <div class="cart-item__quantity">
+                  <button type="button" onclick="this.parentNode.querySelector('input').stepDown(); this.closest('form').submit();" aria-label="Decrease">−</button>
+                  <input type="number" name="updates[]" value="{{ item.quantity }}" min="0" aria-label="Quantity" onchange="this.closest('form').submit();">
+                  <button type="button" onclick="this.parentNode.querySelector('input').stepUp(); this.closest('form').submit();" aria-label="Increase">+</button>
+                </div>
+                <a href="{{ routes.cart_change_url }}?id={{ item.key }}&quantity=0" class="cart-item__remove">{{ 'sections.cart.remove' | t }}</a>
+              </div>
+              <div style="text-align: right;">
+                {{ item.line_price | money }}
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+
+        <div class="cart-footer">
+          <div class="cart-footer__total">
+            {{ 'sections.cart.estimated_total' | t }}: {{ cart.total_price | money }}
+          </div>
+          <button type="submit" name="checkout" class="btn btn--primary">
+            {{ 'sections.cart.checkout' | t }}
+          </button>
+        </div>
+      </form>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart"
+}
+{% endschema %}

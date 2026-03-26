@@ -2,6 +2,7 @@
 .env
 .env.prod
 acme.json
+.claude.json
 
 # Python
 __pycache__/

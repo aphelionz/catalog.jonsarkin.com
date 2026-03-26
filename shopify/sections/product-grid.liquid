@@ -1,0 +1,87 @@
+{%- paginate collection.products by section.settings.products_per_page -%}
+<section class="section">
+  <div class="page-width">
+    {%- assign display_title = collection.title -%}
+    {%- if collection.handle == 'all' -%}
+      {%- assign display_title = 'Available Works' -%}
+    {%- endif -%}
+    <div class="collection-header text-center">
+      <h1>{{ display_title }}</h1>
+      {%- if collection.description != blank -%}
+        <p>{{ collection.description }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="product-grid">
+      {%- for product in collection.products -%}
+        <a href="{{ product.url }}" class="product-card">
+          <div class="product-card__image">
+            {%- if product.featured_image -%}
+              {{ product.featured_image | image_url: width: 600 | image_tag: alt: product.title, loading: 'lazy' }}
+            {%- endif -%}
+          </div>
+          <div class="product-card__info">
+            <div class="product-card__title">{{ product.title }}</div>
+            {%- if product.metafields.artwork.medium -%}
+              <div class="product-card__meta">{{ product.metafields.artwork.medium }}</div>
+            {%- endif -%}
+            {%- if product.metafields.artwork.dimensions -%}
+              <div class="product-card__meta">{{ product.metafields.artwork.dimensions }}</div>
+            {%- endif -%}
+            <div class="product-card__price">
+              {%- if product.available -%}
+                {{ product.price | money }}
+              {%- else -%}
+                <span class="product-card__badge">Inquire</span>
+              {%- endif -%}
+            </div>
+          </div>
+        </a>
+      {%- else -%}
+        <p>No works found in this collection.</p>
+      {%- endfor -%}
+    </div>
+
+    {%- if paginate.pages > 1 -%}
+      <div class="pagination">
+        {%- if paginate.previous -%}
+          <a href="{{ paginate.previous.url }}">←</a>
+        {%- endif -%}
+        {%- for part in paginate.parts -%}
+          {%- if part.is_link -%}
+            <a href="{{ part.url }}">{{ part.title }}</a>
+          {%- else -%}
+            <span class="current">{{ part.title }}</span>
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if paginate.next -%}
+          <a href="{{ paginate.next.url }}">→</a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+{%- endpaginate -%}
+
+{% schema %}
+{
+  "name": "Product grid",
+  "settings": [
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "min": 6,
+      "max": 48,
+      "step": 6,
+      "default": 24,
+      "label": "Products per page"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sorting",
+      "default": true,
+      "label": "Enable sorting"
+    }
+  ]
+}
+{% endschema %}
