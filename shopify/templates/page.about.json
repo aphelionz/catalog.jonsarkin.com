@@ -4,16 +4,9 @@
       "type": "rich-text",
       "settings": {
         "heading": "Jon Sarkin (1953–2024)",
-        "text": "<p>Jon Sarkin was an outsider artist whose prolific output spanned three decades following a catastrophic stroke in 1989. What began as an uncontrollable compulsion to draw evolved into a body of more than 20,000 works — dense, layered compositions in ink, marker, paint, and collage that drew comparisons to Jean-Michel Basquiat and Jean Dubuffet.</p><p>His work entered the collections of the Centre Pompidou, the deCordova Sculpture Park and Museum, and the American Visionary Art Museum. He was the subject of a bestselling biography, <em>Shadows Bright as Glass</em> by Amy Ellis Nutt, and was profiled in <em>The New Yorker</em>, <em>The New York Times</em>, NPR, and GQ.</p><p>He died in Gloucester, Massachusetts on July 19, 2024.</p>"
-      }
-    },
-    "catalog": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "The Catalog Raisonné",
-        "text": "<p>The catalog raisonné documents over 4,500 works by Jon Sarkin, with high-resolution images, detailed provenance, and scholarly metadata. It is the authoritative record of Jon's artistic output.</p>",
-        "button_label_1": "Explore the Catalog Raisonné →",
-        "button_link_1": "https://catalog.jonsarkin.com"
+        "text": "<p>Jon Sarkin was an outsider artist whose prolific output spanned three decades following a catastrophic stroke in 1989. Working from his studio in Gloucester, Massachusetts, he produced an estimated twenty thousand drawings, paintings, collages, and mixed-media works before his death in July 2024. His practice has been the subject of peer-reviewed scholarship, a bestselling biography, and international exhibition.</p>",
+        "button_label": "Read the full biography →",
+        "button_link": "https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin"
       }
     },
     "advisors": {
@@ -27,38 +20,13 @@
       "type": "rich-text",
       "settings": {
         "heading": "The Estate",
-        "text": "<p>The Jon Sarkin Estate is managed by Mark Henderson, Estate Manager.</p><p>For inquiries about Jon Sarkin's work, contact Mark Henderson at <a href=\"mailto:art@jonsarkin.com\">art@jonsarkin.com</a>.</p>"
-      }
-    },
-    "press": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "Selected Press",
-        "text": "<p>The New Yorker · The New York Times · NPR · GQ · Raw Vision · Boston Globe</p>"
-      }
-    },
-    "books": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "Books",
-        "text": "<p><em>Shadows Bright as Glass</em> by Amy Ellis Nutt (Free Press, 2011)<br><em>The Art of Jon Sarkin</em> by Colin Rhodes (Raw Vision, 2019)</p>"
-      }
-    },
-    "licensing": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "",
-        "text": "<p>Jon Sarkin's work is represented by Artists Rights Society (ARS), New York.</p>"
+        "text": "<p>The Jon Sarkin Estate manages the artist's legacy, including the <a href=\"https://catalog.jonsarkin.com\">catalog raisonné</a>, exhibition loans, and licensing through Artists Rights Society (ARS), New York.</p><p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href=\"mailto:art@jonsarkin.com\">art@jonsarkin.com</a>.</p>"
       }
     }
   },
   "order": [
     "bio",
-    "catalog",
     "advisors",
-    "estate",
-    "press",
-    "books",
-    "licensing"
+    "estate"
   ]
 }

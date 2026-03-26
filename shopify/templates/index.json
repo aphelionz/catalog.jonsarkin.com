@@ -22,14 +22,6 @@
         "text": "<p>Jon Sarkin was an outsider artist whose prolific output spanned three decades following a catastrophic stroke in 1989. What began as an uncontrollable compulsion to draw evolved into a body of more than 20,000 works—dense, layered compositions in ink, marker, paint, and collage that drew comparisons to Jean-Michel Basquiat and Jean Dubuffet. His work entered the collections of the Centre Pompidou, the deCordova Sculpture Park and Museum, and the American Visionary Art Museum, and was the subject of a bestselling biography, <em>Shadows Bright as Glass</em> by Amy Ellis Nutt. He died in Gloucester, Massachusetts on July 19, 2024.</p>"
       }
     },
-    "advisors": {
-      "type": "rich-text",
-      "settings": {
-        "show_divider": true,
-        "heading": "Advisory Board",
-        "text": "<p><strong>Colin Rhodes</strong> — Distinguished Professor; Contributing Editor, <em>Raw Vision</em><br><strong>Tony Millionaire</strong> — Eisner Award–winning cartoonist<br><strong>Dr. Alice Flaherty</strong> — Harvard Medical School / Massachusetts General Hospital</p>"
-      }
-    },
     "press": {
       "type": "rich-text",
       "settings": {
@@ -58,7 +50,6 @@
     "hero",
     "name_ctas",
     "bio",
-    "advisors",
     "press",
     "institutions",
     "licensing_contact"
