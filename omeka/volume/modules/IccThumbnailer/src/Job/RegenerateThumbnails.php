@@ -18,10 +18,19 @@ class RegenerateThumbnails extends AbstractJob
         $thumbTypes = $config['thumbnails']['types'];
         $thumbnailer->setOptions($config['thumbnails']['thumbnailer_options'] ?? []);
 
-        $query = $em->createQuery(
-            'SELECT m FROM Omeka\Entity\Media m WHERE m.hasOriginal = true AND m.mediaType LIKE :type ORDER BY m.id ASC'
-        );
-        $query->setParameter('type', 'image/%');
+        $itemIds = $this->getArg('item_ids', []);
+        if (!empty($itemIds)) {
+            $query = $em->createQuery(
+                'SELECT m FROM Omeka\Entity\Media m WHERE m.hasOriginal = true AND m.mediaType LIKE :type AND IDENTITY(m.item) IN (:item_ids) ORDER BY m.id ASC'
+            );
+            $query->setParameter('type', 'image/%');
+            $query->setParameter('item_ids', $itemIds);
+        } else {
+            $query = $em->createQuery(
+                'SELECT m FROM Omeka\Entity\Media m WHERE m.hasOriginal = true AND m.mediaType LIKE :type ORDER BY m.id ASC'
+            );
+            $query->setParameter('type', 'image/%');
+        }
 
         $media = $query->getResult();
         $total = count($media);
@@ -65,7 +74,11 @@ class RegenerateThumbnails extends AbstractJob
                     if (!is_dir($dir)) {
                         mkdir($dir, 0755, true);
                     }
-                    rename($thumbPath, $destLocalPath);
+                    @unlink($destLocalPath);
+                    if (!rename($thumbPath, $destLocalPath)) {
+                        copy($thumbPath, $destLocalPath);
+                        @unlink($thumbPath);
+                    }
                 } catch (\Exception $e) {
                     $logger->err(sprintf('IccThumbnailer: [%d] %s error: %s', $id, $type, $e->getMessage()));
                     $errors++;
