@@ -5,6 +5,23 @@ return [
         'phpcli_path' => null,
     ],
 
+    // Transactional email via Gmail SMTP (App Password auth).
+    'mail' => [
+        'transport' => [
+            'type' => 'smtp',
+            'options' => [
+                'host' => 'smtp.gmail.com',
+                'port' => 587,
+                'connection_class' => 'login',
+                'connection_config' => [
+                    'username' => getenv('SMTP_USER') ?: 'mark@fishcitystudios.com',
+                    'password' => getenv('SMTP_PASS') ?: '',
+                    'ssl' => 'tls',
+                ],
+            ],
+        ],
+    ],
+
     // Persist uploads/derivatives in the bind-mounted volume.
     'file_store' => [
         'local' => [

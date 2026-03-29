@@ -34,6 +34,8 @@ services:
       OMEKA_SITE_TITLE: "Jon Sarkin Catalog"
       OMEKA_ENVIRONMENT: development
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
     restart: on-failure:5
 
   qdrant:
