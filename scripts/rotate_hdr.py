@@ -105,8 +105,8 @@ def patch_mpf_offset(primary_data: bytes, gainmap_size: int) -> bytes:
     return bytes(data)
 
 
-def reset_exif_orientation(data: bytes) -> bytes:
-    """Set EXIF Orientation tag to 1 (TopLeft/normal) if present."""
+def set_exif_orientation(data: bytes, value: int) -> bytes:
+    """Set EXIF Orientation tag to the given value if present."""
     data = bytearray(data)
     pos = 2  # skip SOI
     while pos < len(data) - 3:
@@ -129,11 +129,16 @@ def reset_exif_orientation(data: bytes) -> bytes:
                     break
                 if struct.unpack(bo + 'H', tiff[ep:ep + 2])[0] == 0x0112:  # Orientation
                     abs_pos = tiff_start + ep + 8
-                    data[abs_pos:abs_pos + 2] = struct.pack(bo + 'H', 1)
+                    data[abs_pos:abs_pos + 2] = struct.pack(bo + 'H', value)
                     return bytes(data)
             break
         pos += 2 + seg_len
     return bytes(data)
+
+
+def reset_exif_orientation(data: bytes) -> bytes:
+    """Set EXIF Orientation tag to 1 (TopLeft/normal) if present."""
+    return set_exif_orientation(data, 1)
 
 
 def rotate_jpeg(input_path: str, output_path: str, degrees: int):
@@ -165,7 +170,21 @@ def main():
         data = reset_exif_orientation(data)
         with open(path, 'wb') as f:
             f.write(data)
-        print(f'Orientation reset: {path}')
+        print(f'Orientation reset to 1: {path}')
+        return
+
+    if sys.argv[1] == 'set-orientation':
+        if len(sys.argv) != 4:
+            print(f'Usage: {sys.argv[0]} set-orientation <file.jpeg> <value>')
+            sys.exit(1)
+        path = sys.argv[2]
+        value = int(sys.argv[3])
+        with open(path, 'rb') as f:
+            data = f.read()
+        data = set_exif_orientation(data, value)
+        with open(path, 'wb') as f:
+            f.write(data)
+        print(f'Orientation set to {value}: {path}')
         return
 
     if len(sys.argv) != 4:
