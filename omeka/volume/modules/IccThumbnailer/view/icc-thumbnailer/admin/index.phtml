@@ -14,6 +14,10 @@ $this->htmlElement('body')->appendAttribute('class', 'icc-thumbnailer');
     <?php endif; ?>
 
     <form method="post" action="<?= $this->url('admin/icc-thumbnailer/regenerate') ?>">
-        <button type="submit" class="button">Regenerate All Thumbnails</button>
+        <div style="margin-bottom:1em">
+            <label for="item_ids" style="display:block;margin-bottom:.25em">Item IDs to regenerate (comma-separated; leave blank for all)</label>
+            <input type="text" id="item_ids" name="item_ids" style="width:40em;font-family:monospace" placeholder="e.g. 9884, 9888, 10062">
+        </div>
+        <button type="submit" class="button">Regenerate Thumbnails</button>
     </form>
 <?php endif; ?>

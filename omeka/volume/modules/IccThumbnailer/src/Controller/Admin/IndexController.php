@@ -37,7 +37,12 @@ class IndexController extends AbstractActionController
 
         $services = $this->getEvent()->getApplication()->getServiceManager();
         $dispatcher = $services->get('Omeka\Job\Dispatcher');
-        $dispatcher->dispatch(RegenerateThumbnails::class);
+        $itemIdsRaw = trim($this->getRequest()->getPost('item_ids', ''));
+        $args = [];
+        if ($itemIdsRaw !== '') {
+            $args['item_ids'] = array_values(array_filter(array_map('intval', preg_split('/[\s,]+/', $itemIdsRaw))));
+        }
+        $dispatcher->dispatch(RegenerateThumbnails::class, $args);
 
         $this->messenger()->addSuccess('Thumbnail regeneration job dispatched. Check Jobs for progress.');
         return $this->redirect()->toRoute('admin/icc-thumbnailer');
