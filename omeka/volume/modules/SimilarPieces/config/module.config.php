@@ -107,7 +107,7 @@ return [
     ],
     'similar_pieces' => [
         'base_url' => 'http://clip-api:8000',
-        'timeout' => 3,
+        'timeout' => 6,
         'default_per_page' => 24,
         'enable_item_link' => true,
         'enable_search_ui' => false,
