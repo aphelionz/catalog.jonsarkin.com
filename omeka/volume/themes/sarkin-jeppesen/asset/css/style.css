@@ -571,6 +571,10 @@ abbr[title] {
 .pill-button--danger:hover,
 .pill-button--danger:focus-visible { color: #6b2830; }
 
+.pill-button--acquire { color: #4a7055; }
+.pill-button--acquire:hover,
+.pill-button--acquire:focus-visible { color: #2e4f38; }
+
 /* --- Action Nav --- */
 
 .metadata-bottom { border-top: var(--border); }

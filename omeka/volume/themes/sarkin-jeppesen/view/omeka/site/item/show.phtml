@@ -67,7 +67,8 @@ $resourceClass = $item->resourceClass();
 $isPerson  = ($resourceClass && $resourceClass->id() === 119); // schema:Person
 $genre     = $val('schema:genre');
 $fullText  = $val('bibo:content');
-$sourceUrl = $val('dcterms:source');
+$sourceUrl  = $val('dcterms:source');
+$shopifyUrl = $val('schema:url');
 
 // ── Physical ──
 $mediumRaw  = $val('dcterms:medium');
@@ -425,7 +426,11 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <button type="button" class="pill-button" onclick="window.print();">[print]</button>
 
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>" class="pill-button">[rights]</a>
+                <?php if ($shopifyUrl): ?>
+                <a href="<?php echo $shopifyUrl; ?>" class="pill-button pill-button--acquire" target="_blank" rel="noopener">[acquire]</a>
+                <?php else: ?>
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
+                <?php endif; ?>
             </div>
             <h1 id="record-title"><?php echo $escape($pageLabel); ?></h1>
         </div>
