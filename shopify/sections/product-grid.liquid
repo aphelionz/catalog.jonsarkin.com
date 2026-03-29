@@ -15,15 +15,28 @@
     <div class="product-grid">
       {%- for product in collection.products -%}
         <a href="{{ product.url }}" class="product-card">
-          <div class="product-card__image">
+          <div class="product-card__image{% if product.metafields.artwork.original_image_url %} product-card__image--hdr{% endif %}">
+            {%- if product.metafields.artwork.original_image_url -%}
+              <img
+                class="product-card__img product-card__img--hdr"
+                src="{{ product.metafields.artwork.original_image_url }}"
+                alt="{{ product.title | escape }}"
+                loading="lazy"
+              >
+            {%- endif -%}
             {%- if product.featured_image -%}
-              {{ product.featured_image | image_url: width: 600 | image_tag: alt: product.title, loading: 'lazy' }}
+              <img
+                class="product-card__img product-card__img--shopify"
+                src="{{ product.featured_image | image_url: width: 600 }}"
+                alt="{{ product.title | escape }}"
+                loading="lazy"
+              >
             {%- endif -%}
           </div>
           <div class="product-card__info">
             <div class="product-card__title">{{ product.title }}</div>
             {%- if product.metafields.artwork.medium -%}
-              <div class="product-card__meta">{{ product.metafields.artwork.medium }}</div>
+              <div class="product-card__meta">{{ product.metafields.artwork.medium }}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | downcase }}{% endif %}</div>
             {%- endif -%}
             {%- if product.metafields.artwork.dimensions -%}
               <div class="product-card__meta">{{ product.metafields.artwork.dimensions }}</div>
@@ -62,6 +75,23 @@
   </div>
 </section>
 {%- endpaginate -%}
+
+<script>
+(function() {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.6 });
+
+  document.querySelectorAll('.product-card__image--hdr').forEach(function(el) {
+    observer.observe(el);
+  });
+})();
+</script>
 
 {% schema %}
 {

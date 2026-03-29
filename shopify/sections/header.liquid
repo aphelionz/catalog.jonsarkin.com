@@ -22,14 +22,12 @@
       <a href="https://catalog.jonsarkin.com" target="_blank" rel="noopener">Catalog Raisonné</a>
       <a href="/pages/contact">Contact</a>
 
-      {%- unless template == 'index' -%}
+      {%- if cart.item_count > 0 -%}
         <a href="{{ routes.cart_url }}" class="site-header__cart">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
-          {%- if cart.item_count > 0 -%}
-            <span class="cart-count">{{ cart.item_count }}</span>
-          {%- endif -%}
+          <span class="cart-count">{{ cart.item_count }}</span>
         </a>
-      {%- endunless -%}
+      {%- endif -%}
     </nav>
 
     <button class="nav-toggle" onclick="document.querySelector('.mobile-nav').classList.toggle('is-open'); this.setAttribute('aria-expanded', this.getAttribute('aria-expanded') === 'true' ? 'false' : 'true')" aria-expanded="false" aria-controls="mobile-nav" aria-label="Menu">
@@ -43,11 +41,11 @@
   <a href="/collections/all" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">Available Works</a>
   <a href="https://catalog.jonsarkin.com" target="_blank" rel="noopener" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">Catalog Raisonné</a>
   <a href="/pages/contact" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">Contact</a>
-  {%- unless template == 'index' -%}
+  {%- if cart.item_count > 0 -%}
     <a href="{{ routes.cart_url }}" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">
-      Selections{% if cart.item_count > 0 %} ({{ cart.item_count }}){% endif %}
+      Selections ({{ cart.item_count }})
     </a>
-  {%- endunless -%}
+  {%- endif -%}
 </div>
 
 {% schema %}

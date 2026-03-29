@@ -3,10 +3,17 @@
     <div class="product-detail">
       <div class="product-detail__media">
         <div class="product-detail__main-image" id="product-main-image">
-          {%- if product.featured_image -%}
+          {%- if product.metafields.artwork.original_image_url -%}
             <img
               id="product-hero-img"
-              src="{{ product.featured_image | image_url: width: 1200 }}"
+              src="{{ product.metafields.artwork.original_image_url }}"
+              alt="{{ product.title | escape }}"
+              loading="eager"
+            >
+          {%- elsif product.featured_image -%}
+            <img
+              id="product-hero-img"
+              src="{{ product.featured_image | image_url }}"
               alt="{{ product.title | escape }}"
               loading="eager"
             >
@@ -19,7 +26,7 @@
                 src="{{ image | image_url: width: 120 }}"
                 alt="{{ image.alt | default: product.title | escape }}"
                 class="product-detail__thumb{% if forloop.first %} is-active{% endif %}"
-                data-full-src="{{ image | image_url: width: 1200 }}"
+                data-full-src="{% if forloop.first and product.metafields.artwork.original_image_url %}{{ product.metafields.artwork.original_image_url }}{% else %}{{ image | image_url }}{% endif %}"
                 loading="lazy"
               >
             {%- endfor -%}
@@ -38,13 +45,10 @@
 
       <div class="product-detail__info">
         <h1 class="product-detail__title">{{ product.title }}</h1>
-        {%- if product.metafields.artwork.catalog_number -%}
-          <div class="product-detail__catalog-number">{{ product.metafields.artwork.catalog_number }}</div>
-        {%- endif -%}
 
         <div class="product-detail__metadata">
           {%- if product.metafields.artwork.medium -%}
-            {{ product.metafields.artwork.medium }}<br>
+            {{ product.metafields.artwork.medium }}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | downcase }}{% endif %}<br>
           {%- endif -%}
           {%- if product.metafields.artwork.dimensions -%}
             {{ product.metafields.artwork.dimensions }}<br>
@@ -53,6 +57,23 @@
             {{ product.metafields.artwork.year }}
           {%- endif -%}
         </div>
+
+        <div class="product-detail__provenance">
+          {%- if product.metafields.artwork.signed -%}
+            <div class="product-detail__provenance-line">Signed: {{ product.metafields.artwork.signed }}</div>
+          {%- endif -%}
+          {%- if product.metafields.artwork.condition -%}
+            <div class="product-detail__provenance-line">Condition: {{ product.metafields.artwork.condition }}</div>
+          {%- endif -%}
+          <div class="product-detail__provenance-line">Certificate of Authenticity included</div>
+          {%- if product.metafields.artwork.provenance -%}
+            <div class="product-detail__provenance-line">Provenance: {{ product.metafields.artwork.provenance }}</div>
+          {%- endif -%}
+        </div>
+
+        {%- if product.metafields.artwork.content_excerpt -%}
+          <blockquote class="product-detail__excerpt">{{ product.metafields.artwork.content_excerpt }}</blockquote>
+        {%- endif -%}
 
         <div class="product-detail__price">
           {{ product.price | money }}
@@ -73,9 +94,7 @@
               {%- endform -%}
             {%- endif -%}
           {%- else -%}
-            <a href="mailto:art@jonsarkin.com?subject=Inquiry: {{ product.title | url_encode }}" class="btn">
-              {{ 'products.product.sold_out' | t }}
-            </a>
+            <button disabled class="btn btn--primary btn--disabled">Acquired</button>
           {%- endif -%}
 
           {%- if product.metafields.artwork.catalog_url -%}
@@ -83,6 +102,9 @@
               View in the Catalog Raisonné →
             </a>
           {%- endif -%}
+          <a href="/pages/contact" class="product-detail__catalog-link">
+            Request a condition report →
+          </a>
         </div>
 
         {%- if product.description != blank -%}
@@ -107,7 +129,7 @@
               <div class="product-card__info">
                 <div class="product-card__title">{{ product.title }}</div>
                 {%- if product.metafields.artwork.medium -%}
-                  <div class="product-card__meta">{{ product.metafields.artwork.medium }}</div>
+                  <div class="product-card__meta">{{ product.metafields.artwork.medium }}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | downcase }}{% endif %}</div>
                 {%- endif -%}
                 <div class="product-card__price">
                   {%- if product.available -%}

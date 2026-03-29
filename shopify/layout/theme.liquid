@@ -3,7 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ page_title }}{% unless page_title contains shop.name %} — {{ shop.name }}{% endunless %}</title>
+  <title>
+    {%- if template.name == 'product' and product.metafields.artwork.medium -%}
+      {{ product.metafields.artwork.medium | strip }}{% if product.metafields.artwork.year %}, {{ product.metafields.artwork.year }}{% endif %} — {{ shop.name }} ({{ product.title }})
+    {%- else -%}
+      {{ page_title }}{% unless page_title contains shop.name %} — {{ shop.name }}{% endunless %}
+    {%- endif -%}
+  </title>
 
   {% if page_description %}
     <meta name="description" content="{{ page_description | escape }}">

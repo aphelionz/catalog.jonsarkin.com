@@ -155,7 +155,7 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   display: flex;
   align-items: center;
 }
-.site-header__cart svg { width: 20px; height: 20px; stroke: var(--text-secondary); fill: none; stroke-width: 1.5; }
+.site-header__cart svg { width: 20px; height: 20px; stroke: var(--link); fill: none; stroke-width: 1.5; }
 .site-header__cart:hover svg { stroke: var(--accent); }
 .cart-count {
   position: absolute;
@@ -322,6 +322,27 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   object-fit: cover;
   transition: opacity 0.2s;
 }
+
+/* HDR crossfade: catalog original sits beneath, Shopify thumbnail fades out on hover */
+.product-card__image--hdr .product-card__img--hdr {
+  position: absolute;
+  inset: 0;
+}
+.product-card__image--hdr .product-card__img--shopify {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.4s ease;
+}
+.product-card__image--hdr:hover .product-card__img--shopify {
+  opacity: 0;
+}
+
+/* Scroll-revealed: touch devices only — desktop uses :hover instead */
+@media (pointer: coarse) {
+  .product-card__image--hdr.is-revealed .product-card__img--shopify {
+    opacity: 0;
+  }
+}
 .product-card__info { padding: 0 0.25rem; }
 .product-card__title {
   font-size: 0.8rem;
@@ -441,7 +462,6 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
-  line-height: 1.8;
 }
 .product-detail__price {
   font-size: 1.2rem;
@@ -461,6 +481,28 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   font-size: 0.9rem;
 }
 .product-detail__catalog-link:hover { color: var(--accent); }
+.product-detail__provenance {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.product-detail__excerpt {
+  margin: 1.5rem 0 1.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.04);
+  border-left: 2px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .product-detail__description {
   margin-top: 2rem;
   padding-top: 2rem;
@@ -474,6 +516,10 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   .product-detail {
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+  .product-detail__info,
+  .product-card__info {
+    text-align: center;
   }
 }
 
