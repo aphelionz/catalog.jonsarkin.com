@@ -1,19 +1,10 @@
 {
   "sections": {
-    "intro": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "Contact",
-        "text": "<p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href=\"mailto:art@jonsarkin.com\">art@jonsarkin.com</a>.</p>"
-      }
-    },
-    "form": {
-      "type": "contact-form",
-      "settings": {}
+    "contact_layout": {
+      "type": "contact-layout"
     }
   },
   "order": [
-    "intro",
-    "form"
+    "contact_layout"
   ]
 }

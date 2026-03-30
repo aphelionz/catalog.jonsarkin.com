@@ -1,0 +1,53 @@
+<section class="section">
+  <div class="page-width">
+    <h1 class="section-heading">Contact</h1>
+    <div class="contact-two-col">
+      <div class="contact-text">
+        <h3>General Inquiries</h3>
+        <p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href="mailto:art@jonsarkin.com">art@jonsarkin.com</a>.</p>
+
+        <h3>Submissions</h3>
+        <p>If you own a work by Jon Sarkin that does not appear in this catalogue, we welcome submissions for inclusion. Please provide photographs and any documentation of the work&rsquo;s provenance.</p>
+
+        <h3>Private Viewings</h3>
+        <p>Works in the collection of The Jon Sarkin Estate may be available for private viewing by appointment. Please contact us with the catalog number(s) of the work(s) you wish to view.</p>
+      </div>
+
+      <div class="contact-form">
+        {%- form 'contact', id: 'ContactForm' -%}
+          {%- if form.posted_successfully? -%}
+            <p style="color: #8f8; margin-bottom: 2rem;">{{ 'templates.contact.form.post_success' | t }}</p>
+          {%- endif -%}
+
+          <div class="form-field">
+            <label for="ContactForm-name">{{ 'templates.contact.form.name' | t }}</label>
+            <input type="text" id="ContactForm-name" name="contact[{{ 'templates.contact.form.name' | t }}]" autocomplete="name" required>
+          </div>
+
+          <div class="form-field">
+            <label for="ContactForm-email">{{ 'templates.contact.form.email' | t }}</label>
+            <input type="email" id="ContactForm-email" name="contact[email]" autocomplete="email" required>
+          </div>
+
+          <div class="form-field">
+            <label for="ContactForm-body">{{ 'templates.contact.form.comment' | t }}</label>
+            <textarea id="ContactForm-body" name="contact[body]" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn--primary">{{ 'templates.contact.form.send' | t }}</button>
+        {%- endform -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Contact layout",
+  "presets": [
+    {
+      "name": "Contact layout"
+    }
+  ]
+}
+{% endschema %}
