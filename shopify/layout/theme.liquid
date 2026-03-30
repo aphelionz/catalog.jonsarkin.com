@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ request.locale.iso_code }}">
 <head>
+  <script>(function(){var t=localStorage.getItem('sarkin-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>
@@ -23,13 +24,14 @@
   {{ 'theme.css' | asset_url | stylesheet_tag }}
 
   {%- style -%}
-    :root {
+    html:not([data-theme]) {
       --bg: {{ settings.color_bg }};
       --bg-surface: {{ settings.color_bg_surface }};
       --text: {{ settings.color_text }};
       --text-secondary: {{ settings.color_text_secondary }};
       --link: {{ settings.color_link }};
       --border: {{ settings.color_border }};
+      --border-color: {{ settings.color_border }};
       --accent: {{ settings.color_accent }};
       {%- if settings.font_body -%}
         --font: {{ settings.font_body.family }}, {{ settings.font_body.fallback_families }};
@@ -57,5 +59,113 @@
   </main>
 
   {% section 'footer' %}
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ── Mobile nav toggle ──
+    var navToggle = document.querySelector('.nav-toggle');
+    var siteNav = document.getElementById('site-nav');
+    var mobileNav = document.getElementById('mobile-nav');
+    if (navToggle && mobileNav) {
+      navToggle.addEventListener('click', function () {
+        var open = mobileNav.classList.toggle('is-open');
+        navToggle.setAttribute('aria-expanded', open);
+      });
+    }
+
+    // ── Submenu click-to-toggle (desktop nav) ──
+    var parentItems = document.querySelectorAll('.site-nav li');
+    parentItems.forEach(function (li) {
+      var sub = li.querySelector(':scope > ul');
+      if (!sub) return;
+
+      var btn = document.createElement('button');
+      btn.className = 'submenu-toggle';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', 'Toggle submenu');
+      var parentLink = li.querySelector(':scope > a');
+      parentLink.after(btn);
+
+      function toggleSubmenu(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var wasOpen = li.classList.contains('submenu-open');
+
+        document.querySelectorAll('.site-nav .submenu-open').forEach(function (el) {
+          el.classList.remove('submenu-open');
+          el.querySelector(':scope > .submenu-toggle').setAttribute('aria-expanded', 'false');
+        });
+
+        if (!wasOpen) {
+          li.classList.add('submenu-open');
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      }
+
+      btn.addEventListener('click', toggleSubmenu);
+      parentLink.addEventListener('click', toggleSubmenu);
+    });
+
+    // ── Close submenus on outside click ──
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.site-nav')) {
+        document.querySelectorAll('.site-nav .submenu-open').forEach(function (el) {
+          el.classList.remove('submenu-open');
+          el.querySelector(':scope > .submenu-toggle').setAttribute('aria-expanded', 'false');
+        });
+      }
+    });
+
+    // ── Close submenus on Escape ──
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.site-nav .submenu-open').forEach(function (el) {
+          el.classList.remove('submenu-open');
+          var toggle = el.querySelector(':scope > .submenu-toggle');
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.focus();
+        });
+        if (mobileNav && mobileNav.classList.contains('is-open')) {
+          mobileNav.classList.remove('is-open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+
+    // ── Share button ──
+    var shareBtn = document.getElementById('global-share');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var url = window.location.href;
+        if (navigator.share) {
+          navigator.share({ title: document.title, url: url });
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url);
+          shareBtn.textContent = '[copied!]';
+          setTimeout(function () { shareBtn.textContent = '[share]'; }, 1500);
+        }
+      });
+    }
+
+    // ── Theme toggle (light/dark) ──
+    var themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+      var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      themeToggle.textContent = currentTheme === 'dark' ? '[light]' : '[dark]';
+
+      themeToggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        var current = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('sarkin-theme', next);
+        themeToggle.textContent = next === 'dark' ? '[light]' : '[dark]';
+      });
+    }
+  })();
+  </script>
 </body>
 </html>

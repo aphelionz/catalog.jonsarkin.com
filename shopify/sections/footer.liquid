@@ -1,7 +1,7 @@
 <footer class="site-footer">
   <div class="page-width">
     {%- if settings.social_instagram_link != blank or settings.social_youtube_link != blank -%}
-      <div class="site-footer__social">
+      <div class="footer-social">
         {%- if settings.social_instagram_link != blank -%}
           <a href="{{ settings.social_instagram_link }}" target="_blank" rel="noopener" aria-label="Instagram">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="5"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
@@ -15,8 +15,16 @@
       </div>
     {%- endif -%}
 
-    <div class="site-footer__copyright">
-      &copy; {{ 'now' | date: '%Y' }}, The {{ shop.name }} Estate / Artists Rights Society (ARS), New York. All rights reserved.
+    <div class="footer-line">
+      <div class="footer-text">
+        <p>&copy; {{ 'now' | date: '%Y' }}, The {{ shop.name }} Estate / Artists Rights Society (ARS), New York. All rights reserved.</p>
+        <p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href="mailto:art@jonsarkin.com">art@jonsarkin.com</a>.</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="https://catalog.jonsarkin.com/s/catalog/page/rights">Rights &amp; Reproduction</a>
+        <a href="https://catalog.jonsarkin.com/s/catalog/page/terms">Terms of Use</a>
+        <a href="/pages/contact">Contact</a>
+      </nav>
     </div>
   </div>
 </footer>

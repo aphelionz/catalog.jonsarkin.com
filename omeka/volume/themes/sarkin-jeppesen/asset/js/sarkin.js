@@ -133,6 +133,23 @@
         });
     }
 
+    // ── Theme toggle (light/dark) ──
+    var themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        // Set initial label based on current theme
+        var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        themeToggle.textContent = currentTheme === 'light' ? '[dark]' : '[light]';
+
+        themeToggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            var current = document.documentElement.getAttribute('data-theme') || 'light';
+            var next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('sarkin-theme', next);
+            themeToggle.textContent = next === 'light' ? '[dark]' : '[light]';
+        });
+    }
+
     // ── Similar pieces (async) ──
     var similarSection = document.getElementById('similar-pieces');
     if (similarSection) {

@@ -144,5 +144,17 @@ The Shopify store runs at jonsarkin.com. Theme source lives in `shopify/`.
 - **`image_tag` and JS image switching:** Shopify's `image_tag` helper generates `<img srcset="...">` with responsive images. Setting `.src` via JS doesn't work because `srcset` takes priority. Use a plain `<img src="...">` tag when you need JS to swap the image source.
 - **SVGs in footer:** Use `stroke="currentColor"` (not `fill`) for Feather-style line icons. The CSS uses `color` inheritance, not `fill`.
 
+## Visual parity — catalog ↔ Shopify
+The two sites must be visually indistinguishable to a user navigating between them. This is a standing directive.
+
+- **Any cosmetic change to one site must be applied to the other.**
+- Keep CSS variable names and HTML class names identical across both codebases so diffs are easy to audit.
+- Shared files:
+  - CSS: `omeka/volume/themes/sarkin-jeppesen/asset/css/style.css` ↔ `shopify/assets/theme.css`
+  - Layout/header: `omeka/.../view/layout/layout.phtml` ↔ `shopify/sections/header.liquid` + `shopify/layout/theme.liquid`
+  - Footer: `omeka/.../view/layout/layout.phtml` ↔ `shopify/sections/footer.liquid`
+  - JS: `omeka/.../asset/js/sarkin.js` ↔ inline `<script>` in `shopify/layout/theme.liquid`
+- When finishing a cosmetic task, deploy both: `make deploy` + `cd shopify && npx shopify theme push --theme 157306650854 --allow-live`
+
 ## Communication
 - What changed and why — skip the obvious, don't restate my instructions
