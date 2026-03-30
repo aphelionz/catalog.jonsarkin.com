@@ -1,50 +1,83 @@
 <header class="site-header">
   <div class="page-width site-header__inner">
-    <div class="site-header__logo">
-      <a href="{{ routes.root_url }}">
-        {%- if settings.logo -%}
-          {%- assign logo_height = settings.logo_width | divided_by: settings.logo.aspect_ratio -%}
-          {{ settings.logo | image_url: width: 300 | image_tag:
-            width: settings.logo_width,
-            height: logo_height,
-            alt: shop.name,
-            preload: true
-          }}
-        {%- else -%}
-          {{ shop.name }}
-        {%- endif -%}
-      </a>
-    </div>
-
-    <nav class="site-header__nav">
-      <a href="/pages/about">About</a>
-      <a href="/collections/all">Available Works</a>
-      <a href="https://catalog.jonsarkin.com" target="_blank" rel="noopener">Catalog Raisonné</a>
-      <a href="/pages/contact">Contact</a>
-
-      {%- if cart.item_count > 0 -%}
-        <a href="{{ routes.cart_url }}" class="site-header__cart">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
-          <span class="cart-count">{{ cart.item_count }}</span>
-        </a>
+    <a href="{{ routes.root_url }}" class="site-title-link">
+      {%- if settings.logo -%}
+        {%- assign logo_height = settings.logo_width | divided_by: settings.logo.aspect_ratio -%}
+        {{ settings.logo | image_url: width: 300 | image_tag:
+          width: settings.logo_width,
+          height: logo_height,
+          alt: shop.name,
+          preload: true
+        }}
+      {%- else -%}
+        {{ shop.name }}
       {%- endif -%}
-    </nav>
-
-    <button class="nav-toggle" onclick="document.querySelector('.mobile-nav').classList.toggle('is-open'); this.setAttribute('aria-expanded', this.getAttribute('aria-expanded') === 'true' ? 'false' : 'true')" aria-expanded="false" aria-controls="mobile-nav" aria-label="Menu">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </a>
+    <div class="site-search-group">
+      <form class="site-search" action="{{ routes.search_url }}">
+        <input type="text" name="q" placeholder="Search" aria-label="Search" />
+        <button type="submit" aria-label="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </form>
+      <div class="site-search-advanced">
+        <a href="#" class="pill-button" id="global-share">[share]</a>
+        <a href="#" class="pill-button" id="theme-toggle">[light]</a>
+        {%- if cart.item_count > 0 -%}
+          <a href="{{ routes.cart_url }}" class="pill-button">[selections&nbsp;{{ cart.item_count }}]</a>
+        {%- endif -%}
+      </div>
+    </div>
+    <button class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="site-nav">
+      <span></span><span></span><span></span>
     </button>
   </div>
 </header>
 
+<nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+  <ul>
+    <li>
+      <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225">Catalog Raisonn&eacute;</a>
+      <ul>
+        <li><a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225">Artwork</a></li>
+        <li><a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=118">Writing</a></li>
+        <li><a href="https://catalog.jonsarkin.com/s/catalog/submit">Submit</a></li>
+      </ul>
+    </li>
+    <li><a href="/collections/all"{% if request.path contains '/collections' %} class="active"{% endif %}>Available Works</a></li>
+    <li>
+      <a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin">About</a>
+      <ul>
+        <li><a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin">The Artist</a></li>
+        <li><a href="https://catalog.jonsarkin.com/s/catalog/page/methodology">Methodology</a></li>
+        <li><a href="https://catalog.jonsarkin.com/s/catalog/page/about-the-catalog">Advisory Board</a></li>
+        <li><a href="/pages/contact">Contact</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
 <div class="mobile-nav" id="mobile-nav">
-  <a href="/pages/about" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">About</a>
-  <a href="/collections/all" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">Available Works</a>
-  <a href="https://catalog.jonsarkin.com" target="_blank" rel="noopener" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">Catalog Raisonné</a>
-  <a href="/pages/contact" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">Contact</a>
+  <div class="mobile-nav__group">
+    <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225" class="mobile-nav__parent">Catalog Raisonn&eacute;</a>
+    <div class="mobile-nav__sub">
+      <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225">Artwork</a>
+      <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=118">Writing</a>
+      <a href="https://catalog.jonsarkin.com/s/catalog/submit">Submit</a>
+    </div>
+  </div>
+  <a href="/collections/all"{% if request.path contains '/collections' %} class="active"{% endif %}>Available Works</a>
+  <div class="mobile-nav__group">
+    <a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin" class="mobile-nav__parent">About</a>
+    <div class="mobile-nav__sub">
+      <a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin">The Artist</a>
+      <a href="https://catalog.jonsarkin.com/s/catalog/page/methodology">Methodology</a>
+      <a href="https://catalog.jonsarkin.com/s/catalog/page/about-the-catalog">Advisory Board</a>
+      <a href="/pages/contact">Contact</a>
+    </div>
+  </div>
   {%- if cart.item_count > 0 -%}
-    <a href="{{ routes.cart_url }}" onclick="document.querySelector('.mobile-nav').classList.remove('is-open')">
-      Selections ({{ cart.item_count }})
-    </a>
+    <a href="{{ routes.cart_url }}">Selections ({{ cart.item_count }})</a>
   {%- endif -%}
 </div>
 

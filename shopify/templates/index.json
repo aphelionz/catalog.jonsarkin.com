@@ -1,57 +1,10 @@
 {
   "sections": {
-    "hero": {
-      "type": "hero",
-      "settings": {
-        "count": 5
-      }
-    },
-    "name_ctas": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "Jon Sarkin (1953–2024)",
-        "text": "<p>American artist. Gloucester, Massachusetts.</p><p><a href=\"https://catalog.jonsarkin.com\">Explore the Catalog Raisonné →</a></p>",
-        "button_label": "Available Works →",
-        "button_link": "/collections/all"
-      }
-    },
-    "bio": {
-      "type": "rich-text",
-      "settings": {
-        "show_divider": true,
-        "text": "<p>Jon Sarkin was an outsider artist whose prolific output spanned three decades following a catastrophic stroke in 1989. What began as an uncontrollable compulsion to draw evolved into a body of more than 20,000 works—dense, layered compositions in ink, marker, paint, and collage that drew comparisons to Jean-Michel Basquiat and Jean Dubuffet. His work entered the collections of the Centre Pompidou, the deCordova Sculpture Park and Museum, and the American Visionary Art Museum, and was the subject of a bestselling biography, <em>Shadows Bright as Glass</em> by Amy Ellis Nutt. He died in Gloucester, Massachusetts on July 19, 2024.</p>"
-      }
-    },
-    "press": {
-      "type": "rich-text",
-      "settings": {
-        "show_divider": true,
-        "heading": "Selected Press",
-        "text": "<p>The New Yorker · The New York Times · NPR · GQ · Raw Vision · Boston Globe</p>"
-      }
-    },
-    "institutions": {
-      "type": "rich-text",
-      "settings": {
-        "show_divider": true,
-        "heading": "Institutional Holdings",
-        "text": "<p>Centre Pompidou · deCordova Sculpture Park and Museum · American Visionary Art Museum · Museum of Modern Art Archives (Calvin Tomkins Papers)</p>"
-      }
-    },
-    "licensing_contact": {
-      "type": "rich-text",
-      "settings": {
-        "show_divider": true,
-        "text": "<p>Jon Sarkin's work is represented by Artists Rights Society (ARS), New York.</p><p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href=\"mailto:art@jonsarkin.com\">art@jonsarkin.com</a>.</p>"
-      }
+    "home_content": {
+      "type": "home-content"
     }
   },
   "order": [
-    "hero",
-    "name_ctas",
-    "bio",
-    "press",
-    "institutions",
-    "licensing_contact"
+    "home_content"
   ]
 }

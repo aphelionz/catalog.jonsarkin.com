@@ -41,6 +41,14 @@ $this->placeholder('json_ld')->set(
 $this->headLink()->appendStylesheet($this->assetUrl('css/page-blocks.css', 'Omeka'));
 $this->htmlElement('body')->appendAttribute('class', $pageBodyClass);
 $this->pageTitle($page->title(), 2);
+
+// Home page redirects to the canonical estate site
+if ($page->slug() === 'home') {
+    $this->headMeta()->appendHttpEquiv('refresh', '0;url=https://jonsarkin.com');
+    $this->headLink(['rel' => 'canonical', 'href' => 'https://jonsarkin.com']);
+    $this->headStyle()->appendStyle('body{display:none!important}');
+}
+
 $nav = $site->publicNav();
 $activePage = $nav->findActive($nav->getContainer());
 switch ($this->siteSetting('subnav_display')) {
@@ -61,6 +69,11 @@ $showPagePagination = $this->siteSetting('show_page_pagination', true);
 <nav class="sub-menu"><?php echo $nav->menu()->renderSubMenu(); ?></nav>
 <?php endif; ?>
 <?php endif; ?>
+
+<?php if ($page->slug() === 'home'): ?>
+<script>window.location.replace("https://jonsarkin.com");</script>
+<p style="text-align:center;padding:2rem;">Redirecting to <a href="https://jonsarkin.com">jonsarkin.com</a>&hellip;</p>
+<?php return; endif; ?>
 
 <?php $this->trigger('view.show.before'); ?>
 <div class="blocks">

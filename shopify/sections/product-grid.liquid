@@ -19,7 +19,7 @@
             {%- if product.metafields.artwork.original_image_url -%}
               <img
                 class="product-card__img product-card__img--hdr"
-                src="{{ product.metafields.artwork.original_image_url }}"
+                src="{{ product.metafields.artwork.original_image_url | replace: '/files/original/', '/files/medium/' | replace: '.jpeg', '.jpg' | replace: '.png', '.jpg' }}"
                 alt="{{ product.title | escape }}"
                 loading="lazy"
               >
