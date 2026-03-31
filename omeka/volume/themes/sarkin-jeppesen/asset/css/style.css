@@ -1050,6 +1050,7 @@ abbr[title] {
 /* Iconographic profile */
 
 .iconographic-profile {
+  padding-top: var(--gutter);
 }
 
 .icon-profile-heading {
