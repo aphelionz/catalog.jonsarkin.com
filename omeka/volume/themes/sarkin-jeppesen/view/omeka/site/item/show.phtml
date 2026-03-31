@@ -567,6 +567,28 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             </div>
             <?php endif; ?>
 
+            <?php if (!empty($provenanceVals)): ?>
+            <div class="item-condition">
+                <h3>Provenance / custody</h3>
+                <ul>
+                    <?php foreach ($provenanceVals as $prov): ?>
+                        <li><?php echo $prov; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($exhibitions)): ?>
+            <div class="item-condition">
+                <h3>Exhibition history</h3>
+                <ul>
+                    <?php foreach ($exhibitions as $exh): ?>
+                        <li><?php echo $exh; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
             <?php if (!empty($motifs)): ?>
             <div id="iconographic-profile"
                  data-item-id="<?php echo (int) $item->id(); ?>"
@@ -619,27 +641,6 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                     </section>
                     <?php endif; ?>
 
-                    <?php if (!empty($provenanceVals)): ?>
-                    <section aria-labelledby="provenance-heading">
-                        <h4 id="provenance-heading"><?php echo $translate('Provenance / custody'); ?></h4>
-                        <ul>
-                            <?php foreach ($provenanceVals as $prov): ?>
-                                <li><?php echo $prov; ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </section>
-                    <?php endif; ?>
-
-                    <?php if (!empty($exhibitions)): ?>
-                    <section aria-labelledby="exhibitions-heading">
-                        <h4 id="exhibitions-heading"><?php echo $translate('Exhibition history'); ?></h4>
-                        <ul>
-                            <?php foreach ($exhibitions as $exh): ?>
-                                <li><?php echo $exh; ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </section>
-                    <?php endif; ?>
 
                     <?php if (!empty($bibliography)): ?>
                     <section aria-labelledby="bibliography-heading">

@@ -1232,7 +1232,7 @@ abbr[title] {
   margin: 0 calc(-1 * var(--gutter)) var(--gutter);
   padding-left: var(--gutter);
   padding-right: var(--gutter);
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .item-condition h3 {
@@ -1243,9 +1243,16 @@ abbr[title] {
   margin: 0 0 0.5em;
 }
 
-.item-condition p {
+.item-condition p,
+.item-condition li {
   margin: 0;
   font-size: 0.85rem;
+}
+
+.item-condition ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 #similar-pieces {
