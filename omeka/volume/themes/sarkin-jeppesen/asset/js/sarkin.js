@@ -19,6 +19,13 @@
             var open = mobileNav.classList.toggle('is-open');
             navToggle.setAttribute('aria-expanded', open);
         });
+        var closeBtn = mobileNav.querySelector('.mobile-nav__close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                mobileNav.classList.remove('is-open');
+                navToggle.setAttribute('aria-expanded', 'false');
+            });
+        }
     }
 
     // ── Mark parent nav active when a subnav link matches the current URL ──

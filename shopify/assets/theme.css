@@ -382,6 +382,19 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   overflow-y: auto;
 }
 .mobile-nav.is-open { display: block; }
+.mobile-nav__close {
+  position: absolute;
+  top: 1rem;
+  right: var(--gutter);
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.mobile-nav__close:hover { color: var(--text-secondary); }
 .mobile-nav > a,
 .mobile-nav__parent {
   display: block;

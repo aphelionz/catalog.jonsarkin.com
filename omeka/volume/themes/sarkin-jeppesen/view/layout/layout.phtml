@@ -92,6 +92,7 @@ try {
         </nav>
 
         <div class="mobile-nav" id="mobile-nav">
+            <button class="mobile-nav__close" aria-label="Close menu">&times;</button>
             <?php
             $navContainer = $site->publicNav()->getContainer();
             foreach ($navContainer as $page) {

@@ -67,6 +67,13 @@
         var open = mobileNav.classList.toggle('is-open');
         navToggle.setAttribute('aria-expanded', open);
       });
+      var closeBtn = mobileNav.querySelector('.mobile-nav__close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+          mobileNav.classList.remove('is-open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        });
+      }
     }
 
     // ── Submenu click-to-toggle (desktop nav) ──
