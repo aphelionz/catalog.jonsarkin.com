@@ -881,8 +881,50 @@ abbr[title] {
   margin-top: 0.3rem;
 }
 
+.item-with-metadata__photo img {
+  cursor: pointer;
+}
+
 .item-with-metadata__dots {
   display: none;
+}
+
+/* Lightbox for about-page photos */
+.photo-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.95);
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.photo-lightbox.open {
+  display: flex;
+}
+
+.photo-lightbox figure {
+  margin: 0;
+  text-align: center;
+}
+
+.photo-lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+}
+
+.photo-lightbox figcaption {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .photo-lightbox { display: none !important; }
+  .item-with-metadata__photo img { cursor: default; }
 }
 
 .item-with-metadata__dot {
@@ -929,6 +971,7 @@ abbr[title] {
   .item-with-metadata__photos {
     flex: none;
     width: 100%;
+    max-width: none;
     overflow: hidden;
   }
   .item-with-metadata__track {
