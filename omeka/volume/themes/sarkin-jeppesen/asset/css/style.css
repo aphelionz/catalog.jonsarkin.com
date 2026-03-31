@@ -296,7 +296,9 @@ abbr[title] {
 }
 
 .site-nav .active > a,
-.site-nav .active > .submenu-toggle {
+.site-nav .active > .submenu-toggle,
+.site-nav.submit-active > ul > li:first-child > a,
+.site-nav.submit-active > ul > li:first-child > .submenu-toggle {
   background: var(--bg-surface);
   color: var(--text);
 }

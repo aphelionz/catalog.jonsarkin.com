@@ -25,7 +25,7 @@ $this->headTitle('Submit Your Collection');
 }
 .collector-form .form-intro {
     font-size: 0.9rem;
-    color: var(--secondary);
+    color: var(--text-secondary);
     margin-bottom: calc(var(--gutter) * 3);
     line-height: 1.6;
 }
@@ -39,7 +39,7 @@ $this->headTitle('Submit Your Collection');
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--primary);
+    color: var(--text);
     margin-bottom: 0.35rem;
 }
 .collector-form label.required::after {
@@ -57,16 +57,16 @@ $this->headTitle('Submit Your Collection');
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0.55rem 0.7rem;
-    border: var(--border);
-    background: var(--surface);
-    color: var(--primary);
+    border: 2px solid var(--text-muted);
+    background: var(--bg-surface);
+    color: var(--text);
     border-radius: 0;
     -webkit-appearance: none;
 }
 .collector-form input:focus,
 .collector-form select:focus,
 .collector-form textarea:focus {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--text);
     outline-offset: -2px;
 }
 .collector-form textarea {
@@ -90,7 +90,7 @@ $this->headTitle('Submit Your Collection');
     margin-top: 0.15rem;
     width: 16px;
     height: 16px;
-    accent-color: var(--primary);
+    accent-color: var(--text);
 }
 .collector-form .checkbox-field label {
     font-size: 0.85rem;
@@ -100,7 +100,7 @@ $this->headTitle('Submit Your Collection');
 }
 .collector-form .field-hint {
     font-size: 0.75rem;
-    color: var(--secondary);
+    color: var(--text-secondary);
     margin-top: 0.25rem;
 }
 .collector-form .field-error {
@@ -109,9 +109,9 @@ $this->headTitle('Submit Your Collection');
     margin-top: 0.25rem;
 }
 .collector-form .submit-btn {
-    background: var(--primary);
-    color: var(--surface);
-    border: var(--border);
+    background: var(--text);
+    color: var(--bg-surface);
+    border: 2px solid var(--text-muted);
     padding: 0.7rem 2.5rem;
     font-family: var(--font);
     font-size: 0.8rem;
@@ -125,7 +125,7 @@ $this->headTitle('Submit Your Collection');
     background: #252a3b;
 }
 .collector-form .success-message {
-    border: 2px solid var(--primary);
+    border: 2px solid var(--text-muted);
     padding: calc(var(--gutter) * 3);
     text-align: center;
 }
@@ -137,7 +137,7 @@ $this->headTitle('Submit Your Collection');
 }
 .collector-form .success-message p {
     font-size: 0.9rem;
-    color: var(--secondary);
+    color: var(--text-secondary);
     line-height: 1.6;
 }
 /* Honeypot: off-screen, not display:none */

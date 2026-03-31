@@ -85,7 +85,11 @@ try {
             </button>
         </header>
 
-        <nav id="site-nav" class="site-nav" aria-label="<?php echo $this->translate('Primary navigation'); ?>">
+        <?php
+        // Mark "Catalog" nav active on submit page (custom controller, not a site page)
+        $isSubmitPage = strpos($this->serverUrl(true), '/submit') !== false;
+        ?>
+        <nav id="site-nav" class="site-nav<?php echo $isSubmitPage ? ' submit-active' : ''; ?>" aria-label="<?php echo $this->translate('Primary navigation'); ?>">
             <?php echo $site->publicNav()->menu()->renderMenu(null, [
                 'maxDepth' => 1,
             ]); ?>
