@@ -1791,7 +1791,7 @@ abbr[title] {
 /* Pagination inside browse controls */
 .faceted-browse-page .browse-controls .pagination,
 .faceted-browse-page .browse-controls nav.pagination {
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--text-muted);
   margin: 0;
   display: flex;
   align-items: stretch;
@@ -1813,7 +1813,7 @@ abbr[title] {
   font-size: 0.8rem;
   padding: 6px 10px;
   border: none;
-  border-right: 2px solid var(--border-color);
+  border-right: 2px solid var(--text-muted);
   background: transparent;
   cursor: pointer;
 }
@@ -1910,7 +1910,8 @@ abbr[title] {
   font-family: var(--font);
   font-size: 0.8rem;
   padding: 5px 8px;
-  border: 2px solid var(--border-color);
+  color: var(--text);
+  border: 2px solid var(--text-muted);
   background: var(--bg-surface);
   cursor: pointer;
 }
@@ -1929,7 +1930,7 @@ abbr[title] {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 6px 12px;
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--text-muted);
   background: var(--text);
   color: var(--bg-surface);
   cursor: pointer;
@@ -1974,7 +1975,8 @@ abbr[title] {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: var(--gutter);
-  border: 2px solid var(--border-color);
+  color: var(--text);
+  border: 2px solid var(--text-muted);
   background: transparent;
   cursor: pointer;
   width: 100%;
@@ -1985,7 +1987,8 @@ abbr[title] {
 /* Close button in mobile sidebar modal */
 .faceted-browse-page #section-sidebar button.close-button {
   background: transparent;
-  border: 2px solid var(--border-color);
+  color: var(--text);
+  border: 2px solid var(--text-muted);
   padding: 6px 12px;
   font-family: var(--font);
   font-size: 0.7rem;
