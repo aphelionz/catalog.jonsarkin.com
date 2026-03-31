@@ -335,8 +335,21 @@ function navigateWithSelections(extraParams) {
         if (text) params.set('fulltext_search', text);
     });
 
-    // Extra params (sort, page override)
+    // Preserve URL-based array filters not set via sidebar (e.g. item_set_id from external link)
     const currentParams = new URLSearchParams(window.location.search);
+    ['item_set_id', 'resource_class_id', 'resource_template_id'].forEach(function(key) {
+        if (!params.has(key + '[]')) {
+            currentParams.forEach(function(v, k) {
+                if (k === key + '[]') {
+                    params.append(key + '[]', v);
+                } else if (new RegExp('^' + key.replace(/([[\]])/g, '\\$1') + '\\[\\d+\\]$').test(k)) {
+                    params.append(key + '[]', v);
+                }
+            });
+        }
+    });
+
+    // Extra params (sort, page override)
     if (extraParams) {
         for (const [k, v] of Object.entries(extraParams)) {
             params.set(k, v);

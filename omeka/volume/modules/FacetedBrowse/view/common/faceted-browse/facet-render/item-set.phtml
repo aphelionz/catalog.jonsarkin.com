@@ -1,16 +1,26 @@
+<?php
+$activeItemSetIds = (array) ($this->placeholder('activeFilters')->getValue()['item_set_id'] ?? []);
+?>
 <?php if ($singleSelect): ?>
+<?php
+if ($activeItemSetIds) {
+    $singleSelect->setValue(reset($activeItemSetIds));
+}
+?>
 <?php echo $this->formElement($singleSelect); ?>
 <?php else: ?>
 <ul class="select-list" data-truncate-list-items="<?php echo $this->escapeHtml($facet->data('truncate_item_sets')); ?>">
     <?php $index = 0; ?>
     <?php foreach ($itemSets as $itemSet): ?>
+    <?php $isActive = in_array((string) $itemSet->id(), array_map('strval', $activeItemSetIds)); ?>
     <li class="select-list-item" data-index="<?php echo $this->escapeHtml($index++); ?>">
         <label>
             <input
-                class="item-set"
+                class="item-set<?php echo $isActive ? ' selected' : ''; ?>"
                 type="<?php echo ('multiple_list' === $facet->data('select_type')) ? 'checkbox' : 'radio'; ?>"
                 name="<?php echo sprintf('item_set_%s', $facet->id()); ?>"
-                data-item-set-id="<?php echo $this->escapeHtml($itemSet->id()); ?>">
+                data-item-set-id="<?php echo $this->escapeHtml($itemSet->id()); ?>"
+                <?php echo $isActive ? 'checked' : ''; ?>>
                 <?php echo $itemSet->title(); ?>
         </label>
     </li>
