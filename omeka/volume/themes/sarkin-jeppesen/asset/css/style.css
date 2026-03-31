@@ -1228,11 +1228,14 @@ abbr[title] {
 /* ── Similar Pieces (inline on item page) ── */
 
 .item-condition {
-  padding-bottom: var(--gutter);
-  margin: 0 calc(-1 * var(--gutter)) var(--gutter);
-  padding-left: var(--gutter);
-  padding-right: var(--gutter);
+  padding: var(--gutter);
+  margin: 0 calc(-1 * var(--gutter));
+  border-top: 2px solid var(--border-color);
   border-bottom: 2px solid var(--border-color);
+}
+
+.item-condition + .item-condition {
+  border-top: none;
 }
 
 .item-condition h3 {
