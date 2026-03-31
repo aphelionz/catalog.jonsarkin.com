@@ -2586,6 +2586,51 @@ nav.pagination span.row-count {
 }
 
 /* ==========================================================================
+   MOBILE NAV DRAWER
+   ========================================================================== */
+
+.mobile-nav {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0; right: 0; bottom: 0;
+  background: var(--bg-surface);
+  z-index: 99;
+  padding: 2rem var(--gutter);
+  overflow-y: auto;
+}
+.mobile-nav.is-open { display: block; }
+.mobile-nav > a,
+.mobile-nav__parent {
+  display: block;
+  padding: 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-color);
+}
+.mobile-nav > a:hover,
+.mobile-nav__parent:hover { color: var(--text-secondary); }
+.mobile-nav__sub {
+  padding-left: 1rem;
+}
+.mobile-nav__sub a {
+  display: block;
+  padding: 0.6rem 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-color);
+}
+.mobile-nav__sub a:hover { color: var(--text); }
+
+/* ==========================================================================
    RESPONSIVE
    ========================================================================== */
 
@@ -2650,24 +2695,6 @@ nav.pagination span.row-count {
 
   .nav-toggle { display: flex; }
   .site-nav { display: none; }
-  .site-nav.open { display: block; }
-  .site-nav ul { flex-direction: column; }
-  .site-nav li { border-right: none; border-bottom: 2px solid var(--nav-hover); }
-  .site-nav li:last-child { border-bottom: none; }
-
-  .site-nav ul ul {
-    position: static;
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.1);
-  }
-  .site-nav ul ul a {
-    padding-left: calc(var(--gutter) * 3);
-    text-align: left;
-  }
-  .site-nav ul ul li {
-    border-bottom: 1px solid var(--nav-sub-border);
-  }
-  .site-nav ul ul li:last-child { border-bottom: none; }
 }
 
 @media (max-width: 480px) {

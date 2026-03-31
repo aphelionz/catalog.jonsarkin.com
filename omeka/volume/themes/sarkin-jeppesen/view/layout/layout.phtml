@@ -91,6 +91,28 @@ try {
             ]); ?>
         </nav>
 
+        <div class="mobile-nav" id="mobile-nav">
+            <?php
+            $navContainer = $site->publicNav()->getContainer();
+            foreach ($navContainer as $page) {
+                $label  = $escape($page->getLabel());
+                $href   = $escape($page->getHref());
+                $children = $page->getPages();
+                if (count($children)) {
+                    echo '<div class="mobile-nav__group">';
+                    echo '<a href="' . $href . '" class="mobile-nav__parent">' . $label . '</a>';
+                    echo '<div class="mobile-nav__sub">';
+                    foreach ($children as $child) {
+                        echo '<a href="' . $escape($child->getHref()) . '">' . $escape($child->getLabel()) . '</a>';
+                    }
+                    echo '</div></div>';
+                } else {
+                    echo '<a href="' . $href . '">' . $label . '</a>';
+                }
+            }
+            ?>
+        </div>
+
         <main id="content" role="main">
             <?php echo $this->content; ?>
         </main>

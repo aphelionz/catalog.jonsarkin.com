@@ -13,10 +13,10 @@
 
     // ── Mobile nav toggle ──
     var navToggle = document.querySelector('.nav-toggle');
-    var siteNav   = document.getElementById('site-nav');
-    if (navToggle && siteNav) {
+    var mobileNav = document.getElementById('mobile-nav');
+    if (navToggle && mobileNav) {
         navToggle.addEventListener('click', function () {
-            var open = siteNav.classList.toggle('open');
+            var open = mobileNav.classList.toggle('is-open');
             navToggle.setAttribute('aria-expanded', open);
         });
     }
