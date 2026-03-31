@@ -12,6 +12,7 @@ class Module extends AbstractModule
 {
     // ── Preview item IDs — update these to the real catalog item IDs ──
     const PREVIEW_ITEM_IDS = [2082, 7467, 5440, 8824, 8818];
+    const PUBLIC_PAGE_SLUGS = ['about-jon-sarkin', 'methodology', 'about-the-catalog'];
 
     public function getConfig()
     {
@@ -91,6 +92,14 @@ class Module extends AbstractModule
             if ($isItemController && $action === 'show' && $id
                 && in_array((int) $id, self::PREVIEW_ITEM_IDS, true)) {
                 return; // Preview item — let through
+            }
+        }
+
+        // Allow whitelisted site pages through without authentication
+        if ($routeName === 'site/page') {
+            $pageSlug = $routeMatch->getParam('page-slug');
+            if ($pageSlug && in_array($pageSlug, self::PUBLIC_PAGE_SLUGS, true)) {
+                return;
             }
         }
 
