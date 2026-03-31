@@ -2674,6 +2674,10 @@ nav.pagination span.row-count {
     flex-direction: column;
     gap: 0;
   }
+  .metadata-fields dl + dl {
+    border-left: none;
+    border-top: 2px solid var(--border-color);
+  }
 
   .metadata-bottom ul {
     grid-template-columns: 1fr;
