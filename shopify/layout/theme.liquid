@@ -17,9 +17,7 @@
   {% endif %}
 
   <link rel="canonical" href="{{ canonical_url }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="{{ 'Jost-VF.woff2' | asset_url }}" as="font" type="font/woff2" crossorigin>
 
   {{ 'theme.css' | asset_url | stylesheet_tag }}
 
@@ -40,11 +38,7 @@
         font-size: {{ settings.font_body_scale | times: 0.16 }}px;
       {%- endif -%}
     }
-    {%- if settings.font_heading -%}
-      h1, h2, h3, h4 { font-family: {{ settings.font_heading.family }}, {{ settings.font_heading.fallback_families }}; }
-    {%- endif -%}
-    {{ settings.font_body | font_face: font_display: 'swap' }}
-    {{ settings.font_heading | font_face: font_display: 'swap' }}
+    h1, h2, h3, h4 { font-family: var(--font); }
   {%- endstyle -%}
 
   {{ content_for_header }}

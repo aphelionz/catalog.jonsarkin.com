@@ -4,6 +4,15 @@
    Mirrors catalog.jonsarkin.com DNA, inverted.
    ============================================================ */
 
+/* ---------- @font-face ---------- */
+
+@font-face {
+  font-family: 'Jost';
+  src: url('Jost-VF.woff2') format('woff2'),
+       url('Jost-VF.ttf') format('truetype');
+  font-display: swap;
+}
+
 /* Fallbacks — overridden by theme.liquid inline style when no data-theme set */
 :root {
   --bg: #0a0c16;
@@ -97,7 +106,7 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   margin: 0 auto;
   padding: 0 var(--gutter);
 }
-.section { padding: 3rem 0; }
+.section { padding: 1.5rem 0 3rem; }
 .section--tight { padding: 1.5rem 0; }
 .section--flush { padding: 0; }
 .text-center { text-align: center; }
