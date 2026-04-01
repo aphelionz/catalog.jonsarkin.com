@@ -153,6 +153,7 @@
             var next = current === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('sarkin-theme', next);
+            document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
             themeToggle.textContent = next === 'light' ? '[dark]' : '[light]';
         });
     }

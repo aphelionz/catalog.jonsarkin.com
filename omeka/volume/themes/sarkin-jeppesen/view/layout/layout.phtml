@@ -45,7 +45,7 @@ try {
 <!DOCTYPE html>
 <?php echo $this->htmlElement('html'); ?>
 <head>
-    <script>(function(){var t=localStorage.getItem('sarkin-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+    <script>(function(){var c=document.cookie.match('(?:^|; )sarkin-theme=([^;]*)');var t=(c&&c[1])||localStorage.getItem('sarkin-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.cookie='sarkin-theme='+t+';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';})()</script>
     <?php echo $this->headMeta(); ?>
     <?php echo $this->headTitle(); ?>
     <?php echo $this->headLink(); ?>
