@@ -158,7 +158,7 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
 .site-header__inner {
   max-width: var(--page-width);
   margin: 0 auto;
-  padding: 0 var(--gutter);
+  padding: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
