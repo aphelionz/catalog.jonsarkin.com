@@ -174,7 +174,7 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
 .site-title-link:hover { color: var(--text); text-decoration: none; }
 
 .site-title-link img.site-logo {
-  height: 24px;
+  height: 36px;
   width: auto;
   filter: invert(1);
   mix-blend-mode: screen;

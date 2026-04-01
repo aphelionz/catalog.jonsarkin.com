@@ -197,7 +197,7 @@ abbr[title] {
 .site-title-link:hover { color: var(--text); text-decoration: none; }
 
 .site-title-link img.site-logo {
-  height: 24px;
+  height: 36px;
   width: auto;
   mix-blend-mode: multiply;
 }
