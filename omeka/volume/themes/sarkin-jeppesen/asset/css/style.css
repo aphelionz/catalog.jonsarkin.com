@@ -21,9 +21,9 @@
   --accent:         #161a2b;
   --nav-bg:         #161a2b;
   --nav-text:       #ffffff;
-  --nav-hover:      var(--nav-hover);
-  --nav-hover-deep: var(--nav-hover-deep);
-  --nav-sub-border: var(--nav-sub-border);
+  --nav-hover:      #252a3b;
+  --nav-hover-deep: #333a4f;
+  --nav-sub-border: #c8cad2;
   /* Layout */
   --gutter:    10px;
   --max-width: 920px;
