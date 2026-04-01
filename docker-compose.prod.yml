@@ -13,6 +13,13 @@ services:
       - "--log.level=WARN"
       - "--accesslog=true"
       - "--ping=true"
+      - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=600s"
+      - "--entrypoints.websecure.transport.respondingTimeouts.writeTimeout=600s"
+      - "--entrypoints.web.transport.respondingTimeouts.readTimeout=600s"
+      - "--entrypoints.web.transport.respondingTimeouts.writeTimeout=600s"
+      - "--serversTransport.forwardingTimeouts.dialTimeout=300s"
+      - "--serversTransport.forwardingTimeouts.responseHeaderTimeout=600s"
+      - "--serversTransport.forwardingTimeouts.idleConnTimeout=600s"
     ports:
       - "80:80"
       - "443:443"
@@ -44,6 +51,7 @@ services:
     volumes:
       - ./omeka/volume:/var/www/html/volume
       - ./omeka/php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+      - ./omeka/reqtimeout.conf:/etc/apache2/mods-enabled/reqtimeout.conf:ro
       - /var/www/omeka-s/files:/var/www/html/volume/files
     environment:
       MYSQL_HOST: db
