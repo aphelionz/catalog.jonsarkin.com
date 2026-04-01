@@ -384,7 +384,7 @@ async function getImageUrl(item) {
 
   try {
     const { json } = await apiGet(`media/${mediaId}`);
-    const url = json['o:original_url'] || '';
+    const url = json['o:thumbnail_urls']?.large || json['o:original_url'] || '';
     // Convert absolute URL to proxy path
     const path = url.replace(/^https?:\/\/[^/]+/, '');
     mediaCache[mediaId] = path;
@@ -1027,8 +1027,19 @@ function setupKeyboard() {
     } else if (e.key === 'Escape') {
       e.preventDefault();
       skip();
+    } else if (e.key === 'ArrowRight' && !isTextInput(e.target)) {
+      e.preventDefault();
+      goNext();
+    } else if (e.key === 'ArrowLeft' && !isTextInput(e.target)) {
+      e.preventDefault();
+      goPrev();
     }
   });
+}
+
+function isTextInput(el) {
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
 }
 
 // ── Toast ───────────────────────────────────────────────────────────────────
