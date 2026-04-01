@@ -15,17 +15,53 @@
     var navToggle = document.querySelector('.nav-toggle');
     var mobileNav = document.getElementById('mobile-nav');
     if (navToggle && mobileNav) {
-        navToggle.addEventListener('click', function () {
-            var open = mobileNav.classList.toggle('is-open');
-            navToggle.setAttribute('aria-expanded', open);
-        });
-        var closeBtn = mobileNav.querySelector('.mobile-nav__close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function () {
-                mobileNav.classList.remove('is-open');
-                navToggle.setAttribute('aria-expanded', 'false');
-            });
+        var mobileCloseBtn = mobileNav.querySelector('.mobile-nav__close');
+
+        function openMobileNav() {
+            mobileNav.classList.add('is-open');
+            navToggle.setAttribute('aria-expanded', 'true');
+            mobileNav.setAttribute('aria-modal', 'true');
+            if (mobileCloseBtn) mobileCloseBtn.focus();
         }
+
+        function closeMobileNav() {
+            mobileNav.classList.remove('is-open');
+            navToggle.setAttribute('aria-expanded', 'false');
+            mobileNav.removeAttribute('aria-modal');
+            navToggle.focus();
+        }
+
+        navToggle.addEventListener('click', function () {
+            if (mobileNav.classList.contains('is-open')) {
+                closeMobileNav();
+            } else {
+                openMobileNav();
+            }
+        });
+
+        if (mobileCloseBtn) {
+            mobileCloseBtn.addEventListener('click', closeMobileNav);
+        }
+
+        // Focus trap + Escape
+        mobileNav.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeMobileNav();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+            var focusable = mobileNav.querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])');
+            if (!focusable.length) return;
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        });
     }
 
     // ── Mark parent nav active when a subnav link matches the current URL ──

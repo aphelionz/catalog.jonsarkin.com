@@ -22,20 +22,20 @@
         {%- if product.images.size > 1 -%}
           <div class="product-detail__thumbnails">
             {%- for image in product.images -%}
-              <img
-                src="{{ image | image_url: width: 120 }}"
-                alt="{{ image.alt | default: product.title | escape }}"
-                class="product-detail__thumb{% if forloop.first %} is-active{% endif %}"
-                data-full-src="{% if forloop.first and product.metafields.artwork.original_image_url %}{{ product.metafields.artwork.original_image_url }}{% else %}{{ image | image_url }}{% endif %}"
-                loading="lazy"
-              >
+              <button type="button" class="product-detail__thumb-btn{% if forloop.first %} is-active{% endif %}" data-full-src="{% if forloop.first and product.metafields.artwork.original_image_url %}{{ product.metafields.artwork.original_image_url }}{% else %}{{ image | image_url }}{% endif %}" aria-label="View image {{ forloop.index }} of {{ product.images.size }}">
+                <img
+                  src="{{ image | image_url: width: 120 }}"
+                  alt="{{ image.alt | default: product.title | escape }}"
+                  loading="lazy"
+                >
+              </button>
             {%- endfor -%}
           </div>
           <script>
-            document.querySelectorAll('.product-detail__thumb').forEach(function(thumb) {
-              thumb.addEventListener('click', function() {
+            document.querySelectorAll('.product-detail__thumb-btn').forEach(function(btn) {
+              btn.addEventListener('click', function() {
                 document.getElementById('product-hero-img').src = this.dataset.fullSrc;
-                document.querySelectorAll('.product-detail__thumb').forEach(function(t) { t.classList.remove('is-active'); });
+                document.querySelectorAll('.product-detail__thumb-btn').forEach(function(b) { b.classList.remove('is-active'); });
                 this.classList.add('is-active');
               });
             });

@@ -3,7 +3,7 @@
     <div class="contact-form">
       {%- form 'contact', id: 'ContactForm' -%}
         {%- if form.posted_successfully? -%}
-          <p style="color: #8f8; margin-bottom: 2rem;">{{ 'templates.contact.form.post_success' | t }}</p>
+          <p role="alert" style="color: var(--text); margin-bottom: 2rem;">&#10003; {{ 'templates.contact.form.post_success' | t }}</p>
         {%- endif -%}
 
         <div class="form-field">
@@ -17,7 +17,7 @@
         </div>
 
         <div class="form-field">
-          <label for="ContactForm-phone">{{ 'templates.contact.form.phone' | t }}</label>
+          <label for="ContactForm-phone">{{ 'templates.contact.form.phone' | t }} <span class="form-optional">(optional)</span></label>
           <input type="tel" id="ContactForm-phone" name="contact[{{ 'templates.contact.form.phone' | t }}]" autocomplete="tel">
         </div>
 

@@ -291,8 +291,8 @@ const FacetedBrowse = {
         }
         if (selectList.hasClass('expanded')) {
             // No need to hide items when list is expanded.
-            facet.find('.select-list-expand').hide();
-            facet.find('.select-list-collapse').show();
+            facet.find('.select-list-expand').hide().attr('aria-expanded', 'false');
+            facet.find('.select-list-collapse').show().attr('aria-expanded', 'true');
             return;
         }
         if (truncateListItems < listItemsSelected.length) {
@@ -304,7 +304,7 @@ const FacetedBrowse = {
         }
         const hiddenCount = listItems.filter(':hidden').length;
         facet.find('.select-list-hidden-count').text(`(${hiddenCount})`);
-        facet.find('.select-list-expand').show();
-        facet.find('.select-list-collapse').hide();
+        facet.find('.select-list-expand').show().attr('aria-expanded', 'false');
+        facet.find('.select-list-collapse').hide().attr('aria-expanded', 'true');
     },
 };

@@ -143,7 +143,7 @@ $displayCare     = $val('curation:note');
 // ── Media ──
 $primaryMedia = $item->primaryMedia();
 $allMedia     = $item->media();
-$imageUrl     = $primaryMedia ? $primaryMedia->originalUrl() : '';
+$imageUrl     = $primaryMedia ? ($primaryMedia->thumbnailUrl('large') ?: $primaryMedia->originalUrl()) : '';
 
 $extraMedia = [];
 foreach ($allMedia as $m) {

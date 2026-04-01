@@ -34,7 +34,9 @@
                 <div class="item-with-metadata__track">
                     <?php foreach ($mediaToShow as $media): ?>
                         <figure class="item-with-metadata__photo">
-                            <?php echo $this->thumbnail($media, 'large'); ?>
+                            <button type="button" class="photo-lightbox-trigger" aria-label="View larger image">
+                                <?php echo $this->thumbnail($media, 'large'); ?>
+                            </button>
                             <?php
                                 $mediaTitle = $media->displayTitle();
                                 if ($mediaTitle && !preg_match('/\.\w{3,4}$/', $mediaTitle)):
@@ -45,9 +47,9 @@
                     <?php endforeach; ?>
                 </div>
                 <?php if (count($mediaToShow) > 1): ?>
-                    <div class="item-with-metadata__dots">
+                    <div class="item-with-metadata__dots" role="tablist" aria-label="Photo gallery">
                         <?php for ($i = 0; $i < count($mediaToShow); $i++): ?>
-                            <span class="item-with-metadata__dot<?php echo $i === 0 ? ' active' : ''; ?>"></span>
+                            <button type="button" class="item-with-metadata__dot<?php echo $i === 0 ? ' active' : ''; ?>" role="tab" aria-selected="<?php echo $i === 0 ? 'true' : 'false'; ?>" aria-label="Photo <?php echo $i + 1; ?> of <?php echo count($mediaToShow); ?>"></button>
                         <?php endfor; ?>
                     </div>
                 <?php endif; ?>
@@ -72,8 +74,16 @@ document.querySelectorAll('.item-with-metadata__track').forEach(function(track) 
     if (!dots.length) return;
     track.addEventListener('scroll', function() {
         var idx = Math.round(track.scrollLeft / track.offsetWidth);
-        dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+        dots.forEach(function(d, i) {
+            d.classList.toggle('active', i === idx);
+            d.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+        });
     }, {passive: true});
+    dots.forEach(function(dot, i) {
+        dot.addEventListener('click', function() {
+            track.scrollTo({left: track.offsetWidth * i, behavior: 'smooth'});
+        });
+    });
 });
 
 // Desktop lightbox — appended to body to avoid stacking context issues
@@ -82,38 +92,65 @@ document.querySelectorAll('.item-with-metadata__track').forEach(function(track) 
 
     var lb = document.createElement('div');
     lb.className = 'photo-lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-label', 'Image lightbox');
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'photo-lightbox__close';
+    closeBtn.setAttribute('aria-label', 'Close lightbox');
+    closeBtn.textContent = '\u00D7';
     var fig = document.createElement('figure');
     var lbImg = document.createElement('img');
     var lbCaption = document.createElement('figcaption');
     fig.appendChild(lbImg);
     fig.appendChild(lbCaption);
+    lb.appendChild(closeBtn);
     lb.appendChild(fig);
     document.body.appendChild(lb);
 
-    document.querySelectorAll('.item-with-metadata__photo img').forEach(function(img) {
-        img.addEventListener('click', function() {
+    var lastTrigger = null;
+
+    function closeLightbox() {
+        lb.classList.remove('open');
+        lb.removeAttribute('aria-modal');
+        lbImg.src = '';
+        if (lastTrigger) lastTrigger.focus();
+    }
+
+    document.querySelectorAll('.photo-lightbox-trigger').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var img = btn.querySelector('img');
+            if (!img) return;
+            lastTrigger = btn;
             lbImg.src = img.src.replace('/large/', '/original/');
             lbImg.alt = img.alt;
-            var caption = img.closest('figure').querySelector('.item-with-metadata__credit');
+            var caption = btn.closest('figure').querySelector('.item-with-metadata__credit');
             lbCaption.textContent = caption ? caption.textContent : '';
             lbCaption.style.display = caption ? '' : 'none';
             lb.classList.add('open');
+            lb.setAttribute('aria-modal', 'true');
+            closeBtn.focus();
         });
+    });
+
+    closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeLightbox();
     });
 
     fig.addEventListener('click', function(e) {
         e.stopPropagation();
     });
 
-    lb.addEventListener('click', function() {
-        lb.classList.remove('open');
-        lbImg.src = '';
-    });
+    lb.addEventListener('click', closeLightbox);
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && lb.classList.contains('open')) {
-            lb.classList.remove('open');
-            lbImg.src = '';
+            closeLightbox();
+        }
+        // Focus trap within lightbox
+        if (e.key === 'Tab' && lb.classList.contains('open')) {
+            e.preventDefault();
+            closeBtn.focus();
         }
     });
 })();

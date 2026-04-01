@@ -16,6 +16,6 @@
     </li>
     <?php endforeach; ?>
 </ul>
-<a href="#" class="select-list-expand" style="display: none;"><?php echo $this->translate('See more'); ?> <span class="select-list-hidden-count"></span></a>
-<a href="#" class="select-list-collapse" style="display: none;"><?php echo $this->translate('See less'); ?></a>
+<button type="button" class="select-list-expand" aria-expanded="false" style="display: none;"><?php echo $this->translate('See more'); ?> <span class="select-list-hidden-count"></span></button>
+<button type="button" class="select-list-collapse" aria-expanded="true" style="display: none;"><?php echo $this->translate('See less'); ?></button>
 <?php endif; ?>
