@@ -31,8 +31,8 @@
 }
 
 [data-theme="dark"] {
-  --bg:             #0a0c16;
-  --bg-surface:     #0a0c16;
+  --bg:             #06080e;
+  --bg-surface:     #06080e;
   --bg-hover:       #151828;
   --text:           #e8e8e8;
   --text-secondary: #888888;

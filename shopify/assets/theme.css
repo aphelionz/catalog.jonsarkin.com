@@ -15,7 +15,7 @@
 
 /* Fallbacks — overridden by theme.liquid inline style when no data-theme set */
 :root {
-  --bg: #0a0c16;
+  --bg: #06080e;
   --bg-surface: #0f1120;
   --bg-hover: #151828;
   --text: #e8e8e8;
