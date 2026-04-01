@@ -196,6 +196,16 @@ abbr[title] {
 
 .site-title-link:hover { color: var(--text); text-decoration: none; }
 
+.site-title-link img.site-logo {
+  height: 24px;
+  width: auto;
+  mix-blend-mode: multiply;
+}
+[data-theme="dark"] .site-title-link img.site-logo {
+  filter: invert(1);
+  mix-blend-mode: screen;
+}
+
 /* ---------- Site Search (header) ---------- */
 
 .site-search {

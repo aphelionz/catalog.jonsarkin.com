@@ -62,7 +62,7 @@ try {
     <div class="site-wrapper">
         <header class="site-header">
             <a href="<?php echo $escape($site->url()); ?>" class="site-title-link">
-                <?php echo $escape($site->title()); ?>
+                <img src="<?php echo $this->assetUrl('img/JS-Signature.png'); ?>" alt="<?php echo $escape($site->title()); ?>" class="site-logo">
             </a>
             <div class="site-search-group">
                 <form class="site-search" action="<?php echo $this->url('site/resource', ['controller' => 'index', 'action' => 'search'], true); ?>">

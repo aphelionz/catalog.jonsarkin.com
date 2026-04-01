@@ -172,7 +172,17 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   font-weight: 600;
 }
 .site-title-link:hover { color: var(--text); text-decoration: none; }
-.site-title-link img { height: 24px; width: auto; }
+
+.site-title-link img.site-logo {
+  height: 24px;
+  width: auto;
+  filter: invert(1);
+  mix-blend-mode: screen;
+}
+[data-theme="light"] .site-title-link img.site-logo {
+  filter: none;
+  mix-blend-mode: multiply;
+}
 
 /* Search group */
 .site-search-group {
@@ -926,6 +936,7 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
 .product-detail__price {
   font-size: 1.2rem;
   font-weight: 600;
+  margin-top: 1.5rem;
   margin-bottom: 1.5rem;
 }
 .product-detail__actions {
@@ -948,7 +959,7 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
 }
 
 .product-detail__excerpt {
-  margin: 1.5rem 0 1.5rem;
+  margin: 1.5rem 0 0;
   padding: 1rem 1.25rem;
   background: rgba(255,255,255,0.04);
   border-left: 2px solid var(--border);

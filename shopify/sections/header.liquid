@@ -1,17 +1,7 @@
 <header class="site-header">
   <div class="page-width site-header__inner">
     <a href="{{ routes.root_url }}" class="site-title-link">
-      {%- if settings.logo -%}
-        {%- assign logo_height = settings.logo_width | divided_by: settings.logo.aspect_ratio -%}
-        {{ settings.logo | image_url: width: 300 | image_tag:
-          width: settings.logo_width,
-          height: logo_height,
-          alt: shop.name,
-          preload: true
-        }}
-      {%- else -%}
-        {{ shop.name }}
-      {%- endif -%}
+      <img src="{{ 'JS-Signature.png' | asset_url }}" alt="{{ shop.name }}" class="site-logo">
     </a>
     <div class="site-search-group">
       <form class="site-search" action="{{ routes.search_url }}">
