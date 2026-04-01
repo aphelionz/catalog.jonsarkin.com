@@ -97,6 +97,20 @@ try {
 
         <div class="mobile-nav" id="mobile-nav" role="dialog" aria-label="Navigation menu">
             <button class="mobile-nav__close" aria-label="Close menu">&times;</button>
+            <form class="mobile-nav__search" action="<?php echo $this->url('site/resource', ['controller' => 'index', 'action' => 'search'], true); ?>">
+                <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" />
+                <button type="submit" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </form>
+            <?php try { $mobileAdvancedUrl = $this->url('site/visual-search', ['site-slug' => $site->slug()]); ?>
+            <div class="mobile-nav__actions">
+                <a href="<?php echo $this->url('site/collector-submit', ['site-slug' => $site->slug()]); ?>">[submit]</a>
+                <a href="#" id="mobile-share">[share]</a>
+                <a href="<?php echo $mobileAdvancedUrl; ?>">[visual search]</a>
+                <a href="#" id="mobile-theme-toggle">[dark]</a>
+            </div>
+            <?php } catch (\Exception $e) { /* SimilarPieces not installed */ } ?>
             <?php
             $navContainer = $site->publicNav()->getContainer();
             foreach ($navContainer as $page) {

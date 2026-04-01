@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "catalog",
-      "runtimeExecutable": "node",
+      "runtimeExecutable": "/Users/mark/.nvm/versions/node/v22.14.0/bin/node",
       "runtimeArgs": ["-e", "require('http').createServer((q,r)=>{const p=require('http').request({hostname:'localhost',port:8888,path:q.url,method:q.method,headers:q.headers},x=>{r.writeHead(x.statusCode,x.headers);x.pipe(r)});q.pipe(p);p.on('error',()=>{r.writeHead(502);r.end()})}).listen(process.env.PORT||9888)"],
       "port": 9888
     },

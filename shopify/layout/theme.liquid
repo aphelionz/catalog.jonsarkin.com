@@ -225,11 +225,35 @@
       });
     }
 
+    // ── Mobile share button ──
+    var mobileShareBtn = document.getElementById('mobile-share');
+    if (mobileShareBtn) {
+      mobileShareBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var url = window.location.href;
+        if (navigator.share) {
+          navigator.share({ title: document.title, url: url });
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url);
+          mobileShareBtn.textContent = '[copied!]';
+          setTimeout(function () { mobileShareBtn.textContent = '[share]'; }, 1500);
+        }
+      });
+    }
+
     // ── Theme toggle (light/dark) ──
     var themeToggle = document.getElementById('theme-toggle');
+    var mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+
+    function updateThemeLabels(theme) {
+      var label = theme === 'dark' ? '[light]' : '[dark]';
+      if (themeToggle) themeToggle.textContent = label;
+      if (mobileThemeToggle) mobileThemeToggle.textContent = label;
+    }
+
     if (themeToggle) {
       var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      themeToggle.textContent = currentTheme === 'dark' ? '[light]' : '[dark]';
+      updateThemeLabels(currentTheme);
 
       themeToggle.addEventListener('click', function (e) {
         e.preventDefault();
@@ -238,7 +262,22 @@
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('sarkin-theme', next);
         document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
-        themeToggle.textContent = next === 'dark' ? '[light]' : '[dark]';
+        updateThemeLabels(next);
+      });
+    }
+
+    if (mobileThemeToggle) {
+      var mobileCurrentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      updateThemeLabels(mobileCurrentTheme);
+
+      mobileThemeToggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        var current = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('sarkin-theme', next);
+        document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
+        updateThemeLabels(next);
       });
     }
   })();

@@ -194,6 +194,50 @@
         });
     }
 
+    // ── Mobile share button ──
+    var mobileShareBtn = document.getElementById('mobile-share');
+    if (mobileShareBtn) {
+        mobileShareBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var url = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: document.title, url: url });
+            } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url);
+                mobileShareBtn.textContent = '[copied!]';
+                setTimeout(function () { mobileShareBtn.textContent = '[share]'; }, 1500);
+            }
+        });
+    }
+
+    // ── Mobile theme toggle ──
+    var mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+    if (mobileThemeToggle) {
+        var mobileCurrentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        mobileThemeToggle.textContent = mobileCurrentTheme === 'light' ? '[dark]' : '[light]';
+
+        mobileThemeToggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            var current = document.documentElement.getAttribute('data-theme') || 'light';
+            var next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('sarkin-theme', next);
+            document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
+            var label = next === 'light' ? '[dark]' : '[light]';
+            mobileThemeToggle.textContent = label;
+            if (themeToggle) themeToggle.textContent = label;
+        });
+
+        // Keep desktop toggle in sync when clicked
+        if (themeToggle) {
+            var origHandler = themeToggle.onclick;
+            themeToggle.addEventListener('click', function () {
+                var next = document.documentElement.getAttribute('data-theme') || 'light';
+                mobileThemeToggle.textContent = next === 'light' ? '[dark]' : '[light]';
+            });
+        }
+    }
+
     // ── Similar pieces (async) ──
     var similarSection = document.getElementById('similar-pieces');
     if (similarSection) {
