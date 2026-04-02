@@ -429,7 +429,7 @@
     // ── Zoom follow cursor (2× magnification) ──
     var zoom = document.querySelector('.zoom');
     var media = document.querySelector('.record-media');
-    if (zoom && media) {
+    if (zoom && media && !media.classList.contains('record-media--video')) {
         var zoomImg = zoom.querySelector('img');
         var mainImg = media.querySelector('img');
         var ZOOM = 2;

@@ -143,6 +143,7 @@ $displayCare     = $val('curation:note');
 // ── Media ──
 $primaryMedia = $item->primaryMedia();
 $allMedia     = $item->media();
+$isVideo      = $primaryMedia && strpos($primaryMedia->mediaType(), 'video/') === 0;
 $imageUrl     = $primaryMedia ? ($primaryMedia->thumbnailUrl('large') ?: $primaryMedia->originalUrl()) : '';
 
 $extraMedia = [];
@@ -490,10 +491,22 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     </section>
     <?php else: ?>
     <!-- ═══ ARTWORK MEDIA ═══ -->
-    <section class="record-media" aria-labelledby="artwork-media-heading">
+    <section class="record-media<?php if ($isVideo) echo ' record-media--video'; ?>" aria-labelledby="artwork-media-heading">
         <h2 id="artwork-media-heading" class="sr-only"><?php echo $translate('Artwork media'); ?></h2>
         <figure class="artwork-figure">
-            <?php if ($primaryMedia): ?>
+            <?php if ($isVideo): ?>
+                <video controls preload="metadata"
+                       <?php $poster = $primaryMedia->thumbnailUrl('large');
+                             if ($poster && strpos($poster, '/thumbnails/video.png') === false):
+                                 echo 'poster="' . $escape($poster) . '"';
+                             endif; ?>>
+                    <source src="<?php echo $escape($primaryMedia->originalUrl()); ?>"
+                            type="<?php echo $escape($primaryMedia->mediaType()); ?>" />
+                </video>
+                <?php $primaryTitle = $primaryMedia->displayTitle(); if ($primaryTitle && $primaryTitle !== $primaryMedia->source()): ?>
+                    <figcaption><?php echo $escape($primaryTitle); ?></figcaption>
+                <?php endif; ?>
+            <?php elseif ($primaryMedia): ?>
                 <img src="<?php echo $escape($imageUrl); ?>"
                      alt="<?php echo $escape(($creator ?: 'Jon Sarkin') . ", $pageLabel" . ($date ? ", $date" : '')); ?>" />
                 <?php $primaryTitle = $primaryMedia->displayTitle(); if ($primaryTitle && $primaryTitle !== $primaryMedia->source()): ?>
@@ -501,7 +514,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <?php endif; ?>
             <?php endif; ?>
         </figure>
-        <?php if ($primaryMedia): ?>
+        <?php if ($primaryMedia && !$isVideo): ?>
             <div class="zoom" aria-hidden="true">
                 <img src="<?php echo $escape($imageUrl); ?>" alt="" />
             </div>
@@ -666,8 +679,15 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                                 $caption = $hasRealTitle ? $extraTitle : $slotLabels[$i];
                             ?>
                             <figure class="supporting-slot">
+                                <?php if (strpos($extraM->mediaType(), 'video/') === 0): ?>
+                                <video controls preload="metadata">
+                                    <source src="<?php echo $escape($extraM->originalUrl()); ?>"
+                                            type="<?php echo $escape($extraM->mediaType()); ?>" />
+                                </video>
+                                <?php else: ?>
                                 <img src="<?php echo $escape($extraM->thumbnailUrl('large')); ?>"
                                      alt="<?php echo $escape($caption . ' for ' . ($creator ?: 'Jon Sarkin') . ", $pageLabel"); ?>" />
+                                <?php endif; ?>
                                 <figcaption><?php echo $escape($caption); ?></figcaption>
                             </figure>
                             <?php endfor; ?>

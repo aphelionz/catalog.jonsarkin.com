@@ -695,6 +695,18 @@ abbr[title] {
   padding: 0.4rem 0.75rem;
 }
 
+.artwork-figure video {
+  width: 100%;
+  display: block;
+  background: #000;
+}
+
+.supporting-slot video {
+  width: 100%;
+  display: block;
+  background: #000;
+}
+
 .zoom {
   position: absolute;
   bottom: 20px; left: 20px;
