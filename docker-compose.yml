@@ -26,6 +26,9 @@ services:
       - ./omeka/apache-expires.load:/etc/apache2/mods-enabled/expires.load:ro
       - ./omeka/apache-headers.load:/etc/apache2/mods-enabled/headers.load:ro
       - ./omeka/apache-caching.conf:/etc/apache2/conf-enabled/caching.conf:ro
+      - ./omeka/htaccess:/var/www/html/.htaccess:ro
+      - ./omeka/clean-urls.php:/var/www/html/clean-urls.php:ro
+      - ./omeka/clean-urls.ini:/usr/local/etc/php/conf.d/clean-urls.ini:ro
     environment:
       MYSQL_HOST: db
       MYSQL_PORT: 3306
