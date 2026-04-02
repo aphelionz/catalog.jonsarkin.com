@@ -23,6 +23,9 @@ services:
     volumes:
       - ./omeka/volume:/var/www/html/volume
       - ./omeka/php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+      - ./omeka/apache-expires.load:/etc/apache2/mods-enabled/expires.load:ro
+      - ./omeka/apache-headers.load:/etc/apache2/mods-enabled/headers.load:ro
+      - ./omeka/apache-caching.conf:/etc/apache2/conf-enabled/caching.conf:ro
     environment:
       MYSQL_HOST: db
       MYSQL_PORT: 3306

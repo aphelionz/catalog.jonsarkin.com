@@ -52,6 +52,9 @@ services:
       - ./omeka/volume:/var/www/html/volume
       - ./omeka/php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - ./omeka/reqtimeout.conf:/etc/apache2/mods-enabled/reqtimeout.conf:ro
+      - ./omeka/apache-expires.load:/etc/apache2/mods-enabled/expires.load:ro
+      - ./omeka/apache-headers.load:/etc/apache2/mods-enabled/headers.load:ro
+      - ./omeka/apache-caching.conf:/etc/apache2/conf-enabled/caching.conf:ro
       - /var/www/omeka-s/files:/var/www/html/volume/files
     environment:
       MYSQL_HOST: db
@@ -75,7 +78,8 @@ services:
       traefik.http.routers.omeka.rule: "Host(`catalog.jonsarkin.com`)"
       traefik.http.routers.omeka.tls: "true"
       traefik.http.routers.omeka.tls.certresolver: "letsencrypt"
-      traefik.http.routers.omeka.middlewares: "omeka-headers"
+      traefik.http.routers.omeka.middlewares: "omeka-compress,omeka-headers"
+      traefik.http.middlewares.omeka-compress.compress: "true"
       traefik.http.middlewares.omeka-headers.headers.customresponseheaders.X-Robots-Tag: "noimageai, noimageindex"
       traefik.http.services.omeka.loadbalancer.server.port: "80"
 
