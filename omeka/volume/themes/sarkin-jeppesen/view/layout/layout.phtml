@@ -141,6 +141,9 @@ try {
                 <div class="footer-text">
                     <p><?php echo $footerText; ?></p>
                     <p>For inquiries about Jon Sarkin's work, contact Mark Henderson, Estate Manager, at <a href="mailto:art@jonsarkin.com">art@jonsarkin.com</a>.</p>
+                    <?php if ($sraPublicKey): ?>
+                    <p class="estate-key">Estate public key: <code><?php echo $escape($sraPublicKey); ?></code></p>
+                    <?php endif; ?>
                 </div>
                 <div class="footer-right">
                     <div class="footer-social">
@@ -164,9 +167,6 @@ try {
                     </nav>
                 </div>
             </div>
-            <?php if ($sraPublicKey): ?>
-            <p class="estate-key">Estate public key: <code><?php echo $escape($sraPublicKey); ?></code></p>
-            <?php endif; ?>
         </footer>
     </div>
 

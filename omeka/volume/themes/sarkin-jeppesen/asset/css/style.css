@@ -510,6 +510,19 @@ abbr[title] {
   word-break: break-all;
 }
 
+@media (max-width: 600px) {
+  .footer-line {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .footer-right {
+    align-items: flex-start;
+  }
+  .footer-links {
+    align-items: flex-start;
+  }
+}
+
 /* ==========================================================================
    ITEM SHOW  (Detail / Record page — from layout.html)
    ========================================================================== */
