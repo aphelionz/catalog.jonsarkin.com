@@ -1,0 +1,44 @@
+<article class="section">
+  <div class="page-width">
+    <div class="page-content">
+      <header class="article-header">
+        <h1>{{ article.title }}</h1>
+        <p class="article-meta">
+          <time datetime="{{ article.published_at | date: '%Y-%m-%d' }}">
+            {{ article.published_at | date: '%B %d, %Y' }}
+          </time>
+          {%- if article.author -%}
+            <span class="article-meta__sep">&mdash;</span>
+            <span>{{ article.author }}</span>
+          {%- endif -%}
+        </p>
+      </header>
+
+      {%- if article.image -%}
+        <div class="article-image">
+          <img
+            src="{{ article.image | image_url: width: 1200 }}"
+            alt="{{ article.image.alt | escape }}"
+            width="{{ article.image.width }}"
+            height="{{ article.image.height }}"
+            loading="lazy"
+          >
+        </div>
+      {%- endif -%}
+
+      <div class="article-body">
+        {{ article.content }}
+      </div>
+
+      <footer class="article-footer">
+        <a href="{{ blog.url }}">&larr; Back to {{ blog.title }}</a>
+      </footer>
+    </div>
+  </div>
+</article>
+
+{% schema %}
+{
+  "name": "Article content"
+}
+{% endschema %}

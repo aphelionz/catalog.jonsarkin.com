@@ -1,0 +1,33 @@
+<section class="section">
+  <div class="page-width">
+    <div class="page-content">
+      <h1>{{ blog.title }}</h1>
+
+      {%- for article in blog.articles -%}
+        <div class="blog-card">
+          <h2 class="blog-card__title">
+            <a href="{{ article.url }}">{{ article.title }}</a>
+          </h2>
+          <p class="blog-card__meta">
+            {{ article.published_at | date: '%B %d, %Y' }}
+          </p>
+          {%- if article.excerpt_or_content != blank -%}
+            <p class="blog-card__excerpt">
+              {{ article.excerpt_or_content | strip_html | truncatewords: 30 }}
+            </p>
+          {%- endif -%}
+        </div>
+      {%- endfor -%}
+
+      {%- if blog.articles.size == 0 -%}
+        <p>No articles yet.</p>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Blog listing"
+}
+{% endschema %}
