@@ -753,7 +753,10 @@ abbr[title] {
 /* --- Writing Content (replaces artwork media for writings) --- */
 
 .writing-content {
-  background: #fff;
+  background: var(--bg-surface);
+}
+[data-theme="dark"] .writing-content {
+  background: var(--bg);
 }
 
 .writing-text {

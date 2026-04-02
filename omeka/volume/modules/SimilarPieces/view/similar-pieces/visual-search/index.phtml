@@ -48,6 +48,20 @@ $siteItemUrl = function ($id) use ($siteSlug) {
 .vs-dropzone input[type="file"] {
     display: none;
 }
+[data-theme="dark"] .vs-dropzone {
+    background: var(--bg-surface);
+    border-color: var(--border-color);
+}
+[data-theme="dark"] .vs-dropzone.dragover {
+    border-color: var(--text);
+    background: var(--bg-hover);
+}
+[data-theme="dark"] .vs-dropzone-label {
+    color: var(--text-secondary);
+}
+[data-theme="dark"] .vs-dropzone-label strong {
+    color: var(--text);
+}
 .vs-preview {
     margin: 1.5rem 0;
     display: none;
