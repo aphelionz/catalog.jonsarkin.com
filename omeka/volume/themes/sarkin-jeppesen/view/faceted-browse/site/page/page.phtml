@@ -116,7 +116,7 @@ $isNotMime = function ($str) {
         ?>
         <?php
         // Derive heading from active TYPE filter (resource_class_id[])
-        $typeLabels = [225 => 'Artwork', 118 => 'Writing'];
+        $typeLabels = [225 => 'Artwork', 118 => 'Writing', 286 => 'Video'];
         $activeClassIds = (array)($this->params()->fromQuery('resource_class_id', []));
         $activeClassId = count($activeClassIds) === 1 ? (int)reset($activeClassIds) : null;
         $typeLabel = $activeClassId && isset($typeLabels[$activeClassId])

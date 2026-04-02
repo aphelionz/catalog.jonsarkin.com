@@ -11,7 +11,7 @@ $myCounts = $counts[$facet->id()] ?? [];
 $activeFilters = $this->placeholder('activeFilters')->getValue() ?: [];
 $activeClassIds = array_map('strval', $activeFilters['resource_class_id'] ?? []);
 
-$classLabels = [225 => 'Artwork', 118 => 'Writing'];
+$classLabels = [225 => 'Artwork', 118 => 'Writing', 286 => 'Video'];
 ?>
 <?php if ($singleSelect): ?>
 <?php

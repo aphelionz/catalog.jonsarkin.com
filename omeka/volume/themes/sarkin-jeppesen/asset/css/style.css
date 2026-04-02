@@ -1564,6 +1564,12 @@ abbr[title] {
   line-height: 1.2;
   margin-bottom: 4px;
   text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
 }
 
 .card-medium {
