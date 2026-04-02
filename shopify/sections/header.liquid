@@ -4,8 +4,8 @@
       <img src="{{ 'JS-Signature.png' | asset_url }}" alt="{{ shop.name }}" class="site-logo">
     </a>
     <div class="site-search-group">
-      <form class="site-search" action="{{ routes.search_url }}">
-        <input type="text" name="q" placeholder="Search" aria-label="Search" />
+      <form class="site-search" action="https://catalog.jonsarkin.com/item">
+        <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" />
         <button type="submit" aria-label="Search">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
@@ -27,21 +27,21 @@
 <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
   <ul>
     <li>
-      <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225">Catalog Raisonn&eacute;</a>
+      <a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=225">Catalog Raisonn&eacute;</a>
       <ul>
-        <li><a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225">Artwork</a></li>
-        <li><a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=118">Writing</a></li>
-        <li><a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=286">Video</a></li>
-        <li><a href="https://catalog.jonsarkin.com/s/catalog/submit">Submit</a></li>
+        <li><a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=225">Artwork</a></li>
+        <li><a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=118">Writing</a></li>
+        <li><a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=286">Video</a></li>
+        <li><a href="https://catalog.jonsarkin.com/submit">Submit</a></li>
       </ul>
     </li>
     <li><a href="/collections/all"{% if request.path contains '/collections' %} class="active"{% endif %}>Available Works</a></li>
     <li>
-      <a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin">About</a>
+      <a href="https://catalog.jonsarkin.com/page/about-jon-sarkin">About</a>
       <ul>
-        <li><a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin">The Artist</a></li>
-        <li><a href="https://catalog.jonsarkin.com/s/catalog/page/methodology">Methodology</a></li>
-        <li><a href="https://catalog.jonsarkin.com/s/catalog/page/about-the-catalog">Advisory Board</a></li>
+        <li><a href="https://catalog.jonsarkin.com/page/about-jon-sarkin">The Artist</a></li>
+        <li><a href="https://catalog.jonsarkin.com/page/methodology">Methodology</a></li>
+        <li><a href="https://catalog.jonsarkin.com/page/about-the-catalog">Advisory Board</a></li>
         <li><a href="/pages/contact">Contact</a></li>
       </ul>
     </li>
@@ -50,8 +50,8 @@
 
 <div class="mobile-nav" id="mobile-nav" role="dialog" aria-label="Navigation menu">
   <button class="mobile-nav__close" aria-label="Close menu">&times;</button>
-  <form class="mobile-nav__search" action="{{ routes.search_url }}">
-    <input type="text" name="q" placeholder="Search" aria-label="Search" />
+  <form class="mobile-nav__search" action="https://catalog.jonsarkin.com/item">
+    <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" />
     <button type="submit" aria-label="Search">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
@@ -61,21 +61,21 @@
     <a href="#" id="mobile-theme-toggle">[light]</a>
   </div>
   <div class="mobile-nav__group">
-    <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225" class="mobile-nav__parent">Catalog Raisonn&eacute;</a>
+    <a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=225" class="mobile-nav__parent">Catalog Raisonn&eacute;</a>
     <div class="mobile-nav__sub">
-      <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=225">Artwork</a>
-      <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=118">Writing</a>
-      <a href="https://catalog.jonsarkin.com/s/catalog/faceted-browse/2?resource_class_id%5B%5D=286">Video</a>
-      <a href="https://catalog.jonsarkin.com/s/catalog/submit">Submit</a>
+      <a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=225">Artwork</a>
+      <a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=118">Writing</a>
+      <a href="https://catalog.jonsarkin.com/faceted-browse/2?resource_class_id%5B%5D=286">Video</a>
+      <a href="https://catalog.jonsarkin.com/submit">Submit</a>
     </div>
   </div>
   <a href="/collections/all"{% if request.path contains '/collections' %} class="active"{% endif %}>Available Works</a>
   <div class="mobile-nav__group">
-    <a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin" class="mobile-nav__parent">About</a>
+    <a href="https://catalog.jonsarkin.com/page/about-jon-sarkin" class="mobile-nav__parent">About</a>
     <div class="mobile-nav__sub">
-      <a href="https://catalog.jonsarkin.com/s/catalog/page/about-jon-sarkin">The Artist</a>
-      <a href="https://catalog.jonsarkin.com/s/catalog/page/methodology">Methodology</a>
-      <a href="https://catalog.jonsarkin.com/s/catalog/page/about-the-catalog">Advisory Board</a>
+      <a href="https://catalog.jonsarkin.com/page/about-jon-sarkin">The Artist</a>
+      <a href="https://catalog.jonsarkin.com/page/methodology">Methodology</a>
+      <a href="https://catalog.jonsarkin.com/page/about-the-catalog">Advisory Board</a>
       <a href="/pages/contact">Contact</a>
     </div>
   </div>
