@@ -56,7 +56,7 @@ Enrichment is now in the Omeka admin UI: **Admin > Enrich Queue**.
 - See [docs/omeka-invariants.md](docs/omeka-invariants.md) for Omeka data model, property IDs, API patterns, and theme conventions
 
 ## Data flow (prod ↔ dev)
-- **Code + schema**: dev → prod only (`make deploy`, `make push-schema`)
+- **Code**: dev → prod only (`make deploy`)
 - **New items**: prod → dev (`make pull-new`, `make pull-files`)
 - **Enrichment**: Omeka admin UI (EnrichItem module calls Claude API directly); cached results survive DB resets
 - **Full DB reset**: prod → dev (`make pull`)

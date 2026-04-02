@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db push-schema ensure-api-key classify classify-opencv classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments sam-playground
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key classify classify-opencv classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments sam-playground
 
 .DEFAULT_GOAL := help
 
@@ -20,7 +20,7 @@ help: ## Show available targets
 	@grep -E '^(ingest|ingest-full|ingest-dry|process-new):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Data Sync"
-	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy|push-schema):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Classification & Segmentation (local M4/MPS)"
 	@grep -E '^(classify|classify-opencv|classify-stats|reclassify|segment|segment-force|segment-test|segment-tier|segment-id|push-segments|sam-playground):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -102,43 +102,6 @@ deploy: ## Push code (modules/themes) to production and restart Omeka
 		./ $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/
 	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose restart omeka'
 
-push-schema: ## Push local schema, site pages, item sets, and config to production
-	@echo "Exporting local schema tables..."
-	@{ \
-		echo "SET FOREIGN_KEY_CHECKS = 0;"; \
-		echo "DELETE FROM resource_template_property WHERE resource_template_id = 2;"; \
-		echo "DELETE FROM site_page_block;"; \
-		echo "DELETE FROM site_page;"; \
-		echo "DELETE FROM site_item_set;"; \
-		echo "DELETE FROM value WHERE resource_id IN (SELECT id FROM item_set);"; \
-		echo "DELETE FROM item_set;"; \
-		echo "DELETE FROM resource WHERE resource_type = 'Omeka\\\\Entity\\\\ItemSet';"; \
-		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
-			--replace --no-create-info --skip-extended-insert --skip-lock-tables \
-			--where="resource_type = 'Omeka\\\\Entity\\\\ItemSet'" resource; \
-		echo "UPDATE resource SET thumbnail_id = NULL WHERE resource_type = 'Omeka\\\\\\\\Entity\\\\\\\\ItemSet';"; \
-		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
-			--replace --no-create-info --skip-extended-insert \
-			custom_vocab resource_template resource_template_property \
-			faceted_browse_page faceted_browse_category \
-			faceted_browse_facet faceted_browse_column \
-			site site_page site_page_block site_setting \
-			item_set site_item_set; \
-		docker compose exec -T db mariadb-dump -uomeka -pomeka omeka \
-			--replace --no-create-info --skip-extended-insert --skip-lock-tables \
-			--where="resource_id IN (SELECT id FROM item_set)" value; \
-		echo "SET FOREIGN_KEY_CHECKS = 1;"; \
-	} > /tmp/omeka-schema-export.sql
-	@echo "Pushing to production..."
-	cat /tmp/omeka-schema-export.sql | ssh $(PROD_USER)@$(PROD_HOST) \
-		'cd $(PROD_DIR) && . .env && docker compose exec -T db mariadb -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE'
-	@echo "Verifying production schema..."
-	@ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && . .env && docker compose exec -T db mariadb -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE \
-			-e "SELECT COUNT(*) AS custom_vocabs FROM custom_vocab; \
-			    SELECT COUNT(*) AS template_2_props FROM resource_template_property WHERE resource_template_id = 2; \
-			    SELECT COUNT(*) AS site_pages FROM site_page; \
-			    SELECT COUNT(*) AS item_sets FROM item_set;"'
-	@echo "Done. Expected: 7 custom_vocabs, 25 template_2_props, 8 site_pages, 18 item_sets."
 
 # ── Classification & Segmentation (local M4/MPS — not in Docker) ──
 
