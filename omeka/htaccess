@@ -25,17 +25,9 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} ^(.+)/+$
 RewriteRule .* %1 [R=307,L]
 
-# The following rewrites all other queries to index.php. The
-# condition ensures that if you are using Apache aliases to do
-# mass virtual hosting, the base path will be prepended to
-# allow proper resolution of the index.php file; it will work
-# in non-aliased environments as well, providing a safe, one-size
-# fits all solution.
-RewriteCond %{REQUEST_URI}::$1 ^(/.+)/(.*)::\2$
-RewriteRule ^(.*) - [E=BASE:%1]
-
+# Rewrite all other queries to index.php (front controller).
 RewriteCond %{ENV:REDIRECT_OMEKA_REQ} !"1"
-RewriteRule ^(.*)$ %{ENV:BASE}/index.php [E=OMEKA_REQ:"1",L]
+RewriteRule ^(.*)$ /index.php [E=OMEKA_REQ:"1",L]
 
 # Block access to all .ini files.
 <FilesMatch "\.ini$">
