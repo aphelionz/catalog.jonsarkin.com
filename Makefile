@@ -102,7 +102,8 @@ deploy: ## Push code (modules/themes) to production and restart Omeka
 		./ $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/
 	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml up -d --no-deps traefik goaccess && docker compose -f docker-compose.prod.yml restart omeka'
 
-analytics: ## Fetch latest analytics report from prod and open in browser
+analytics: ## Regenerate and open analytics report from prod
+	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml restart goaccess' && sleep 10
 	scp $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/goaccess-report/index.html /tmp/catalog-analytics.html
 	open /tmp/catalog-analytics.html
 
