@@ -5,6 +5,7 @@
  */
 $escape = $this->plugin('escapeHtml');
 $site   = $this->site;
+$searchQuery = isset($_GET['fulltext_search']) ? $escape($_GET['fulltext_search']) : '';
 
 $this->htmlElement('html')->setAttribute('lang', $this->lang());
 $this->headMeta()->setCharset('utf-8');
@@ -66,7 +67,7 @@ try {
             </a>
             <div class="site-search-group">
                 <form class="site-search" action="/search">
-                    <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" />
+                    <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" value="<?php echo $searchQuery; ?>" />
                     <button type="submit" aria-label="Search">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </button>
@@ -98,7 +99,7 @@ try {
         <div class="mobile-nav" id="mobile-nav" role="dialog" aria-label="Navigation menu">
             <button class="mobile-nav__close" aria-label="Close menu">&times;</button>
             <form class="mobile-nav__search" action="/search">
-                <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" />
+                <input type="text" name="fulltext_search" placeholder="Search" aria-label="Search" value="<?php echo $searchQuery; ?>" />
                 <button type="submit" aria-label="Search">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </button>
