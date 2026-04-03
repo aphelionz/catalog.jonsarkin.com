@@ -144,7 +144,7 @@ $displayCare     = $val('curation:note');
 $primaryMedia = $item->primaryMedia();
 $allMedia     = $item->media();
 $isVideo      = $primaryMedia && strpos($primaryMedia->mediaType(), 'video/') === 0;
-$imageUrl     = $primaryMedia ? ($primaryMedia->thumbnailUrl('large') ?: $primaryMedia->originalUrl()) : '';
+$imageUrl     = $primaryMedia ? ($primaryMedia->originalUrl() ?: $primaryMedia->thumbnailUrl('large')) : '';
 
 $extraMedia = [];
 foreach ($allMedia as $m) {
