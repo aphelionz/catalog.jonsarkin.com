@@ -333,6 +333,17 @@ function validateItem(item) {
     issues.push({ field: 'Category', level: 'error', msg: 'invalid (must be A–D)' });
   }
 
+  // Duplicate values on any property
+  for (const term of Object.keys(PROP)) {
+    const vals = extractAllValues(item, term);
+    if (vals.length < 2) continue;
+    const unique = new Set(vals);
+    if (unique.size < vals.length) {
+      const label = term.split(':')[1];
+      issues.push({ field: label, level: 'error', msg: 'duplicate values' });
+    }
+  }
+
   return issues;
 }
 
@@ -2919,7 +2930,7 @@ function initFieldSprints() {
     motifs: {
       label: 'Motifs',
       term: 'dcterms:subject',
-      filterFn: item => !extractAllValues(item, 'dcterms:subject').length,
+      filterFn: item => extractAllValues(item, 'dcterms:subject').length < 2,
       inputType: 'tagger',
       autoAdvance: false,
       multiSelect: true,
