@@ -18,19 +18,22 @@ if ($path === '/' || $path === '') {
 }
 
 // Rewrite /s/catalog/ out of HTML responses so links use clean URLs.
-// Only for text/html content (not JSON API responses, admin pages, etc.).
-ob_start(function ($buffer) {
-    // Skip non-HTML responses (API, admin assets, etc.)
-    foreach (headers_list() as $header) {
-        if (stripos($header, 'content-type:') === 0 && stripos($header, 'text/html') === false) {
-            return $buffer;
+// Skip admin and API pages — they use /s/catalog/ internally (e.g. /admin/site/s/catalog/).
+$isAdmin = strpos($path, '/admin') === 0 || strpos($path, '/api') === 0;
+if (!$isAdmin) {
+    ob_start(function ($buffer) {
+        // Skip non-HTML responses (JSON, assets, etc.)
+        foreach (headers_list() as $header) {
+            if (stripos($header, 'content-type:') === 0 && stripos($header, 'text/html') === false) {
+                return $buffer;
+            }
         }
-    }
-    $buffer = str_replace('/s/catalog/', '/', $buffer);
-    // Handle HTML-entity-encoded slashes (Omeka's escapeHtml encodes / as &#x2F;)
-    $buffer = str_replace('&#x2F;s&#x2F;catalog&#x2F;', '&#x2F;', $buffer);
-    // Handle homepage link: "/s/catalog" (no trailing slash) in href/action attributes
-    $buffer = str_replace('"/s/catalog"', '"/"', $buffer);
-    $buffer = str_replace("'/s/catalog'", "'/'", $buffer);
-    return $buffer;
-}, 0, PHP_OUTPUT_HANDLER_REMOVABLE);
+        $buffer = str_replace('/s/catalog/', '/', $buffer);
+        // Handle HTML-entity-encoded slashes (Omeka's escapeHtml encodes / as &#x2F;)
+        $buffer = str_replace('&#x2F;s&#x2F;catalog&#x2F;', '&#x2F;', $buffer);
+        // Handle homepage link: "/s/catalog" (no trailing slash) in href/action attributes
+        $buffer = str_replace('"/s/catalog"', '"/"', $buffer);
+        $buffer = str_replace("'/s/catalog'", "'/'", $buffer);
+        return $buffer;
+    }, 0, PHP_OUTPUT_HANDLER_REMOVABLE);
+}
