@@ -44,7 +44,6 @@ while true; do
         --anonymize-ip \
         --ignore-crawlers \
         --real-os \
-        --no-query-string \
         --exclude-ip=127.0.0.1 \
         --ignore-panel=KEYPHRASES \
         --html-report-title="catalog.jonsarkin.com"
