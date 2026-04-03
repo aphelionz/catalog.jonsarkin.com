@@ -428,7 +428,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
 
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'rights']); ?>" class="pill-button">[rights]</a>
                 <?php if ($shopifyUrl): ?>
-                <a href="<?php echo $shopifyUrl; ?>" class="pill-button pill-button--acquire" target="_blank" rel="noopener">[acquire]</a>
+                <a href="<?php echo $shopifyUrl; ?>?utm_source=catalog&amp;utm_medium=acquire&amp;utm_campaign=item-<?php echo $item->id(); ?>" class="pill-button pill-button--acquire" target="_blank" rel="noopener">[acquire]</a>
                 <?php else: ?>
                 <a href="<?php echo $this->url('site/page', ['site-slug' => $this->currentSite()->slug(), 'page-slug' => 'contact']); ?>" class="pill-button">[inquire]</a>
                 <?php endif; ?>
