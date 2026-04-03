@@ -4,7 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ 'gift_cards.issued.title' | t: value: gift_card.initial_value | format_address, shop: shop.name }}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Jost';
+      src: url('{{ "Jost-VF.woff2" | asset_url }}') format('woff2');
+      font-weight: 100 900;
+      font-display: swap;
+    }
+  </style>
   {{ content_for_header }}
   <style>
     body { font-family: 'Jost', sans-serif; background: #111; color: #e8e8e8; text-align: center; padding: 3rem 1rem; }
