@@ -837,6 +837,128 @@
   font-weight: 600;
 }
 
+/* Tagger input (motifs autocomplete) */
+.rapid-editor-container .card-input:has(.sprint-tagger) {
+  overflow: visible;
+}
+.rapid-editor-container .sprint-tagger {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rapid-editor-container .sprint-tagger-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.rapid-editor-container .sprint-tagger-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  background: #111;
+  color: #fff;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+.rapid-editor-container .sprint-tagger-remove {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.rapid-editor-container .sprint-tagger-remove:hover { color: #fff; }
+.rapid-editor-container .sprint-tagger-input-wrap {
+  position: relative;
+}
+.rapid-editor-container .sprint-tagger-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  background: #fff;
+}
+.rapid-editor-container .sprint-tagger-input:focus { outline: none; border-color: #999; }
+.rapid-editor-container .sprint-tagger-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.rapid-editor-container .sprint-tagger-option {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.rapid-editor-container .sprint-tagger-option:hover,
+.rapid-editor-container .sprint-tagger-option.hl {
+  background: #f0f0f0;
+}
+
+/* Tagging principles info popup */
+.rapid-editor-container .sprint-tagger-info-btn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.rapid-editor-container .sprint-tagger-info-btn:hover { color: #333; border-color: #999; }
+.rapid-editor-container .sprint-tagger-info {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  z-index: 20;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.rapid-editor-container .sprint-tagger-info h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #666;
+}
+.rapid-editor-container .sprint-tagger-info ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.rapid-editor-container .sprint-tagger-info li {
+  margin-bottom: 6px;
+}
+.rapid-editor-container .sprint-tagger-info li strong {
+  color: #111;
+}
+
 /* Save button inside card (for text/chips) */
 .rapid-editor-container .card-input .sprint-save {
   display: block;
@@ -1201,11 +1323,21 @@
   padding: 6px 16px;
 }
 
+/* ── Enlarged sprint stage for motifs ──────────────────────────────── */
+.rapid-editor-container .sprint-motifs #sprint-stage {
+  width: min(600px, 95vw);
+  height: min(780px, 80vh);
+}
+
 /* ── Responsive ────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .rapid-editor-container #card-stage, .rapid-editor-container #sprint-stage {
     width: 95vw;
     height: 65vh;
+  }
+  .rapid-editor-container .sprint-motifs #sprint-stage {
+    width: 98vw;
+    height: 75vh;
   }
   .rapid-editor-container #curate-actions, .rapid-editor-container #sprint-actions { bottom: 12px; gap: 12px; }
   .rapid-editor-container .curate-btn-pass, .rapid-editor-container .curate-btn-keep { padding: 10px 24px; font-size: 14px; }

@@ -82,6 +82,7 @@ let mediaCache = {};      // mediaId → original_url
 let saving = false;
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
 let stickyText = {}; // persist text field values across cards (keyed by term)
+let ALL_MOTIF_TAGS = []; // all distinct motif values across items (autocomplete corpus)
 let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint' | 'exhibit'
 
 // Bucket sort state
@@ -208,6 +209,17 @@ async function fetchAllData() {
     item._issues = validateItem(item);
     item._identifier = extractValue(item, 'dcterms:identifier') || `item-${item['o:id']}`;
   }
+
+  // Build motif autocomplete corpus from all existing values
+  buildMotifTagCorpus();
+}
+
+function buildMotifTagCorpus() {
+  const tagSet = new Set();
+  for (const item of allItems) {
+    for (const v of extractAllValues(item, 'dcterms:subject')) tagSet.add(v);
+  }
+  ALL_MOTIF_TAGS = [...tagSet].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 }
 
 // ── Value extraction ────────────────────────────────────────────────────────
@@ -1003,7 +1015,7 @@ function setupKeyboard() {
 
     // Sprint mode shortcuts
     if (sprintMode) {
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' && !isTextInput(e.target)) {
         e.preventDefault();
         sprintSkip();
       } else if (mod && e.key === 'z') {
@@ -2908,8 +2920,7 @@ function initFieldSprints() {
       label: 'Motifs',
       term: 'dcterms:subject',
       filterFn: item => !extractAllValues(item, 'dcterms:subject').length,
-      inputType: 'chips',
-      options: MOTIFS.map(m => ({ value: m, label: m })),
+      inputType: 'tagger',
       autoAdvance: false,
       multiSelect: true,
     },
@@ -3062,6 +3073,7 @@ function enterSprintMode(fieldKey) {
   dom.main.classList.add('hidden');
   $('#curate-panel').classList.add('hidden');
   $('#sprint-panel').classList.remove('hidden');
+  $('#sprint-panel').classList.toggle('sprint-motifs', fieldKey === 'motifs');
 
   // Update nav buttons
   for (const b of $$('.filter-btn')) b.classList.remove('active');
@@ -3282,6 +3294,186 @@ function renderSprintInput(card, item, config) {
         sprintSaveAndAdvance(itemId, config, vals);
       });
       zone.appendChild(saveBtn);
+      break;
+    }
+
+    case 'tagger': {
+      const tagger = document.createElement('div');
+      tagger.className = 'sprint-tagger';
+      const selectedTags = new Set(extractAllValues(item, config.term));
+
+      // Tag pills container
+      const tagsWrap = document.createElement('div');
+      tagsWrap.className = 'sprint-tagger-tags';
+      tagger.appendChild(tagsWrap);
+
+      // Input row: input + info button
+      const inputRow = document.createElement('div');
+      inputRow.style.cssText = 'display:flex;gap:6px;align-items:center;';
+      const inputWrap = document.createElement('div');
+      inputWrap.className = 'sprint-tagger-input-wrap';
+      inputWrap.style.flex = '1';
+      const tagInput = document.createElement('input');
+      tagInput.type = 'text';
+      tagInput.className = 'sprint-tagger-input';
+      tagInput.placeholder = 'Type to add motif…';
+      tagInput.autocomplete = 'off';
+      const dropdown = document.createElement('div');
+      dropdown.className = 'sprint-tagger-dropdown';
+      dropdown.style.display = 'none';
+      inputWrap.appendChild(tagInput);
+      inputWrap.appendChild(dropdown);
+      inputRow.appendChild(inputWrap);
+
+      // Info button + popup
+      const infoBtn = document.createElement('button');
+      infoBtn.className = 'sprint-tagger-info-btn';
+      infoBtn.textContent = '?';
+      infoBtn.title = 'Tagging principles';
+      const infoPopup = document.createElement('div');
+      infoPopup.className = 'sprint-tagger-info';
+      infoPopup.style.display = 'none';
+      infoPopup.innerHTML = `<h4>Tagging Principles</h4><ul>
+<li><strong>Be specific but reusable.</strong> "Cactus" not "plant" (too vague) or "barrel cactus in terracotta pot" (too specific). A tag should fit 3\u20135+ works.</li>
+<li><strong>Consistent granularity.</strong> Keep subjects and techniques at the same level of specificity. "Crosshatching" and "fish" are both leaf-level \u2014 good. Avoid mixing "drawing techniques" (parent) with "crosshatching" (child).</li>
+<li><strong>Singular nouns.</strong> "Fish" not "fishes", "face" not "faces". Pick one convention and stick to it.</li>
+<li><strong>Tag what you see.</strong> "Spiral" is observable; "anxiety" is interpretation. Keep it concrete.</li>
+<li><strong>Plan for splitting.</strong> Subjects and techniques may separate later. Each tag should clearly be one or the other.</li>
+<li><strong>Don\u2019t over-tag.</strong> 3\u20138 motifs per work is the sweet spot. If everything gets tagged "lines", the tag carries no information.</li>
+<li><strong>Prefer established terms.</strong> Align with AAT conventions when possible ("crosshatching" not "cross-hatch").</li>
+</ul>`;
+      infoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        infoPopup.style.display = infoPopup.style.display === 'none' ? 'block' : 'none';
+      });
+      inputWrap.appendChild(infoPopup);
+      inputRow.appendChild(infoBtn);
+      tagger.appendChild(inputRow);
+
+      let hlIndex = -1;
+
+      function renderPills() {
+        tagsWrap.innerHTML = '';
+        for (const tag of selectedTags) {
+          const pill = document.createElement('span');
+          pill.className = 'sprint-tagger-pill';
+          pill.textContent = tag;
+          const rm = document.createElement('button');
+          rm.className = 'sprint-tagger-remove';
+          rm.textContent = '×';
+          rm.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectedTags.delete(tag);
+            renderPills();
+          });
+          pill.appendChild(rm);
+          tagsWrap.appendChild(pill);
+        }
+      }
+
+      function filterDropdown(query) {
+        const q = query.toLowerCase().trim();
+        dropdown.innerHTML = '';
+        hlIndex = -1;
+        if (!q) { dropdown.style.display = 'none'; return; }
+        const matches = ALL_MOTIF_TAGS.filter(t =>
+          t.toLowerCase().includes(q) && !selectedTags.has(t)
+        ).slice(0, 12);
+        if (!matches.length) { dropdown.style.display = 'none'; return; }
+        for (const m of matches) {
+          const opt = document.createElement('div');
+          opt.className = 'sprint-tagger-option';
+          opt.textContent = m;
+          opt.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            addTag(m);
+          });
+          dropdown.appendChild(opt);
+        }
+        dropdown.style.display = 'block';
+      }
+
+      function highlightOption(idx) {
+        const opts = dropdown.querySelectorAll('.sprint-tagger-option');
+        for (const o of opts) o.classList.remove('hl');
+        if (idx >= 0 && idx < opts.length) {
+          opts[idx].classList.add('hl');
+          opts[idx].scrollIntoView({ block: 'nearest' });
+        }
+      }
+
+      function addTag(tag) {
+        const trimmed = tag.trim();
+        if (!trimmed || selectedTags.has(trimmed)) return;
+        selectedTags.add(trimmed);
+        // Push new tag to corpus if novel
+        if (!ALL_MOTIF_TAGS.includes(trimmed)) {
+          ALL_MOTIF_TAGS.push(trimmed);
+          ALL_MOTIF_TAGS.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        }
+        tagInput.value = '';
+        dropdown.style.display = 'none';
+        hlIndex = -1;
+        renderPills();
+        tagInput.focus();
+      }
+
+      tagInput.addEventListener('input', () => filterDropdown(tagInput.value));
+
+      tagInput.addEventListener('keydown', (e) => {
+        const opts = dropdown.querySelectorAll('.sprint-tagger-option');
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (dropdown.style.display !== 'none' && opts.length) {
+            hlIndex = Math.min(hlIndex + 1, opts.length - 1);
+            highlightOption(hlIndex);
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (dropdown.style.display !== 'none' && opts.length) {
+            hlIndex = Math.max(hlIndex - 1, 0);
+            highlightOption(hlIndex);
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (hlIndex >= 0 && hlIndex < opts.length) {
+            addTag(opts[hlIndex].textContent);
+          } else if (tagInput.value.trim()) {
+            addTag(tagInput.value);
+          }
+        } else if (e.key === 'Tab' && dropdown.style.display !== 'none' && hlIndex >= 0 && hlIndex < opts.length) {
+          e.preventDefault();
+          addTag(opts[hlIndex].textContent);
+        } else if (e.key === 'Backspace' && !tagInput.value) {
+          // Remove last tag
+          const arr = [...selectedTags];
+          if (arr.length) {
+            selectedTags.delete(arr[arr.length - 1]);
+            renderPills();
+          }
+        }
+      });
+
+      tagInput.addEventListener('blur', () => {
+        setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+      });
+      tagInput.addEventListener('focus', () => {
+        if (tagInput.value.trim()) filterDropdown(tagInput.value);
+      });
+
+      renderPills();
+      zone.appendChild(tagger);
+
+      // Save + Next button
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'sprint-save';
+      saveBtn.textContent = 'Save + Next →';
+      saveBtn.addEventListener('click', () => {
+        if (sprintActing) return;
+        sprintSaveAndAdvance(itemId, config, [...selectedTags]);
+      });
+      zone.appendChild(saveBtn);
+      setTimeout(() => tagInput.focus(), 100);
       break;
     }
 
