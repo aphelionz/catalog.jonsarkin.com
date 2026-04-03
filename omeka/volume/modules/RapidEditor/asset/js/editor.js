@@ -3431,6 +3431,15 @@ function renderSprintInput(card, item, config) {
 
       tagInput.addEventListener('input', () => filterDropdown(tagInput.value));
 
+      // Save + Next button (declared early so keydown handler can reference it)
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'sprint-save';
+      saveBtn.textContent = 'Save + Next →';
+      saveBtn.addEventListener('click', () => {
+        if (sprintActing) return;
+        sprintSaveAndAdvance(itemId, config, [...selectedTags]);
+      });
+
       tagInput.addEventListener('keydown', (e) => {
         const opts = dropdown.querySelectorAll('.sprint-tagger-option');
         if (e.key === 'ArrowDown') {
@@ -3451,6 +3460,8 @@ function renderSprintInput(card, item, config) {
             addTag(opts[hlIndex].textContent);
           } else if (tagInput.value.trim()) {
             addTag(tagInput.value);
+          } else {
+            saveBtn.click();
           }
         } else if (e.key === 'Tab' && dropdown.style.display !== 'none' && hlIndex >= 0 && hlIndex < opts.length) {
           e.preventDefault();
@@ -3474,15 +3485,6 @@ function renderSprintInput(card, item, config) {
 
       renderPills();
       zone.appendChild(tagger);
-
-      // Save + Next button
-      const saveBtn = document.createElement('button');
-      saveBtn.className = 'sprint-save';
-      saveBtn.textContent = 'Save + Next →';
-      saveBtn.addEventListener('click', () => {
-        if (sprintActing) return;
-        sprintSaveAndAdvance(itemId, config, [...selectedTags]);
-      });
       zone.appendChild(saveBtn);
       setTimeout(() => tagInput.focus(), 100);
       break;

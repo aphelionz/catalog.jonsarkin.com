@@ -840,6 +840,8 @@
 /* Tagger input (motifs autocomplete) */
 .rapid-editor-container .card-input:has(.sprint-tagger) {
   overflow: visible;
+  max-height: none;
+  flex-shrink: 0;
 }
 .rapid-editor-container .sprint-tagger {
   display: flex;
@@ -850,6 +852,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  max-height: 80px;
+  overflow-y: auto;
 }
 .rapid-editor-container .sprint-tagger-pill {
   display: inline-flex;
