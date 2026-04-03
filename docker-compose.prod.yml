@@ -12,6 +12,11 @@ services:
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
       - "--log.level=WARN"
       - "--accesslog=true"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
+      - "--accesslog.format=json"
+      - "--accesslog.fields.headers.defaultmode=drop"
+      - "--accesslog.fields.headers.names.User-Agent=keep"
+      - "--accesslog.fields.headers.names.Referer=keep"
       - "--ping=true"
       - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=600s"
       - "--entrypoints.websecure.transport.respondingTimeouts.writeTimeout=600s"
@@ -26,6 +31,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./acme.json:/acme.json
+      - traefik_logs:/var/log/traefik
 
   db:
     image: mariadb:10.11
@@ -116,8 +122,18 @@ services:
       - search_index:/app/search_index
       - /opt/catalog/segments:/app/segments
 
+  goaccess:
+    image: allinurl/goaccess:latest
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/goaccess/entrypoint.sh"]
+    volumes:
+      - traefik_logs:/var/log/traefik:ro
+      - ./goaccess:/goaccess:ro
+      - ./goaccess-report:/var/www/goaccess
+
 volumes:
   dbdata:
   qdrant_data:
   qdrant_snapshots:
   search_index:
+  traefik_logs:

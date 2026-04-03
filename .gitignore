@@ -48,6 +48,9 @@ omeka/volume/files/
 # Omeka logs
 omeka/volume/logs/
 
+# GoAccess generated report
+goaccess-report/
+
 # Third-party Omeka modules (FacetedBrowse is ours — not ignored)
 omeka/volume/modules/BulkEdit/
 omeka/volume/modules/Common/
