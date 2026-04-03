@@ -1,5 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key classify classify-opencv classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments sam-playground analytics
-
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key classify classify-opencv classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments sam-playground
 .DEFAULT_GOAL := help
 
 -include .env
@@ -26,7 +25,7 @@ help: ## Show available targets
 	@grep -E '^(classify|classify-opencv|classify-stats|reclassify|segment|segment-force|segment-test|segment-tier|segment-id|push-segments|sam-playground):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Utilities"
-	@grep -E '^(backup-db|restore-db|ensure-api-key|analytics):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(backup-db|restore-db|ensure-api-key):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Enrichment is now in the Omeka admin UI: Admin > Enrich Queue"
 	@echo ""
@@ -98,14 +97,9 @@ deploy: ## Push code (modules/themes) to production and restart Omeka
 		--exclude='.hf_cache/' --exclude='__pycache__/' --exclude='.venv/' \
 		--exclude='harvest/' --exclude='search_index/' --exclude='.DS_Store' \
 		--exclude='.git/' --exclude='node_modules/' --exclude='.claude/' \
-		--exclude='acme.json' --exclude='omeka/volume/logs/' --exclude='goaccess-report/' \
+		--exclude='acme.json' --exclude='omeka/volume/logs/' \
 		./ $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/
-	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml up -d --no-deps traefik goaccess && docker compose -f docker-compose.prod.yml restart omeka'
-
-analytics: ## Regenerate and open analytics report from prod
-	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml restart goaccess' && sleep 10
-	scp $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/goaccess-report/index.html /tmp/catalog-analytics.html
-	open /tmp/catalog-analytics.html
+	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml restart omeka'
 
 
 # ── Classification & Segmentation (local M4/MPS — not in Docker) ──
