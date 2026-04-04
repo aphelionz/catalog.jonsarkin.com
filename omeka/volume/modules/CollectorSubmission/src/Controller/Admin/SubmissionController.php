@@ -219,7 +219,7 @@ class SubmissionController extends AbstractActionController
         $itemData = [
             'o:resource_template' => ['o:id' => 2],   // Artwork (Jon Sarkin)
             'o:resource_class' => ['o:id' => 225],     // VisualArtwork
-            'o:is_public' => false,
+            'o:is_public' => true,
             'dcterms:title' => [[
                 'type' => 'literal',
                 'property_id' => 1,
@@ -286,11 +286,50 @@ class SubmissionController extends AbstractActionController
 
             $this->conn->update('collector_submission', ['item_id' => $itemId], ['id' => $id]);
 
+            // Dispatch enrichment + CLIP ingest jobs
+            $this->dispatchEnrichAndIngest($itemId);
+
             $this->messenger()->addSuccess("Catalog item #{$itemId} created. Edit it below, then return to approve the submission.");
             return $this->redirect()->toUrl('/admin/item/' . $itemId . '/edit');
         } catch (\Exception $e) {
             $this->messenger()->addError('Failed to create item: ' . $e->getMessage());
             return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
+        }
+    }
+
+    /**
+     * Dispatch enrichment (transcription) and CLIP ingest jobs for a newly created item.
+     */
+    private function dispatchEnrichAndIngest(int $itemId): void
+    {
+        try {
+            $services = $this->getEvent()->getApplication()->getServiceManager();
+            $jobDispatcher = $services->get('Omeka\Job\Dispatcher');
+            $conn = $this->conn;
+
+            // Enrich transcription (property 91) if instructions are configured
+            $saved = $conn->fetchAssociative(
+                'SELECT instructions, model FROM enrich_field_instructions WHERE property_id = 91'
+            );
+            if ($saved) {
+                $jobDispatcher->dispatch('EnrichItem\Job\EnrichFieldBatch', [
+                    'property_id' => 91,
+                    'term' => 'bibo:content',
+                    'field_label' => 'content',
+                    'instructions' => $saved['instructions'],
+                    'model' => $saved['model'],
+                    'vocab_terms' => null,
+                    'item_ids' => [$itemId],
+                    'force' => false,
+                ]);
+            }
+
+            // CLIP ingest into Qdrant
+            $jobDispatcher->dispatch('EnrichItem\Job\IngestClip', [
+                'item_ids' => [$itemId],
+            ]);
+        } catch (\Throwable $e) {
+            error_log('CollectorSubmission: enrich/ingest dispatch failed: ' . $e->getMessage());
         }
     }
 
