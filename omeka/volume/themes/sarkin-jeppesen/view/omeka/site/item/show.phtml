@@ -639,7 +639,12 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <?php if ($transcription): ?>
             <details class="transcription-collapsible">
                 <summary><h3>Transcription</h3></summary>
-                <p><?php echo nl2br($transcription); ?></p>
+                <p><?php
+                    $t = $transcription;
+                    $t = str_replace(' // ', '<br><br>', $t);
+                    $t = str_replace(' / ', '<br>', $t);
+                    echo nl2br($t);
+                ?></p>
             </details>
             <?php endif; ?>
 
