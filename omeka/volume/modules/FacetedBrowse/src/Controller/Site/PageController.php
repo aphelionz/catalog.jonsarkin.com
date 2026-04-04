@@ -48,14 +48,14 @@ class PageController extends AbstractActionController
 
             // Browse results (same logic as browseAction)
             $browseDefaults = $this->siteSettings()->get('browse_defaults_public_items');
-            $sortBy = $browseDefaults['sort_by'];
+            $sortBy = $browseDefaults['sort_by'] ?? 'created';
             $sortByValueOptions = $this->facetedBrowse()->getSortByValueOptions($category);
             $sortBy = array_key_exists($category->sortBy(), $sortByValueOptions)
                 ? $category->sortBy()
                 : $sortBy;
             $sortOrder = in_array($category->sortOrder(), ['desc', 'asc'])
                 ? $category->sortOrder()
-                : $browseDefaults['sort_order'];
+                : ($browseDefaults['sort_order'] ?? 'desc');
             $this->setBrowseDefaults($sortBy, $sortOrder);
 
             $categoryResourceIds = null;
@@ -137,14 +137,14 @@ class PageController extends AbstractActionController
 
         // Set default sort.
         $browseDefaults = $this->siteSettings()->get('browse_defaults_public_items');
-        $sortBy = $browseDefaults['sort_by'];
+        $sortBy = $browseDefaults['sort_by'] ?? 'created';
         if ($category) {
             $sortByValueOptions = $this->facetedBrowse()->getSortByValueOptions($category);
             $sortBy = array_key_exists($category->sortBy(), $sortByValueOptions)
                 ? $category->sortBy()
                 : $sortBy;
         }
-        $sortOrder = $browseDefaults['sort_order'];
+        $sortOrder = $browseDefaults['sort_order'] ?? 'desc';
         if ($category) {
             $sortOrder = in_array($category->sortOrder(), ['desc', 'asc'])
                 ? $category->sortOrder()
@@ -185,6 +185,7 @@ class PageController extends AbstractActionController
         $view->setVariable('query', $query);
         $view->setVariable('columns', $columns);
         $view->setVariable('sortings', $this->facetedBrowse()->getSortings($category));
+        $view->setVariable('page', $page);
         return $view;
     }
 }
