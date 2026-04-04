@@ -115,32 +115,6 @@ class DinoIngestRequest(BaseModel):
     thumb_url: str = ""
 
 
-# ── SAM segment search ──
-
-
-class SegmentMatchItem(BaseModel):
-    omeka_item_id: Union[int, str] = Field(..., description="Omeka item id")
-    omeka_url: Optional[str] = None
-    thumb_url: Optional[str] = None
-    score: float
-    segment_index: int = 0
-    segment_url: Optional[str] = None
-    bbox: Optional[List[int]] = None
-
-
-class SegmentSearchResponse(BaseModel):
-    matches: List[SegmentMatchItem]
-
-
-# ── Segment ingest ──
-
-
-class SegmentIngestRequest(BaseModel):
-    image_url: str = Field(..., description="URL of the artwork image to embed")
-    omeka_url: str = ""
-    thumb_url: str = ""
-
-
 class TournamentSeedRequest(BaseModel):
     item_ids: List[int] = Field(..., description="Omeka item IDs to seed into a bracket")
 

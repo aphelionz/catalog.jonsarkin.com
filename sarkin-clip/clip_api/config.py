@@ -57,10 +57,6 @@ class Settings:
     disable_hybrid_boost: bool
     dino_collection: str
     dino_enabled: bool
-    segment_collection: str
-    segment_enabled: bool
-    segment_ingest_enabled: bool
-    segment_dir: str
     max_limit: int = MAX_LIMIT
 
 
@@ -86,8 +82,4 @@ def load_settings() -> Settings:
         disable_hybrid_boost=disable_hybrid_boost,
         dino_collection=os.getenv("DINO_COLLECTION", "sarkin_motif_patches_518"),
         dino_enabled=_env_bool("DINO_ENABLED", True),
-        segment_collection=os.getenv("SEGMENT_COLLECTION", "sarkin_motif_segments"),
-        segment_enabled=_env_bool("SEGMENT_ENABLED", True),
-        segment_ingest_enabled=_env_bool("SEGMENT_INGEST_ENABLED", False),
-        segment_dir=os.getenv("SEGMENT_DIR", "/app/segments"),
     )

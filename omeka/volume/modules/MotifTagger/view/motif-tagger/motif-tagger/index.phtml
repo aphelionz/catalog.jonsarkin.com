@@ -177,21 +177,6 @@ echo $this->pageTitle('Motif Tagger');
     flex-shrink: 0;
 }
 
-/* Segment thumbnail inset */
-.mt-segment-thumb {
-    position: absolute;
-    bottom: 4px;
-    right: 4px;
-    width: 48px;
-    height: 48px;
-    border: 2px solid #fff;
-    border-radius: 3px;
-    object-fit: cover;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    background: #808080;
-    z-index: 2;
-}
-
 /* Tabs */
 .mt-tabs {
     display: flex;
@@ -221,154 +206,6 @@ echo $this->pageTitle('Motif Tagger');
 .mt-tab-panel { display: none; }
 .mt-tab-panel.active { display: block; }
 
-/* Density tab */
-.mt-density-summary {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-}
-.mt-density-stat {
-    padding: 0.6em 1em;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    background: #f8f9fa;
-    font-variant-numeric: tabular-nums;
-    min-width: 100px;
-    text-align: center;
-}
-.mt-density-stat strong { display: block; font-size: 1.4em; }
-.mt-density-stat small { color: #666; }
-
-.mt-density-controls {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-}
-.mt-density-controls .mt-filter-btn {
-    padding: 0.4em 0.8em;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    background: #fff;
-    cursor: pointer;
-    font-size: 0.9em;
-}
-.mt-density-controls .mt-filter-btn.active {
-    background: #333;
-    color: #fff;
-    border-color: #333;
-}
-.mt-density-controls select { padding: 0.4em; }
-
-.mt-density-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-}
-
-.mt-density-card {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #fff;
-    transition: box-shadow 0.15s;
-}
-.mt-density-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-
-.mt-density-card .mt-card-img-wrap {
-    position: relative;
-    aspect-ratio: 1;
-    overflow: hidden;
-    cursor: pointer;
-}
-.mt-density-card .mt-card-img-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-.mt-density-card .mt-no-image {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f0f0f0;
-    color: #aaa;
-    font-size: 0.75em;
-}
-
-.mt-tier-badge {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.75em;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    z-index: 2;
-}
-.mt-tier-badge.sparse { background: #d4edda; color: #155724; }
-.mt-tier-badge.medium { background: #fff3cd; color: #856404; }
-.mt-tier-badge.dense { background: #f8d7da; color: #721c24; }
-
-.mt-source-badge {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 0.7em;
-    z-index: 2;
-}
-.mt-override-badge {
-    position: absolute;
-    top: 24px;
-    right: 6px;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 0.7em;
-    z-index: 2;
-}
-
-.mt-density-info {
-    padding: 6px 8px;
-    font-size: 0.82em;
-    line-height: 1.3;
-}
-.mt-density-info .mt-metric { color: #555; display: block; }
-.mt-density-info .mt-metric-secondary { color: #aaa; font-size: 0.9em; }
-.mt-density-info select {
-    width: 100%;
-    margin-top: 4px;
-    padding: 0.2em;
-    font-size: 0.95em;
-}
-
-.mt-density-pager {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-}
-.mt-density-pager button {
-    padding: 0.3em 0.8em;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    background: #fff;
-    cursor: pointer;
-}
-.mt-density-pager button:disabled { opacity: 0.4; cursor: default; }
-
 /* Spinner */
 .mt-spinner {
     display: inline-block;
@@ -386,7 +223,6 @@ echo $this->pageTitle('Motif Tagger');
 <!-- Tabs -->
 <div class="mt-tabs">
     <button type="button" class="mt-tab active" data-tab="search">Search</button>
-    <button type="button" class="mt-tab" data-tab="density">Density</button>
     <button type="button" class="mt-tab" data-tab="admin">Admin</button>
 </div>
 
@@ -405,8 +241,7 @@ echo $this->pageTitle('Motif Tagger');
     <div id="mt-search-controls">
         <label>Mode:
             <select id="mt-search-mode">
-                <option value="dino">Motif (DINOv2)</option>
-                <option value="segment" selected>Segment (SAM)</option>
+                <option value="dino" selected>Motif (DINOv2)</option>
                 <option value="clip">Global (CLIP)</option>
             </select>
         </label>
@@ -449,48 +284,6 @@ echo $this->pageTitle('Motif Tagger');
 
 </div><!-- /search tab panel -->
 
-<!-- Density Tab -->
-<div class="mt-tab-panel" data-panel="density">
-
-<div class="mt-density-summary" id="mt-density-summary">
-    <div class="mt-density-stat"><strong id="mt-stat-total">--</strong><small>total</small></div>
-    <div class="mt-density-stat"><strong id="mt-stat-sparse" style="color:#155724">--</strong><small>sparse</small></div>
-    <div class="mt-density-stat"><strong id="mt-stat-medium" style="color:#856404">--</strong><small>medium</small></div>
-    <div class="mt-density-stat"><strong id="mt-stat-dense" style="color:#721c24">--</strong><small>dense</small></div>
-</div>
-
-<div class="mt-density-controls">
-    <button type="button" class="mt-filter-btn active" data-tier="">All</button>
-    <button type="button" class="mt-filter-btn" data-tier="sparse">Sparse</button>
-    <button type="button" class="mt-filter-btn" data-tier="medium">Medium</button>
-    <button type="button" class="mt-filter-btn" data-tier="dense">Dense</button>
-    <label style="margin-left:auto;">Sort:
-        <select id="mt-density-sort">
-            <option value="density_score-desc">Score (high)</option>
-            <option value="density_score-asc">Score (low)</option>
-            <option value="motif_count-desc">Motifs (most)</option>
-            <option value="motif_count-asc">Motifs (fewest)</option>
-            <option value="transcription_length-desc">Transcription (longest)</option>
-            <option value="transcription_length-asc">Transcription (shortest)</option>
-            <option value="edge_density-desc">Edge density (high)</option>
-            <option value="edge_density-asc">Edge density (low)</option>
-            <option value="omeka_id-desc">ID (newest)</option>
-            <option value="omeka_id-asc">ID (oldest)</option>
-        </select>
-    </label>
-</div>
-
-<div id="mt-density-status" style="color:#666; margin-bottom:1rem;"></div>
-<div class="mt-density-grid" id="mt-density-grid"></div>
-
-<div class="mt-density-pager" id="mt-density-pager" style="display:none;">
-    <button type="button" id="mt-density-prev" disabled>&laquo; Prev</button>
-    <span id="mt-density-page-info">Page 1</span>
-    <button type="button" id="mt-density-next">Next &raquo;</button>
-</div>
-
-</div><!-- /density tab panel -->
-
 <!-- Admin Tab -->
 <div class="mt-tab-panel" data-panel="admin">
 
@@ -499,7 +292,6 @@ echo $this->pageTitle('Motif Tagger');
     <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
         <button type="button" id="mt-ingest-clip-btn" class="button">Ingest CLIP</button>
         <button type="button" id="mt-ingest-dino-btn" class="button">Ingest DINOv2</button>
-        <button type="button" id="mt-ingest-segments-btn" class="button">Ingest Segments</button>
         <span id="mt-ingest-status" style="color:#666;"></span>
         <a href="/admin/job" style="margin-left:auto; font-size:0.9em;">View Jobs</a>
     </div>
@@ -584,10 +376,6 @@ echo $this->pageTitle('Motif Tagger');
     var addTermUrl = <?= json_encode($addTermUrl) ?>;
     var ingestClipUrl = <?= json_encode($ingestClipUrl) ?>;
     var ingestDinoUrl = <?= json_encode($ingestDinoUrl) ?>;
-    var ingestSegmentsUrl = <?= json_encode($ingestSegmentsUrl) ?>;
-    var densityUrl = <?= json_encode($densityUrl) ?>;
-    var densityOverrideUrlTpl = <?= json_encode($densityOverrideUrl) ?>;
-
     var currentFile = null;
     var matches = [];
 
@@ -747,15 +535,10 @@ echo $this->pageTitle('Motif Tagger');
             card.dataset.id = m.omeka_id;
             card.dataset.score = score;
 
-            var segThumbHtml = m.segment_url
-                ? '<img class="mt-segment-thumb" src="' + escHtml(m.segment_url) + '" alt="segment">'
-                : '';
-
             card.innerHTML =
                 '<input type="checkbox" class="mt-card-checkbox" checked>' +
                 '<div class="mt-card-img-wrap">' +
                     '<img src="' + escHtml(m.thumb_url || '') + '" loading="lazy" alt="' + escHtml(title) + '">' +
-                    segThumbHtml +
                 '</div>' +
                 '<div class="mt-card-info">' +
                     '<span class="mt-score ' + scoreClass + '">' + pct + '%</span> ' +
@@ -948,198 +731,8 @@ echo $this->pageTitle('Motif Tagger');
         });
     }
 
-    var ingestSegmentsBtn = document.getElementById('mt-ingest-segments-btn');
-
     ingestClipBtn.addEventListener('click', function() { dispatchIngest(ingestClipUrl, 'CLIP', ingestClipBtn); });
     ingestDinoBtn.addEventListener('click', function() { dispatchIngest(ingestDinoUrl, 'DINOv2', ingestDinoBtn); });
-    ingestSegmentsBtn.addEventListener('click', function() { dispatchIngest(ingestSegmentsUrl, 'Segments', ingestSegmentsBtn); });
-
-    // --- Density Tab ---
-    var densityGrid = document.getElementById('mt-density-grid');
-    var densityStatus = document.getElementById('mt-density-status');
-    var densityPager = document.getElementById('mt-density-pager');
-    var densityPrev = document.getElementById('mt-density-prev');
-    var densityNext = document.getElementById('mt-density-next');
-    var densityPageInfo = document.getElementById('mt-density-page-info');
-    var densitySortSelect = document.getElementById('mt-density-sort');
-
-    var densityState = { tier: '', sort: 'density_score', order: 'desc', page: 1, perPage: 50, total: 0, loaded: false };
-
-    // Filter buttons
-    document.querySelectorAll('.mt-filter-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.mt-filter-btn').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            densityState.tier = btn.dataset.tier;
-            densityState.page = 1;
-            loadDensity();
-        });
-    });
-
-    // Sort
-    densitySortSelect.addEventListener('change', function() {
-        var parts = this.value.split('-');
-        densityState.sort = parts[0];
-        densityState.order = parts[1];
-        densityState.page = 1;
-        loadDensity();
-    });
-
-    // Pagination
-    densityPrev.addEventListener('click', function() {
-        if (densityState.page > 1) { densityState.page--; loadDensity(); }
-    });
-    densityNext.addEventListener('click', function() {
-        var maxPage = Math.ceil(densityState.total / densityState.perPage);
-        if (densityState.page < maxPage) { densityState.page++; loadDensity(); }
-    });
-
-    // Load density on first tab click
-    document.querySelectorAll('.mt-tab').forEach(function(tab) {
-        tab.addEventListener('click', function() {
-            if (tab.dataset.tab === 'density' && !densityState.loaded) {
-                loadDensity();
-            }
-        });
-    });
-
-    function loadDensity() {
-        densityStatus.innerHTML = '<span class="mt-spinner"></span> Loading...';
-        densityGrid.innerHTML = '';
-        densityPager.style.display = 'none';
-
-        var params = new URLSearchParams();
-        if (densityState.tier) params.set('tier', densityState.tier);
-        params.set('sort', densityState.sort);
-        params.set('order', densityState.order);
-        params.set('page', densityState.page);
-        params.set('per_page', densityState.perPage);
-
-        fetch(densityUrl + '?' + params.toString())
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                densityState.loaded = true;
-                if (data.error) {
-                    densityStatus.textContent = data.error;
-                    return;
-                }
-
-                // Update summary stats
-                var dist = data.distribution || {};
-                var sparse = dist.sparse || 0;
-                var medium = dist.medium || 0;
-                var dense = dist.dense || 0;
-                var total = sparse + medium + dense;
-                document.getElementById('mt-stat-total').textContent = total;
-                document.getElementById('mt-stat-sparse').textContent = sparse;
-                document.getElementById('mt-stat-medium').textContent = medium;
-                document.getElementById('mt-stat-dense').textContent = dense;
-
-                densityState.total = data.total || 0;
-
-                // Render grid
-                var items = data.items || [];
-                densityStatus.textContent = densityState.total + ' items' +
-                    (densityState.tier ? ' (' + densityState.tier + ')' : '');
-
-                items.forEach(function(item) {
-                    var card = document.createElement('div');
-                    card.className = 'mt-density-card';
-                    card.dataset.id = item.omeka_id;
-
-                    var overrideMark = item.override ? '<span class="mt-override-badge">override</span>' : '';
-
-                    var sourceBadge = item.source && item.source !== 'opencv'
-                        ? '<span class="mt-source-badge">' + escHtml(item.source) + '</span>'
-                        : '';
-                    var metaLine = item.motif_count || item.transcription_length
-                        ? '<span class="mt-metric">' + item.motif_count + ' motifs &middot; ' + item.transcription_length + ' chars &middot; score: ' + item.density_score.toFixed(1) + '</span>'
-                        : '';
-                    var cvLine = item.edge_density
-                        ? '<span class="mt-metric mt-metric-secondary">edge: ' + item.edge_density + ' &middot; white: ' + (item.white_pct * 100).toFixed(1) + '%</span>'
-                        : '';
-
-                    var imgHtml = item.thumb_url
-                        ? '<img src="' + escHtml(item.thumb_url) + '" loading="lazy" alt="Item ' + item.omeka_id + '">'
-                        : '<div class="mt-no-image">No image</div>';
-                    card.innerHTML =
-                        '<div class="mt-card-img-wrap">' +
-                            imgHtml +
-                            '<span class="mt-tier-badge ' + escHtml(item.tier) + '">' + escHtml(item.tier) + '</span>' +
-                            sourceBadge +
-                            overrideMark +
-                        '</div>' +
-                        '<div class="mt-density-info">' +
-                            metaLine +
-                            cvLine +
-                            '<select class="mt-tier-override" data-id="' + item.omeka_id + '">' +
-                                '<option value="sparse"' + (item.tier === 'sparse' ? ' selected' : '') + '>Sparse</option>' +
-                                '<option value="medium"' + (item.tier === 'medium' ? ' selected' : '') + '>Medium</option>' +
-                                '<option value="dense"' + (item.tier === 'dense' ? ' selected' : '') + '>Dense</option>' +
-                            '</select>' +
-                        '</div>';
-
-                    // Click image to open admin edit
-                    card.querySelector('.mt-card-img-wrap').addEventListener('click', function() {
-                        window.open('/admin/item/' + item.omeka_id + '/edit', '_blank');
-                    });
-
-                    // Override select
-                    card.querySelector('.mt-tier-override').addEventListener('change', function() {
-                        var sel = this;
-                        var newTier = sel.value;
-                        var id = sel.dataset.id;
-                        var url = densityOverrideUrlTpl.replace('__ID__', id);
-
-                        sel.disabled = true;
-                        fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                            body: JSON.stringify({ tier: newTier })
-                        })
-                        .then(function(r) { return r.json(); })
-                        .then(function(data) {
-                            sel.disabled = false;
-                            if (data.error) {
-                                alert('Override failed: ' + data.error);
-                                return;
-                            }
-                            // Update badge
-                            var badge = card.querySelector('.mt-tier-badge');
-                            badge.className = 'mt-tier-badge ' + newTier;
-                            badge.textContent = newTier;
-                            // Add override badge if not present
-                            if (!card.querySelector('.mt-override-badge')) {
-                                var ob = document.createElement('span');
-                                ob.className = 'mt-override-badge';
-                                ob.textContent = 'override';
-                                card.querySelector('.mt-card-img-wrap').appendChild(ob);
-                            }
-                        })
-                        .catch(function(e) {
-                            sel.disabled = false;
-                            alert('Override failed: ' + e.message);
-                        });
-                    });
-
-                    densityGrid.appendChild(card);
-                });
-
-                // Pagination
-                var maxPage = Math.ceil(densityState.total / densityState.perPage);
-                if (maxPage > 1) {
-                    densityPager.style.display = 'flex';
-                    densityPrev.disabled = densityState.page <= 1;
-                    densityNext.disabled = densityState.page >= maxPage;
-                    densityPageInfo.textContent = 'Page ' + densityState.page + ' of ' + maxPage;
-                } else {
-                    densityPager.style.display = 'none';
-                }
-            })
-            .catch(function(e) {
-                densityStatus.textContent = 'Failed to load density data: ' + e.message;
-            });
-    }
 
     // --- Helpers ---
     function escHtml(str) {

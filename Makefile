@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key classify classify-opencv classify-stats reclassify segment segment-force segment-test segment-tier segment-id push-segments sam-playground
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key push-schema
 .DEFAULT_GOAL := help
 
 -include .env
@@ -20,9 +20,6 @@ help: ## Show available targets
 	@echo ""
 	@echo "  Data Sync"
 	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo ""
-	@echo "  Classification & Segmentation (local M4/MPS)"
-	@grep -E '^(classify|classify-opencv|classify-stats|reclassify|segment|segment-force|segment-test|segment-tier|segment-id|push-segments|sam-playground):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Utilities"
 	@grep -E '^(backup-db|restore-db|ensure-api-key):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -101,41 +98,6 @@ deploy: ## Push code (modules/themes) to production and restart Omeka
 		./ $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/
 	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml restart omeka'
 
-
-# ── Classification & Segmentation (local M4/MPS — not in Docker) ──
-
-classify: ## Metadata-derived density classification (fast, uses MariaDB)
-	cd sarkin-clip && .venv/bin/python classify.py $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH)) $(if $(DB_HOST),--db-host $(DB_HOST))
-
-classify-opencv: ## OpenCV-based density classification (downloads images)
-	cd sarkin-clip && .venv/bin/python classify.py --opencv $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH))
-
-classify-stats: ## Show density tier distribution with per-source breakdown
-	cd sarkin-clip && .venv/bin/python classify.py --stats
-
-reclassify: ## Reclassify tiers from stored scores by percentile
-	cd sarkin-clip && .venv/bin/python classify.py --reclassify $(if $(P_LOW),--p-low $(P_LOW)) $(if $(P_HIGH),--p-high $(P_HIGH))
-
-segment: ## Run SAM 2.1 segmentation locally (incremental, density-tiered)
-	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment
-
-segment-force: ## Re-segment all items with SAM 2.1 (recreates collection)
-	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --force
-
-segment-test: ## Segment ~20 test items (mix of tiers) for parameter tuning
-	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --test
-
-segment-tier: ## Segment items in a specific tier (usage: make segment-tier TIER=sparse)
-	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --tier $(TIER)
-
-segment-id: ## Segment a single item (usage: make segment-id ID=1234)
-	cd sarkin-clip && .venv/bin/python local_segment_ingest.py segment --id $(ID)
-
-push-segments: ## Push segment JPEGs + Qdrant vectors to production
-	cd sarkin-clip && .venv/bin/python local_segment_ingest.py push
-
-sam-playground: ## Interactive SAM parameter playground (local, MPS)
-	cd sarkin-clip && uv run --python .venv/bin/python sam_playground.py
 
 # ── Utilities ────────────────────────────────────────────────────────
 

@@ -59,9 +59,6 @@ class MotifTaggerController extends AbstractActionController
             'addTermUrl' => $this->url()->fromRoute('admin/motif-tagger/add-term'),
             'ingestClipUrl' => $this->url()->fromRoute('admin/motif-tagger/ingest-clip'),
             'ingestDinoUrl' => $this->url()->fromRoute('admin/motif-tagger/ingest-dino'),
-            'ingestSegmentsUrl' => $this->url()->fromRoute('admin/motif-tagger/ingest-segments'),
-            'densityUrl' => $this->url()->fromRoute('admin/motif-tagger/density'),
-            'densityOverrideUrl' => $this->url()->fromRoute('admin/motif-tagger/density-override', ['id' => '__ID__']),
             'qdrantStats' => $qdrantStats,
         ]);
         return $view;
@@ -97,7 +94,6 @@ class MotifTaggerController extends AbstractActionController
 
         $endpoint = match ($searchMode) {
             'dino' => '/v1/omeka/images/motif-search',
-            'segment' => '/v1/omeka/images/segment-search',
             default => '/v1/omeka/images/search',
         };
         $clipUrl = rtrim($this->getSetting('clip_api_url', 'http://clip-api:8000'), '/')
@@ -172,10 +168,6 @@ class MotifTaggerController extends AbstractActionController
                 );
             }
 
-            // Rewrite segment_url (relative path from clip-api) to browser-reachable
-            if (!empty($match['segment_url'])) {
-                $match['segment_url'] = 'http://localhost:8000' . $match['segment_url'];
-            }
         }
         unset($match);
 
@@ -273,86 +265,6 @@ class MotifTaggerController extends AbstractActionController
 
         $this->dispatcher->dispatch(Job\IngestDino::class, []);
         return new JsonModel(['status' => 'dispatched', 'type' => 'dino']);
-    }
-
-    public function ingestSegmentsAction(): JsonModel
-    {
-        $request = $this->getRequest();
-        if (!$request->isPost()) {
-            return new JsonModel(['error' => 'POST required']);
-        }
-
-        $this->dispatcher->dispatch(Job\IngestSegments::class, []);
-        return new JsonModel(['status' => 'dispatched', 'type' => 'segments']);
-    }
-
-    public function densityAction(): JsonModel
-    {
-        $clipApiUrl = rtrim($this->config['clip_api_url'] ?? 'http://clip-api:8000', '/');
-        $params = $this->params()->fromQuery();
-        $qs = http_build_query($params);
-
-        try {
-            $client = clone $this->httpClient;
-            $client->resetParameters(true);
-            $client->setUri($clipApiUrl . '/v1/density' . ($qs ? '?' . $qs : ''));
-            $client->setMethod('GET');
-            $client->setOptions(['timeout' => 10]);
-            $response = $client->send();
-
-            $data = json_decode($response->getBody(), true) ?: [];
-
-            // Rewrite thumb_urls from container to browser-reachable
-            $requestUri = $this->getRequest()->getUri();
-            $browserBase = $requestUri->getScheme() . '://' . $requestUri->getHost()
-                . ($requestUri->getPort() ? ':' . $requestUri->getPort() : '');
-            for ($i = 0, $n = count($data['items'] ?? []); $i < $n; $i++) {
-                if (!empty($data['items'][$i]['thumb_url'])) {
-                    $data['items'][$i]['thumb_url'] = preg_replace(
-                        '#https?://(?:omeka(?::\d+)?|localhost:\d+|catalog\.jonsarkin\.com)#',
-                        $browserBase,
-                        $data['items'][$i]['thumb_url']
-                    );
-                }
-            }
-
-            return new JsonModel($data);
-        } catch (\Exception $e) {
-            return new JsonModel(['error' => 'clip-api error: ' . $e->getMessage()]);
-        }
-    }
-
-    public function densityOverrideAction(): JsonModel
-    {
-        $request = $this->getRequest();
-        if (!$request->isPost()) {
-            return new JsonModel(['error' => 'POST required']);
-        }
-
-        $omekaId = (int) $this->params()->fromRoute('id');
-        $body = json_decode($request->getContent(), true);
-        $tier = $body['tier'] ?? '';
-
-        if (!in_array($tier, ['sparse', 'medium', 'dense'], true)) {
-            return new JsonModel(['error' => 'Invalid tier']);
-        }
-
-        $clipApiUrl = rtrim($this->config['clip_api_url'] ?? 'http://clip-api:8000', '/');
-
-        try {
-            $client = clone $this->httpClient;
-            $client->resetParameters(true);
-            $client->setUri($clipApiUrl . '/v1/density/' . $omekaId);
-            $client->setMethod('PATCH');
-            $client->setRawBody(json_encode(['tier' => $tier]));
-            $client->setHeaders(['Content-Type' => 'application/json']);
-            $client->setOptions(['timeout' => 5]);
-            $response = $client->send();
-
-            return new JsonModel(json_decode($response->getBody(), true) ?: []);
-        } catch (\Exception $e) {
-            return new JsonModel(['error' => 'clip-api error: ' . $e->getMessage()]);
-        }
     }
 
     public function addTermAction(): JsonModel

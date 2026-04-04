@@ -1,4 +1,0 @@
-# Local-only dependencies for SAM 2.1 segmentation on Apple Silicon (MPS).
-# Install with: SAM2_BUILD_CUDA=0 pip install -r requirements.local.txt
-sam-2 @ git+https://github.com/facebookresearch/sam2.git
-gradio>=5.0

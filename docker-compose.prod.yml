@@ -109,12 +109,8 @@ services:
       DEFAULT_LIMIT: 50
       DINO_COLLECTION: sarkin_motif_patches_518
       DINO_ENABLED: "true"
-      SEGMENT_ENABLED: "true"
-      SEGMENT_INGEST_ENABLED: "false"
-      SEGMENT_COLLECTION: sarkin_motif_segments
     volumes:
       - search_index:/app/search_index
-      - /opt/catalog/segments:/app/segments
 
 volumes:
   dbdata:
