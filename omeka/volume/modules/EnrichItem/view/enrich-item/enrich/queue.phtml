@@ -10,6 +10,7 @@ $previewUrl = $this->url('admin/enrich-queue/preview');
 $batchUrl = $this->url('admin/enrich-queue/batch');
 $batchStatusUrl = $this->url('admin/enrich-queue/batch-status');
 $batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
+$ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
 ?>
 
 <?php echo $this->pageTitle('Enrich Fields') ?>
@@ -95,6 +96,14 @@ $batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
             <tbody id="batch-rows"></tbody>
         </table>
     </div>
+
+    <!-- CLIP Vector Index -->
+    <div style="margin-top: 2em; padding: 1em; border: 1px solid #ddd; background: #f9f9f9; border-radius: 4px;">
+        <h3 style="margin-top: 0;">CLIP Vector Index</h3>
+        <p style="color: #666; font-size: 0.9em; margin-bottom: 1em;">Re-index all items into the CLIP similarity search database (Qdrant). This processes every item with media.</p>
+        <button type="button" id="ingest-clip-btn" class="button">Ingest All Items</button>
+        <span id="ingest-clip-status" style="margin-left: 0.5em; color: #666;"></span>
+    </div>
 </div>
 
 <script>
@@ -109,7 +118,8 @@ $batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
         preview: <?= json_encode($previewUrl) ?>,
         batch: <?= json_encode($batchUrl) ?>,
         batchStatus: <?= json_encode($batchStatusUrl) ?>,
-        batchCollect: <?= json_encode($batchCollectUrl) ?>
+        batchCollect: <?= json_encode($batchCollectUrl) ?>,
+        ingestClip: <?= json_encode($ingestClipUrl) ?>
     };
 
     var fieldSelect = document.getElementById('field-select');
@@ -345,6 +355,33 @@ $batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
         div.textContent = str;
         return div.innerHTML;
     }
+
+    // CLIP Ingest
+    var ingestClipBtn = document.getElementById('ingest-clip-btn');
+    var ingestClipStatus = document.getElementById('ingest-clip-status');
+    ingestClipBtn.addEventListener('click', function() {
+        if (!confirm('Re-index all items into CLIP? This processes every item with media.')) return;
+        ingestClipBtn.disabled = true;
+        ingestClipStatus.textContent = 'Dispatching...';
+        fetch(urls.ingestClip, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: '{}'
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            ingestClipBtn.disabled = false;
+            if (data.error) {
+                ingestClipStatus.textContent = 'Error: ' + data.error;
+            } else {
+                ingestClipStatus.textContent = 'Job dispatched. Check Admin > Jobs for progress.';
+            }
+        })
+        .catch(function(e) {
+            ingestClipBtn.disabled = false;
+            ingestClipStatus.textContent = 'Error: ' + e.message;
+        });
+    });
 
     // Init
     loadFields();

@@ -82,6 +82,15 @@ return [
                                     ],
                                 ],
                             ],
+                            'ingest-clip' => [
+                                'type' => 'Literal',
+                                'options' => [
+                                    'route' => '/ingest-clip',
+                                    'defaults' => [
+                                        'action' => 'ingestClip',
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],

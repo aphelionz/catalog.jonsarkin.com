@@ -350,6 +350,19 @@ class EnrichController extends AbstractActionController
         return new JsonModel(['status' => 'dispatched', 'batch_id' => $batchId]);
     }
 
+    /**
+     * POST /admin/enrich-queue/ingest-clip — dispatch CLIP re-index job.
+     */
+    public function ingestClipAction(): JsonModel
+    {
+        $request = $this->getRequest();
+        if (!$request->isPost()) {
+            return new JsonModel(['error' => 'POST required']);
+        }
+        $this->jobDispatcher->dispatch(\EnrichItem\Job\IngestClip::class, []);
+        return new JsonModel(['status' => 'dispatched', 'type' => 'clip']);
+    }
+
     // ── Private helpers ─────────────────────────────────────────────
 
     /**
