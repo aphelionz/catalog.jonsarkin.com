@@ -298,35 +298,19 @@ class SubmissionController extends AbstractActionController
     }
 
     /**
-     * Dispatch enrichment (transcription) and CLIP ingest jobs for a newly created item.
+     * Dispatch a single background job that enriches transcription, ingests into
+     * CLIP/Qdrant, then sets the item back to private.
+     *
+     * The item is temporarily public so the Omeka API can read it in job context
+     * (background jobs have no authenticated user).
      */
     private function dispatchEnrichAndIngest(int $itemId): void
     {
         try {
             $services = $this->getEvent()->getApplication()->getServiceManager();
             $jobDispatcher = $services->get('Omeka\Job\Dispatcher');
-            $conn = $this->conn;
-
-            // Enrich transcription (property 91) if instructions are configured
-            $saved = $conn->fetchAssociative(
-                'SELECT instructions, model FROM enrich_field_instructions WHERE property_id = 91'
-            );
-            if ($saved) {
-                $jobDispatcher->dispatch('EnrichItem\Job\EnrichFieldBatch', [
-                    'property_id' => 91,
-                    'term' => 'bibo:content',
-                    'field_label' => 'content',
-                    'instructions' => $saved['instructions'],
-                    'model' => $saved['model'],
-                    'vocab_terms' => null,
-                    'item_ids' => [$itemId],
-                    'force' => false,
-                ]);
-            }
-
-            // CLIP ingest into Qdrant
-            $jobDispatcher->dispatch('EnrichItem\Job\IngestClip', [
-                'item_ids' => [$itemId],
+            $jobDispatcher->dispatch('CollectorSubmission\Job\EnrichAndIngest', [
+                'item_id' => $itemId,
             ]);
         } catch (\Throwable $e) {
             error_log('CollectorSubmission: enrich/ingest dispatch failed: ' . $e->getMessage());
