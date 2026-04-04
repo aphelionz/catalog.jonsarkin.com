@@ -1447,6 +1447,29 @@ abbr[title] {
   color: var(--text-secondary);
 }
 
+/* Transcription collapsible */
+.transcription-collapsible {
+  padding: 0.35rem var(--gutter) var(--gutter) calc(var(--gutter) + 0.5rem);
+  margin: 0 calc(-1 * var(--gutter));
+  border-top: 2px solid var(--border-color);
+}
+.transcription-collapsible summary {
+  cursor: pointer;
+}
+.transcription-collapsible summary h3 {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+  display: inline;
+}
+.transcription-collapsible p {
+  margin: 0.5em 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 /* ==========================================================================
    ITEM BROWSE  (Grid of approach-chart cards)
    ========================================================================== */

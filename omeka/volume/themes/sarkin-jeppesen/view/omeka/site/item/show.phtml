@@ -636,6 +636,13 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <?php try { ?><a href="<?php echo $this->url('similar-pieces', ['item_id' => $item->id()], ['query' => ['site' => $this->currentSite()->slug()]]); ?>" class="similar-more">View all</a><?php } catch (\Exception $e) { /* SimilarPieces not installed */ } ?>
             </section>
 
+            <?php if ($transcription): ?>
+            <details class="transcription-collapsible">
+                <summary><h3>Transcription</h3></summary>
+                <p><?php echo nl2br($escape($transcription)); ?></p>
+            </details>
+            <?php endif; ?>
+
             <div class="collector-details">
                 <?php if ($displayCare): ?>
                     <p class="care"><strong>Display &amp; care:</strong> <?php echo $displayCare; ?></p>
