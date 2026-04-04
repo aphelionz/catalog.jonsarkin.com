@@ -580,20 +580,32 @@ PROMPT;
 
     /**
      * Get the internal Docker URL for the first media of an item.
+     * The item's o:media array only contains references ({@id, o:id}),
+     * so we read the media object separately to get its storage filename.
      */
     private function getFirstMediaUrl(array $itemJson): ?string
     {
         $media = $itemJson['o:media'] ?? [];
         if (empty($media)) return null;
 
-        $firstMedia = $media[0];
-        $url = $firstMedia['o:original_url']
-            ?? $firstMedia['o:thumbnail_urls']['large']
-            ?? null;
+        $mediaId = $media[0]['o:id'] ?? null;
+        if (!$mediaId) return null;
 
-        if (!$url) return null;
+        // Look up the storage filename from the DB (avoids another full API read)
+        $conn = $this->entityManager->getConnection();
+        $filename = $conn->fetchOne(
+            'SELECT storage_id FROM media WHERE id = ?',
+            [$mediaId]
+        );
+        if (!$filename) return null;
 
-        // Convert public URL to internal Docker URL
-        return preg_replace('#^https?://[^/]+#', 'http://omeka:80', $url);
+        // Fetch extension
+        $ext = $conn->fetchOne(
+            'SELECT extension FROM media WHERE id = ?',
+            [$mediaId]
+        );
+
+        $fullFilename = $ext ? "{$filename}.{$ext}" : $filename;
+        return "http://omeka:80/files/original/{$fullFilename}";
     }
 }
