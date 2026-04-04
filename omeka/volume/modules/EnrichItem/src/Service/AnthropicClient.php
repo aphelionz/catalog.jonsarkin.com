@@ -180,11 +180,87 @@ class AnthropicClient
     }
 
     /**
-     * Download image, resize to max 1024px, return [base64, media_type].
+     * Send a multi-turn messages request (e.g. for few-shot prompting).
      *
+     * @param string $systemPrompt  System prompt text
+     * @param array $messages  Pre-built messages array [{role, content}, ...]
+     * @param string|null $model  Model short name (haiku/sonnet/opus)
+     * @return array{value: string, usage: array{input_tokens: int, output_tokens: int, model: string, cost_usd: float}}
+     */
+    public function sendMessages(string $systemPrompt, array $messages, ?string $model = null): array
+    {
+        if (!$this->apiKey) {
+            throw new \RuntimeException('ANTHROPIC_API_KEY environment variable is not set');
+        }
+
+        $model = $model ?? $this->defaultModel;
+        $modelId = self::MODEL_MAP[$model] ?? $model;
+
+        $requestBody = [
+            'model' => $modelId,
+            'max_tokens' => self::MAX_TOKENS,
+            'system' => $systemPrompt,
+            'messages' => $messages,
+        ];
+
+        $client = clone $this->httpClient;
+        $client->resetParameters(true);
+        $client->setUri(self::API_URL);
+        $client->setMethod('POST');
+        $client->setHeaders([
+            'Content-Type' => 'application/json',
+            'x-api-key' => $this->apiKey,
+            'anthropic-version' => self::API_VERSION,
+        ]);
+        $client->setRawBody(json_encode($requestBody));
+        $client->setOptions(['timeout' => 120]);
+
+        $response = $client->send();
+        if (!$response->isSuccess()) {
+            $body = json_decode($response->getBody(), true);
+            $detail = $body['error']['message'] ?? $response->getBody();
+            throw new \RuntimeException(sprintf(
+                'Anthropic API error (HTTP %d): %s',
+                $response->getStatusCode(),
+                $detail
+            ));
+        }
+
+        $apiResponse = json_decode($response->getBody(), true);
+        $rawText = trim($apiResponse['content'][0]['text'] ?? '');
+
+        if (str_starts_with($rawText, '```')) {
+            $lines = explode("\n", $rawText);
+            $lines = array_filter($lines, fn($l) => !str_starts_with(trim($l), '```'));
+            $rawText = trim(implode("\n", $lines));
+        }
+
+        if (strtoupper($rawText) === 'NULL') {
+            $rawText = '';
+        }
+
+        $usage = $apiResponse['usage'] ?? [];
+        $inputTokens = $usage['input_tokens'] ?? 0;
+        $outputTokens = $usage['output_tokens'] ?? 0;
+
+        return [
+            'value' => $rawText,
+            'usage' => [
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens,
+                'model' => $modelId,
+                'cost_usd' => $this->estimateCost($modelId, $inputTokens, $outputTokens),
+            ],
+        ];
+    }
+
+    /**
+     * Download image, resize to max dimension, return [base64, media_type].
+     *
+     * @param int $maxDim  Maximum dimension (default 1024, use 512 for few-shot examples)
      * @return array{0: string, 1: string}
      */
-    public function downloadAndEncodeImage(string $imageUrl): array
+    public function downloadAndEncodeImage(string $imageUrl, int $maxDim = self::IMAGE_MAX_DIM): array
     {
         $client = clone $this->httpClient;
         $client->resetParameters(true);
@@ -210,8 +286,8 @@ class AnthropicClient
         $w = imagesx($img);
         $h = imagesy($img);
 
-        if (max($w, $h) > self::IMAGE_MAX_DIM) {
-            $scale = self::IMAGE_MAX_DIM / max($w, $h);
+        if (max($w, $h) > $maxDim) {
+            $scale = $maxDim / max($w, $h);
             $newW = (int) ($w * $scale);
             $newH = (int) ($h * $scale);
             $resized = imagecreatetruecolor($newW, $newH);

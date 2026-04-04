@@ -3,6 +3,8 @@
 namespace RapidEditor\Controller;
 
 use Doctrine\ORM\EntityManager;
+use EnrichItem\Service\AnthropicClient;
+use EnrichItem\Service\EnrichmentCache;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\JsonModel;
 use Laminas\View\Model\ViewModel;
@@ -10,10 +12,17 @@ use Laminas\View\Model\ViewModel;
 class EditorController extends AbstractActionController
 {
     private EntityManager $entityManager;
+    private ?AnthropicClient $anthropicClient;
+    private ?EnrichmentCache $enrichmentCache;
 
-    public function __construct(EntityManager $entityManager)
-    {
+    public function __construct(
+        EntityManager $entityManager,
+        ?AnthropicClient $anthropicClient = null,
+        ?EnrichmentCache $enrichmentCache = null
+    ) {
         $this->entityManager = $entityManager;
+        $this->anthropicClient = $anthropicClient;
+        $this->enrichmentCache = $enrichmentCache;
     }
 
     public function indexAction()
@@ -339,5 +348,252 @@ class EditorController extends AbstractActionController
 
         $this->getResponse()->setStatusCode($httpCode);
         return new JsonModel(json_decode($result, true) ?? ['error' => 'Invalid response']);
+    }
+
+    /**
+     * Suggest motif tags for an item using Claude with few-shot examples.
+     * GET /admin/rapid-editor/suggest-motifs/:id
+     */
+    public function suggestMotifsAction(): JsonModel
+    {
+        $itemId = (int) $this->params('id');
+        if ($itemId < 1) {
+            return new JsonModel(['error' => 'Invalid item ID', 'suggestions' => []]);
+        }
+
+        if (!$this->anthropicClient) {
+            return new JsonModel(['error' => 'AnthropicClient not available', 'suggestions' => []]);
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        // ── Check cache ────────────────────────────────────────────────
+        if ($this->enrichmentCache) {
+            $cached = $this->enrichmentCache->get($itemId, 3);
+            if ($cached !== null) {
+                $tags = array_filter(array_map('trim', explode(',', $cached)));
+                return new JsonModel(['suggestions' => array_values($tags), 'from_cache' => true]);
+            }
+        }
+
+        // ── Get target item's image URL ────────────────────────────────
+        try {
+            $itemRepr = $this->api()->read('items', $itemId)->getContent();
+            $itemJson = json_decode(json_encode($itemRepr), true);
+        } catch (\Throwable $e) {
+            return new JsonModel(['error' => 'Item not found', 'suggestions' => []]);
+        }
+
+        $mediaUrl = $this->getFirstMediaUrl($itemJson);
+        if (!$mediaUrl) {
+            return new JsonModel(['error' => 'Item has no media', 'suggestions' => []]);
+        }
+
+        try {
+            [$targetB64, $targetMime] = $this->anthropicClient->downloadAndEncodeImage($mediaUrl);
+        } catch (\Throwable $e) {
+            return new JsonModel(['error' => 'Image download failed', 'suggestions' => []]);
+        }
+
+        // ── Fetch full motif vocabulary ────────────────────────────────
+        $vocabRows = $conn->fetchAllAssociative(
+            'SELECT DISTINCT v.value FROM value v
+             WHERE v.property_id = 3 AND v.value IS NOT NULL AND TRIM(v.value) != ""
+             ORDER BY v.value'
+        );
+        $allMotifs = array_column($vocabRows, 'value');
+
+        // ── Get few-shot examples via clip-api similarity ──────────────
+        $examples = $this->getSimilarTaggedItems($conn, $itemId, $allMotifs);
+
+        // ── Build messages array (few-shot) ────────────────────────────
+        $messages = [];
+        foreach ($examples as $ex) {
+            try {
+                [$exB64, $exMime] = $this->anthropicClient->downloadAndEncodeImage($ex['image_url'], 512);
+            } catch (\Throwable $e) {
+                continue;
+            }
+            $messages[] = [
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $exMime, 'data' => $exB64]],
+                    ['type' => 'text', 'text' => 'Suggest motifs for this artwork.'],
+                ],
+            ];
+            $messages[] = [
+                'role' => 'assistant',
+                'content' => implode(', ', $ex['motifs']),
+            ];
+        }
+
+        // Target image (final user turn)
+        $messages[] = [
+            'role' => 'user',
+            'content' => [
+                ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $targetMime, 'data' => $targetB64]],
+                ['type' => 'text', 'text' => 'Suggest motifs for this artwork.'],
+            ],
+        ];
+
+        // ── System prompt ──────────────────────────────────────────────
+        $vocabList = implode(', ', $allMotifs);
+        $systemPrompt = <<<PROMPT
+You are cataloging artworks by Jon Sarkin (1953-2024) for a catalog raisonne.
+
+Your task is to suggest motif tags for artworks. Motifs include both subjects (fish, face, building) and techniques (crosshatching, contour hatching, scribble).
+
+Tagging principles:
+- Be specific but reusable. "Cactus" not "plant" (too vague). A tag should fit 3-5+ works.
+- Consistent granularity. Keep subjects and techniques at the same level of specificity.
+- Singular nouns. "Fish" not "fishes".
+- Tag what you see. "Spiral" is observable; "anxiety" is interpretation.
+- 3-8 motifs per work is the sweet spot. Don't over-tag.
+- Prefer established terms from the vocabulary below, but you may suggest new ones if clearly needed.
+
+ESTABLISHED VOCABULARY:
+{$vocabList}
+
+Return ONLY a comma-separated list of motif tags. No explanations, no numbering, no markdown.
+PROMPT;
+
+        // ── Call Claude ────────────────────────────────────────────────
+        try {
+            $result = $this->anthropicClient->sendMessages($systemPrompt, $messages, 'opus');
+        } catch (\Throwable $e) {
+            return new JsonModel(['error' => 'Claude API error: ' . $e->getMessage(), 'suggestions' => []]);
+        }
+
+        // ── Parse and normalize response ───────────────────────────────
+        $rawTags = array_filter(array_map('trim', explode(',', $result['value'])));
+        $vocabLower = [];
+        foreach ($allMotifs as $m) {
+            $vocabLower[strtolower($m)] = $m;
+        }
+        $normalized = [];
+        foreach ($rawTags as $tag) {
+            $lower = strtolower($tag);
+            $normalized[] = $vocabLower[$lower] ?? $tag;
+        }
+        $normalized = array_values(array_unique($normalized));
+
+        // ── Cache result ───────────────────────────────────────────────
+        if ($this->enrichmentCache && !empty($normalized)) {
+            $this->enrichmentCache->put($itemId, 3, implode(', ', $normalized), 'opus');
+        }
+
+        return new JsonModel([
+            'suggestions' => $normalized,
+            'from_cache' => false,
+            'usage' => $result['usage'] ?? null,
+        ]);
+    }
+
+    /**
+     * Get few-shot examples: items visually similar to $itemId that have ≥2 motifs.
+     * Falls back to random well-tagged items if clip-api is unavailable.
+     */
+    private function getSimilarTaggedItems($conn, int $itemId, array $allMotifs): array
+    {
+        $examples = [];
+
+        // Try clip-api similarity search
+        $clipUrl = rtrim(getenv('CLIP_API_URL') ?: 'http://clip-api:8000', '/');
+        $url = $clipUrl . "/v1/omeka/items/{$itemId}/similar?limit=20";
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+        ]);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $candidateIds = [];
+        if ($result !== false && $httpCode === 200) {
+            $data = json_decode($result, true);
+            foreach ($data['results'] ?? [] as $r) {
+                $rid = (int) ($r['omeka_item_id'] ?? 0);
+                if ($rid > 0 && $rid !== $itemId) {
+                    $candidateIds[] = $rid;
+                }
+            }
+        }
+
+        // If clip-api failed, use random well-tagged items
+        if (empty($candidateIds)) {
+            $rows = $conn->fetchAllAssociative(
+                'SELECT v.resource_id FROM value v
+                 WHERE v.property_id = 3 AND v.value IS NOT NULL
+                 GROUP BY v.resource_id
+                 HAVING COUNT(*) >= 3
+                 ORDER BY RAND()
+                 LIMIT 10'
+            );
+            $candidateIds = array_map(fn($r) => (int) $r['resource_id'], $rows);
+        }
+
+        if (empty($candidateIds)) {
+            return [];
+        }
+
+        // Fetch motifs for candidates
+        $placeholders = implode(',', $candidateIds);
+        $motifRows = $conn->fetchAllAssociative(
+            "SELECT v.resource_id, v.value FROM value v
+             WHERE v.property_id = 3 AND v.resource_id IN ($placeholders)
+             AND v.value IS NOT NULL AND TRIM(v.value) != ''
+             ORDER BY v.resource_id"
+        );
+
+        $motifsByItem = [];
+        foreach ($motifRows as $r) {
+            $motifsByItem[(int) $r['resource_id']][] = $r['value'];
+        }
+
+        // Pick candidates with ≥2 motifs, up to 5
+        foreach ($candidateIds as $cid) {
+            if (count($examples) >= 5) break;
+            $motifs = $motifsByItem[$cid] ?? [];
+            if (count($motifs) < 2) continue;
+
+            // Get image URL
+            try {
+                $repr = $this->api()->read('items', $cid)->getContent();
+                $json = json_decode(json_encode($repr), true);
+                $imgUrl = $this->getFirstMediaUrl($json);
+                if (!$imgUrl) continue;
+            } catch (\Throwable $e) {
+                continue;
+            }
+
+            $examples[] = [
+                'item_id' => $cid,
+                'image_url' => $imgUrl,
+                'motifs' => $motifs,
+            ];
+        }
+
+        return $examples;
+    }
+
+    /**
+     * Get the internal Docker URL for the first media of an item.
+     */
+    private function getFirstMediaUrl(array $itemJson): ?string
+    {
+        $media = $itemJson['o:media'] ?? [];
+        if (empty($media)) return null;
+
+        $firstMedia = $media[0];
+        $url = $firstMedia['o:original_url']
+            ?? $firstMedia['o:thumbnail_urls']['large']
+            ?? null;
+
+        if (!$url) return null;
+
+        // Convert public URL to internal Docker URL
+        return preg_replace('#^https?://[^/]+#', 'http://omeka:80', $url);
     }
 }

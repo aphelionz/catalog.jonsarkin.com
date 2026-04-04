@@ -67,6 +67,14 @@ return [
                                     'defaults' => ['action' => 'tournamentSeed'],
                                 ],
                             ],
+                            'suggest-motifs' => [
+                                'type' => Segment::class,
+                                'options' => [
+                                    'route' => '/suggest-motifs/:id',
+                                    'constraints' => ['id' => '\d+'],
+                                    'defaults' => ['action' => 'suggestMotifs'],
+                                ],
+                            ],
                         ],
                     ],
                 ],

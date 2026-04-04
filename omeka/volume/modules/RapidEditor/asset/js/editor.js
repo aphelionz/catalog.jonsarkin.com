@@ -3359,6 +3359,21 @@ function renderSprintInput(card, item, config) {
       });
       inputWrap.appendChild(infoPopup);
       inputRow.appendChild(infoBtn);
+
+      // Suggest button (Claude-powered)
+      const suggestBtn = document.createElement('button');
+      suggestBtn.className = 'sprint-tagger-suggest-btn';
+      suggestBtn.textContent = '✨ Suggest';
+      suggestBtn.title = 'Ask Claude to suggest motifs';
+      suggestBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (suggestBtn.disabled) return;
+        suggestBtn.disabled = true;
+        suggestBtn.textContent = 'Suggesting…';
+        fetchMotifSuggestions(itemId, selectedTags, tagger, renderPills, suggestBtn);
+      });
+      inputRow.appendChild(suggestBtn);
+
       tagger.appendChild(inputRow);
 
       let hlIndex = -1;
@@ -3558,6 +3573,100 @@ function renderSprintInput(card, item, config) {
       setTimeout(() => hInput.focus(), 100);
       break;
     }
+  }
+}
+
+// ── Sprint: motif suggestions (Claude-powered) ──────────────────────────────
+
+async function fetchMotifSuggestions(itemId, selectedTags, tagger, renderPillsFn, suggestBtn) {
+  try {
+    const resp = await fetch(`/admin/rapid-editor/suggest-motifs/${itemId}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    suggestBtn.textContent = '✨ Suggest';
+    suggestBtn.disabled = false;
+
+    if (data.error) {
+      showToast(`Suggestion error: ${data.error}`, true);
+      return;
+    }
+
+    if (data.suggestions && data.suggestions.length) {
+      // Filter out tags already selected
+      const novel = data.suggestions.filter(t => !selectedTags.has(t));
+      if (novel.length) {
+        renderSuggestionPills(novel, selectedTags, tagger, renderPillsFn);
+      } else {
+        showToast('All suggestions already tagged');
+      }
+      if (data.usage) {
+        console.log(`Suggest cost: $${data.usage.cost_usd?.toFixed(4)} (${data.from_cache ? 'cached' : data.usage.model})`);
+      }
+    } else {
+      showToast('No suggestions returned');
+    }
+  } catch (err) {
+    suggestBtn.textContent = '✨ Suggest';
+    suggestBtn.disabled = false;
+    showToast('Suggestion failed: ' + err.message, true);
+    console.warn('Motif suggestion failed:', err);
+  }
+}
+
+function renderSuggestionPills(suggestions, selectedTags, tagger, renderPillsFn) {
+  // Remove any existing suggestion container
+  tagger.querySelector('.sprint-tagger-suggestions')?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'sprint-tagger-suggestions';
+  const label = document.createElement('span');
+  label.className = 'sprint-tagger-suggestions-label';
+  label.textContent = 'Suggestions';
+  wrap.appendChild(label);
+
+  for (const tag of suggestions) {
+    const pill = document.createElement('span');
+    pill.className = 'sprint-tagger-suggestion-pill';
+    pill.textContent = tag;
+
+    // Click pill text to accept
+    pill.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      selectedTags.add(tag);
+      // Push to autocomplete corpus if novel
+      if (!ALL_MOTIF_TAGS.includes(tag)) {
+        ALL_MOTIF_TAGS.push(tag);
+        ALL_MOTIF_TAGS.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      }
+      pill.remove();
+      renderPillsFn();
+      // Remove container if empty
+      if (!wrap.querySelector('.sprint-tagger-suggestion-pill')) wrap.remove();
+    });
+
+    // Dismiss button
+    const dismiss = document.createElement('button');
+    dismiss.className = 'sprint-tagger-suggestion-dismiss';
+    dismiss.textContent = '×';
+    dismiss.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      pill.remove();
+      if (!wrap.querySelector('.sprint-tagger-suggestion-pill')) wrap.remove();
+    });
+    pill.appendChild(dismiss);
+    wrap.appendChild(pill);
+  }
+
+  // Insert after the tags container
+  const tagsWrap = tagger.querySelector('.sprint-tagger-tags');
+  if (tagsWrap) {
+    tagsWrap.after(wrap);
+  } else {
+    tagger.prepend(wrap);
   }
 }
 
