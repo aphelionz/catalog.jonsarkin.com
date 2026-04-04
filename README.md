@@ -40,8 +40,7 @@ The catalog runs on **Omeka S v4.2**, a PHP/MySQL digital collections CMS. Stock
 | Browse | FacetedBrowse module (forked) | GROUP BY count optimization, custom facet renderers |
 | Search | Omeka's built-in search | CLIP hybrid search via `SimilarPieces` module + `clip-api` |
 | Enrichment | — | `EnrichItem` module (Claude API OCR + metadata extraction) |
-| Motif tagging | — | `MotifTagger` module (DINOv2 patch search + CLIP global search) |
-| Batch editing | — | `RapidEditor` module (sprint-mode metadata editor with motif autocomplete) |
+| Batch editing | — | `RapidEditor` module (sprint-mode metadata editor with motif autocomplete + Claude suggestions) |
 | Thumbnails | Omeka's ImageMagick thumbnailer | `IccThumbnailer` module (ICC profile preservation + HDR gain map re-embedding) |
 | Access control | — | `SiteLockdown` module (password gate with HMAC cookies) |
 | Clean URLs | — | `clean-urls.php` rewrite layer (`/item/123` instead of `/s/catalog/item/123`) |
@@ -239,13 +238,6 @@ ICC color profile-preserving thumbnail generator. Replaces Omeka's default Image
 - Preserve embedded ICC color profiles (uses `-resize` instead of `-thumbnail`)
 - Re-embed Apple HDR gain maps into resized thumbnails via MPF format reconstruction
 - Admin UI at `/admin/icc-thumbnailer` for bulk thumbnail regeneration
-
-### MotifTagger
-
-Batch motif tagging using visual similarity. Two search modes:
-
-- **Motif (DINOv2)** — patch-level similarity via DINOv2 embeddings
-- **Global (CLIP)** — full-image similarity via CLIP embeddings
 
 ### SiteLockdown
 
