@@ -71,21 +71,6 @@ class ImageSearchResponse(BaseModel):
     matches: List[MatchItem]
 
 
-# ── Motif search (DINOv2 patch-level) ──
-
-
-class MotifMatchItem(BaseModel):
-    omeka_item_id: Union[int, str] = Field(..., description="Omeka item id")
-    omeka_url: Optional[str] = None
-    thumb_url: Optional[str] = None
-    score: float
-    patch_index: int = 0
-
-
-class MotifSearchResponse(BaseModel):
-    matches: List[MotifMatchItem]
-
-
 # ── Single-item ingest ──
 
 
@@ -104,15 +89,6 @@ class IngestResponse(BaseModel):
     status: str
     omeka_item_id: int
     elapsed_seconds: float
-
-
-# ── DINOv2-only ingest ──
-
-
-class DinoIngestRequest(BaseModel):
-    image_url: str = Field(..., description="URL of the artwork image to embed")
-    omeka_url: str = ""
-    thumb_url: str = ""
 
 
 class TournamentSeedRequest(BaseModel):

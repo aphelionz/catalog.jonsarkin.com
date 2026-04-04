@@ -55,8 +55,6 @@ class Settings:
     search_semantic_weight: float
     search_rrf_k: int
     disable_hybrid_boost: bool
-    dino_collection: str
-    dino_enabled: bool
     max_limit: int = MAX_LIMIT
 
 
@@ -80,6 +78,4 @@ def load_settings() -> Settings:
         search_semantic_weight=0.6 if search_semantic_weight is None else search_semantic_weight,
         search_rrf_k=_env_int("SEARCH_RRF_K", 60),
         disable_hybrid_boost=disable_hybrid_boost,
-        dino_collection=os.getenv("DINO_COLLECTION", "sarkin_motif_patches_518"),
-        dino_enabled=_env_bool("DINO_ENABLED", True),
     )

@@ -120,19 +120,6 @@ async def ingest_item(
         "text_blob": text_blob,
     })
 
-    # DINOv2 patch embeddings (optional, non-blocking)
-    if settings.dino_enabled:
-        try:
-            await ingest_dino_patches(
-                settings,
-                omeka_item_id,
-                image_bytes=image_bytes,
-                omeka_url=omeka_url,
-                thumb_url=thumb_url,
-            )
-        except Exception:
-            logger.warning("DINOv2 patch ingest failed for item %d", omeka_item_id, exc_info=True)
-
     elapsed = time.perf_counter() - t_start
     logger.info("Ingested item %d in %.2fs", omeka_item_id, elapsed)
 
@@ -141,63 +128,3 @@ async def ingest_item(
         "omeka_item_id": omeka_item_id,
         "elapsed_seconds": round(elapsed, 2),
     }
-
-
-async def ingest_dino_patches(
-    settings: Settings,
-    omeka_item_id: int,
-    *,
-    image_bytes: Optional[bytes] = None,
-    image_url: str = "",
-    omeka_url: str = "",
-    thumb_url: str = "",
-) -> None:
-    """Extract DINOv2 patch embeddings and upsert to the motif patches collection."""
-    from clip_api import dino
-
-    if image_bytes is None:
-        image_bytes = await fetch_image_bytes(image_url)
-
-    patch_vectors, grid_h, grid_w = dino.extract_patches(image_bytes)
-
-    # Delete existing patches for this item (idempotent re-ingest)
-    collection = settings.dino_collection
-    qdrant_url = settings.qdrant_url
-    async with httpx.AsyncClient(timeout=30) as client:
-        await client.post(
-            f"{qdrant_url}/collections/{collection}/points/delete",
-            json={
-                "filter": {
-                    "must": [{"key": "omeka_item_id", "match": {"value": omeka_item_id}}]
-                }
-            },
-        )
-
-    # Build points: ID = omeka_id * 10000 + patch_index
-    points = [
-        {
-            "id": omeka_item_id * 10000 + i,
-            "vector": patch_vec,
-            "payload": {
-                "omeka_item_id": omeka_item_id,
-                "omeka_url": omeka_url,
-                "thumb_url": thumb_url,
-                "patch_index": i,
-            },
-        }
-        for i, patch_vec in enumerate(patch_vectors)
-    ]
-
-    # Upsert all patches in a single request
-    async with httpx.AsyncClient(timeout=60) as client:
-        resp = await client.put(
-            f"{qdrant_url}/collections/{collection}/points",
-            json={"points": points},
-        )
-        resp.raise_for_status()
-
-    logger.info(
-        "DINOv2: ingested %d patches for item %d",
-        len(points),
-        omeka_item_id,
-    )

@@ -68,8 +68,6 @@ services:
       TEXT_VECTOR_NAME: text_vec_clip
       SEARCH_MODE: hybrid
       DEFAULT_LIMIT: 50
-      DINO_COLLECTION: sarkin_motif_patches_518
-      DINO_ENABLED: "true"
     volumes:
       - ./sarkin-clip/clip_api:/app/clip_api
     restart: unless-stopped

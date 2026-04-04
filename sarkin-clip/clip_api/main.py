@@ -13,7 +13,6 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from clip_api import embeddings
 from clip_api.config import Settings, load_settings
 from clip_api.models import (
-    DinoIngestRequest,
     IconographyBatchItem,
     IconographyBatchResponse,
     IconographyResponse,
@@ -22,8 +21,6 @@ from clip_api.models import (
     IngestResponse,
     MatchItem,
     MotifDetail,
-    MotifMatchItem,
-    MotifSearchResponse,
     SearchResponse,
     SearchResult,
     SimilarResponse,
@@ -66,39 +63,6 @@ BLOB_MATCH_BOOST = 0.03
 
 def _settings() -> Settings:
     return load_settings()
-
-
-@app.on_event("startup")
-def _ensure_dino_collection() -> None:
-    """Auto-create the DINOv2 patch collection if it doesn't exist."""
-    from clip_api.dino import DINO_DIM
-
-    settings = _settings()
-    if not settings.dino_enabled:
-        return
-    url = f"{settings.qdrant_url}/collections/{settings.dino_collection}"
-    try:
-        resp = request_json("GET", url, headers=_headers(settings), timeout=5.0)
-        if resp.is_success:
-            return  # already exists
-    except QdrantUnavailable:
-        logger.warning("Qdrant unavailable, skipping DINOv2 collection check")
-        return
-    try:
-        request_json(
-            "PUT",
-            url,
-            headers=_headers(settings),
-            json={
-                "vectors": {"size": DINO_DIM, "distance": "Cosine"},
-                "quantization_config": {"scalar": {"type": "int8", "quantile": 0.99, "always_ram": True}},
-                "optimizers_config": {"memmap_threshold": 20000},
-            },
-            timeout=10.0,
-        )
-        logger.info("Created DINOv2 patch collection: %s", settings.dino_collection)
-    except Exception:
-        logger.warning("Could not create DINOv2 collection %s", settings.dino_collection)
 
 
 @app.on_event("startup")
@@ -970,108 +934,6 @@ async def image_search(
     return ImageSearchResponse(matches=matches)
 
 
-# ── Motif search (DINOv2 patch-level) ────────────────────────────────────────
-
-
-MOTIF_SEARCH_PAYLOAD_FIELDS = ["omeka_item_id", "omeka_url", "thumb_url", "patch_index"]
-
-
-def _search_motif_patches(
-    settings: Settings,
-    query_vector: list[float],
-    *,
-    raw_limit: int,
-) -> Dict[str, Any]:
-    url = f"{settings.qdrant_url}/collections/{settings.dino_collection}/points/search"
-    body: Dict[str, Any] = {
-        "vector": query_vector,
-        "limit": raw_limit,
-        "with_payload": MOTIF_SEARCH_PAYLOAD_FIELDS,
-        "with_vector": False,
-    }
-    response = request_json("POST", url, headers=_headers(settings), json=body)
-    if not response.is_success:
-        message = extract_error_message(response)
-        raise QdrantError(message, status_code=response.status_code, payload=message)
-    return response.json()
-
-
-def _deduplicate_patch_matches(results: list, limit: int) -> list[MotifMatchItem]:
-    """Group patch hits by omeka_item_id, keep best score per item."""
-    best: Dict[Any, Dict[str, Any]] = {}
-    for item in results:
-        payload = item.get("payload") or {}
-        omeka_id = payload.get("omeka_item_id")
-        if omeka_id is None:
-            continue
-        score = float(item.get("score") or 0.0)
-        if omeka_id not in best or score > best[omeka_id]["score"]:
-            best[omeka_id] = {
-                "omeka_item_id": omeka_id,
-                "omeka_url": payload.get("omeka_url"),
-                "thumb_url": payload.get("thumb_url"),
-                "score": score,
-                "patch_index": payload.get("patch_index", 0),
-            }
-    sorted_items = sorted(best.values(), key=lambda x: x["score"], reverse=True)
-    return [MotifMatchItem(**item) for item in sorted_items[:limit]]
-
-
-@app.post(
-    "/v1/omeka/images/motif-search",
-    response_model=MotifSearchResponse,
-)
-async def motif_search(
-    image: UploadFile,
-    limit: Optional[str] = None,
-) -> MotifSearchResponse:
-    """Search for artworks containing a visual motif using DINOv2 patch embeddings."""
-    from clip_api import dino
-
-    settings = _settings()
-    if not settings.dino_enabled:
-        raise HTTPException(status_code=503, detail="Motif search is disabled")
-
-    if image.content_type and image.content_type not in IMAGE_SEARCH_ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="Image must be JPEG, PNG, or WebP")
-
-    image_bytes = await image.read()
-    if len(image_bytes) > IMAGE_SEARCH_MAX_BYTES:
-        raise HTTPException(status_code=400, detail="Image must be under 10 MB")
-    if not image_bytes:
-        raise HTTPException(status_code=400, detail="Empty image file")
-
-    limit_value = (
-        settings.default_limit
-        if limit is None
-        else _parse_int_param("limit", limit, min_value=1, max_value=settings.max_limit)
-    )
-    # Fetch many more raw patches than needed: each artwork has ~1369 patches
-    # (at 518×518), so top-scoring items consume many slots before we see other items.
-    raw_limit = min(limit_value * 50, 10000)
-
-    try:
-        query_vector = dino.embed_query_crop(image_bytes)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail="Could not process image") from exc
-
-    try:
-        search_response = _search_motif_patches(
-            settings,
-            query_vector,
-            raw_limit=raw_limit,
-        )
-    except QdrantUnavailable as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-    except QdrantError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-
-    results = search_response.get("result") or []
-    matches = _deduplicate_patch_matches(results, limit_value)
-
-    return MotifSearchResponse(matches=matches)
-
-
 # ── Single-item ingest ──────────────────────────────────────────────────────
 
 
@@ -1100,31 +962,6 @@ async def ingest_single_item(omeka_id: int, req: IngestRequest) -> IngestRespons
     return IngestResponse(**result)
 
 
-@app.post("/v1/dino/ingest/{omeka_id}", response_model=IngestResponse)
-async def dino_ingest_single_item(omeka_id: int, req: DinoIngestRequest) -> IngestResponse:
-    """Embed a single item's DINOv2 patch vectors only (no CLIP, no FTS)."""
-    from clip_api.ingest import fetch_image_bytes, ingest_dino_patches
-    import time
-
-    settings = _settings()
-    if not settings.dino_enabled:
-        raise HTTPException(status_code=503, detail="DINOv2 ingest is disabled")
-
-    t_start = time.perf_counter()
-    try:
-        image_bytes = await fetch_image_bytes(req.image_url)
-        await ingest_dino_patches(
-            settings,
-            omeka_id,
-            image_bytes=image_bytes,
-            omeka_url=req.omeka_url,
-            thumb_url=req.thumb_url,
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"DINOv2 ingest failed: {exc}") from exc
-
-    elapsed = time.perf_counter() - t_start
-    return IngestResponse(status="ok", omeka_item_id=omeka_id, elapsed_seconds=round(elapsed, 2))
 
 
 if __name__ == "__main__":
