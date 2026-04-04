@@ -14,6 +14,16 @@ $batchCollectUrl = $this->url('admin/enrich-queue/batch-collect');
 
 <?php echo $this->pageTitle('Enrich Fields') ?>
 
+<?php
+    $autoEnrich = (bool) $this->setting('enrich_item_auto_enrich', false);
+    $autoProps = $this->setting('enrich_item_auto_enrich_properties', '91');
+?>
+<div style="margin-bottom: 1em; padding: 0.5em 0.75em; background: <?= $autoEnrich ? '#e8f5e9' : '#f5f5f5' ?>; border: 1px solid <?= $autoEnrich ? '#a5d6a7' : '#ddd' ?>; border-radius: 4px; font-size: 0.9em;">
+    <strong>Auto-enrich on upload:</strong>
+    <?= $autoEnrich ? 'ON (properties: ' . $this->escapeHtml($autoProps) . ')' : 'OFF' ?>
+    &mdash; <a href="<?= $this->basePath('/admin/module') ?>">Configure</a>
+</div>
+
 <div id="enrich-app">
     <div style="margin-bottom: 1.5em;">
         <div style="display: flex; gap: 1em; align-items: flex-start; flex-wrap: wrap;">
