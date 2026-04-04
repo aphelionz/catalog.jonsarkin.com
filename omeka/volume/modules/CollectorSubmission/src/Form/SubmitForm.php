@@ -63,6 +63,32 @@ class SubmitForm extends Form implements InputFilterProviderInterface
         ]);
 
         $this->add([
+            'name' => 'dimensions_height',
+            'type' => Element\Text::class,
+            'options' => ['label' => 'Height'],
+            'attributes' => ['placeholder' => 'e.g. 12'],
+        ]);
+
+        $this->add([
+            'name' => 'dimensions_width',
+            'type' => Element\Text::class,
+            'options' => ['label' => 'Width'],
+            'attributes' => ['placeholder' => 'e.g. 16'],
+        ]);
+
+        $this->add([
+            'name' => 'dimensions_unit',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'Unit',
+                'value_options' => [
+                    'in' => 'inches',
+                    'cm' => 'cm',
+                ],
+            ],
+        ]);
+
+        $this->add([
             'name' => 'photos',
             'type' => Element\File::class,
             'options' => ['label' => 'Photos'],
@@ -154,6 +180,12 @@ class SubmitForm extends Form implements InputFilterProviderInterface
             ],
             'date_acquired' => ['required' => false],
             'description' => ['required' => false],
+            'dimensions_height' => ['required' => false, 'filters' => [['name' => 'StringTrim']]],
+            'dimensions_width' => ['required' => false, 'filters' => [['name' => 'StringTrim']]],
+            'dimensions_unit' => [
+                'required' => false,
+                'validators' => [['name' => 'InArray', 'options' => ['haystack' => ['in', 'cm']]]],
+            ],
             'exhibition_history' => ['required' => false],
             'may_contact' => ['required' => false],
             'credit_preference' => [

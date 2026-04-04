@@ -246,6 +246,33 @@ $this->headTitle('Submit Your Collection');
         </div>
 
         <div class="field">
+            <label>Dimensions</label>
+            <div style="display:flex;gap:0.75rem;align-items:flex-end">
+                <div style="flex:1">
+                    <input type="text" name="dimensions_height" id="dimensions_height"
+                           value="<?= $this->escapeHtmlAttr($form->get('dimensions_height')->getValue() ?? '') ?>"
+                           placeholder="Height" inputmode="decimal">
+                </div>
+                <span style="font-size:0.9rem;color:var(--text-secondary);padding-bottom:0.6rem">&times;</span>
+                <div style="flex:1">
+                    <input type="text" name="dimensions_width" id="dimensions_width"
+                           value="<?= $this->escapeHtmlAttr($form->get('dimensions_width')->getValue() ?? '') ?>"
+                           placeholder="Width" inputmode="decimal">
+                </div>
+                <div style="flex:0 0 auto">
+                    <select name="dimensions_unit" id="dimensions_unit" style="min-width:80px">
+                        <?php foreach ($form->get('dimensions_unit')->getValueOptions() as $value => $label): ?>
+                            <option value="<?= $this->escapeHtmlAttr($value) ?>"
+                                <?= ($form->get('dimensions_unit')->getValue() === $value) ? 'selected' : '' ?>
+                            ><?= $this->escapeHtml($label) ?></option>
+                        <?php endforeach ?>
+                    </select>
+                </div>
+            </div>
+            <div class="field-hint">H &times; W, approximate is fine.</div>
+        </div>
+
+        <div class="field">
             <label for="photos" class="required">Photos</label>
             <input type="file" name="photos[]" id="photos" multiple
                    accept="image/jpeg,image/png,image/heic,.jpg,.jpeg,.png,.heic"

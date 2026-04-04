@@ -50,6 +50,14 @@ return [
                                     'defaults' => ['action' => 'status'],
                                 ],
                             ],
+                            'create-item' => [
+                                'type' => 'Segment',
+                                'options' => [
+                                    'route' => '/:id/create-item',
+                                    'constraints' => ['id' => '\\d+'],
+                                    'defaults' => ['action' => 'createItem'],
+                                ],
+                            ],
                         ],
                     ],
                 ],
@@ -78,6 +86,7 @@ return [
     ],
     'collector_submission' => [
         'admin_email' => 'mark@mrh.io',
+        'site_url' => 'https://catalog.jonsarkin.com/s/catalog',
         'max_files' => 20,
         'max_file_size' => 15 * 1024 * 1024,
     ],

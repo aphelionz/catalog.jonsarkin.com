@@ -81,6 +81,7 @@ class SubmitController extends AbstractActionController
                 } else {
                     $this->saveSubmission($data, $savedFiles);
                     $this->sendNotification($data, count($savedFiles));
+                    $this->sendThankYouEmail($data);
 
                     return $this->redirect()->toRoute('site/collector-submit', [
                         'site-slug' => $this->currentSite()->slug(),
@@ -156,11 +157,38 @@ class SubmitController extends AbstractActionController
             'description' => $data['description'] ?: null,
             'files' => json_encode($files),
             'exhibition_history' => $data['exhibition_history'] ?: null,
+            'dimensions_height' => $data['dimensions_height'] ?: null,
+            'dimensions_width' => $data['dimensions_width'] ?: null,
+            'dimensions_unit' => $data['dimensions_unit'] ?: 'in',
             'may_contact' => (int) ($data['may_contact'] ?? 1),
             'credit_preference' => $data['credit_preference'] ?: 'full_name',
             'status' => 'new',
             'created' => (new \DateTime())->format('Y-m-d H:i:s'),
         ]);
+    }
+
+    private function sendThankYouEmail(array $data): void
+    {
+        try {
+            $email = $data['email'] ?? null;
+            if (!$email) {
+                return;
+            }
+
+            $name = explode(' ', $data['collector_name'])[0];
+            $replacements = ['{name}' => $name];
+
+            $subject = strtr($this->config['email']['collector_submission_thankyou_subject'] ?? '', $replacements);
+            $body = strtr($this->config['email']['collector_submission_thankyou_body'] ?? '', $replacements);
+
+            $message = $this->mailer->createMessage();
+            $message->setSubject($subject);
+            $message->addTo($email);
+            $message->setBody($body);
+            $this->mailer->send($message);
+        } catch (\Throwable $e) {
+            error_log('CollectorSubmission thank-you email failed: ' . $e->getMessage());
+        }
     }
 
     private function sendNotification(array $data, int $fileCount): void

@@ -94,6 +94,34 @@ $this->headTitle('Submission #' . $s['id']);
     font-size: 0.8rem;
     color: #777;
 }
+.cs-item-section {
+    border-top: 2px solid #333;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+}
+.cs-item-links {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+.cs-item-links a {
+    font-size: 0.85rem;
+}
+.cs-create-btn {
+    background: #333;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 0.4rem 1.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.cs-hint {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+}
 </style>
 
 <a class="cs-back" href="<?= $this->url('admin/collector-submissions') ?>">&larr; All submissions</a>
@@ -119,6 +147,19 @@ $this->headTitle('Submission #' . $s['id']);
         <div>
             <div class="meta-label">Date Acquired</div>
             <div class="meta-value"><?= $this->escapeHtml($s['date_acquired'] ?: '—') ?></div>
+        </div>
+        <div>
+            <div class="meta-label">Dimensions</div>
+            <div class="meta-value"><?php
+                if (!empty($s['dimensions_height']) || !empty($s['dimensions_width'])) {
+                    $h = $this->escapeHtml($s['dimensions_height'] ?? '?');
+                    $w = $this->escapeHtml($s['dimensions_width'] ?? '?');
+                    $u = $this->escapeHtml($s['dimensions_unit'] ?? 'in');
+                    echo "{$h} &times; {$w} {$u}";
+                } else {
+                    echo '—';
+                }
+            ?></div>
         </div>
         <div>
             <div class="meta-label">Credit Preference</div>
@@ -172,6 +213,24 @@ $this->headTitle('Submission #' . $s['id']);
         </div>
     <?php endif ?>
 
+    <!-- Catalog Item -->
+    <div class="cs-item-section">
+        <div class="meta-label">Catalog Item</div>
+        <?php if (!empty($s['item_id'])): ?>
+            <div class="cs-item-links">
+                <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'show', 'id' => $s['item_id']]) ?>">View Item #<?= (int) $s['item_id'] ?></a>
+                <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'edit', 'id' => $s['item_id']]) ?>">Edit</a>
+                <a href="/s/catalog/item/<?= (int) $s['item_id'] ?>" target="_blank">Public page</a>
+            </div>
+        <?php else: ?>
+            <form method="post" action="<?= $this->url('admin/collector-submissions/create-item', ['id' => $s['id']]) ?>" style="margin-top: 0.5rem;">
+                <button type="submit" class="cs-create-btn" onclick="return confirm('Create a new catalog item from this submission\'s photos?')">Create Catalog Item</button>
+            </form>
+            <div class="cs-hint">Creates a draft item with the submitted photos, then opens it for editing.</div>
+        <?php endif ?>
+    </div>
+
+    <!-- Status + Notes -->
     <div class="cs-status-form">
         <form method="post" action="<?= $this->url('admin/collector-submissions/status', ['id' => $s['id']]) ?>">
             <label for="status">Status</label>
@@ -181,10 +240,27 @@ $this->headTitle('Submission #' . $s['id']);
                 <?php endforeach ?>
             </select>
 
-            <label for="admin_notes">Admin Notes</label>
+            <label for="admin_notes">Admin Notes <span style="font-size:0.65rem;color:#aaa;text-transform:none;letter-spacing:0">(private, not sent to collector)</span></label>
             <textarea name="admin_notes" id="admin_notes"><?= $this->escapeHtml($s['admin_notes'] ?? '') ?></textarea>
+
+            <div id="rejection-reason-group" style="display: none;">
+                <label for="rejection_reason">Rejection Reason <span style="font-size:0.65rem;color:#aaa;text-transform:none;letter-spacing:0">(sent to the collector)</span></label>
+                <textarea name="rejection_reason" id="rejection_reason"><?= $this->escapeHtml($s['rejection_reason'] ?? '') ?></textarea>
+            </div>
 
             <button type="submit">Update Status</button>
         </form>
     </div>
 </div>
+
+<script>
+(function() {
+    var statusSelect = document.getElementById('status');
+    var reasonGroup = document.getElementById('rejection-reason-group');
+    function toggle() {
+        reasonGroup.style.display = statusSelect.value === 'rejected' ? '' : 'none';
+    }
+    statusSelect.addEventListener('change', toggle);
+    toggle();
+})();
+</script>
