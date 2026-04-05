@@ -44,15 +44,15 @@ class IndexController extends AbstractActionController
                             'property_id' => 1,
                             'type' => 'literal',
                             '@value' => $title,
-                            'is_public' => true,
+                            'is_public' => false,
                         ],
                     ],
-                    'o:is_public' => true,
+                    'o:is_public' => false,
                     'o:media' => [
                         [
                             'o:ingester' => 'upload',
                             'file_index' => 0,
-                            'o:is_public' => true,
+                            'o:is_public' => false,
                         ],
                     ],
                 ];
