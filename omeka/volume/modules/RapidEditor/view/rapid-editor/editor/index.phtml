@@ -1,7 +1,7 @@
 <?php
 $this->pageTitle('Rapid Editor');
-$this->headLink()->appendStylesheet($this->assetUrl('css/editor.css', 'RapidEditor'));
-$this->headScript()->appendFile($this->assetUrl('js/editor.js', 'RapidEditor'));
+$this->headLink()->appendStylesheet($this->assetUrl('css/editor.css', 'RapidEditor') . '?v=0.2.0');
+$this->headScript()->appendFile($this->assetUrl('js/editor.js', 'RapidEditor') . '?v=0.2.0');
 // Hide the admin page title and reclaim full #content area
 $this->headStyle()->appendStyle('#content { padding: 0 !important; } #content > h1.page-title { display: none; }');
 ?>
@@ -23,8 +23,6 @@ $this->headStyle()->appendStyle('#content { padding: 0 !important; } #content > 
           <button class="filter-caret" id="sprint-caret" title="Sprint: fix one field at a time">▾</button>
           <div id="sprint-menu" class="sprint-menu hidden"></div>
         </div>
-        <button class="filter-btn" data-filter="all">All <span id="count-all"></span></button>
-        <button class="filter-btn" data-filter="curate">Sort</button>
         <button class="filter-btn" data-filter="exhibit">Exhibit</button>
       </div>
     </div>
@@ -51,132 +49,8 @@ $this->headStyle()->appendStyle('#content { padding: 0 !important; } #content > 
     <!-- Form panel -->
     <section id="form-panel">
 
-      <form id="editor-form" autocomplete="off">
-        <div id="issue-badges"></div>
-        <!-- Focused fields -->
-        <label>Date</label>
-        <div id="date-pills" class="date-pills" data-term="dcterms:date"></div>
-        <input type="text" id="f-date" data-term="dcterms:date" placeholder="Custom date (e.g. c. 2005)">
-
-        <label for="f-type">Type</label>
-        <select id="f-type" data-term="dcterms:type">
-          <option value="">—</option>
-        </select>
-
-        <label for="f-medium">Medium</label>
-        <input type="text" id="f-medium" data-term="dcterms:medium" placeholder="e.g. Marker on paper">
-
-        <div class="row-2">
-          <div>
-            <label for="f-support">Support</label>
-            <select id="f-support" data-term="schema:artworkSurface">
-              <option value="">—</option>
-            </select>
-          </div>
-          <div>
-            <label for="f-condition">Condition</label>
-            <select id="f-condition" data-term="schema:itemCondition">
-              <option value="">—</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row-2">
-          <div>
-            <label for="f-height">Height ″</label>
-            <input type="text" id="f-height" data-term="schema:height" placeholder="in.">
-          </div>
-          <div>
-            <label for="f-width">Width ″</label>
-            <input type="text" id="f-width" data-term="schema:width" placeholder="in.">
-          </div>
-        </div>
-
-        <label>Signature</label>
-        <div id="sig-grid" class="sig-grid" data-term="schema:distinguishingSign">
-          <button type="button" data-val="↖">↖</button>
-          <button type="button" data-val="↑">↑</button>
-          <button type="button" data-val="↗">↗</button>
-          <button type="button" data-val="←">←</button>
-          <button type="button" data-val="∅" title="None">∅</button>
-          <button type="button" data-val="→">→</button>
-          <button type="button" data-val="↙">↙</button>
-          <button type="button" data-val="↓">↓</button>
-          <button type="button" data-val="↘">↘</button>
-        </div>
-
-        <label>Motifs</label>
-        <div id="motif-chips" class="chip-group" data-term="dcterms:subject"></div>
-
-        <label>Transcription</label>
-        <div id="transcription-pills" class="transcription-pills"></div>
-
-        <label>Category</label>
-        <div id="category-pills" class="category-pills" data-term="curation:category">
-          <button type="button" data-val="A">A</button>
-          <button type="button" data-val="B">B</button>
-          <button type="button" data-val="C">C</button>
-          <button type="button" data-val="D">D</button>
-        </div>
-
-        <!-- Collapsible "More" section -->
-        <details id="more-fields">
-          <summary>More fields</summary>
-
-          <label for="f-identifier">Identifier</label>
-          <input type="text" id="f-identifier" data-term="dcterms:identifier">
-
-          <label for="f-description">Description</label>
-          <textarea id="f-description" data-term="dcterms:description" rows="2"></textarea>
-
-          <label for="f-framing">Framing</label>
-          <input type="text" id="f-framing" data-term="dcterms:format">
-
-          <label for="f-owner">Owner</label>
-          <input type="text" id="f-owner" data-term="bibo:owner">
-
-          <label for="f-location">Location</label>
-          <input type="text" id="f-location" data-term="dcterms:spatial">
-
-          <label for="f-provenance">Provenance</label>
-          <textarea id="f-provenance" data-term="dcterms:provenance" rows="2"></textarea>
-
-          <label for="f-rights">Rights</label>
-          <input type="text" id="f-rights" data-term="dcterms:rights">
-
-          <label for="f-credit">Credit</label>
-          <input type="text" id="f-credit" data-term="schema:creditText">
-
-          <label for="f-inscriptions">Inscriptions</label>
-          <textarea id="f-inscriptions" data-term="bibo:annotates" rows="2"></textarea>
-
-          <label for="f-transcription">Transcription</label>
-          <textarea id="f-transcription" data-term="bibo:content" rows="4"></textarea>
-
-          <label for="f-exhibition">Exhibition</label>
-          <input type="text" id="f-exhibition" data-term="bibo:presentedAt">
-
-          <label for="f-bibliography">Bibliography</label>
-          <input type="text" id="f-bibliography" data-term="dcterms:bibliographicCitation">
-
-          <label for="f-box">Box</label>
-          <input type="text" id="f-box" data-term="schema:box">
-
-          <label for="f-notes">Curator notes</label>
-          <textarea id="f-notes" data-term="curation:note" rows="2"></textarea>
-        </details>
-
-        <!-- Actions -->
-        <div class="actions">
-          <button type="button" id="btn-prev" class="btn btn-nav" title="Ctrl+←">← Prev</button>
-          <button type="button" id="btn-save" class="btn btn-save" title="Ctrl+S">Save</button>
-          <button type="button" id="btn-skip" class="btn btn-skip" title="Esc">Skip →</button>
-          <button type="button" id="btn-save-next" class="btn btn-save-next" title="Ctrl+→">Save + Next →</button>
-        </div>
-      </form>
-
-      <!-- Sprint view (replaces form when a sprint field is active) -->
-      <div id="sprint-view" class="hidden">
+      <!-- Sprint view — one-property-at-a-time editing -->
+      <div id="sprint-view">
         <div id="sprint-view-progress">
           <span id="sprint-view-field-label"></span>
           <span id="sprint-view-count"></span>

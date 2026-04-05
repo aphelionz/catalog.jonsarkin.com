@@ -8,13 +8,11 @@
 // ── Config ──────────────────────────────────────────────────────────────────
 
 const API_BASE = '/api';
-const RESOURCE_TEMPLATE_ID = 2;
-const CREATOR_ITEM_ID = 3;
 
-// Bucket / swipe mode
-const SWIPE_THRESHOLD = 100;    // px of horizontal drag to trigger action
-const ROTATION_FACTOR = 0.12;   // degrees per px of drag
-const FLY_DISTANCE = 1.5;       // viewport-width multiplier for fly-off
+// Bucket / swipe mode (used by Exhibition)
+const SWIPE_THRESHOLD = 100;
+const ROTATION_FACTOR = 0.12;
+const FLY_DISTANCE = 1.5;
 
 // Sprint mode — field-specific card workflows (built after WORK_TYPES etc. are defined)
 let FIELD_SPRINTS; // initialized in initFieldSprints()
@@ -76,18 +74,14 @@ const DEATH_YEAR = 2024;
 let allItems = [];       // Full item summaries from API
 let queue = [];          // Filtered/sorted working queue
 let queueIndex = 0;      // Current position in queue
-let currentItem = null;   // Full item JSON for the item being edited
-let snapshot = {};        // Initial form values for dirty-check
 let mediaCache = {};      // mediaId → original_url
-let saving = false;
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
 let stickyText = {}; // persist text field values across cards (keyed by term)
 let ALL_MOTIF_TAGS = []; // all distinct motif values across items (autocomplete corpus)
-let filterMode = 'issues'; // 'issues' | 'all' | 'curate' | 'sprint' | 'exhibit'
+let filterMode = 'issues'; // 'issues' | 'sprint' | 'exhibit'
 
-// Bucket sort state
+// Bucket state (used by Exhibition mode)
 let bucketMode = false;
-let bucketSetup = true;        // true = showing setup screen, false = swiping
 let bucketConfig = null;       // current bucket config object
 let bucketQueue = [];
 let bucketIndex = 0;
@@ -127,19 +121,12 @@ function cacheDom() {
   dom.queueStatus = $('#queue-status');
   dom.itemLink = $('#item-link');
   dom.countIssues = $('#count-issues');
-  dom.countAll = $('#count-all');
   dom.progressFill = $('#progress-fill');
   dom.image = $('#item-image');
   dom.imageLoading = $('#image-loading');
   dom.formPanel = $('#form-panel');
-  dom.issueBadges = $('#issue-badges');
   dom.toast = $('#toast');
-  dom.btnPrev = $('#btn-prev');
-  dom.btnSave = $('#btn-save');
-  dom.btnSkip = $('#btn-skip');
-  dom.btnSaveNext = $('#btn-save-next');
   // Sprint view (inside form panel)
-  dom.editorForm = $('#editor-form');
   dom.sprintView = $('#sprint-view');
   dom.sprintViewFieldLabel = $('#sprint-view-field-label');
   dom.sprintViewCount = $('#sprint-view-count');
@@ -375,20 +362,15 @@ function hasBadDate(item) {
 }
 
 function buildQueue() {
-  if (filterMode === 'issues') {
-    queue = allItems
-      .filter(it => it._issues.some(i => i.level === 'error'))
-      .sort((a, b) => b._issues.length - a._issues.length);
-  } else {
-    queue = [...allItems].sort((a, b) => a._identifier.localeCompare(b._identifier));
-  }
+  queue = allItems
+    .filter(it => it._issues.some(i => i.level === 'error'))
+    .sort((a, b) => b._issues.length - a._issues.length);
   queueIndex = Math.min(queueIndex, Math.max(0, queue.length - 1));
 }
 
 function updateNav() {
   const issueCount = allItems.filter(it => it._issues.some(i => i.level === 'error')).length;
   dom.countIssues.textContent = `(${issueCount})`;
-  dom.countAll.textContent = `(${allItems.length})`;
 
   if (!queue.length) {
     const emptyMsg = { issues: 'No issues found!' };
@@ -448,142 +430,6 @@ async function getCardImageUrl(item) {
   }
 }
 
-// Preload next item's image
-function preloadNext() {
-  if (queueIndex + 1 < queue.length) {
-    const next = queue[queueIndex + 1];
-    getImageUrl(next).then(url => {
-      if (url) { const img = new Image(); img.src = url; }
-    });
-  }
-}
-
-// ── Form population ─────────────────────────────────────────────────────────
-
-function populateForm(item) {
-  // Text/select fields
-  for (const el of $$('[data-term]')) {
-    const term = el.dataset.term;
-    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills') || el.closest('.category-pills')) continue;
-
-    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-      // For repeatable fields (provenance, inscriptions), join with newline
-      if (['dcterms:provenance', 'bibo:annotates'].includes(term)) {
-        el.value = extractAllValues(item, term).join('\n');
-      } else {
-        el.value = extractValue(item, term);
-      }
-    } else if (el.tagName === 'SELECT') {
-      const val = extractValue(item, term);
-      // If the value exists but isn't in our options, add it temporarily
-      const hasOption = Array.from(el.options).some(o => o.value === val);
-      if (val && !hasOption) {
-        const opt = document.createElement('option');
-        opt.value = val;
-        opt.textContent = `${val} (custom)`;
-        el.appendChild(opt);
-      }
-      el.value = val;
-    }
-  }
-
-  // Sticky dimensions: prefill empty height/width from last-used values
-  for (const [term, key] of [['schema:height', 'height'], ['schema:width', 'width']]) {
-    const el = $(`[data-term="${term}"]`);
-    if (el && !el.value && stickyDims[key]) {
-      el.value = stickyDims[key];
-    }
-  }
-
-  // Suggest catalog ID for items missing one
-  const idEl = $('[data-term="dcterms:identifier"]');
-  if (idEl && !idEl.value) {
-    idEl.value = suggestCatalogId(item);
-  }
-
-  // Date pills
-  const dateVal = extractValue(item, 'dcterms:date');
-  for (const pill of $$('.date-pill')) {
-    pill.classList.toggle('active', pill.dataset.val === dateVal);
-  }
-
-  // Transcription pills
-  const transVal = extractValue(item, 'bibo:content');
-  for (const pill of $$('.transcription-pill')) {
-    pill.classList.toggle('active', pill.dataset.val === transVal);
-  }
-
-  // Signature grid
-  const sigVal = extractValue(item, 'schema:distinguishingSign');
-  for (const btn of $$('#sig-grid button')) {
-    btn.classList.toggle('active', btn.dataset.val === sigVal);
-  }
-
-  // Category pills
-  const catVal = extractValue(item, 'curation:category');
-  for (const btn of $$('#category-pills button')) {
-    btn.classList.toggle('active', btn.dataset.val === catVal);
-  }
-
-  // Motif chips
-  const motifs = extractAllValues(item, 'dcterms:subject');
-  for (const chip of $$('#motif-chips .chip')) {
-    chip.classList.toggle('active', motifs.includes(chip.dataset.val));
-  }
-
-  // Issue badges
-  const issues = validateItem(item);
-  dom.issueBadges.innerHTML = issues
-    .map(i => `<span class="badge badge-${i.level}">${i.field}: ${i.msg}</span>`)
-    .join('');
-
-  // Save snapshot for dirty tracking
-  snapshot = captureFormState();
-  dom.formPanel.classList.remove('dirty', 'saved', 'error');
-}
-
-// ── Form state capture ──────────────────────────────────────────────────────
-
-function captureFormState() {
-  const state = {};
-
-  // Text/select fields
-  for (const el of $$('[data-term]')) {
-    const term = el.dataset.term;
-    if (el.closest('.sig-grid') || el.closest('.chip-group') || el.closest('.date-pills') || el.closest('.transcription-pills') || el.closest('.category-pills')) continue;
-    if (el.tagName !== 'INPUT' && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA') continue;
-    state[term] = el.value;
-  }
-
-  // Signature
-  const activeSig = $('#sig-grid button.active');
-  state['schema:distinguishingSign'] = activeSig ? activeSig.dataset.val : '';
-
-  // Category
-  const activeCat = $('#category-pills button.active');
-  state['curation:category'] = activeCat ? activeCat.dataset.val : '';
-
-  // Motifs
-  state['dcterms:subject'] = Array.from($$('#motif-chips .chip.active'))
-    .map(c => c.dataset.val)
-    .sort()
-    .join(',');
-
-  return state;
-}
-
-function isDirty() {
-  const current = captureFormState();
-  for (const key of Object.keys(current)) {
-    if (current[key] !== snapshot[key]) return true;
-  }
-  return false;
-}
-
-function updateDirtyState() {
-  dom.formPanel.classList.toggle('dirty', isDirty());
-}
-
 // ── Build PATCH payload ─────────────────────────────────────────────────────
 // Critical: mirrors backfill_defaults.py:build_payload exactly.
 // Must preserve ALL existing properties; only overwrite edited fields.
@@ -600,212 +446,14 @@ function literalValue(term, val) {
   return { type: 'literal', property_id: PROP[term], '@value': val, is_public: true };
 }
 
-function buildPayload(item, formState) {
-  const payload = {};
-
-  // 1. Copy ALL existing vocabulary properties
-  for (const [key, val] of Object.entries(item)) {
-    if (key.includes(':') && !key.startsWith('o:') && Array.isArray(val)) {
-      payload[key] = val.filter(v => typeof v === 'object').map(cleanValue);
-    }
-  }
-
-  // 2. Copy system keys
-  for (const sysKey of ['o:resource_class', 'o:resource_template', 'o:item_set', 'o:media', 'o:is_public', 'o:site']) {
-    if (sysKey in item) payload[sysKey] = item[sysKey];
-  }
-
-  // 3. Overwrite edited literal fields
-  const literalFields = [
-    'dcterms:date', 'dcterms:type', 'dcterms:medium',
-    'schema:artworkSurface', 'schema:height', 'schema:width',
-    'schema:distinguishingSign', 'schema:itemCondition',
-    'dcterms:identifier', 'dcterms:description', 'dcterms:format',
-    'bibo:owner', 'dcterms:spatial', 'dcterms:rights',
-    'schema:creditText', 'bibo:content', 'bibo:presentedAt',
-    'dcterms:bibliographicCitation', 'schema:box', 'curation:note',
-    'curation:category',
-  ];
-
-  for (const term of literalFields) {
-    const val = (formState[term] || '').trim();
-    if (val) {
-      payload[term] = [literalValue(term, val)];
-    } else {
-      // Preserve existing if form is empty (don't delete data we didn't show)
-      // But if the focused field is explicitly empty, allow clearing it
-      payload[term] = [];
-    }
-  }
-
-  // 4. Repeatable text fields (provenance, inscriptions) — split on newlines
-  for (const term of ['dcterms:provenance', 'bibo:annotates']) {
-    const raw = (formState[term] || '').trim();
-    if (raw) {
-      payload[term] = raw.split('\n').filter(Boolean).map(line => literalValue(term, line.trim()));
-    } else {
-      payload[term] = [];
-    }
-  }
-
-  // 5. Motifs (dcterms:subject) — from comma-joined string
-  const motifStr = formState['dcterms:subject'] || '';
-  if (motifStr) {
-    payload['dcterms:subject'] = motifStr.split(',').map(m => literalValue('dcterms:subject', m));
-  } else {
-    payload['dcterms:subject'] = [];
-  }
-
-  // 6. Ensure creator reference exists
-  const creatorVals = payload['schema:creator'] || [];
-  const hasCreator = creatorVals.some(v => v.value_resource_id === CREATOR_ITEM_ID);
-  if (!hasCreator) {
-    payload['schema:creator'] = [
-      ...creatorVals,
-      { type: 'resource:item', property_id: PROP['schema:creator'], value_resource_id: CREATOR_ITEM_ID },
-    ];
-  }
-
-  return payload;
-}
-
-// ── Save ────────────────────────────────────────────────────────────────────
-
-async function saveCurrentItem() {
-  if (saving || !currentItem) return;
-  saving = true;
-  dom.btnSave.disabled = true;
-  dom.btnSaveNext.disabled = true;
-
-  try {
-    // Re-fetch to avoid stale overwrites
-    const { json: freshItem } = await apiGet(`items/${currentItem['o:id']}`);
-    const formState = captureFormState();
-    const payload = buildPayload(freshItem, formState);
-    const updated = await apiPatch(`items/${currentItem['o:id']}`, payload);
-
-    // Update local state
-    currentItem = updated;
-    const idx = allItems.findIndex(it => it['o:id'] === updated['o:id']);
-    if (idx >= 0) {
-      // Preserve _issues and _identifier on the allItems entry
-      allItems[idx] = updated;
-      allItems[idx]._issues = validateItem(updated);
-      allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
-    }
-
-    snapshot = captureFormState();
-    // Persist dimensions for next card
-    const hEl = $('[data-term="schema:height"]');
-    const wEl = $('[data-term="schema:width"]');
-    if (hEl?.value) stickyDims.height = hEl.value;
-    if (wEl?.value) stickyDims.width = wEl.value;
-    dom.formPanel.classList.remove('dirty');
-    flashSave();
-    showToast(`Saved ${extractValue(updated, 'dcterms:identifier')}`);
-
-    // Update issue badges for this item
-    const issues = validateItem(updated);
-    dom.issueBadges.innerHTML = issues
-      .map(i => `<span class="badge badge-${i.level}">${i.field}: ${i.msg}</span>`)
-      .join('');
-
-    updateNav();
-  } catch (err) {
-    dom.formPanel.classList.add('error');
-    showToast(`Error: ${err.message}`, true);
-    console.error('Save failed:', err);
-  } finally {
-    saving = false;
-    dom.btnSave.disabled = false;
-    dom.btnSaveNext.disabled = false;
-  }
-}
-
-function flashSave() {
-  dom.formPanel.classList.add('saved');
-  setTimeout(() => dom.formPanel.classList.remove('saved'), 600);
-}
-
-// ── Navigation ──────────────────────────────────────────────────────────────
-
-async function loadItem(index) {
-  if (index < 0 || index >= queue.length) return;
-  queueIndex = index;
-  savePosition();
-  updateNav();
-
-  const summary = queue[queueIndex];
-
-  // Show image loading state
-  dom.imageLoading.classList.remove('hidden');
-  dom.image.style.opacity = '0.3';
-
-  // Fetch full item
-  const { json: fullItem } = await apiGet(`items/${summary['o:id']}`);
-  currentItem = fullItem;
-
-  // Load image
-  const url = await getImageUrl(fullItem);
-  if (url) {
-    dom.image.src = url;
-    dom.image.onload = () => {
-      dom.image.style.opacity = '1';
-      dom.imageLoading.classList.add('hidden');
-    };
-  } else {
-    dom.image.src = '';
-    dom.image.style.opacity = '1';
-    dom.imageLoading.classList.add('hidden');
-  }
-
-  populateForm(fullItem);
-  preloadNext();
-
-  // Scroll form to top
-  dom.formPanel.scrollTop = 0;
-}
-
-function confirmIfDirty() {
-  if (isDirty()) {
-    return confirm('You have unsaved changes. Discard and continue?');
-  }
-  return true;
-}
-
-function goNext() {
-  if (queueIndex + 1 < queue.length) loadItem(queueIndex + 1);
-}
-
-function goPrev() {
-  if (!confirmIfDirty()) return;
-  if (queueIndex > 0) loadItem(queueIndex - 1);
-}
-
-function skip() {
-  if (!confirmIfDirty()) return;
-  goNext();
-}
-
-async function saveAndNext() {
-  await saveCurrentItem();
-  if (!saving) goNext();
-}
-
 // ── Session persistence ─────────────────────────────────────────────────────
 
 function savePosition() {
   try {
     const state = {
-      index: queueIndex,
       filter: filterMode,
       sprintField: sprintField,
     };
-    if (filterMode === 'curate' && bucketConfig) {
-      state.bucketConfig = bucketConfig;
-      state.bucketIndex = bucketIndex;
-      state.bucketSetup = bucketSetup;
-    }
     if (filterMode === 'exhibit') {
       state.exhibitMode = true;
     }
@@ -818,211 +466,45 @@ function restorePosition() {
     const saved = JSON.parse(localStorage.getItem('rapid-editor') || '{}');
     if (saved.filter) filterMode = saved.filter;
     if (saved.sprintField) sprintField = saved.sprintField;
-    if (typeof saved.index === 'number') queueIndex = saved.index;
-    if (saved.bucketConfig) {
-      bucketConfig = saved.bucketConfig;
-      bucketSetup = saved.bucketSetup !== false;
-      if (typeof saved.bucketIndex === 'number') bucketIndex = saved.bucketIndex;
-    }
     // Migrate removed filter modes
-    if (filterMode === 'dates') {
-      filterMode = 'sprint';
-      sprintField = 'date';
+    if (['dates', 'box', 'all', 'curate'].includes(filterMode)) {
+      filterMode = 'issues';
     }
-    if (filterMode === 'box') filterMode = 'issues';
   } catch { /* ignore */ }
 }
 
 // ── UI setup ────────────────────────────────────────────────────────────────
 
-function setupSelects() {
-  const typeSelect = $('#f-type');
-  const supportSelect = $('#f-support');
-  const conditionSelect = $('#f-condition');
-
-  for (const val of WORK_TYPES) {
-    typeSelect.add(new Option(val, val));
-  }
-  for (const val of SUPPORTS) {
-    supportSelect.add(new Option(val, val));
-  }
-  for (const val of CONDITIONS) {
-    conditionSelect.add(new Option(val, val));
-  }
-}
-
-function setupDatePills() {
-  const container = $('#date-pills');
-  const dateInput = $('#f-date');
-
-  function makePill(value, label, extraClass) {
-    const pill = document.createElement('span');
-    pill.className = 'date-pill' + (extraClass ? ' ' + extraClass : '');
-    pill.textContent = label;
-    pill.dataset.val = value;
-    pill.addEventListener('click', () => {
-      const wasActive = pill.classList.contains('active');
-      for (const p of $$('.date-pill')) p.classList.remove('active');
-      if (!wasActive) {
-        pill.classList.add('active');
-        dateInput.value = value;
-      } else {
-        dateInput.value = '';
-      }
-      updateDirtyState();
-      // Auto save + next on date pill click
-      saveAndNext();
-    });
-    container.appendChild(pill);
-  }
-
-  // Unknown date pill — proper art catalog convention for "during his career"
-  makePill('c. 1989–2024', 'c. 1989–2024', 'date-unknown');
-  makePill('c. 2000s', 'c. 2000s', 'date-unknown');
-
-  // Year pills with short labels ('87, '88, ... '24)
-  for (const year of DATE_YEARS) {
-    const label = '\u2019' + year.slice(2); // '87, '88, etc.
-    const extra = year.endsWith('0') ? 'decade-start' : '';
-    makePill(year, label, extra);
-  }
-  // Typing in the text input clears the pill selection
-  dateInput.addEventListener('input', () => {
-    const val = dateInput.value.trim();
-    for (const p of $$('.date-pill')) {
-      p.classList.toggle('active', p.dataset.val === val);
-    }
-    updateDirtyState();
-  });
-}
-
-function setupTranscriptionPills() {
-  const container = $('#transcription-pills');
-  const textarea = $('#f-transcription');
-  const pills = [
-    { value: '∅', label: 'No text' },
-    { value: '[Needs enrichment]', label: 'Needs enrichment' },
-  ];
-  for (const { value, label } of pills) {
-    const pill = document.createElement('span');
-    pill.className = 'transcription-pill';
-    pill.textContent = label;
-    pill.dataset.val = value;
-    pill.addEventListener('click', () => {
-      const wasActive = pill.classList.contains('active');
-      for (const p of $$('.transcription-pill')) p.classList.remove('active');
-      if (!wasActive) {
-        pill.classList.add('active');
-        textarea.value = value;
-      } else {
-        textarea.value = '';
-      }
-      updateDirtyState();
-      saveAndNext();
-    });
-    container.appendChild(pill);
-  }
-}
-
-function setupMotifChips() {
-  const container = $('#motif-chips');
-  for (const motif of MOTIFS) {
-    const chip = document.createElement('span');
-    chip.className = 'chip';
-    chip.textContent = motif;
-    chip.dataset.val = motif;
-    chip.addEventListener('click', () => {
-      chip.classList.toggle('active');
-      updateDirtyState();
-    });
-    container.appendChild(chip);
-  }
-}
-
-function setupSignatureGrid() {
-  for (const btn of $$('#sig-grid button')) {
-    btn.addEventListener('click', () => {
-      // Toggle: if already active, deactivate; otherwise switch
-      const wasActive = btn.classList.contains('active');
-      for (const b of $$('#sig-grid button')) b.classList.remove('active');
-      if (!wasActive) btn.classList.add('active');
-      updateDirtyState();
-    });
-  }
-}
-
-function setupCategoryPills() {
-  for (const btn of $$('#category-pills button')) {
-    btn.addEventListener('click', () => {
-      const wasActive = btn.classList.contains('active');
-      for (const b of $$('#category-pills button')) b.classList.remove('active');
-      if (!wasActive) btn.classList.add('active');
-      updateDirtyState();
-    });
-  }
-}
-
 function setupFilterButtons() {
   for (const btn of $$('.filter-btn')) {
     btn.addEventListener('click', () => {
-      // Bucket sort mode: special handling
-      if (btn.dataset.filter === 'curate') {
-        if (bucketMode && !exhibitMode) return; // already in bucket mode
-        if (!confirmIfDirty()) return;
-        if (exhibitMode) exitExhibitMode();
-        enterBucketMode();
-        return;
-      }
-
       // Exhibition curation mode
       if (btn.dataset.filter === 'exhibit') {
         if (exhibitMode) return;
-        if (!confirmIfDirty()) return;
-        if (bucketMode) exitBucketMode();
         enterExhibitMode();
         return;
       }
 
-      // Leaving bucket/sprint/exhibit mode — skip dirty check (no editor form to lose)
-      const wasCard = bucketMode || sprintMode || exhibitMode;
-      if (exhibitMode) exitExhibitMode();
-      if (bucketMode) exitBucketMode();
-      if (sprintMode) exitSprintMode();
-
-      if (!wasCard && !confirmIfDirty()) return;
-      for (const b of $$('.filter-btn')) b.classList.remove('active');
-      btn.classList.add('active');
-      filterMode = btn.dataset.filter;
-
-      queueIndex = 0;
-      buildQueue();
-      updateNav();
-      if (queue.length) loadItem(0);
+      // Issues mode — auto-enter sprint on first issue field
+      if (btn.dataset.filter === 'issues') {
+        if (exhibitMode) exitExhibitMode();
+        if (sprintMode) exitSprintMode();
+        for (const b of $$('.filter-btn')) b.classList.remove('active');
+        btn.classList.add('active');
+        filterMode = 'issues';
+        autoSprintIssues();
+        return;
+      }
     });
   }
-}
-
-function setupDirtyTracking() {
-  // Track changes on all form inputs
-  for (const el of $$('input, select, textarea')) {
-    el.addEventListener('input', updateDirtyState);
-    el.addEventListener('change', updateDirtyState);
-  }
-}
-
-function setupButtons() {
-  dom.btnPrev.addEventListener('click', goPrev);
-  dom.btnSave.addEventListener('click', saveCurrentItem);
-  dom.btnSkip.addEventListener('click', skip);
-  dom.btnSaveNext.addEventListener('click', saveAndNext);
 }
 
 function setupKeyboard() {
   document.addEventListener('keydown', (e) => {
     const mod = e.metaKey || e.ctrlKey;
 
-    // Bucket sort mode shortcuts
-    if (bucketMode && !bucketSetup) {
+    // Bucket mode shortcuts (Exhibition uses bucket infrastructure)
+    if (bucketMode) {
       if (e.key === 'ArrowRight') {
         e.preventDefault();
         triggerBucketSwipe('right');
@@ -1045,29 +527,7 @@ function setupKeyboard() {
         e.preventDefault();
         sprintUndo();
       }
-      // Don't intercept other keys — text inputs need them
       return;
-    }
-
-    // Normal editor shortcuts
-    if (mod && e.key === 's') {
-      e.preventDefault();
-      saveCurrentItem();
-    } else if (mod && e.key === 'ArrowRight') {
-      e.preventDefault();
-      saveAndNext();
-    } else if (mod && e.key === 'ArrowLeft') {
-      e.preventDefault();
-      goPrev();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      skip();
-    } else if (e.key === 'ArrowRight' && !isTextInput(e.target)) {
-      e.preventDefault();
-      goNext();
-    } else if (e.key === 'ArrowLeft' && !isTextInput(e.target)) {
-      e.preventDefault();
-      goPrev();
     }
   });
 }
@@ -1094,77 +554,17 @@ function showToast(msg, isError = false) {
 // ── Bucket Sort Mode — configurable two-bucket swipe sorting ─────────────────
 // ══════════════════════════════════════════════════════════════════════════════
 
-// ── Bucket: sortable fields & presets ────────────────────────────────────────
-
-const BUCKET_SORTABLE_FIELDS = [
-  { term: 'dcterms:type', label: 'Work Type' },
-  { term: 'schema:artworkSurface', label: 'Support' },
-  { term: 'schema:itemCondition', label: 'Condition' },
-  { term: 'schema:distinguishingSign', label: 'Signature' },
-  { term: 'dcterms:subject', label: 'Motif', multi: true },
-];
-
-function getVocabForField(term) {
-  const map = {
-    'dcterms:type': () => WORK_TYPES,
-    'schema:artworkSurface': () => SUPPORTS,
-    'schema:itemCondition': () => CONDITIONS,
-    'schema:distinguishingSign': () => SIGNATURE_ARROWS,
-    'dcterms:subject': () => MOTIFS,
-  };
-  return (map[term] || (() => []))();
-}
-
 // Left swipe is always skip (touch o:modified, no field/set changes)
 const BUCKET_LEFT = { label: 'Skip', color: '#555', actions: [] };
 
-const BUILTIN_PRESETS = [
-  {
-    name: 'Curate: Permanent Collection',
-    builtin: true,
-    right: { label: 'Keep', color: '#2a7d2e', actions: [
-      { type: 'item_set', setId: 7490, setLabel: 'Permanent Collection' },
-    ]},
-    queueFilter: 'exclude_matched',
-  },
-];
-
-function loadPresets() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('bucket-presets') || '[]');
-    return [...BUILTIN_PRESETS, ...saved];
-  } catch { return [...BUILTIN_PRESETS]; }
-}
-
-function savePreset(config) {
-  const presets = loadPresets().filter(p => !p.builtin);
-  // Replace existing preset with same name, or append
-  const idx = presets.findIndex(p => p.name === config.name);
-  if (idx >= 0) presets[idx] = { ...config, builtin: false };
-  else presets.push({ ...config, builtin: false });
-  localStorage.setItem('bucket-presets', JSON.stringify(presets));
-}
-
-function deletePreset(name) {
-  const presets = loadPresets().filter(p => !p.builtin && p.name !== name);
-  localStorage.setItem('bucket-presets', JSON.stringify(presets));
-}
-
-// ── Bucket: matching helpers ─────────────────────────────────────────────────
+// ── Bucket: matching helpers (used by Exhibition) ────────────────────────────
 
 function itemMatchesBucket(item, bucket) {
-  if (!bucket.actions.length) return false; // empty bucket = "pass", never pre-matches
+  if (!bucket.actions.length) return false;
   return bucket.actions.every(action => {
     if (action.type === 'item_set') {
       const sets = item['o:item_set'] || [];
       return sets.some(s => s['o:id'] === action.setId);
-    }
-    if (action.type === 'field') {
-      const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === action.term);
-      if (fieldDef && fieldDef.multi) {
-        return extractAllValues(item, action.term).includes(action.value);
-      }
-      return extractValue(item, action.term) === action.value;
     }
     return false;
   });
@@ -1174,8 +574,7 @@ function describeBucket(bucket) {
   if (!bucket.actions.length) return 'Skip';
   return bucket.actions.map(a => {
     if (a.type === 'item_set') return a.setLabel;
-    const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === a.term);
-    return `${fieldDef ? fieldDef.label : a.term}: ${a.value}`;
+    return a.term;
   }).join(', ');
 }
 
@@ -1215,282 +614,18 @@ function buildBucketQueue(config) {
   bucketIndex = 0;
 }
 
-// ── Bucket: mode switching ───────────────────────────────────────────────────
-
-function enterBucketMode(resumeSwiping = false) {
-  bucketMode = true;
-  filterMode = 'curate';
-
-  dom.main.classList.add('hidden');
-  $('#curate-panel').classList.remove('hidden');
-
-  for (const b of $$('.filter-btn')) {
-    b.classList.toggle('active', b.dataset.filter === 'curate');
-  }
-
-
-  if (resumeSwiping && bucketConfig && !bucketSetup) {
-    // Resume swiping with existing config
-    startBucketSwiping(bucketConfig, true);
-  } else {
-    // Show setup screen
-    bucketSetup = true;
-    renderBucketSetup();
-  }
-
-  savePosition();
-}
+// ── Bucket: mode switching (used by Exhibition) ─────────────────────────────
 
 function exitBucketMode() {
   bucketMode = false;
-  bucketSetup = true;
   $('#curate-panel').classList.add('hidden');
   dom.main.classList.remove('hidden');
   clearCardStage();
 }
 
-// ── Bucket: setup screen ─────────────────────────────────────────────────────
-
-function renderBucketSetup() {
-  const panel = $('#curate-panel');
-  // Hide swipe action buttons
-  $('#curate-actions').classList.add('hidden');
-  $('#curate-progress').classList.add('hidden');
-
-  const stage = $('#card-stage');
-  stage.style.width = '';
-  stage.style.height = '';
-
-  const presets = loadPresets();
-  const current = bucketConfig || presets[0];
-
-  stage.innerHTML = `
-    <div class="bucket-setup">
-      <div class="bucket-preset-row">
-        <select class="bucket-preset-select">
-          ${presets.map((p, i) => `<option value="${i}" ${p.name === current.name ? 'selected' : ''}>${p.name}</option>`).join('')}
-        </select>
-        <button class="btn btn-nav bucket-delete-preset">Delete</button>
-      </div>
-
-      <div class="bucket-column" data-side="right">
-        <h3>Swipe Right →</h3>
-        <div class="bucket-label-row">
-          <input type="text" class="bucket-label-input" value="${current.right.label}" placeholder="Label (e.g. Keep)">
-        </div>
-        <div class="bucket-action-list"></div>
-        <div class="bucket-add-buttons">
-          <button class="btn btn-nav bucket-add-field">+ Field value</button>
-          <button class="btn btn-nav bucket-add-set">+ Item set</button>
-        </div>
-      </div>
-
-      <div class="bucket-skip-hint">← Swipe left = skip (touch modified)</div>
-
-      <div class="bucket-queue-filter">
-        <label>
-          <input type="radio" name="bucket-queue" value="exclude_matched" ${current.queueFilter === 'exclude_matched' ? 'checked' : ''}>
-          Exclude already-sorted
-        </label>
-        <label>
-          <input type="radio" name="bucket-queue" value="all" ${current.queueFilter !== 'exclude_matched' ? 'checked' : ''}>
-          Show all items
-        </label>
-        <span class="bucket-queue-count"></span>
-      </div>
-
-      <div class="bucket-bottom-row">
-        <button class="btn btn-nav bucket-save-preset">Save Preset</button>
-        <button class="btn btn-save bucket-start">Start Sorting</button>
-      </div>
-    </div>
-  `;
-
-  // Populate existing actions for the loaded preset
-  const rightList = stage.querySelector('.bucket-column .bucket-action-list');
-  for (const action of current.right.actions) addActionRow(rightList, action);
-
-  // Wire add buttons
-  const col = stage.querySelector('.bucket-column');
-  const list = col.querySelector('.bucket-action-list');
-  col.querySelector('.bucket-add-field').addEventListener('click', () => {
-    addActionRow(list, { type: 'field', term: '', value: '' });
-    updateBucketQueueCount();
-  });
-  col.querySelector('.bucket-add-set').addEventListener('click', () => {
-    addActionRow(list, { type: 'item_set', setId: 0, setLabel: '' });
-    updateBucketQueueCount();
-  });
-
-  // Wire preset selector
-  stage.querySelector('.bucket-preset-select').addEventListener('change', (e) => {
-    const preset = presets[e.target.value];
-    if (preset) {
-      bucketConfig = JSON.parse(JSON.stringify(preset));
-      renderBucketSetup();
-    }
-  });
-
-  // Wire delete preset
-  stage.querySelector('.bucket-delete-preset').addEventListener('click', () => {
-    const config = readBucketConfig();
-    if (!config) return;
-    const preset = presets.find(p => p.name === config.name);
-    if (preset && preset.builtin) {
-      showToast('Cannot delete built-in preset', true);
-      return;
-    }
-    deletePreset(config.name);
-    bucketConfig = null;
-    renderBucketSetup();
-    showToast('Preset deleted');
-  });
-
-  // Wire save preset
-  stage.querySelector('.bucket-save-preset').addEventListener('click', () => {
-    const config = readBucketConfig();
-    if (!config) return;
-    const name = prompt('Preset name:', config.name || '');
-    if (!name) return;
-    config.name = name;
-    savePreset(config);
-    bucketConfig = config;
-    renderBucketSetup();
-    showToast('Preset saved');
-  });
-
-  // Wire start button
-  stage.querySelector('.bucket-start').addEventListener('click', () => {
-    const config = readBucketConfig();
-    if (!config) return;
-    bucketConfig = config;
-    startBucketSwiping(config);
-  });
-
-  // Wire queue filter radios
-  for (const radio of stage.querySelectorAll('input[name="bucket-queue"]')) {
-    radio.addEventListener('change', () => updateBucketQueueCount());
-  }
-
-  updateBucketQueueCount();
-}
-
-function addActionRow(listEl, action) {
-  const row = document.createElement('div');
-  row.className = 'bucket-action-row';
-
-  if (action.type === 'field') {
-    const fieldSelect = document.createElement('select');
-    fieldSelect.className = 'bucket-field-select';
-    fieldSelect.innerHTML = `<option value="">Field…</option>` +
-      BUCKET_SORTABLE_FIELDS.map(f =>
-        `<option value="${f.term}" ${f.term === action.term ? 'selected' : ''}>${f.label}</option>`
-      ).join('');
-
-    const valueSelect = document.createElement('select');
-    valueSelect.className = 'bucket-value-select';
-
-    const populateValues = (term, selectedValue) => {
-      const vocab = getVocabForField(term);
-      valueSelect.innerHTML = `<option value="">Value…</option>` +
-        vocab.map(v => `<option value="${v}" ${v === selectedValue ? 'selected' : ''}>${v}</option>`).join('');
-    };
-
-    if (action.term) populateValues(action.term, action.value);
-
-    fieldSelect.addEventListener('change', () => {
-      populateValues(fieldSelect.value, '');
-      updateBucketEmptyHints();
-      updateBucketQueueCount();
-    });
-    valueSelect.addEventListener('change', () => {
-      updateBucketQueueCount();
-    });
-
-    row.appendChild(fieldSelect);
-    row.appendChild(valueSelect);
-  } else if (action.type === 'item_set') {
-    const setSelect = document.createElement('select');
-    setSelect.className = 'bucket-set-select';
-    setSelect.innerHTML = `<option value="">Item set…</option>` +
-      availableItemSets.map(s =>
-        `<option value="${s.id}" ${s.id === action.setId ? 'selected' : ''}>${s.label}</option>`
-      ).join('');
-    setSelect.addEventListener('change', () => {
-      updateBucketQueueCount();
-    });
-    row.appendChild(setSelect);
-  }
-
-  const removeBtn = document.createElement('button');
-  removeBtn.className = 'bucket-action-remove';
-  removeBtn.textContent = '×';
-  removeBtn.addEventListener('click', () => {
-    row.remove();
-    updateBucketQueueCount();
-  });
-  row.appendChild(removeBtn);
-
-  listEl.appendChild(row);
-}
-
-function readBucketConfig() {
-  const stage = $('#card-stage');
-  if (!stage) return null;
-
-  const col = stage.querySelector('.bucket-column[data-side="right"]');
-  const label = col ? (col.querySelector('.bucket-label-input').value.trim() || 'Keep') : 'Keep';
-  const actions = [];
-
-  if (col) {
-    for (const row of col.querySelectorAll('.bucket-action-row')) {
-      const fieldSelect = row.querySelector('.bucket-field-select');
-      const valueSelect = row.querySelector('.bucket-value-select');
-      const setSelect = row.querySelector('.bucket-set-select');
-
-      if (fieldSelect && valueSelect && fieldSelect.value && valueSelect.value) {
-        actions.push({ type: 'field', term: fieldSelect.value, value: valueSelect.value });
-      } else if (setSelect && setSelect.value) {
-        const setId = Number(setSelect.value);
-        const setLabel = setSelect.options[setSelect.selectedIndex].text;
-        actions.push({ type: 'item_set', setId, setLabel });
-      }
-    }
-  }
-
-  const queueRadio = stage.querySelector('input[name="bucket-queue"]:checked');
-  const queueFilter = queueRadio ? queueRadio.value : 'exclude_matched';
-
-  const presetSelect = stage.querySelector('.bucket-preset-select');
-  const name = presetSelect ? presetSelect.options[presetSelect.selectedIndex].text : '';
-
-  return {
-    name,
-    left: { ...BUCKET_LEFT },
-    right: { label, color: '#2a7d2e', actions },
-    queueFilter,
-  };
-}
-
-function updateBucketQueueCount() {
-  const config = readBucketConfig();
-  if (!config) return;
-  const countEl = $('.bucket-queue-count');
-  if (!countEl) return;
-
-  let count;
-  if (config.queueFilter === 'exclude_matched') {
-    count = allItems.filter(item => !itemMatchesBucket(item, config.right)).length;
-  } else {
-    count = allItems.length;
-  }
-  countEl.textContent = `${count} items in queue`;
-}
-
 // ── Bucket: start swiping ────────────────────────────────────────────────────
 
 function startBucketSwiping(config, isResume = false) {
-  bucketSetup = false;
   bucketConfig = config;
 
   // Restore card-stage sizing
@@ -1785,22 +920,6 @@ async function applyBucketAction(itemId, bucket, direction) {
           payload['o:item_set'] = [...sets, { 'o:id': action.setId }];
           addedSets.push(action.setId);
         }
-      } else if (action.type === 'field') {
-        const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === action.term);
-        // Save old value for undo
-        if (fieldDef && fieldDef.multi) {
-          oldFieldValues[action.term] = extractAllValues(freshItem, action.term);
-          const existing = extractAllValues(freshItem, action.term);
-          if (!existing.includes(action.value)) {
-            payload[action.term] = [
-              ...existing.map(v => literalValue(action.term, v)),
-              literalValue(action.term, action.value),
-            ];
-          }
-        } else {
-          oldFieldValues[action.term] = extractValue(freshItem, action.term);
-          payload[action.term] = [literalValue(action.term, action.value)];
-        }
       }
     }
 
@@ -1839,14 +958,9 @@ async function bucketUndo() {
         .filter(s => !addedSets.includes(s['o:id']));
     }
 
-    // Reverse field value changes
+    // Reverse field value changes (if any)
     for (const [term, oldVal] of Object.entries(oldFieldValues)) {
-      const fieldDef = BUCKET_SORTABLE_FIELDS.find(f => f.term === term);
-      if (fieldDef && fieldDef.multi) {
-        payload[term] = (oldVal || []).map(v => literalValue(term, v));
-      } else {
-        payload[term] = oldVal ? [literalValue(term, oldVal)] : [];
-      }
+      payload[term] = oldVal ? [literalValue(term, oldVal)] : [];
     }
 
     await apiPatch(`items/${itemId}`, payload);
@@ -1882,31 +996,8 @@ async function bucketUndo() {
 
 function showBucketComplete() {
   if (exhibitMode) { showExhibitRoundComplete(); return; }
-  const stage = $('#card-stage');
-  stage.innerHTML = `
-    <div class="curate-done">
-      <h2>Done</h2>
-      <p>${bucketIndex} items sorted</p>
-      <div style="display:flex;gap:8px;justify-content:center">
-        <button class="btn btn-nav" id="bucket-restart">Start over</button>
-        <button class="btn btn-nav" id="bucket-reconfigure">Change config</button>
-      </div>
-    </div>
-  `;
-  $('#bucket-restart').addEventListener('click', () => {
-    buildBucketQueue(bucketConfig);
-    if (bucketQueue.length) {
-      renderBucketCards();
-      preloadBucketNext();
-    } else {
-      showBucketComplete();
-    }
-    updateBucketProgress();
-  });
-  $('#bucket-reconfigure').addEventListener('click', () => {
-    bucketSetup = true;
-    renderBucketSetup();
-  });
+  // Bucket complete outside exhibition — shouldn't happen, but handle gracefully
+  clearCardStage();
 }
 
 // ── Bucket: button wiring ────────────────────────────────────────────────────
@@ -2008,7 +1099,7 @@ function exitExhibitMode() {
   exhibitMode = false;
   exhibitState = null;
   bucketMode = false;
-  bucketSetup = true;
+
   if (tournamentMode) exitTournamentMode();
   $('#curate-panel').classList.add('hidden');
   dom.main.classList.remove('hidden');
@@ -2318,7 +1409,7 @@ function startExhibitRound(state, roundNum, resume) {
   };
 
   bucketQueue = [...pool];
-  bucketSetup = false;
+
 
   if (resume) {
     const stored = loadExhibitStorage();
@@ -3093,10 +2184,9 @@ function enterSprintMode(fieldKey) {
   sprintField = fieldKey;
   filterMode = 'sprint';
 
-  // Show main layout (image + form panel), but swap form for sprint view
+  // Show main layout (image + sprint view)
   dom.main.classList.remove('hidden');
   $('#curate-panel').classList.add('hidden');
-  dom.editorForm.classList.add('hidden');
   dom.sprintView.classList.remove('hidden');
   dom.sprintViewDone.classList.add('hidden');
 
@@ -3122,7 +2212,6 @@ function exitSprintMode() {
   sprintMode = false;
   sprintField = null;
   dom.sprintView.classList.add('hidden');
-  dom.editorForm.classList.remove('hidden');
 }
 
 // ── Sprint: queue ─────────────────────────────────────────────────────────────
@@ -3829,6 +2918,57 @@ function setupSprintButtons() {
   dom.sprintViewUndo.addEventListener('click', sprintUndo);
 }
 
+// ── Auto-sprint: pick the first issue field and enter sprint mode ────────────
+
+function autoSprintIssues() {
+  buildQueue();
+  updateNav();
+
+  if (!queue.length) {
+    // No issues — show "all done" in sprint view
+    dom.main.classList.remove('hidden');
+    dom.sprintView.classList.remove('hidden');
+    dom.sprintViewDone.classList.remove('hidden');
+    dom.sprintViewActions.classList.add('hidden');
+    dom.sprintViewZone.innerHTML = '';
+    dom.sprintViewMeta.innerHTML = '';
+    dom.sprintViewCurrent.textContent = '';
+    dom.sprintViewFieldLabel.textContent = '';
+    dom.sprintViewCount.textContent = '';
+    dom.sprintViewDone.innerHTML = `
+      <h2>All clear</h2>
+      <p>No issues found across ${allItems.length} items.</p>
+    `;
+    dom.image.src = '';
+    return;
+  }
+
+  // Find the first issue field that has a sprint config
+  const firstItem = queue[0];
+  const issueFieldMap = {
+    'Catalog #': 'identifier', 'Date': 'date', 'Type': 'type',
+    'Medium': 'medium', 'Support': 'support', 'Height': 'dimensions',
+    'Width': 'dimensions', 'Signature': 'signature', 'Condition': 'condition',
+    'Framing': 'framing', 'Owner': 'owner', 'Location': 'location',
+    'Motifs': 'motifs', 'Box': 'box', 'Transcription': 'transcription',
+    'Category': 'category',
+  };
+
+  let fieldKey = null;
+  for (const issue of firstItem._issues) {
+    const mapped = issueFieldMap[issue.field];
+    if (mapped && FIELD_SPRINTS[mapped]) {
+      fieldKey = mapped;
+      break;
+    }
+  }
+
+  // Fallback: pick the first FIELD_SPRINTS key
+  if (!fieldKey) fieldKey = Object.keys(FIELD_SPRINTS)[0];
+
+  enterSprintMode(fieldKey);
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -3841,16 +2981,8 @@ async function init() {
   }
 
   initFieldSprints();
-  setupSelects();
-  setupDatePills();
-  setupTranscriptionPills();
-  setupMotifChips();
-  setupSignatureGrid();
-  setupCategoryPills();
-  setupButtons();
   setupKeyboard();
   setupFilterButtons();
-  setupDirtyTracking();
   setupBucketButtons();
   setupSprintButtons();
   setupSprintMenu();
@@ -3868,17 +3000,11 @@ async function init() {
   // Enter the saved mode
   if (filterMode === 'exhibit') {
     enterExhibitMode();
-  } else if (filterMode === 'curate') {
-    enterBucketMode(true);
   } else if (filterMode === 'sprint' && sprintField && FIELD_SPRINTS[sprintField]) {
     enterSprintMode(sprintField);
   } else {
-    buildQueue();
-    updateNav();
-    dom.main.classList.remove('hidden');
-    if (queue.length) {
-      await loadItem(queueIndex);
-    }
+    // Default: auto-sprint on issues
+    autoSprintIssues();
   }
 }
 
