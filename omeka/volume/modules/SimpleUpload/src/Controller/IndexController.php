@@ -47,12 +47,12 @@ class IndexController extends AbstractActionController
                             'is_public' => false,
                         ],
                     ],
-                    'o:is_public' => false,
+                    'o:is_public' => true,
                     'o:media' => [
                         [
                             'o:ingester' => 'upload',
                             'file_index' => 0,
-                            'o:is_public' => false,
+                            'o:is_public' => true,
                         ],
                     ],
                 ];
@@ -66,6 +66,7 @@ class IndexController extends AbstractActionController
                 try {
                     $response = $this->api(null, true)->create('items', $itemData, $fileData);
                     $item = $response->getContent();
+                    $this->dispatchEnrichAndIngest($item->id());
                     $results[] = [
                         'filename' => $originalName,
                         'success' => true,
@@ -104,6 +105,19 @@ class IndexController extends AbstractActionController
         $view = new ViewModel();
         $view->setVariable('results', $results);
         return $view;
+    }
+
+    private function dispatchEnrichAndIngest(int $itemId): void
+    {
+        try {
+            $services = $this->getEvent()->getApplication()->getServiceManager();
+            $jobDispatcher = $services->get('Omeka\Job\Dispatcher');
+            $jobDispatcher->dispatch('EnrichItem\Job\EnrichAndIngest', [
+                'item_id' => $itemId,
+            ]);
+        } catch (\Throwable $e) {
+            error_log('SimpleUpload: enrich/ingest dispatch failed: ' . $e->getMessage());
+        }
     }
 
     private function isAjax(): bool

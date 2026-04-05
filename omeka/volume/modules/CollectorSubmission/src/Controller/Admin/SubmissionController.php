@@ -309,7 +309,7 @@ class SubmissionController extends AbstractActionController
         try {
             $services = $this->getEvent()->getApplication()->getServiceManager();
             $jobDispatcher = $services->get('Omeka\Job\Dispatcher');
-            $jobDispatcher->dispatch('CollectorSubmission\Job\EnrichAndIngest', [
+            $jobDispatcher->dispatch('EnrichItem\Job\EnrichAndIngest', [
                 'item_id' => $itemId,
             ]);
         } catch (\Throwable $e) {

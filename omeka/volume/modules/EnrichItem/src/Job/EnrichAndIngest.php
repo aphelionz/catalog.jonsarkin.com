@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace CollectorSubmission\Job;
+namespace EnrichItem\Job;
 
 use Omeka\Job\AbstractJob;
 
 /**
- * Background job: enrich transcription + CLIP ingest for a new submission item,
+ * Background job: enrich transcription + CLIP ingest for a newly created item,
  * then set the item back to private.
  *
  * The item must be public for the Omeka API to read it in job context (no
- * authenticated user), so createItemAction makes it public, dispatches this
+ * authenticated user), so the caller creates it as public, dispatches this
  * job, and this job flips it back to private when done.
  */
 class EnrichAndIngest extends AbstractJob
@@ -25,7 +25,7 @@ class EnrichAndIngest extends AbstractJob
             return;
         }
 
-        $logger->info(sprintf('CollectorSubmission\\EnrichAndIngest: starting item %d', $itemId));
+        $logger->info(sprintf('EnrichItem\\EnrichAndIngest: starting item %d', $itemId));
 
         // --- Enrich transcription (property 91) ---
         $saved = $conn->fetchAssociative(
@@ -33,11 +33,9 @@ class EnrichAndIngest extends AbstractJob
         );
         if ($saved) {
             try {
-                $enrichJob = new \EnrichItem\Job\EnrichFieldBatch($this->job, $services);
-                // We can't easily run another job inline, so replicate the core logic:
                 $this->enrichTranscription($itemId, $saved, $services, $logger);
             } catch (\Throwable $e) {
-                $logger->err(sprintf('CollectorSubmission\\EnrichAndIngest: enrich failed for item %d: %s', $itemId, $e->getMessage()));
+                $logger->err(sprintf('EnrichItem\\EnrichAndIngest: enrich failed for item %d: %s', $itemId, $e->getMessage()));
             }
         }
 
@@ -45,12 +43,12 @@ class EnrichAndIngest extends AbstractJob
         try {
             $this->ingestClip($itemId, $services, $logger);
         } catch (\Throwable $e) {
-            $logger->err(sprintf('CollectorSubmission\\EnrichAndIngest: CLIP ingest failed for item %d: %s', $itemId, $e->getMessage()));
+            $logger->err(sprintf('EnrichItem\\EnrichAndIngest: CLIP ingest failed for item %d: %s', $itemId, $e->getMessage()));
         }
 
         // --- Set item back to private ---
         $conn->update('resource', ['is_public' => 0], ['id' => $itemId]);
-        $logger->info(sprintf('CollectorSubmission\\EnrichAndIngest: item %d set back to private', $itemId));
+        $logger->info(sprintf('EnrichItem\\EnrichAndIngest: item %d set back to private', $itemId));
     }
 
     private function enrichTranscription(int $itemId, array $saved, $services, $logger): void
@@ -94,7 +92,7 @@ class EnrichAndIngest extends AbstractJob
         $value = $result['value'] ?? '';
 
         if ($value === '') {
-            $logger->info(sprintf('CollectorSubmission\\EnrichAndIngest: item %d transcription empty, skipping', $itemId));
+            $logger->info(sprintf('EnrichItem\\EnrichAndIngest: item %d transcription empty, skipping', $itemId));
             return;
         }
 
@@ -106,7 +104,7 @@ class EnrichAndIngest extends AbstractJob
         $itemJson['bibo:content'] = $vals;
         $api->update('items', $itemId, $itemJson);
 
-        $logger->info(sprintf('CollectorSubmission\\EnrichAndIngest: item %d transcription applied (%d chars)', $itemId, strlen($value)));
+        $logger->info(sprintf('EnrichItem\\EnrichAndIngest: item %d transcription applied (%d chars)', $itemId, strlen($value)));
     }
 
     private function ingestClip(int $itemId, $services, $logger): void
@@ -176,9 +174,9 @@ class EnrichAndIngest extends AbstractJob
         curl_close($ch);
 
         if ($httpCode === 200) {
-            $logger->info(sprintf('CollectorSubmission\\EnrichAndIngest: item %d CLIP ingested', $itemId));
+            $logger->info(sprintf('EnrichItem\\EnrichAndIngest: item %d CLIP ingested', $itemId));
         } else {
-            $logger->err(sprintf('CollectorSubmission\\EnrichAndIngest: item %d CLIP ingest HTTP %d: %s', $itemId, $httpCode, $response));
+            $logger->err(sprintf('EnrichItem\\EnrichAndIngest: item %d CLIP ingest HTTP %d: %s', $itemId, $httpCode, $response));
         }
     }
 }
