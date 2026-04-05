@@ -138,6 +138,18 @@ function cacheDom() {
   dom.btnSave = $('#btn-save');
   dom.btnSkip = $('#btn-skip');
   dom.btnSaveNext = $('#btn-save-next');
+  // Sprint view (inside form panel)
+  dom.editorForm = $('#editor-form');
+  dom.sprintView = $('#sprint-view');
+  dom.sprintViewFieldLabel = $('#sprint-view-field-label');
+  dom.sprintViewCount = $('#sprint-view-count');
+  dom.sprintViewUndo = $('#sprint-view-undo');
+  dom.sprintViewMeta = $('#sprint-view-meta');
+  dom.sprintViewCurrent = $('#sprint-view-current');
+  dom.sprintViewZone = $('#sprint-view-zone');
+  dom.sprintViewSkip = $('#sprint-view-skip');
+  dom.sprintViewDone = $('#sprint-view-done');
+  dom.sprintViewActions = $('#sprint-view-actions');
 }
 
 // ── API helpers ─────────────────────────────────────────────────────────────
@@ -3081,24 +3093,24 @@ function enterSprintMode(fieldKey) {
   sprintField = fieldKey;
   filterMode = 'sprint';
 
-  dom.main.classList.add('hidden');
+  // Show main layout (image + form panel), but swap form for sprint view
+  dom.main.classList.remove('hidden');
   $('#curate-panel').classList.add('hidden');
-  $('#sprint-panel').classList.remove('hidden');
-  $('#sprint-panel').classList.toggle('sprint-motifs', fieldKey === 'motifs');
+  dom.editorForm.classList.add('hidden');
+  dom.sprintView.classList.remove('hidden');
+  dom.sprintViewDone.classList.add('hidden');
 
   // Update nav buttons
   for (const b of $$('.filter-btn')) b.classList.remove('active');
 
-
   const config = FIELD_SPRINTS[fieldKey];
-  $('#sprint-field-label').textContent = config.label;
+  dom.sprintViewFieldLabel.textContent = config.label;
 
   buildSprintQueue(fieldKey);
   updateSprintProgress();
 
   if (sprintQueue.length) {
-    renderSprintCards();
-    preloadSprintNext();
+    renderSprintItem();
   } else {
     showSprintComplete();
   }
@@ -3109,9 +3121,8 @@ function enterSprintMode(fieldKey) {
 function exitSprintMode() {
   sprintMode = false;
   sprintField = null;
-  $('#sprint-panel').classList.add('hidden');
-  dom.main.classList.remove('hidden');
-  clearSprintStage();
+  dom.sprintView.classList.add('hidden');
+  dom.editorForm.classList.remove('hidden');
 }
 
 // ── Sprint: queue ─────────────────────────────────────────────────────────────
@@ -3127,56 +3138,62 @@ function buildSprintQueue(fieldKey) {
 // ── Sprint: progress ──────────────────────────────────────────────────────────
 
 function updateSprintProgress() {
-  const countEl = $('#sprint-count');
-  const undoBtn = $('#sprint-undo');
   const remaining = sprintQueue.length - sprintIndex;
-  countEl.textContent = `${sprintIndex} done · ${remaining} remaining`;
-  undoBtn.disabled = !sprintLastAction;
+  dom.sprintViewCount.textContent = `${sprintIndex} done · ${remaining} remaining`;
+  dom.sprintViewUndo.disabled = !sprintLastAction;
 
   const pct = sprintQueue.length > 0 ? (sprintIndex / sprintQueue.length) * 100 : 0;
   dom.progressFill.style.width = `${pct}%`;
+
+  // Update nav status
+  dom.queueStatus.textContent = `${sprintIndex + 1} / ${sprintQueue.length}`;
 }
 
-// ── Sprint: card rendering ────────────────────────────────────────────────────
+// ── Sprint: render current item into side-by-side layout ─────────────────────
 
-function clearSprintStage() {
-  $('#sprint-stage').innerHTML = '';
-}
-
-function renderSprintCards() {
-  clearSprintStage();
-  if (sprintIndex + 1 < sprintQueue.length) {
-    renderSprintCard(sprintQueue[sprintIndex + 1], 1);
+async function renderSprintItem() {
+  if (sprintIndex >= sprintQueue.length) {
+    showSprintComplete();
+    return;
   }
-  if (sprintIndex < sprintQueue.length) {
-    renderSprintCard(sprintQueue[sprintIndex], 2);
-  }
-}
 
-async function renderSprintCard(item, zIndex) {
-  const stage = $('#sprint-stage');
+  const item = sprintQueue[sprintIndex];
   const config = FIELD_SPRINTS[sprintField];
-  const card = document.createElement('div');
-  card.className = 'curate-card'; // reuse curate card styles
-  card.dataset.itemId = item['o:id'];
-  card.style.zIndex = zIndex;
+  const identifier = item._identifier || `item-${item['o:id']}`;
 
-  if (zIndex === 1) {
-    card.classList.add('back-card');
-    card.style.transform = 'scale(0.95)';
-    card.style.opacity = '0.5';
-    card.style.pointerEvents = 'none';
+  // Update nav link
+  dom.itemLink.textContent = identifier;
+  dom.itemLink.href = `/admin/item/${item['o:id']}/edit`;
+
+  // Load image into existing image panel
+  dom.imageLoading.classList.remove('hidden');
+  dom.image.style.opacity = '0.3';
+  const url = await getImageUrl(item);
+  if (url) {
+    dom.image.src = url;
+    dom.image.onload = () => {
+      dom.image.style.opacity = '1';
+      dom.imageLoading.classList.add('hidden');
+    };
+  } else {
+    dom.image.src = '';
+    dom.image.style.opacity = '1';
+    dom.imageLoading.classList.add('hidden');
   }
 
-  const identifier = item._identifier || `item-${item['o:id']}`;
+  // Item metadata
   const medium = extractValue(item, 'dcterms:medium');
   const date = extractValue(item, 'dcterms:date');
   const h = extractValue(item, 'schema:height');
   const w = extractValue(item, 'schema:width');
   const dims = (h && w) ? `${h}″ × ${w}″` : '';
   const detail = [medium, dims].filter(Boolean).join(', ');
+  dom.sprintViewMeta.innerHTML = `
+    <div class="sv-meta-id">${identifier}</div>
+    ${detail || date ? `<div class="sv-meta-detail">${[detail, date].filter(Boolean).join(' · ')}</div>` : ''}
+  `;
 
-  // Build existing value info for the target field
+  // Current value for this field
   let currentValue = '';
   if (config.terms) {
     const vals = config.terms.map(t => extractValue(item, t)).filter(Boolean);
@@ -3186,49 +3203,22 @@ async function renderSprintCard(item, zIndex) {
   } else {
     currentValue = extractValue(item, config.term);
   }
+  dom.sprintViewCurrent.textContent = currentValue ? `Current: ${currentValue}` : '';
 
-  const editUrl = `/admin/item/${item['o:id']}/edit`;
-  card.innerHTML = `
-    <div class="card-img-wrap">
-      <div class="card-img-loading">Loading…</div>
-    </div>
-    <div class="card-meta">
-      <div class="card-meta-id"><a href="${editUrl}" target="_blank">${identifier}</a></div>
-      ${detail ? `<div class="card-meta-detail">${detail}</div>` : ''}
-      ${date ? `<div class="card-meta-date">${date}</div>` : ''}
-    </div>
-    <div class="card-input">
-      ${currentValue ? `<div class="sprint-current">Current: ${currentValue}</div>` : ''}
-      <div class="card-input-label">${config.label}</div>
-      <div class="sprint-input-zone"></div>
-    </div>
-  `;
+  // Render input controls
+  dom.sprintViewZone.innerHTML = '';
+  dom.sprintViewDone.classList.add('hidden');
+  dom.sprintViewActions.classList.remove('hidden');
+  renderSprintInput(dom.sprintViewZone, item, config);
 
-  stage.appendChild(card);
+  // Scroll to top
+  dom.formPanel.scrollTop = 0;
 
-  // Render field-specific input controls (only for top card)
-  if (zIndex === 2) {
-    renderSprintInput(card, item, config);
-  }
-
-  // Load image (large thumbnail for card modes)
-  const url = await getCardImageUrl(item);
-  if (url) {
-    const imgWrap = card.querySelector('.card-img-wrap');
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = identifier;
-    img.onload = () => {
-      const loading = imgWrap.querySelector('.card-img-loading');
-      if (loading) loading.remove();
-    };
-    imgWrap.appendChild(img);
-  }
+  preloadSprintNext();
 }
 
-function renderSprintInput(card, item, config) {
-  const zone = card.querySelector('.sprint-input-zone');
-  const itemId = Number(card.dataset.itemId);
+function renderSprintInput(zone, item, config) {
+  const itemId = item['o:id'];
 
   switch (config.inputType) {
     case 'pills': {
@@ -3268,7 +3258,7 @@ function renderSprintInput(card, item, config) {
     case 'grid': {
       const grid = document.createElement('div');
       grid.className = 'sprint-grid';
-      grid.style.gridTemplateColumns = `repeat(${config.gridCols || 3}, 44px)`;
+      grid.style.gridTemplateColumns = `repeat(${config.gridCols || 3}, auto)`;
       for (const opt of config.options) {
         const btn = document.createElement('button');
         btn.textContent = opt.label;
@@ -3671,9 +3661,9 @@ function renderSuggestionPills(suggestions, selectedTags, tagger, renderPillsFn)
 }
 
 function preloadSprintNext() {
-  const ahead = sprintIndex + 2;
-  if (ahead < sprintQueue.length) {
-    getCardImageUrl(sprintQueue[ahead]).then(url => {
+  const next = sprintIndex + 1;
+  if (next < sprintQueue.length) {
+    getImageUrl(sprintQueue[next]).then(url => {
       if (url) { const img = new Image(); img.src = url; }
     });
   }
@@ -3683,13 +3673,6 @@ function preloadSprintNext() {
 
 async function sprintSaveAndAdvance(itemId, config, value) {
   sprintActing = true;
-
-  // Fly off the top card
-  const stage = $('#sprint-stage');
-  let topCard = null;
-  for (const c of stage.querySelectorAll('.curate-card:not(.fly-off)')) {
-    if (!topCard || Number(c.style.zIndex) > Number(topCard.style.zIndex)) topCard = c;
-  }
 
   // Capture old values for undo
   const item = sprintQueue[sprintIndex];
@@ -3708,17 +3691,9 @@ async function sprintSaveAndAdvance(itemId, config, value) {
   sprintLastAction = { itemId, field: sprintField, oldValues };
   updateSprintProgress();
 
-  // Animate card off — unlock input immediately so next Enter isn't blocked
+  // Render next item immediately
   sprintActing = false;
-  if (topCard) {
-    topCard.classList.add('fly-off');
-    const vw = window.innerWidth;
-    topCard.style.transform = `translate(${-vw * FLY_DISTANCE}px, 0) rotate(-30deg)`;
-    topCard.addEventListener('transitionend', () => {
-      topCard.remove();
-      promoteSprintBackCard();
-    }, { once: true });
-  }
+  renderSprintItem();
 
   // API save in background
   try {
@@ -3765,65 +3740,11 @@ async function sprintSaveAndAdvance(itemId, config, value) {
 
 function sprintSkip() {
   if (sprintActing || sprintIndex >= sprintQueue.length) return;
-  sprintActing = true;
 
   sprintIndex++;
   sprintLastAction = null; // can't undo a skip
   updateSprintProgress();
-
-  const stage = $('#sprint-stage');
-  let topCard = null;
-  for (const c of stage.querySelectorAll('.curate-card:not(.fly-off)')) {
-    if (!topCard || Number(c.style.zIndex) > Number(topCard.style.zIndex)) topCard = c;
-  }
-
-  if (topCard) {
-    topCard.classList.add('fly-off');
-    const vw = window.innerWidth;
-    topCard.style.transform = `translate(${-vw * FLY_DISTANCE}px, 0) rotate(-30deg)`;
-    topCard.addEventListener('transitionend', () => {
-      topCard.remove();
-      promoteSprintBackCard();
-      sprintActing = false;
-    }, { once: true });
-  } else {
-    sprintActing = false;
-    if (sprintIndex >= sprintQueue.length) showSprintComplete();
-  }
-}
-
-// ── Sprint: card promotion ────────────────────────────────────────────────────
-
-function promoteSprintBackCard() {
-  const stage = $('#sprint-stage');
-  const backCard = stage.querySelector('.curate-card');
-  if (backCard && backCard.style.zIndex === '1') {
-    backCard.classList.remove('back-card');
-    backCard.style.zIndex = 2;
-    backCard.style.pointerEvents = '';
-    backCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-    backCard.style.transform = '';
-    backCard.style.opacity = '1';
-    backCard.addEventListener('transitionend', () => {
-      backCard.style.transition = '';
-    }, { once: true });
-    // Render input controls for the newly promoted card
-    const item = sprintQueue[sprintIndex];
-    if (item) {
-      renderSprintInput(backCard, item, FIELD_SPRINTS[sprintField]);
-    }
-  }
-
-  // Render new back card
-  if (sprintIndex + 1 < sprintQueue.length) {
-    renderSprintCard(sprintQueue[sprintIndex + 1], 1);
-  }
-
-  preloadSprintNext();
-
-  if (sprintIndex >= sprintQueue.length) {
-    showSprintComplete();
-  }
+  renderSprintItem();
 }
 
 // ── Sprint: undo ──────────────────────────────────────────────────────────────
@@ -3871,26 +3792,29 @@ async function sprintUndo() {
   }
 
   sprintLastAction = null;
-  renderSprintCards();
+  renderSprintItem();
   updateSprintProgress();
 }
 
 // ── Sprint: completion ────────────────────────────────────────────────────────
 
 function showSprintComplete() {
-  const stage = $('#sprint-stage');
   const config = FIELD_SPRINTS[sprintField];
-  stage.innerHTML = `
-    <div class="sprint-done">
-      <h2>Done</h2>
-      <p>${sprintIndex} items fixed · ${config.label} sprint complete</p>
-      <button class="btn btn-nav" id="sprint-restart">Start over</button>
-    </div>
+  dom.sprintViewZone.innerHTML = '';
+  dom.sprintViewCurrent.textContent = '';
+  dom.sprintViewMeta.innerHTML = '';
+  dom.sprintViewActions.classList.add('hidden');
+  dom.sprintViewDone.classList.remove('hidden');
+  dom.sprintViewDone.innerHTML = `
+    <h2>Done</h2>
+    <p>${sprintIndex} items fixed · ${config.label} sprint complete</p>
+    <button class="btn btn-nav" id="sprint-restart">Start over</button>
   `;
   $('#sprint-restart').addEventListener('click', () => {
     buildSprintQueue(sprintField);
+    dom.sprintViewDone.classList.add('hidden');
     if (sprintQueue.length) {
-      renderSprintCards();
+      renderSprintItem();
     } else {
       showSprintComplete();
     }
@@ -3901,8 +3825,8 @@ function showSprintComplete() {
 // ── Sprint: button wiring ─────────────────────────────────────────────────────
 
 function setupSprintButtons() {
-  $('#sprint-skip')?.addEventListener('click', sprintSkip);
-  $('#sprint-undo')?.addEventListener('click', sprintUndo);
+  dom.sprintViewSkip.addEventListener('click', sprintSkip);
+  dom.sprintViewUndo.addEventListener('click', sprintUndo);
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────

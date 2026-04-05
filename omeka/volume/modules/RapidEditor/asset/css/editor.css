@@ -675,55 +675,90 @@
 }
 
 /* ==========================================================================
-   Sprint Mode — field-specific card editing
+   Sprint View — side-by-side field editing (replaces old card-based sprint)
    ========================================================================== */
 
-.rapid-editor-container #sprint-panel {
-  position: absolute;
-  top: var(--nav-h);
-  left: 0; right: 0; bottom: 0;
-  background: #1a1a1a;
+/* ── Sprint view inside form panel ─────────────────────────────────── */
+.rapid-editor-container #sprint-view {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
+  height: 100%;
 }
 
-.rapid-editor-container #sprint-progress {
-  position: absolute;
-  top: 12px; left: 16px; right: 16px;
+.rapid-editor-container #sprint-view-progress {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.rapid-editor-container #sprint-view-field-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 13px;
+  color: #111;
+}
+.rapid-editor-container #sprint-view-count {
+  font-variant-numeric: tabular-nums;
   color: #888;
   font-size: 13px;
 }
-.rapid-editor-container #sprint-field-label {
-  font-weight: 600;
-  color: #ccc;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 11px;
-}
-.rapid-editor-container #sprint-count { font-variant-numeric: tabular-nums; }
-.rapid-editor-container #sprint-undo { margin-left: auto; font-size: 11px; padding: 4px 10px; }
+.rapid-editor-container #sprint-view-undo { margin-left: auto; font-size: 11px; padding: 4px 10px; }
 
-.rapid-editor-container #sprint-stage {
-  position: relative;
-  width: min(420px, 90vw);
-  height: min(560px, 65vh);
-  margin-bottom: 60px;
+.rapid-editor-container #sprint-view-meta {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+.rapid-editor-container #sprint-view-meta .sv-meta-id {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111;
+}
+.rapid-editor-container #sprint-view-meta .sv-meta-detail {
+  margin-top: 2px;
 }
 
-.rapid-editor-container #sprint-actions {
-  position: absolute;
-  bottom: 24px;
+.rapid-editor-container #sprint-view-current {
+  font-size: 12px;
+  color: #c0392b;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+.rapid-editor-container #sprint-view-current:empty { display: none; }
+
+.rapid-editor-container #sprint-view-zone {
+  flex: 1;
+  min-height: 0;
+}
+
+.rapid-editor-container #sprint-view-actions {
   display: flex;
-  gap: 16px;
+  gap: 8px;
+  padding-top: 12px;
+  margin-top: auto;
 }
 
-/* ── Sprint card input zone ─────────────────────────────────────────── */
+/* Completion screen */
+.rapid-editor-container #sprint-view-done {
+  text-align: center;
+  padding-top: 20%;
+  color: #666;
+}
+.rapid-editor-container #sprint-view-done h2 {
+  font-size: 28px;
+  margin-bottom: 12px;
+  color: #333;
+  font-weight: 300;
+}
+.rapid-editor-container #sprint-view-done p {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ── Sprint input controls (shared by sprint-view and curate cards) ── */
 .rapid-editor-container .card-input {
   padding: 10px 16px 14px;
   background: #fff;
@@ -731,7 +766,8 @@
   max-height: 180px;
   overflow-y: auto;
 }
-.rapid-editor-container .card-input-label {
+.rapid-editor-container .card-input-label,
+.rapid-editor-container .sprint-input-label {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -740,13 +776,13 @@
   margin-bottom: 6px;
 }
 
-/* Pills inside card */
-.rapid-editor-container .card-input .sprint-pills {
+/* Pills */
+.rapid-editor-container .sprint-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
 }
-.rapid-editor-container .card-input .sprint-pill {
+.rapid-editor-container .sprint-pill {
   padding: 5px 10px;
   font-size: 12px;
   border: 1px solid #ddd;
@@ -758,16 +794,22 @@
   transition: all 0.1s;
   font-family: inherit;
 }
-.rapid-editor-container .card-input .sprint-pill:hover { background: #eee; border-color: #bbb; }
-.rapid-editor-container .card-input .sprint-pill.active { background: #111; color: #fff; border-color: #111; }
+.rapid-editor-container .sprint-pill:hover { background: #eee; border-color: #bbb; }
+.rapid-editor-container .sprint-pill.active { background: #111; color: #fff; border-color: #111; }
 
-/* Grid inside card (signature) */
-.rapid-editor-container .card-input .sprint-grid {
+/* Larger pills in sprint-view (more space than cards) */
+.rapid-editor-container #sprint-view-zone .sprint-pill {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/* Grid (signature) */
+.rapid-editor-container .sprint-grid {
   display: grid;
   gap: 3px;
   justify-content: center;
 }
-.rapid-editor-container .card-input .sprint-grid button {
+.rapid-editor-container .sprint-grid button {
   width: 44px; height: 44px;
   font-size: 20px;
   cursor: pointer;
@@ -778,17 +820,23 @@
   transition: all 0.1s;
   font-family: inherit;
 }
-.rapid-editor-container .card-input .sprint-grid button:hover { background: #eee; }
-.rapid-editor-container .card-input .sprint-grid button.active { background: #111; color: #fff; border-color: #111; }
+.rapid-editor-container .sprint-grid button:hover { background: #eee; }
+.rapid-editor-container .sprint-grid button.active { background: #111; color: #fff; border-color: #111; }
 
-/* Chips inside card (motifs) */
-.rapid-editor-container .card-input .sprint-chips {
+/* Larger grid in sprint-view */
+.rapid-editor-container #sprint-view-zone .sprint-grid button {
+  width: 52px; height: 52px;
+  font-size: 22px;
+}
+
+/* Chips (motifs) */
+.rapid-editor-container .sprint-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   margin-bottom: 8px;
 }
-.rapid-editor-container .card-input .sprint-chip {
+.rapid-editor-container .sprint-chip {
   padding: 4px 10px;
   font-size: 12px;
   border: 1px solid #ddd;
@@ -800,11 +848,11 @@
   transition: all 0.1s;
   font-family: inherit;
 }
-.rapid-editor-container .card-input .sprint-chip:hover { background: #ddd; }
-.rapid-editor-container .card-input .sprint-chip.active { background: #111; color: #fff; border-color: #111; }
+.rapid-editor-container .sprint-chip:hover { background: #ddd; }
+.rapid-editor-container .sprint-chip.active { background: #111; color: #fff; border-color: #111; }
 
-/* Text input inside card */
-.rapid-editor-container .card-input .sprint-text {
+/* Text input */
+.rapid-editor-container .sprint-text {
   width: 100%;
   padding: 8px 10px;
   font-size: 14px;
@@ -813,15 +861,15 @@
   font-family: inherit;
   background: #fff;
 }
-.rapid-editor-container .card-input .sprint-text:focus { outline: none; border-color: #999; }
+.rapid-editor-container .sprint-text:focus { outline: none; border-color: #999; }
 
-/* Dimensions (dual input) inside card */
-.rapid-editor-container .card-input .sprint-dims {
+/* Dimensions (dual input) */
+.rapid-editor-container .sprint-dims {
   display: flex;
   gap: 8px;
   align-items: center;
 }
-.rapid-editor-container .card-input .sprint-dims input {
+.rapid-editor-container .sprint-dims input {
   flex: 1;
   padding: 8px 10px;
   font-size: 14px;
@@ -830,15 +878,16 @@
   font-family: inherit;
   text-align: center;
 }
-.rapid-editor-container .card-input .sprint-dims input:focus { outline: none; border-color: #999; }
-.rapid-editor-container .card-input .sprint-dims .dims-x {
+.rapid-editor-container .sprint-dims input:focus { outline: none; border-color: #999; }
+.rapid-editor-container .sprint-dims .dims-x {
   color: #999;
   font-size: 14px;
   font-weight: 600;
 }
 
 /* Tagger input (motifs autocomplete) */
-.rapid-editor-container .card-input:has(.sprint-tagger) {
+.rapid-editor-container .card-input:has(.sprint-tagger),
+.rapid-editor-container #sprint-view-zone:has(.sprint-tagger) {
   overflow: visible;
   max-height: none;
   flex-shrink: 0;
@@ -1027,8 +1076,8 @@
 }
 .rapid-editor-container .sprint-tagger-suggestion-dismiss:hover { color: #c0392b; }
 
-/* Save button inside card (for text/chips) */
-.rapid-editor-container .card-input .sprint-save {
+/* Save button inside sprint controls */
+.rapid-editor-container .sprint-save {
   display: block;
   width: 100%;
   margin-top: 8px;
@@ -1042,31 +1091,14 @@
   cursor: pointer;
   font-family: inherit;
 }
-.rapid-editor-container .card-input .sprint-save:hover { background: var(--accent-hover); }
+.rapid-editor-container .sprint-save:hover { background: var(--accent-hover); }
 
 /* Existing value badge */
-.rapid-editor-container .card-input .sprint-current {
+.rapid-editor-container .sprint-current {
   font-size: 11px;
   color: #c0392b;
   margin-bottom: 6px;
   font-style: italic;
-}
-
-/* Sprint completion */
-.rapid-editor-container .sprint-done {
-  color: #888;
-  text-align: center;
-  padding-top: 30%;
-}
-.rapid-editor-container .sprint-done h2 {
-  font-size: 32px;
-  margin-bottom: 12px;
-  color: #aaa;
-  font-weight: 300;
-}
-.rapid-editor-container .sprint-done p {
-  font-size: 14px;
-  margin-bottom: 16px;
 }
 
 /* Back card hides input zone too */
@@ -1391,23 +1423,13 @@
   padding: 6px 16px;
 }
 
-/* ── Enlarged sprint stage for motifs ──────────────────────────────── */
-.rapid-editor-container .sprint-motifs #sprint-stage {
-  width: min(600px, 95vw);
-  height: min(780px, 80vh);
-}
-
 /* ── Responsive ────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .rapid-editor-container #card-stage, .rapid-editor-container #sprint-stage {
+  .rapid-editor-container #card-stage {
     width: 95vw;
     height: 65vh;
   }
-  .rapid-editor-container .sprint-motifs #sprint-stage {
-    width: 98vw;
-    height: 75vh;
-  }
-  .rapid-editor-container #curate-actions, .rapid-editor-container #sprint-actions { bottom: 12px; gap: 12px; }
+  .rapid-editor-container #curate-actions { bottom: 12px; gap: 12px; }
   .rapid-editor-container .curate-btn-pass, .rapid-editor-container .curate-btn-keep { padding: 10px 24px; font-size: 14px; }
   .rapid-editor-container .tournament-matchup { flex-direction: column; }
   .rapid-editor-container .tournament-vs { min-width: auto; padding: 4px 0; }
