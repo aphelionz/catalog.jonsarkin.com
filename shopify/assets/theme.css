@@ -689,7 +689,7 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   margin: calc(var(--gutter) * 2) 0 calc(var(--gutter) * 3);
 }
 .home-stats.institution-row {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 .home-stat {
   padding: calc(var(--gutter) * 1.5) var(--gutter);
