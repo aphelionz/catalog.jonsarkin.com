@@ -77,18 +77,11 @@ class IngestClip extends AbstractJob
         if (!$mediaUrl) {
             return;
         }
-        $mediaUrl = preg_replace(
-            '#https?://(?:localhost:\d+|catalog\.jonsarkin\.com)#',
-            'http://omeka:80',
-            $mediaUrl
-        );
+        // Rewrite URL for internal Docker access (handles empty-host URLs from job context)
+        $mediaUrl = preg_replace('#^https?://[^/]*/files/#', 'http://omeka:80/files/', $mediaUrl);
 
         $thumbUrl = $mediaJson['o:thumbnail_urls']['square'] ?? '';
-        $thumbUrl = preg_replace(
-            '#https?://(?:localhost:\d+|catalog\.jonsarkin\.com)#',
-            'http://omeka:80',
-            $thumbUrl
-        );
+        $thumbUrl = preg_replace('#^https?://[^/]*/files/#', 'http://omeka:80/files/', $thumbUrl);
 
         $subjects = [];
         foreach (($itemJson['dcterms:subject'] ?? []) as $v) {

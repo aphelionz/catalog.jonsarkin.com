@@ -262,22 +262,25 @@ class AnthropicClient
      */
     public function downloadAndEncodeImage(string $imageUrl, int $maxDim = self::IMAGE_MAX_DIM): array
     {
-        $client = clone $this->httpClient;
-        $client->resetParameters(true);
-        $client->setUri($imageUrl);
-        $client->setMethod('GET');
-        $client->setOptions(['timeout' => 60]);
+        $ch = curl_init($imageUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_FOLLOWLOCATION => true,
+        ]);
+        $imageData = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
 
-        $response = $client->send();
-        if (!$response->isSuccess()) {
+        if ($imageData === false || $httpCode !== 200) {
             throw new \RuntimeException(sprintf(
-                'Failed to download image (HTTP %d): %s',
-                $response->getStatusCode(),
+                'Failed to download image (HTTP %d%s): %s',
+                $httpCode,
+                $error ? ", $error" : '',
                 $imageUrl
             ));
         }
-
-        $imageData = $response->getBody();
         $img = @imagecreatefromstring($imageData);
         if ($img === false) {
             throw new \RuntimeException('Failed to decode image: ' . $imageUrl);

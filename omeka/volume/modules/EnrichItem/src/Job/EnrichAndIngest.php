@@ -74,14 +74,16 @@ class EnrichAndIngest extends AbstractJob
         if (!$mediaUrl) {
             return;
         }
-        // Rewrite URL for internal Docker access
+        // Rewrite URL for internal Docker access — handles:
+        //   http://localhost:8888/files/...  (dev web context)
+        //   http://catalog.jonsarkin.com/... (prod web context)
+        //   http:///files/...               (CLI context, empty host)
+        //   http://:0/files/...             (job context, empty host + port 0)
         $mediaUrl = preg_replace(
-            '#https?://(?:localhost:\d+|catalog\.jonsarkin\.com)#',
-            'http://omeka:80',
+            '#^https?://[^/]*/files/#',
+            'http://omeka:80/files/',
             $mediaUrl
         );
-        // Fix empty-host URLs (http:///files/...)
-        $mediaUrl = preg_replace('#^http:///files/#', 'http://omeka:80/files/', $mediaUrl);
 
         $systemPrompt = \EnrichItem\Service\AnthropicClient::buildSystemPrompt(
             'content', $saved['instructions'], null
@@ -98,11 +100,12 @@ class EnrichAndIngest extends AbstractJob
 
         $cache->put($itemId, 91, $value, $saved['model']);
 
-        // Apply value to item
-        $vals = $itemJson['bibo:content'] ?? [];
-        $vals[] = ['type' => 'literal', 'property_id' => 91, '@value' => $value];
-        $itemJson['bibo:content'] = $vals;
-        $api->update('items', $itemId, $itemJson);
+        // Apply value via direct SQL (background jobs lack API write permission)
+        $conn = $services->get('Omeka\Connection');
+        $conn->executeStatement(
+            'INSERT INTO `value` (resource_id, property_id, type, `value`, is_public) VALUES (?, ?, ?, ?, ?)',
+            [$itemId, 91, 'literal', $value, 1]
+        );
 
         $logger->info(sprintf('EnrichItem\\EnrichAndIngest: item %d transcription applied (%d chars)', $itemId, strlen($value)));
     }
@@ -131,11 +134,9 @@ class EnrichAndIngest extends AbstractJob
         $imageUrl = $mediaJson['o:original_url'] ?? '';
         $thumbUrl = $mediaJson['o:thumbnail_urls']['large'] ?? $imageUrl;
 
-        // Rewrite URLs for Docker
+        // Rewrite URLs for Docker (handles empty-host URLs from job context)
         $rewrite = function ($url) {
-            $url = preg_replace('#https?://(?:localhost:\d+|catalog\.jonsarkin\.com)#', 'http://omeka:80', $url);
-            $url = preg_replace('#^http:///files/#', 'http://omeka:80/files/', $url);
-            return $url;
+            return preg_replace('#^https?://[^/]*/files/#', 'http://omeka:80/files/', $url);
         };
         $imageUrl = $rewrite($imageUrl);
         $thumbUrl = $rewrite($thumbUrl);
