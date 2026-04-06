@@ -93,6 +93,11 @@ if ($height && $width) {
 
 // No medium→format fallback: format (framing) and medium are distinct fields
 
+// Combined medium + support for SEO (e.g. "Marker on foamcore")
+$mediumFull = $medium;
+if ($medium && $surface) $mediumFull = $medium . ' on ' . strtolower(strip_tags($surface));
+elseif ($surface) $mediumFull = strip_tags($surface);
+
 // Build display labels
 if ($isPerson) {
     $pageLabel = $item->displayTitle() ?: ('Item #' . $item->id());
@@ -107,7 +112,7 @@ if ($isPerson) {
     // Artworks are untitled — build display labels from catalog number + medium + date
     $pageLabel = $identifier ?: ('Item #' . $item->id());
     $pageLabelLong = $pageLabel;
-    if ($medium) $pageLabelLong .= ' · ' . strip_tags($medium);
+    if ($mediumFull) $pageLabelLong .= ' · ' . strip_tags($mediumFull);
     if ($date)   $pageLabelLong .= ', ' . strip_tags($date);
 }
 
@@ -164,9 +169,12 @@ if ($isPerson) {
         . '. From the Jon Sarkin Catalog Raisonné.';
 } else {
     $metaDesc = ($creator ?: 'Jon Sarkin') . '. ' . strip_tags($pageLabel)
-        . ($medium ? ". $medium" : '')
-        . ($date ? " ($date)" : '')
-        . '. From the Jon Sarkin Catalog Raisonné.';
+        . ($mediumFull ? '. ' . strip_tags($mediumFull) : '')
+        . ($date ? " ($date)" : '') . '.';
+    if (!empty($motifs)) {
+        $metaDesc .= ' ' . implode(', ', array_map('strip_tags', array_slice($motifs, 0, 3))) . '.';
+    }
+    $metaDesc .= ' From the Jon Sarkin Catalog Raisonné.';
 }
 $this->headMeta()->appendName('description', strip_tags($metaDesc));
 
@@ -255,7 +263,7 @@ if ($isPerson) {
         ],
     ];
     if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
-    if ($spatial)    $jsonLd['locationCreated'] = ['@type' => 'Place', 'name' => strip_tags($spatial)];
+    if ($spatial)    $jsonLd['location'] = ['@type' => 'Place', 'name' => strip_tags($spatial)];
 }
 $jsonLd['isPartOf'] = [
     '@type' => 'CreativeWork',
@@ -508,7 +516,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                 <?php endif; ?>
             <?php elseif ($primaryMedia): ?>
                 <img src="<?php echo $escape($imageUrl); ?>"
-                     alt="<?php echo $escape(($creator ?: 'Jon Sarkin') . ", $pageLabel" . ($date ? ", $date" : '')); ?>" />
+                     alt="<?php echo $escape(($creator ?: 'Jon Sarkin') . ", $pageLabel" . ($mediumFull ? ', ' . strtolower(strip_tags($mediumFull)) : '') . ($date ? ", $date" : '')); ?>" />
                 <?php $primaryTitle = $primaryMedia->displayTitle(); if ($primaryTitle && $primaryTitle !== $primaryMedia->source()): ?>
                     <figcaption><?php echo $escape($primaryTitle); ?></figcaption>
                 <?php endif; ?>
@@ -727,4 +735,11 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
 
 </article>
 
-<?php $this->trigger('view.show.after'); ?>
+<?php
+// Suppress Omeka's auto-generated JSON-LD (dumps full API object including
+// raw transcription and internal classification into page source)
+ob_start();
+$this->trigger('view.show.after');
+$afterHtml = ob_get_clean();
+echo preg_replace('#<script\s+type="application/ld\+json">.*?</script>#s', '', $afterHtml);
+?>
