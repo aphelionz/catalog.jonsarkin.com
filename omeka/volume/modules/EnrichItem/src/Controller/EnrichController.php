@@ -110,6 +110,7 @@ class EnrichController extends AbstractActionController
             if (isset($savedInstructions[$propId])) {
                 $field['saved_instructions'] = $savedInstructions[$propId]['instructions'];
                 $field['saved_model'] = $savedInstructions[$propId]['model'];
+                $field['saved_source_property_id'] = $savedInstructions[$propId]['source_property_id'] ?? null;
             }
 
             // Count items missing this field
@@ -145,12 +146,13 @@ class EnrichController extends AbstractActionController
         $propertyId = (int) ($body['property_id'] ?? 0);
         $instructions = trim($body['instructions'] ?? '');
         $model = $body['model'] ?? 'haiku';
+        $sourcePropertyId = !empty($body['source_property_id']) ? (int) $body['source_property_id'] : null;
 
         if (!$propertyId || !$instructions) {
             return new JsonModel(['error' => 'property_id and instructions are required']);
         }
 
-        $this->fieldInstructions->save($propertyId, $instructions, $model);
+        $this->fieldInstructions->save($propertyId, $instructions, $model, $sourcePropertyId);
         return new JsonModel(['status' => 'saved']);
     }
 
@@ -189,6 +191,7 @@ class EnrichController extends AbstractActionController
             'instructions' => $saved['instructions'],
             'model' => $saved['model'],
             'vocab_terms' => $fieldMeta['vocab_terms'],
+            'source_property_id' => $saved['source_property_id'] ?? null,
             'item_ids' => $itemIds,
             'force' => $force,
         ]);
@@ -225,12 +228,6 @@ class EnrichController extends AbstractActionController
             $itemJson = json_decode(json_encode($itemRepr), true);
             $title = $itemJson['o:title'] ?? '(untitled)';
 
-            $mediaUrl = $this->getOriginalMediaUrl($itemJson);
-            if (!$mediaUrl) {
-                return new JsonModel(['error' => 'Item has no media']);
-            }
-            $mediaUrl = $this->internalizeUrl($mediaUrl);
-
             $fieldMeta = $this->getFieldMeta($propertyId);
             $systemPrompt = AnthropicClient::buildSystemPrompt(
                 $fieldMeta['label'],
@@ -239,7 +236,23 @@ class EnrichController extends AbstractActionController
             );
             $userPrompt = "Analyze this artwork and provide the value for: {$fieldMeta['label']}";
 
-            $result = $this->anthropicClient->enrichField($mediaUrl, $systemPrompt, $userPrompt, $saved['model']);
+            $sourcePropertyId = $saved['source_property_id'] ?? null;
+            if ($sourcePropertyId) {
+                // Text-only mode
+                $sourceText = $this->getPropertyText($itemJson, (int) $sourcePropertyId);
+                if (!$sourceText) {
+                    return new JsonModel(['error' => 'Item has no source text for the selected property']);
+                }
+                $result = $this->anthropicClient->enrichText($sourceText, $systemPrompt, $userPrompt, $saved['model']);
+            } else {
+                // Image-based mode
+                $mediaUrl = $this->getOriginalMediaUrl($itemJson);
+                if (!$mediaUrl) {
+                    return new JsonModel(['error' => 'Item has no media']);
+                }
+                $mediaUrl = $this->internalizeUrl($mediaUrl);
+                $result = $this->anthropicClient->enrichField($mediaUrl, $systemPrompt, $userPrompt, $saved['model']);
+            }
 
             // Validate against vocab
             $value = $result['value'];
@@ -307,6 +320,7 @@ class EnrichController extends AbstractActionController
             'instructions' => $saved['instructions'],
             'model' => $saved['model'],
             'vocab_terms' => $fieldMeta['vocab_terms'],
+            'source_property_id' => $saved['source_property_id'] ?? null,
             'item_ids' => $itemIds,
             'force' => $force,
         ]);
@@ -473,6 +487,21 @@ class EnrichController extends AbstractActionController
         $mediaRepr = $this->api->read('media', $mediaId)->getContent();
         $mediaJson = json_decode(json_encode($mediaRepr), true);
         return $mediaJson['o:original_url'] ?? null;
+    }
+
+    private function getPropertyText(array $itemJson, int $propertyId): ?string
+    {
+        foreach ($itemJson as $key => $val) {
+            if (strpos($key, ':') === false || strpos($key, 'o:') === 0 || !is_array($val)) {
+                continue;
+            }
+            foreach ($val as $v) {
+                if (($v['property_id'] ?? null) == $propertyId && !empty(trim($v['@value'] ?? ''))) {
+                    return trim($v['@value']);
+                }
+            }
+        }
+        return null;
     }
 
     private function internalizeUrl(string $url): string

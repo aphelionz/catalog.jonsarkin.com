@@ -35,6 +35,7 @@ class EnrichFieldBatch extends AbstractJob
         $instructions = $this->getArg('instructions');
         $model = $this->getArg('model', 'haiku');
         $vocabTerms = $this->getArg('vocab_terms');
+        $sourcePropertyId = $this->getArg('source_property_id');
         $itemIds = $this->getArg('item_ids', []);
         $force = (bool) $this->getArg('force', false);
 
@@ -57,7 +58,7 @@ class EnrichFieldBatch extends AbstractJob
             try {
                 $this->processItem(
                     (int) $itemId, $propertyId, $term, $systemPrompt, $userPrompt,
-                    $model, $vocabTerms, $force, $api, $anthropicClient, $cache, $logger
+                    $model, $vocabTerms, $sourcePropertyId, $force, $api, $anthropicClient, $cache, $logger
                 );
                 $succeeded++;
                 if ($succeeded % 10 === 0) {
@@ -82,6 +83,7 @@ class EnrichFieldBatch extends AbstractJob
         string $userPrompt,
         string $model,
         ?array $vocabTerms,
+        ?int $sourcePropertyId,
         bool $force,
         $api,
         AnthropicClient $anthropicClient,
@@ -90,24 +92,6 @@ class EnrichFieldBatch extends AbstractJob
     ): void {
         $itemRepr = $api->read('items', $itemId)->getContent();
         $itemJson = json_decode(json_encode($itemRepr), true);
-
-        // Get media URL
-        $mediaRefs = $itemJson['o:media'] ?? [];
-        if (empty($mediaRefs)) {
-            return;
-        }
-        $mediaId = $mediaRefs[0]['o:id'] ?? null;
-        if (!$mediaId) {
-            return;
-        }
-        $mediaRepr = $api->read('media', $mediaId)->getContent();
-        $mediaJson = json_decode(json_encode($mediaRepr), true);
-        $mediaUrl = $mediaJson['o:original_url'] ?? null;
-        if (!$mediaUrl) {
-            return;
-        }
-        // Rewrite URL for internal Docker access (handles empty-host URLs from job context)
-        $mediaUrl = preg_replace('#^https?://[^/]*/files/#', 'http://omeka:80/files/', $mediaUrl);
 
         // Check cache first (unless force)
         if (!$force) {
@@ -118,8 +102,34 @@ class EnrichFieldBatch extends AbstractJob
             }
         }
 
-        // Call Claude
-        $result = $anthropicClient->enrichField($mediaUrl, $systemPrompt, $userPrompt, $model);
+        // Text-only mode: read source property value instead of image
+        if ($sourcePropertyId) {
+            $sourceText = $this->getPropertyText($itemJson, $sourcePropertyId);
+            if (!$sourceText) {
+                $logger->info(sprintf('EnrichFieldBatch: item %d has no source text (property %d), skipping', $itemId, $sourcePropertyId));
+                return;
+            }
+            $result = $anthropicClient->enrichText($sourceText, $systemPrompt, $userPrompt, $model);
+        } else {
+            // Image-based mode
+            $mediaRefs = $itemJson['o:media'] ?? [];
+            if (empty($mediaRefs)) {
+                return;
+            }
+            $mediaId = $mediaRefs[0]['o:id'] ?? null;
+            if (!$mediaId) {
+                return;
+            }
+            $mediaRepr = $api->read('media', $mediaId)->getContent();
+            $mediaJson = json_decode(json_encode($mediaRepr), true);
+            $mediaUrl = $mediaJson['o:original_url'] ?? null;
+            if (!$mediaUrl) {
+                return;
+            }
+            $mediaUrl = preg_replace('#^https?://[^/]*/files/#', 'http://omeka:80/files/', $mediaUrl);
+            $result = $anthropicClient->enrichField($mediaUrl, $systemPrompt, $userPrompt, $model);
+        }
+
         $value = $result['value'];
 
         if ($value === '') {
@@ -213,5 +223,23 @@ class EnrichFieldBatch extends AbstractJob
         }
 
         $api->update('items', $itemId, $payload, [], ['isPartial' => true]);
+    }
+
+    /**
+     * Extract the text value of a property from an item's JSON representation.
+     */
+    private function getPropertyText(array $itemJson, int $propertyId): ?string
+    {
+        foreach ($itemJson as $key => $val) {
+            if (strpos($key, ':') === false || strpos($key, 'o:') === 0 || !is_array($val)) {
+                continue;
+            }
+            foreach ($val as $v) {
+                if (($v['property_id'] ?? null) == $propertyId && !empty(trim($v['@value'] ?? ''))) {
+                    return trim($v['@value']);
+                }
+            }
+        }
+        return null;
     }
 }

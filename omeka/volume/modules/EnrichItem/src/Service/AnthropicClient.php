@@ -180,6 +180,25 @@ class AnthropicClient
     }
 
     /**
+     * Enrich a field using text input (no image). Reads from an existing property value.
+     *
+     * @param string $text  Source text (e.g. transcription)
+     * @param string $systemPrompt  Dynamic system prompt
+     * @param string $userPrompt  Trigger prompt
+     * @param string|null $model  Model short name
+     * @return array{value: string, usage: array}
+     */
+    public function enrichText(string $text, string $systemPrompt, string $userPrompt, ?string $model = null): array
+    {
+        return $this->sendMessages($systemPrompt, [
+            [
+                'role' => 'user',
+                'content' => $userPrompt . "\n\n" . $text,
+            ],
+        ], $model);
+    }
+
+    /**
      * Send a multi-turn messages request (e.g. for few-shot prompting).
      *
      * @param string $systemPrompt  System prompt text

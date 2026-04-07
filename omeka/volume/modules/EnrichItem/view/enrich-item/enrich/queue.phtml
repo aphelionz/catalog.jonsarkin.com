@@ -44,6 +44,15 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
                 </select>
             </div>
         </div>
+        <div style="display: flex; gap: 1em; align-items: flex-start; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px;">
+                <label for="source-select"><strong>Source</strong></label>
+                <select id="source-select" style="width: 100%; margin-top: 0.25em;">
+                    <option value="">Image (default)</option>
+                </select>
+                <div id="source-info" style="margin-top: 0.25em; color: #666; font-size: 0.85em;"></div>
+            </div>
+        </div>
     </div>
 
     <div style="margin-bottom: 1.5em;">
@@ -124,6 +133,8 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
 
     var fieldSelect = document.getElementById('field-select');
     var modelSelect = document.getElementById('model-select');
+    var sourceSelect = document.getElementById('source-select');
+    var sourceInfo = document.getElementById('source-info');
     var instructionsText = document.getElementById('instructions-text');
     var fieldInfo = document.getElementById('field-info');
     var vocabDisplay = document.getElementById('vocab-display');
@@ -179,11 +190,18 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
         .then(function(data) {
             fields = data.fields || [];
             fieldSelect.innerHTML = '<option value="">— Select a field —</option>';
+            sourceSelect.innerHTML = '<option value="">Image (default)</option>';
             fields.forEach(function(f) {
                 var opt = document.createElement('option');
                 opt.value = f.property_id;
                 opt.textContent = f.label + ' (' + f.term + ') — ' + f.missing_count + ' missing';
                 fieldSelect.appendChild(opt);
+
+                // Also add text-bearing fields to source dropdown
+                var srcOpt = document.createElement('option');
+                srcOpt.value = f.property_id;
+                srcOpt.textContent = f.label + ' (' + f.term + ')';
+                sourceSelect.appendChild(srcOpt);
             });
         });
     }
@@ -195,6 +213,8 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
         if (selectedField) {
             instructionsText.value = selectedField.saved_instructions || '';
             modelSelect.value = selectedField.saved_model || 'haiku';
+            sourceSelect.value = selectedField.saved_source_property_id || '';
+            updateSourceInfo();
             fieldInfo.textContent = selectedField.missing_count + ' of ' + selectedField.total_count + ' items missing this field';
 
             if (selectedField.vocab_terms && selectedField.vocab_terms.length) {
@@ -217,14 +237,29 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
     instructionsText.addEventListener('input', updateButtons);
     forceCheck.addEventListener('change', updateButtons);
 
+    sourceSelect.addEventListener('change', updateSourceInfo);
+
+    function updateSourceInfo() {
+        if (sourceSelect.value) {
+            sourceInfo.textContent = 'Text-only mode — no image sent (cheaper)';
+        } else {
+            sourceInfo.textContent = '';
+        }
+    }
+
+    function getSaveBody() {
+        return {
+            property_id: selectedField.property_id,
+            instructions: instructionsText.value.trim(),
+            model: modelSelect.value,
+            source_property_id: sourceSelect.value ? parseInt(sourceSelect.value, 10) : null
+        };
+    }
+
     // Save Instructions
     saveBtn.addEventListener('click', function() {
         if (!selectedField) return;
-        postJson(urls.save, {
-            property_id: selectedField.property_id,
-            instructions: instructionsText.value.trim(),
-            model: modelSelect.value
-        }, saveBtn).then(function(data) {
+        postJson(urls.save, getSaveBody(), saveBtn).then(function(data) {
             if (data && !data.error) {
                 status.textContent = 'Instructions saved.';
                 selectedField.saved_instructions = instructionsText.value.trim();
@@ -237,11 +272,7 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
     previewBtn.addEventListener('click', function() {
         if (!selectedField) return;
         // Auto-save before preview
-        postJson(urls.save, {
-            property_id: selectedField.property_id,
-            instructions: instructionsText.value.trim(),
-            model: modelSelect.value
-        }).then(function() {
+        postJson(urls.save, getSaveBody()).then(function() {
             return postJson(urls.preview, {
                 property_id: selectedField.property_id
             }, previewBtn);
@@ -270,11 +301,7 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
         if (!selectedField) return;
         if (!confirm('Enrich ' + (forceCheck.checked ? selectedField.total_count : selectedField.missing_count) + ' items with Claude? This will call the API.')) return;
         // Auto-save before enriching
-        postJson(urls.save, {
-            property_id: selectedField.property_id,
-            instructions: instructionsText.value.trim(),
-            model: modelSelect.value
-        }).then(function() {
+        postJson(urls.save, getSaveBody()).then(function() {
             return postJson(urls.run, {
                 property_id: selectedField.property_id,
                 force: forceCheck.checked
@@ -290,11 +317,7 @@ $ingestClipUrl = $this->url('admin/enrich-queue/ingest-clip');
     batchBtn.addEventListener('click', function() {
         if (!selectedField) return;
         if (!confirm('Submit batch for ' + (forceCheck.checked ? selectedField.total_count : selectedField.missing_count) + ' items? (50% cheaper, async)')) return;
-        postJson(urls.save, {
-            property_id: selectedField.property_id,
-            instructions: instructionsText.value.trim(),
-            model: modelSelect.value
-        }).then(function() {
+        postJson(urls.save, getSaveBody()).then(function() {
             return postJson(urls.batch, {
                 property_id: selectedField.property_id,
                 force: forceCheck.checked

@@ -58,6 +58,7 @@ class EnrichFieldBatchApi extends AbstractJob
         $instructions = $this->getArg('instructions');
         $model = $this->getArg('model', 'haiku');
         $vocabTerms = $this->getArg('vocab_terms');
+        $sourcePropertyId = $this->getArg('source_property_id');
         $itemIds = $this->getArg('item_ids', []);
         $force = (bool) $this->getArg('force', false);
 
@@ -72,7 +73,7 @@ class EnrichFieldBatchApi extends AbstractJob
         $requests = [];
         foreach ($itemIds as $itemId) {
             if ($this->shouldStop()) {
-                $logger->info('EnrichFieldBatchApi: stopped during image download');
+                $logger->info('EnrichFieldBatchApi: stopped during preparation');
                 return;
             }
 
@@ -80,45 +81,69 @@ class EnrichFieldBatchApi extends AbstractJob
                 $itemRepr = $api->read('items', (int) $itemId)->getContent();
                 $itemJson = json_decode(json_encode($itemRepr), true);
 
-                $mediaRefs = $itemJson['o:media'] ?? [];
-                if (empty($mediaRefs)) {
-                    continue;
-                }
-                $mediaId = $mediaRefs[0]['o:id'] ?? null;
-                if (!$mediaId) {
-                    continue;
-                }
-                $mediaRepr = $api->read('media', $mediaId)->getContent();
-                $mediaJson = json_decode(json_encode($mediaRepr), true);
-                $mediaUrl = $mediaJson['o:original_url'] ?? null;
-                if (!$mediaUrl) {
-                    continue;
-                }
-                $mediaUrl = preg_replace(
-                    '#https?://(?:localhost:\d+|catalog\.jonsarkin\.com)#',
-                    'http://omeka:80',
-                    $mediaUrl
-                );
+                if ($sourcePropertyId) {
+                    // Text-only mode: read source property
+                    $sourceText = $this->getPropertyText($itemJson, (int) $sourcePropertyId);
+                    if (!$sourceText) {
+                        continue;
+                    }
 
-                [$b64Image, $mediaType] = $anthropicClient->downloadAndEncodeImage($mediaUrl);
-
-                $requests[] = [
-                    'custom_id' => (string) $itemId,
-                    'params' => [
-                        'model' => $modelId,
-                        'max_tokens' => self::MAX_TOKENS,
-                        'system' => $systemPrompt,
-                        'messages' => [
-                            [
-                                'role' => 'user',
-                                'content' => [
-                                    ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $mediaType, 'data' => $b64Image]],
-                                    ['type' => 'text', 'text' => $userPrompt],
+                    $requests[] = [
+                        'custom_id' => (string) $itemId,
+                        'params' => [
+                            'model' => $modelId,
+                            'max_tokens' => self::MAX_TOKENS,
+                            'system' => $systemPrompt,
+                            'messages' => [
+                                [
+                                    'role' => 'user',
+                                    'content' => $userPrompt . "\n\n" . $sourceText,
                                 ],
                             ],
                         ],
-                    ],
-                ];
+                    ];
+                } else {
+                    // Image-based mode
+                    $mediaRefs = $itemJson['o:media'] ?? [];
+                    if (empty($mediaRefs)) {
+                        continue;
+                    }
+                    $mediaId = $mediaRefs[0]['o:id'] ?? null;
+                    if (!$mediaId) {
+                        continue;
+                    }
+                    $mediaRepr = $api->read('media', $mediaId)->getContent();
+                    $mediaJson = json_decode(json_encode($mediaRepr), true);
+                    $mediaUrl = $mediaJson['o:original_url'] ?? null;
+                    if (!$mediaUrl) {
+                        continue;
+                    }
+                    $mediaUrl = preg_replace(
+                        '#https?://(?:localhost:\d+|catalog\.jonsarkin\.com)#',
+                        'http://omeka:80',
+                        $mediaUrl
+                    );
+
+                    [$b64Image, $mediaType] = $anthropicClient->downloadAndEncodeImage($mediaUrl);
+
+                    $requests[] = [
+                        'custom_id' => (string) $itemId,
+                        'params' => [
+                            'model' => $modelId,
+                            'max_tokens' => self::MAX_TOKENS,
+                            'system' => $systemPrompt,
+                            'messages' => [
+                                [
+                                    'role' => 'user',
+                                    'content' => [
+                                        ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $mediaType, 'data' => $b64Image]],
+                                        ['type' => 'text', 'text' => $userPrompt],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ];
+                }
 
                 $logger->info(sprintf('EnrichFieldBatchApi: prepared item %d (%d/%d)', $itemId, count($requests), count($itemIds)));
             } catch (\Throwable $e) {
@@ -396,5 +421,20 @@ class EnrichFieldBatchApi extends AbstractJob
         }
 
         $api->update('items', $itemId, $payload, [], ['isPartial' => true]);
+    }
+
+    private function getPropertyText(array $itemJson, int $propertyId): ?string
+    {
+        foreach ($itemJson as $key => $val) {
+            if (strpos($key, ':') === false || strpos($key, 'o:') === 0 || !is_array($val)) {
+                continue;
+            }
+            foreach ($val as $v) {
+                if (($v['property_id'] ?? null) == $propertyId && !empty(trim($v['@value'] ?? ''))) {
+                    return trim($v['@value']);
+                }
+            }
+        }
+        return null;
     }
 }
