@@ -39,12 +39,22 @@ class IndexController extends AbstractActionController
                 $title = pathinfo($originalName, PATHINFO_FILENAME);
 
                 $itemData = [
+                    'o:resource_class' => ['o:id' => 225],
+                    'o:resource_template' => ['o:id' => 2],
                     'dcterms:title' => [
                         [
                             'property_id' => 1,
                             'type' => 'literal',
                             '@value' => $title,
                             'is_public' => false,
+                        ],
+                    ],
+                    'schema:creator' => [
+                        [
+                            'property_id' => 921,
+                            'type' => 'resource',
+                            'value_resource_id' => 3,
+                            'is_public' => true,
                         ],
                     ],
                     'o:is_public' => true,
