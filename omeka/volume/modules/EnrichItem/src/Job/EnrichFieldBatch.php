@@ -208,21 +208,38 @@ class EnrichFieldBatch extends AbstractJob
             }
         }
 
-        // Set the field value — handle JSON arrays for multi-value fields
-        $decoded = json_decode($value, true);
-        if (is_array($decoded)) {
-            $payload[$term] = array_map(fn($v) => [
-                'type' => 'literal',
-                'property_id' => $propertyId,
-                '@value' => (string) $v,
-            ], $decoded);
-        } else {
-            $payload[$term] = [
-                ['type' => 'literal', 'property_id' => $propertyId, '@value' => $value],
-            ];
-        }
+        // Set the field value — handle multi-value responses
+        $values = $this->splitMultiValue($value);
+        $payload[$term] = array_map(fn($v) => [
+            'type' => 'literal',
+            'property_id' => $propertyId,
+            '@value' => $v,
+        ], $values);
 
         $api->update('items', $itemId, $payload, [], ['isPartial' => true]);
+    }
+
+    /**
+     * Split a value into multiple values. Supports JSON arrays and newline-separated lines.
+     * @return string[]
+     */
+    private function splitMultiValue(string $value): array
+    {
+        // Try JSON array first
+        $decoded = json_decode($value, true);
+        if (is_array($decoded)) {
+            return array_values(array_filter(array_map('trim', array_map('strval', $decoded)), fn($v) => $v !== ''));
+        }
+
+        // Fall back to newline splitting if multiple lines present
+        if (str_contains($value, "\n")) {
+            $lines = array_filter(array_map('trim', explode("\n", $value)), fn($v) => $v !== '');
+            if (count($lines) > 1) {
+                return array_values($lines);
+            }
+        }
+
+        return [$value];
     }
 
     /**
