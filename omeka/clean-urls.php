@@ -12,7 +12,7 @@ $path = parse_url($uri, PHP_URL_PATH);
 // Search needs the /index controller prefix: /search → /s/catalog/index/search
 if (preg_match('#^/(search)(/|$|\?)#', $path)) {
     $_SERVER['REQUEST_URI'] = '/s/catalog/index' . $uri;
-} elseif (preg_match('#^/(item|item-set|media|page|faceted-browse|submit|asset)(/|$|\?)#', $path)) {
+} elseif (preg_match('#^/(item|item-set|media|page|faceted-browse|submit|visual-search|asset)(/|$|\?)#', $path)) {
     $_SERVER['REQUEST_URI'] = '/s/catalog' . $uri;
 }
 // Root URL → serve the catalog site homepage directly
@@ -36,6 +36,8 @@ if (!$isAdmin) {
         $buffer = str_replace('/index/search', '/search', $buffer);
         // Handle HTML-entity-encoded slashes (Omeka's escapeHtml encodes / as &#x2F;)
         $buffer = str_replace('&#x2F;s&#x2F;catalog&#x2F;', '&#x2F;', $buffer);
+        // Handle JSON-escaped slashes (inline JS variables from $this->url())
+        $buffer = str_replace('\/s\/catalog\/', '\/', $buffer);
         // Handle homepage link: "/s/catalog" (no trailing slash) in href/action attributes
         $buffer = str_replace('"/s/catalog"', '"/"', $buffer);
         $buffer = str_replace("'/s/catalog'", "'/'", $buffer);

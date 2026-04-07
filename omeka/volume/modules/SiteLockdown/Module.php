@@ -74,6 +74,10 @@ class Module extends AbstractModule
         if ($routeName === 'site/collector-submit') {
             return;
         }
+        // Visual search — public access
+        if ($routeName === 'site/visual-search' || $routeName === 'site/visual-search/json') {
+            return;
+        }
 
         // SimilarPieces module JSON endpoints (similar, iconography, lexical-profile)
         $jsonRoutes = ['similar-pieces', 'iconography', 'iconography-batch', 'lexical-profile', 'similar-search'];

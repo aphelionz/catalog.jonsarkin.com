@@ -132,6 +132,34 @@ $siteItemUrl = function ($id) use ($siteSlug) {
     font-size: 0.85rem;
     color: #888;
 }
+[data-theme="dark"] .vs-preview img {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] .vs-preview-info {
+    color: var(--text-secondary);
+}
+[data-theme="dark"] .vs-searching {
+    color: var(--text-secondary);
+}
+[data-theme="dark"] .vs-error {
+    color: #e05555;
+}
+[data-theme="dark"] .vs-results-grid .resource {
+    border-color: var(--border-color);
+    background: var(--bg-surface);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+[data-theme="dark"] .vs-results-grid .resource:hover {
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] .vs-results-grid .resource-score {
+    color: var(--text-secondary);
+}
+[data-theme="dark"] .vs-new-search button {
+    border-color: var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text);
+}
 .vs-new-search {
     margin-top: 1rem;
 }
