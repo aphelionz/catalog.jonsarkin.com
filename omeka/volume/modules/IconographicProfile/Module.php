@@ -30,10 +30,11 @@ class Module extends AbstractModule
         parent::onBootstrap($event);
 
         $acl = $event->getApplication()->getServiceManager()->get('Omeka\Acl');
-        $resourceId = Controller\IconographyController::class;
-        if (method_exists($acl, 'hasResource') && !$acl->hasResource($resourceId)) {
-            $acl->addResource(new Resource($resourceId));
+        foreach ([Controller\IconographyController::class, Controller\MentionsController::class] as $resourceId) {
+            if (method_exists($acl, 'hasResource') && !$acl->hasResource($resourceId)) {
+                $acl->addResource(new Resource($resourceId));
+            }
+            $acl->allow(null, $resourceId);
         }
-        $acl->allow(null, $resourceId);
     }
 }

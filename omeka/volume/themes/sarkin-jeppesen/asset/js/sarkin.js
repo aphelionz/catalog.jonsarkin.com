@@ -324,6 +324,58 @@
             .catch(function () { /* service down — section stays hidden */ });
     }
 
+    // ── Cultural references / mentions profile (async, detail page) ──
+    var mentionsSection = document.getElementById('mentions-profile');
+    if (mentionsSection) {
+        var mItemId = mentionsSection.getAttribute('data-item-id');
+        var mSite = mentionsSection.getAttribute('data-site');
+        var mEndpoint = '/mentions/' + mItemId + '/json';
+
+        fetch(mEndpoint)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                if (!data.mentions || !data.mentions.length) return;
+
+                var corpusSize = data.corpus_size || 0;
+                var formatted = corpusSize.toLocaleString();
+
+                var browseBase = '/s/' + (mSite || 'catalog') + '/item'
+                    + '?property%5B0%5D%5Bproperty%5D=schema%3Amentions'
+                    + '&property%5B0%5D%5Btype%5D=eq&property%5B0%5D%5Btext%5D=';
+
+                var html = '<h4 class="icon-profile-heading">Cultural References</h4>';
+                html += '<table class="motif-frequency mentions-frequency">';
+                html += '<thead><tr>';
+                html += '<th>Reference</th>';
+                html += '<th>Category</th>';
+                html += '<th>Corpus</th>';
+                html += '</tr></thead>';
+                html += '<tbody>';
+
+                data.mentions.forEach(function (m) {
+                    var href = browseBase + encodeURIComponent(m.raw);
+                    var freqLabel = m.unique
+                        ? '<em>unique</em>'
+                        : m.corpus_frequency.toLocaleString() + ' of ' + formatted;
+                    html += '<tr' + (m.unique ? ' class="mention-unique"' : '') + '>';
+                    html += '<td><a href="' + href + '">' + esc(m.name) + '</a></td>';
+                    html += '<td class="mention-category">' + esc(m.category) + '</td>';
+                    html += '<td>' + freqLabel + '</td>';
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                html += '<p class="icon-profile-note">';
+                html += 'Cultural allusions extracted from transcribed text. ';
+                html += 'Frequency based on ' + formatted + ' works with references.';
+                html += '</p>';
+
+                mentionsSection.innerHTML = html;
+                mentionsSection.removeAttribute('hidden');
+            })
+            .catch(function () { /* service down or no mentions — section stays hidden */ });
+    }
+
     // ── Lexical profile (async, detail page) ──
     var lexSection = document.getElementById('lexical-profile');
     if (lexSection) {

@@ -32,11 +32,26 @@ return [
                     ],
                 ],
             ],
+            'mentions-profile' => [
+                'type' => Segment::class,
+                'options' => [
+                    'route' => '/mentions/:item_id/json',
+                    'constraints' => [
+                        'item_id' => '\\d+',
+                    ],
+                    'defaults' => [
+                        '__NAMESPACE__' => 'IconographicProfile\\Controller',
+                        'controller' => Controller\MentionsController::class,
+                        'action' => 'item',
+                    ],
+                ],
+            ],
         ],
     ],
     'controllers' => [
         'factories' => [
             Controller\IconographyController::class => Service\Controller\IconographyControllerFactory::class,
+            Controller\MentionsController::class => Service\Controller\MentionsControllerFactory::class,
         ],
     ],
 ];

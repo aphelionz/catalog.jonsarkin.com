@@ -620,6 +620,13 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             </div>
             <?php endif; ?>
 
+            <div id="mentions-profile"
+                 data-item-id="<?php echo (int) $item->id(); ?>"
+                 data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
+                 class="mentions-profile"
+                 hidden>
+            </div>
+
             <?php if ($creditText): ?>
             <div class="item-condition">
                 <h3>Photo credit</h3>

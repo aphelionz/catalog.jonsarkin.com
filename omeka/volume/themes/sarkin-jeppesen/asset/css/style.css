@@ -1232,6 +1232,26 @@ abbr[title] {
   letter-spacing: 0.02em;
 }
 
+/* Mentions / cultural references profile */
+.mentions-profile {
+  padding-top: var(--gutter);
+}
+
+.mentions-frequency .mention-category {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: lowercase;
+}
+
+.mentions-frequency .mention-unique td {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.mentions-frequency .mention-unique td:first-child {
+  font-style: normal;
+}
+
 /* Browse card class badge */
 
 .card-class-badge {
@@ -3071,6 +3091,10 @@ nav.pagination span.row-count {
   .motif-frequency th { font-size: 5.5pt; padding: 2px 4px 2px 0; }
   .motif-frequency td { padding: 2px 4px 2px 0; }
   .icon-profile-note { font-size: 6pt; }
+
+  /* Mentions profile */
+  .mentions-profile { padding: var(--gutter); }
+  .mentions-frequency .mention-category { font-size: 5.5pt; }
 
   /* Lexical profile */
   .lexical-profile { padding: var(--gutter); }
