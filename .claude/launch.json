@@ -10,7 +10,7 @@
     {
       "name": "shopify",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /Users/mark/Projects/catalog.jonsarkin.com/shopify && npx shopify theme dev --theme 157307764966 --port 9222"],
+      "runtimeArgs": ["-c", "export PATH=/Users/mark/.nvm/versions/node/v22.14.0/bin:$PATH && cd /Users/mark/Projects/catalog.jonsarkin.com/shopify && npx shopify theme dev --theme 157307764966 --port 9222"],
       "port": 9222
     }
   ]
