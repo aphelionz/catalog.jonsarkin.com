@@ -156,5 +156,59 @@ The two sites must be visually indistinguishable to a user navigating between th
   - JS: `omeka/.../asset/js/sarkin.js` ↔ inline `<script>` in `shopify/layout/theme.liquid`
 - When finishing a cosmetic task, deploy both: `make deploy` + `cd shopify && npx shopify theme push --theme 157306650854 --allow-live`
 
+## MCP tools (sarkin-catalog, sarkin-shopify)
+
+Both MCPs are connected globally in Claude Desktop. Use them — don't default to raw SQL for everything.
+
+**Use the sarkin-catalog MCP for:**
+- Discovery: finding items by motif, date range, type, medium, condition
+- Similarity search: `find_similar`, `search_by_image` (CLIP embeddings)
+- Transcription search: `search_transcriptions`, `fulltext_search`
+- Item lookup: `get_item` by catalog number or Omeka ID
+- Corpus overview: `corpus_statistics`, `iconographic_profile`
+
+**Use raw SQL for:**
+- Mutations (UPDATE, DELETE, INSERT) — the MCP is read-only
+- Precise joins or aggregations the MCP doesn't support
+- Bulk data operations (the Haiku cleanup, catalog ID regeneration, etc.)
+- Checking exact DB state when MCP's Qdrant/FTS index might be stale
+
+**Use the sarkin-shopify MCP for:**
+- Product CRUD, variant management, customer/order lookup
+- Anything the MCP supports (products, variants, options, customers, orders)
+
+**Use the Shopify Admin API (curl + GraphQL) for:**
+- Navigation menus, pages, themes, collections CRUD, metafield definitions
+- Anything not covered by the MCP
+
+## Operational knowledge
+
+These facts get re-explained across sessions. Reference this section instead.
+
+- **Haiku boundary:** Items with Omeka ID ≤ 8824 were enriched by Haiku (lower quality). Items > 8824 were enriched by Opus. Haiku items have known issues: wrong dates, bad transcription formatting, unreliable signatures.
+- **Transcription format:** Opus uses `//` as line separator in transcriptions. Haiku used `\n`. The canonical format is `//`.
+- **Medium vocabulary:** Normalized values include: Marker, Ink, Oil pastel, Crayon, Colored pencil, Graphite, Paint, Pen, Watercolor, Charcoal, Collage, Mixed media. Compounds use "and" (e.g., "Marker and ink"). Don't invent new medium terms without checking existing vocabulary via `corpus_statistics(breakdown="by_medium")`.
+- **Catalog numbers:** Format is `JS-YYYY-NNNNN` (e.g., JS-2016-00042). Generated from item date + sequence. Writing items use `WRT-NNN`.
+- **Prod SSH:** `ssh omeka.us-east1-b.folkloric-rite-468520-r2` — but prefer `make` targets over hand-crafted SSH commands.
+
+## Make targets for prod operations
+
+Use these instead of hand-crafting SSH+Docker+MariaDB chains:
+- `make deploy` — push code to prod + restart Omeka
+- `make pull` — full DB replacement from prod (pull-db + ensure-api-key + pull-files)
+- `make pull-new` — additive pull (no wipe)
+- `make pull-files` — rsync production file uploads
+- `make backup-db` — timestamped local DB backup
+- `make restore-db` — restore from backup file
+- `make sync` — pull new items + ingest locally
+- `make ingest` — re-index Qdrant (incremental)
+- `make ingest-full` — full Qdrant re-ingest
+
+When raw SQL on prod is truly needed (no make target covers it), use:
+```
+ssh omeka.us-east1-b.folkloric-rite-468520-r2 'docker compose -f /opt/catalog/docker-compose.prod.yml exec -T db mariadb -u root -proot omeka -e "YOUR SQL HERE"'
+```
+Always `make backup-db` before mutations on prod.
+
 ## Communication
 - What changed and why — skip the obvious, don't restate my instructions
