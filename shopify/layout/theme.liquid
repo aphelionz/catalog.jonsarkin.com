@@ -7,6 +7,8 @@
   <title>
     {%- if template.name == 'product' and product.metafields.artwork.medium -%}
       {{ product.metafields.artwork.medium | strip }}{% if product.metafields.artwork.year %}, {{ product.metafields.artwork.year }}{% endif %} — {{ shop.name }} ({{ product.title }})
+    {%- elsif template.name == 'collection' and collection.handle == 'all' -%}
+      Available Works — {{ shop.name }}
     {%- else -%}
       {{ page_title }}{% unless page_title contains shop.name %} — {{ shop.name }}{% endunless %}
     {%- endif -%}
