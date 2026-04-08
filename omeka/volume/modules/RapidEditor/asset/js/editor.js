@@ -53,7 +53,6 @@ let SUPPORTS = [];
 let MOTIFS = [];
 let CONDITIONS = [];
 let SIGNATURE_ARROWS = ['↖', '↑', '↗', '←', '∅', '→', '↙', '↓', '↘']; // layout order matters for grid
-const DATE_YEARS = Array.from({ length: 2024 - 1987 + 1 }, (_, i) => String(1987 + i));
 
 // Write-safe keys for PATCH (from enrich_metadata.py:_clean_value)
 const WRITE_KEYS = new Set([
@@ -259,7 +258,7 @@ function validateItem(item) {
     issues.push({ field: 'Type', level: 'error', msg: 'missing' });
   }
 
-  if (!extractValue(item, 'dcterms:medium')) {
+  if (!extractAllValues(item, 'dcterms:medium').length) {
     issues.push({ field: 'Medium', level: 'error', msg: 'missing' });
   }
 
@@ -332,6 +331,16 @@ function validateItem(item) {
     issues.push({ field: 'Category', level: 'error', msg: 'invalid (must be A–D)' });
   }
 
+  // Signed + dated discrepancy
+  const sigVal = extractValue(item, 'schema:distinguishingSign');
+  const dateVal = extractValue(item, 'dcterms:date');
+  if (sigVal && sigVal !== '∅' && (!dateVal || dateVal === '∅')) {
+    issues.push({ field: 'Date', level: 'error', msg: 'signed but undated' });
+  }
+  if (dateVal && dateVal !== '∅' && (!sigVal || sigVal === '∅')) {
+    issues.push({ field: 'Signature', level: 'error', msg: 'dated but unsigned' });
+  }
+
   // Duplicate values on any property
   for (const term of Object.keys(PROP)) {
     const vals = extractAllValues(item, term);
@@ -351,6 +360,11 @@ function validateItem(item) {
 function hasBadDate(item) {
   const d = extractValue(item, 'dcterms:date');
   if (!d) return true;
+  if (d === '∅') {
+    // signed but undated discrepancy
+    const sig = extractValue(item, 'schema:distinguishingSign');
+    return sig && sig !== '∅';
+  }
   if (EXIF_TS_RE.test(d) || ISO_TS_RE.test(d)) return true;
   // Flag out-of-range years (pre-career or future)
   const m = d.match(YEAR_RE);
@@ -1965,10 +1979,10 @@ function resumeTournament() {
 // ── Sprint: field config ──────────────────────────────────────────────────────
 
 function initFieldSprints() {
+  const dateYears = Array.from({ length: 2024 - 1987 + 1 }, (_, i) => String(1987 + i));
   const dateOptions = [
-    { value: 'c. 1989–2024', label: 'c. 1989–2024', extraClass: 'date-unknown' },
-    { value: 'c. 2000s', label: 'c. 2000s', extraClass: 'date-unknown' },
-    ...DATE_YEARS.map(y => ({
+    { value: '∅', label: '∅', extraClass: 'date-unknown' },
+    ...dateYears.map(y => ({
       value: y,
       label: '\u2019' + y.slice(2),
       extraClass: y.endsWith('0') ? 'decade-start' : '',
@@ -2023,7 +2037,11 @@ function initFieldSprints() {
       term: 'schema:distinguishingSign',
       filterFn: item => {
         const v = extractValue(item, 'schema:distinguishingSign');
-        return !v || !SIGNATURE_ARROWS.includes(v);
+        if (!v || !SIGNATURE_ARROWS.includes(v)) return true;
+        // dated but unsigned discrepancy
+        const d = extractValue(item, 'dcterms:date');
+        if (d && d !== '∅' && v === '∅') return true;
+        return false;
       },
       inputType: 'grid',
       gridCols: 3,
@@ -2055,9 +2073,27 @@ function initFieldSprints() {
     medium: {
       label: 'Medium',
       term: 'dcterms:medium',
-      filterFn: item => !extractValue(item, 'dcterms:medium'),
-      inputType: 'text',
-      placeholder: 'e.g. Marker on paper',
+      filterFn: item => !extractAllValues(item, 'dcterms:medium').length,
+      inputType: 'chips',
+      options: [
+        { value: 'Ink', label: 'Ink' },
+        { value: 'Marker', label: 'Marker' },
+        { value: 'Colored pencil', label: 'Colored pencil' },
+        { value: 'Oil pastel', label: 'Oil pastel' },
+        { value: 'Crayon', label: 'Crayon' },
+        { value: 'Graphite', label: 'Graphite' },
+        { value: 'Acrylic paint', label: 'Acrylic paint' },
+        { value: 'Watercolor', label: 'Watercolor' },
+        { value: 'Collage', label: 'Collage' },
+        { value: 'Paint', label: 'Paint' },
+        { value: 'Charcoal', label: 'Charcoal' },
+        { value: 'Gouache', label: 'Gouache' },
+        { value: 'Pen', label: 'Pen' },
+      ],
+      multiSelect: true,
+      autoAdvance: false,
+      allowCustom: true,
+      customPlaceholder: 'Other medium (Enter to add)',
     },
     dimensions: {
       label: 'Height/Width',
@@ -2374,6 +2410,28 @@ function renderSprintInput(zone, item, config) {
         chipWrap.appendChild(chip);
       }
       zone.appendChild(chipWrap);
+      // Custom text input for values not in the preset list
+      if (config.allowCustom) {
+        const customInput = document.createElement('input');
+        customInput.className = 'sprint-text';
+        customInput.placeholder = config.customPlaceholder || 'Add custom value';
+        customInput.style.marginTop = '8px';
+        customInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            const val = customInput.value.trim();
+            if (!val) return;
+            // Add as a dynamic chip
+            const chip = document.createElement('button');
+            chip.className = 'sprint-chip active';
+            chip.textContent = val;
+            chip.dataset.val = val;
+            chip.addEventListener('click', () => chip.classList.toggle('active'));
+            chipWrap.appendChild(chip);
+            customInput.value = '';
+          }
+        });
+        zone.appendChild(customInput);
+      }
       // Done button
       const saveBtn = document.createElement('button');
       saveBtn.className = 'sprint-save';
