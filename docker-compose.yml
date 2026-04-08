@@ -1,6 +1,8 @@
 services:
   db:
     image: mariadb:10.11
+    ports:
+      - "3306:3306"
     environment:
       MARIADB_DATABASE: omeka
       MARIADB_USER: omeka
@@ -70,6 +72,28 @@ services:
       DEFAULT_LIMIT: 50
     volumes:
       - ./sarkin-clip/clip_api:/app/clip_api
+    restart: unless-stopped
+
+  mcp:
+    build:
+      context: ./sarkin-mcp
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    depends_on:
+      db:
+        condition: service_healthy
+      clip-api:
+        condition: service_started
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: omeka
+      MYSQL_USER: omeka
+      MYSQL_PASSWORD: omeka
+      CLIP_API_URL: http://clip-api:8000
+      CATALOG_BASE_URL: http://localhost:8888
+      MCP_TRANSPORT: sse
+      MCP_PORT: 9000
     restart: unless-stopped
 
   ingest:
