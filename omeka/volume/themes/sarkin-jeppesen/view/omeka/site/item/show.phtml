@@ -71,8 +71,8 @@ $sourceUrl  = $val('dcterms:source');
 $shopifyUrl = $val('schema:url');
 
 // ── Physical ──
-$mediumRaw  = $val('dcterms:medium');
-$medium     = ($mediumRaw && $isNotMime($mediumRaw)) ? $mediumRaw : '';
+$mediumVals = array_filter($allVals('dcterms:medium'), $isNotMime);
+$medium     = implode(', ', $mediumVals);
 $formatRaw  = $val('dcterms:format');
 $format     = ($formatRaw && $isNotMime($formatRaw)) ? $formatRaw : '';
 $surface    = $val('schema:artworkSurface');
@@ -136,7 +136,8 @@ $provenanceVals = $allVals('dcterms:provenance');
 
 // ── Documentation ──
 $inscriptions    = $allVals('bibo:annotates');
-$transcription   = $val('bibo:content');
+$transcriptionRaw = $val('bibo:content');
+$transcription   = in_array(strtolower(trim(strip_tags($transcriptionRaw))), ['∅', 'no text', ''], true) ? '' : $transcriptionRaw;
 $exhibitions     = $allVals('bibo:presentedAt');
 $bibliography    = $allVals('dcterms:bibliographicCitation');
 $description     = $val('dcterms:description');
@@ -569,7 +570,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     <section class="record-value" aria-labelledby="collector-context-heading">
         <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
 
-        <div class="biography">
+        <div class="biography<?php if (!$description) echo ' biography--no-desc'; ?>">
             <?php if ($description): ?>
                 <p><?php echo $description; ?></p>
             <?php endif; ?>
@@ -616,6 +617,13 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
                  data-site="<?php echo $escape($this->currentSite()->slug()); ?>"
                  class="iconographic-profile"
                  hidden>
+            </div>
+            <?php endif; ?>
+
+            <?php if ($creditText): ?>
+            <div class="item-condition">
+                <h3>Photo credit</h3>
+                <p><?php echo $creditText; ?></p>
             </div>
             <?php endif; ?>
 
@@ -722,13 +730,9 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     <?php endif; ?>
 
     <!-- ═══ RECORD FOOTER ═══ -->
-    <?php if ($creditText || $rights): ?>
+    <?php if ($rights): ?>
     <footer class="record-footer">
-        <?php if ($creditText): ?>
-            <div><?php echo $creditText; ?></div>
-        <?php elseif ($rights): ?>
-            <div><?php echo $rights; ?></div>
-        <?php endif; ?>
+        <div><?php echo $rights; ?></div>
     </footer>
     <?php endif; ?>
     <?php endif; /* !$isPerson */ ?>
