@@ -1235,6 +1235,7 @@ abbr[title] {
 /* Mentions / cultural references profile */
 .mentions-profile {
   padding-top: var(--gutter);
+  border-top: 1px solid var(--border-light);
 }
 
 .mentions-frequency .mention-category {
