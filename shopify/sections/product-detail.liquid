@@ -1,6 +1,6 @@
 <section class="section">
   <div class="page-width">
-    <div class="product-detail">
+    <div class="product-detail{% if template.suffix == 'wide' %} product-detail--wide{% endif %}">
       <div class="product-detail__media">
         <div class="product-detail__main-image" id="product-main-image">
           {%- if product.metafields.artwork.original_image_url -%}

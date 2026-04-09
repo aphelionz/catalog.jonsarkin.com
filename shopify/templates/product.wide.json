@@ -1,0 +1,13 @@
+{
+  "sections": {
+    "main": {
+      "type": "product-detail",
+      "settings": {
+        "show_related": true
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}
