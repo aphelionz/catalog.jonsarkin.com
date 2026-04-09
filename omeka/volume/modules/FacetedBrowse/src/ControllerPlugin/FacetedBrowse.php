@@ -91,6 +91,8 @@ class FacetedBrowse extends AbstractPlugin
         // Add custom artwork sort options.
         $sortConfig['dcterms:date'] = 'Year';
         $sortConfig['size'] = 'Size';
+        // Remove sorts that aren't useful for artwork browse.
+        unset($sortConfig['resource_class_label'], $sortConfig['title']);
         $sortings = [];
         foreach ($sortConfig as $sortKey => $sortValue) {
             $sortings[] = [
