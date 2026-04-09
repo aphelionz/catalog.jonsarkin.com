@@ -43,10 +43,115 @@ $isNotMime = function ($str) {
     return true;
 };
 ?>
+<?php
+// Derive heading from active TYPE filter (resource_class_id[])
+$typeLabels = [225 => 'Artwork', 118 => 'Writing', 286 => 'Video'];
+$activeClassIds = (array)($this->params()->fromQuery('resource_class_id', []));
+$activeClassId = count($activeClassIds) === 1 ? (int)reset($activeClassIds) : null;
+$typeLabel = $activeClassId && isset($typeLabels[$activeClassId])
+    ? $typeLabels[$activeClassId]
+    : $escape($page->title());
+
+// Build export query early so we can place links in the heading
+$apiExportUrl = '';
+if ($category) {
+    $exportQuery = [];
+    parse_str($category->query() ?? '', $exportQuery);
+    foreach (['resource_class_id', 'item_set_id', 'resource_template_id', 'property', 'fulltext_search'] as $key) {
+        if (isset($_GET[$key])) {
+            $exportQuery[$key] = $_GET[$key];
+        }
+    }
+    $apiExportUrl = $this->url('api/default', ['resource' => 'items'], ['query' => $exportQuery + ['per_page' => 5000]]);
+}
+?>
+<div class="browse-type-heading">
+    <h2><?php echo $typeLabel; ?></h2>
+    <?php if ($apiExportUrl): ?>
+    <div class="export-bar">
+        <a href="#" class="pill-button export-csv-btn">[export csv]</a>
+        <a href="<?php echo $escape($apiExportUrl); ?>" class="pill-button" target="_blank">[export json]</a>
+    </div>
+    <?php endif; ?>
+</div>
+<?php
+// ── Build active-filter pills (everything except resource_class_id) ──
+$filterPills = [];
+$currentParams = $_GET;
+
+// Item sets
+foreach ($activeFilters['item_set_id'] as $setId) {
+    $setId = (int) $setId;
+    try {
+        $itemSet = $this->api()->read('item_sets', $setId)->getContent();
+        $label = $itemSet->displayTitle();
+    } catch (\Exception $e) {
+        $label = 'Set #' . $setId;
+    }
+    // Build URL without this item_set_id
+    $remaining = array_filter((array)($currentParams['item_set_id'] ?? []), function($v) use ($setId) { return (int)$v !== $setId; });
+    $removeParams = $currentParams;
+    if ($remaining) {
+        $removeParams['item_set_id'] = array_values($remaining);
+    } else {
+        unset($removeParams['item_set_id']);
+    }
+    $filterPills[] = ['label' => $label, 'url' => '?' . http_build_query($removeParams)];
+}
+
+// Resource templates
+foreach ($activeFilters['resource_template_id'] as $tplId) {
+    $tplId = (int) $tplId;
+    try {
+        $tpl = $this->api()->read('resource_templates', $tplId)->getContent();
+        $label = $tpl->label();
+    } catch (\Exception $e) {
+        $label = 'Template #' . $tplId;
+    }
+    $remaining = array_filter((array)($currentParams['resource_template_id'] ?? []), function($v) use ($tplId) { return (int)$v !== $tplId; });
+    $removeParams = $currentParams;
+    if ($remaining) {
+        $removeParams['resource_template_id'] = array_values($remaining);
+    } else {
+        unset($removeParams['resource_template_id']);
+    }
+    $filterPills[] = ['label' => $label, 'url' => '?' . http_build_query($removeParams)];
+}
+
+// Property facets (value filters — work type, medium, support, motifs, etc.)
+foreach ($activeFilters['property'] as $idx => $prop) {
+    $text = $prop['text'] ?? '';
+    if ($text === '') continue;
+    $filterPills[] = [
+        'label' => $text,
+        'url' => '?' . http_build_query(array_merge($currentParams, [
+            'property' => array_values(array_filter($activeFilters['property'], function($k) use ($idx) { return $k !== $idx; }, ARRAY_FILTER_USE_KEY))
+        ]))
+    ];
+}
+
+// Full-text search
+if (!empty($activeFilters['fulltext_search'])) {
+    $removeParams = $currentParams;
+    unset($removeParams['fulltext_search']);
+    $filterPills[] = ['label' => '"' . $activeFilters['fulltext_search'] . '"', 'url' => '?' . http_build_query($removeParams)];
+}
+?>
+<?php if ($filterPills): ?>
+<div class="active-filters">
+    <?php foreach ($filterPills as $pill):
+        $hue = crc32($pill['label']) % 360;
+        if ($hue < 0) $hue += 360;
+    ?>
+    <a href="<?php echo $escape($pill['url']); ?>" class="filter-pill" style="--pill-hue:<?php echo $hue; ?>"><span class="filter-pill-x">&times;</span><?php echo $escape($pill['label']); ?></a>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
 <div id="container" data-category-id="<?php echo $escape($categoryId); ?>">
     <button id="section-sidebar-modal-toggle" type="button"><?php echo $translate('Filters'); ?></button>
 
     <?php // ── SIDEBAR: Facets ── ?>
+    <div class="sidebar-column">
     <div id="section-sidebar" class="mobile modal-panel" aria-describedby="facet-modal-description" aria-label="<?php echo $translate('Filters'); ?>">
     <?php if ($category): ?>
         <button id="section-sidebar-modal-close" class="close-button" aria-label="<?php echo $escape($translate('Close')); ?>" type="button">
@@ -99,55 +204,11 @@ $isNotMime = function ($str) {
         </ul>
     <?php endif; ?>
     </div>
+    </div>
 
     <?php // ── CONTENT: Browse results ── ?>
     <div id="section-content">
     <?php if ($category): ?>
-        <?php
-        // Build export query from category base + active URL filters
-        $exportQuery = [];
-        parse_str($category->query() ?? '', $exportQuery);
-        foreach (['resource_class_id', 'item_set_id', 'resource_template_id', 'property', 'fulltext_search'] as $key) {
-            if (isset($_GET[$key])) {
-                $exportQuery[$key] = $_GET[$key];
-            }
-        }
-        $apiExportUrl = $this->url('api/default', ['resource' => 'items'], ['query' => $exportQuery + ['per_page' => 5000]]);
-        ?>
-        <?php
-        // Derive heading from active TYPE filter (resource_class_id[])
-        $typeLabels = [225 => 'Artwork', 118 => 'Writing', 286 => 'Video'];
-        $activeClassIds = (array)($this->params()->fromQuery('resource_class_id', []));
-        $activeClassId = count($activeClassIds) === 1 ? (int)reset($activeClassIds) : null;
-        $typeLabel = $activeClassId && isset($typeLabels[$activeClassId])
-            ? $typeLabels[$activeClassId]
-            : $escape($page->title());
-        $worksLabel = $totalResults === 1 ? 'work' : 'works';
-        ?>
-        <?php
-        // Detect non-type filters (anything besides resource_class_id)
-        $hasNonTypeFilters = !empty($activeFilters['item_set_id'])
-            || !empty($activeFilters['resource_template_id'])
-            || !empty($activeFilters['property'])
-            || !empty($activeFilters['fulltext_search']);
-        // Build reset URL: keep only resource_class_id (if any)
-        $resetParams = [];
-        if ($activeClassId) {
-            $resetParams['resource_class_id[]'] = $activeClassId;
-        }
-        $resetUrl = $this->url(null, [], ['query' => $resetParams], true);
-        ?>
-        <div class="browse-heading">
-            <h2><?php echo $typeLabel; ?> <span class="browse-heading-count">(<?php echo number_format($totalResults); ?> <?php echo $worksLabel; ?>)</span></h2>
-            <div class="export-bar">
-                <?php if ($hasNonTypeFilters): ?>
-                    <a href="<?php echo $escape($resetUrl); ?>" class="pill-button pill-button--danger">[x remove filters]</a>
-                <?php endif; ?>
-                <a href="#" class="pill-button export-csv-btn">[export csv]</a>
-                <a href="<?php echo $escape($apiExportUrl); ?>" class="pill-button" target="_blank">[export json]</a>
-            </div>
-        </div>
-
         <div class="browse-controls">
             <?php echo $this->pagination(); ?>
             <?php echo $this->sortSelector($sortings); ?>
