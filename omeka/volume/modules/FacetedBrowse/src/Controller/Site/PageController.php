@@ -6,6 +6,79 @@ use Laminas\View\Model\ViewModel;
 
 class PageController extends AbstractActionController
 {
+    /**
+     * Re-sort and paginate items by size (height × width) using direct SQL.
+     *
+     * Gets all filtered item IDs via the API, then sorts them by computed area
+     * in SQL, applies pagination, and fetches the final page of items.
+     *
+     * @param array $query The API search query params
+     * @param string $resourceType The resource type (e.g. 'items')
+     * @param string $sortOrder 'asc' or 'desc'
+     * @param int $page Current page number
+     * @param int $perPage Items per page
+     * @return array [items, totalResults]
+     */
+    protected function searchSortedBySize(array $query, string $resourceType, string $sortOrder, int $page, int $perPage): array
+    {
+        // Get all matching item IDs (no pagination, no sort)
+        $query['sort_by'] = 'id';
+        $allIds = $this->api()
+            ->search($resourceType, $query, ['returnScalar' => 'id'])
+            ->getContent();
+        $totalResults = count($allIds);
+
+        if (!$allIds) {
+            return [[], 0];
+        }
+
+        // Sort by height × width using direct SQL
+        $conn = $this->getEvent()->getApplication()
+            ->getServiceManager()->get('Omeka\Connection');
+        $placeholders = implode(',', array_fill(0, count($allIds), '?'));
+        $dir = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
+        // Items without dimensions sort last
+        $nullSort = $dir === 'DESC' ? 1 : 0;
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT r.id
+                FROM resource r
+                LEFT JOIN value h ON h.resource_id = r.id AND h.property_id = 603
+                LEFT JOIN value w ON w.resource_id = r.id AND w.property_id = 1129
+                WHERE r.id IN ($placeholders)
+                GROUP BY r.id
+                ORDER BY (CASE WHEN h.value IS NULL OR w.value IS NULL THEN $nullSort ELSE 1-$nullSort END),
+                         (MAX(h.value) * MAX(w.value)) $dir,
+                         r.id DESC
+                LIMIT $perPage OFFSET $offset";
+
+        $stmt = $conn->executeQuery($sql, array_values($allIds));
+        $sortedIds = $stmt->fetchFirstColumn();
+
+        if (!$sortedIds) {
+            return [[], $totalResults];
+        }
+
+        // Fetch the actual items in the sorted order
+        $items = [];
+        $response = $this->api()->search($resourceType, [
+            'id' => $sortedIds,
+            'sort_by' => 'id',
+            'site_id' => $query['site_id'] ?? null,
+        ]);
+        $itemsById = [];
+        foreach ($response->getContent() as $item) {
+            $itemsById[$item->id()] = $item;
+        }
+        foreach ($sortedIds as $id) {
+            if (isset($itemsById[$id])) {
+                $items[] = $itemsById[$id];
+            }
+        }
+
+        return [$items, $totalResults];
+    }
+
     public function pageAction()
     {
         $pageId = $this->params('page-id');
@@ -71,10 +144,22 @@ class PageController extends AbstractActionController
                 ['id' => $categoryResourceIds],
                 ['site_id' => $siteId]
             );
-            $response = $this->api()->search($page->resourceType(), $query);
-            $totalResults = $response->getTotalResults();
-            $this->paginator($totalResults, $this->params()->fromQuery('page'));
-            $items = $response->getContent();
+
+            $activeSortBy = $this->params()->fromQuery('sort_by', $sortBy);
+            if ($activeSortBy === 'size') {
+                $activeSortOrder = $this->params()->fromQuery('sort_order', $sortOrder);
+                $currentPage = (int) $this->params()->fromQuery('page', 1);
+                $perPage = (int) ($this->params()->fromQuery('per_page') ?: $this->settings()->get('pagination_per_page', 25));
+                [$items, $totalResults] = $this->searchSortedBySize(
+                    $query, $page->resourceType(), $activeSortOrder, $currentPage, $perPage
+                );
+                $this->paginator($totalResults, $currentPage);
+            } else {
+                $response = $this->api()->search($page->resourceType(), $query);
+                $totalResults = $response->getTotalResults();
+                $this->paginator($totalResults, $this->params()->fromQuery('page'));
+                $items = $response->getContent();
+            }
 
             $sortings = $this->facetedBrowse()->getSortings($category);
         }
