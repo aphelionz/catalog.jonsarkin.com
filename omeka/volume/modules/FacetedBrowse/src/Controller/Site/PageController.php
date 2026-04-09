@@ -23,6 +23,7 @@ class PageController extends AbstractActionController
     {
         // Get all matching item IDs (no pagination, no sort)
         $query['sort_by'] = 'id';
+        unset($query['page'], $query['per_page'], $query['sort_order'], $query['limit'], $query['offset']);
         $allIds = $this->api()
             ->search($resourceType, $query, ['returnScalar' => 'id'])
             ->getContent();
