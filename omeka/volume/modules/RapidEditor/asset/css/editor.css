@@ -1128,3 +1128,49 @@
   .rapid-editor-container .tournament-vs { min-width: auto; padding: 4px 0; }
   .rapid-editor-container .tournament-card .card-img-wrap { height: min(250px, 35vh); }
 }
+
+/* ── Publish Mode ──────────────────────────────────────────────── */
+.rapid-editor-container .publish-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.rapid-editor-container .publish-meta-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.rapid-editor-container .publish-meta-label {
+  flex: 0 0 90px;
+  font-weight: 600;
+  color: #666;
+  text-align: right;
+}
+.rapid-editor-container .publish-meta-value {
+  flex: 1;
+  color: var(--fg);
+}
+.rapid-editor-container .publish-warnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.rapid-editor-container .publish-warning-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #fef3e2;
+  color: #b45309;
+  border: 1px solid #fcd99e;
+}
+.rapid-editor-container .publish-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.rapid-editor-container .publish-actions .btn { flex: 1; }

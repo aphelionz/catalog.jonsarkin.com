@@ -1,7 +1,7 @@
 <?php
 $this->pageTitle('Rapid Editor');
-$this->headLink()->appendStylesheet($this->assetUrl('css/editor.css', 'RapidEditor') . '?v=0.2.0');
-$this->headScript()->appendFile($this->assetUrl('js/editor.js', 'RapidEditor') . '?v=0.2.0');
+$this->headLink()->appendStylesheet($this->assetUrl('css/editor.css', 'RapidEditor') . '?v=0.3.0');
+$this->headScript()->appendFile($this->assetUrl('js/editor.js', 'RapidEditor') . '?v=0.3.0');
 // Hide the admin page title and reclaim full #content area
 $this->headStyle()->appendStyle('#content { padding: 0 !important; } #content > h1.page-title { display: none; }');
 ?>
@@ -23,6 +23,7 @@ $this->headStyle()->appendStyle('#content { padding: 0 !important; } #content > 
           <button class="filter-caret" id="sprint-caret" title="Sprint: fix one field at a time">▾</button>
           <div id="sprint-menu" class="sprint-menu hidden"></div>
         </div>
+        <button class="filter-btn" data-filter="publish">Publish <span id="count-publish"></span></button>
         <button class="filter-btn" data-filter="exhibit">Exhibit</button>
       </div>
     </div>

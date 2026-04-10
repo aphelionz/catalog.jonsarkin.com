@@ -77,7 +77,7 @@ let mediaCache = {};      // mediaId → original_url
 let stickyDims = { height: '', width: '' }; // persist dimensions across cards
 let stickyText = {}; // persist text field values across cards (keyed by term)
 let ALL_MOTIF_TAGS = []; // all distinct motif values across items (autocomplete corpus)
-let filterMode = 'issues'; // 'issues' | 'sprint' | 'exhibit'
+let filterMode = 'issues'; // 'issues' | 'sprint' | 'exhibit' | 'publish'
 
 // Bucket state (used by Exhibition mode)
 let bucketMode = false;
@@ -105,6 +105,13 @@ let sprintIndex = 0;
 let sprintLastAction = null;  // { itemId, field, oldValues }
 let sprintActing = false;
 
+// Publish state
+let publishMode = false;
+let publishQueue = [];
+let publishIndex = 0;
+let publishLastAction = null; // { itemId }
+let publishActing = false;
+
 // ── DOM refs ────────────────────────────────────────────────────────────────
 
 const _container = () => document.querySelector('.rapid-editor-container');
@@ -120,6 +127,7 @@ function cacheDom() {
   dom.queueStatus = $('#queue-status');
   dom.itemLink = $('#item-link');
   dom.countIssues = $('#count-issues');
+  dom.countPublish = $('#count-publish');
   dom.progressFill = $('#progress-fill');
   dom.image = $('#item-image');
   dom.imageLoading = $('#image-loading');
@@ -389,6 +397,7 @@ function buildQueue() {
 function updateNav() {
   const issueCount = allItems.filter(it => it._issues.some(i => i.level === 'error')).length;
   dom.countIssues.textContent = `(${issueCount})`;
+  updatePublishCount();
 
   if (!queue.length) {
     const emptyMsg = { issues: 'No issues found!' };
@@ -499,7 +508,17 @@ function setupFilterButtons() {
       // Exhibition curation mode
       if (btn.dataset.filter === 'exhibit') {
         if (exhibitMode) return;
+        if (publishMode) exitPublishMode();
         enterExhibitMode();
+        return;
+      }
+
+      // Publish review mode
+      if (btn.dataset.filter === 'publish') {
+        if (exhibitMode) exitExhibitMode();
+        if (sprintMode) exitSprintMode();
+        if (publishMode) return;
+        enterPublishMode();
         return;
       }
 
@@ -507,6 +526,7 @@ function setupFilterButtons() {
       if (btn.dataset.filter === 'issues') {
         if (exhibitMode) exitExhibitMode();
         if (sprintMode) exitSprintMode();
+        if (publishMode) exitPublishMode();
         for (const b of $$('.filter-btn')) b.classList.remove('active');
         btn.classList.add('active');
         filterMode = 'issues';
@@ -532,6 +552,21 @@ function setupKeyboard() {
       } else if (mod && e.key === 'z') {
         e.preventDefault();
         bucketUndo();
+      }
+      return;
+    }
+
+    // Publish mode shortcuts
+    if (publishMode) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (publishIndex < publishQueue.length) publishAndAdvance(publishQueue[publishIndex]['o:id']);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        publishSkip();
+      } else if (mod && e.key === 'z') {
+        e.preventDefault();
+        publishUndo();
       }
       return;
     }
@@ -2977,7 +3012,10 @@ function showSprintComplete() {
 
 function setupSprintButtons() {
   dom.sprintViewSkip.addEventListener('click', sprintSkip);
-  dom.sprintViewUndo.addEventListener('click', sprintUndo);
+  dom.sprintViewUndo.addEventListener('click', () => {
+    if (publishMode) publishUndo();
+    else sprintUndo();
+  });
 }
 
 // ── Auto-sprint: pick the first issue field and enter sprint mode ────────────
@@ -3031,6 +3069,315 @@ function autoSprintIssues() {
   enterSprintMode(fieldKey);
 }
 
+// ── Publish: readiness & warnings ────────────────────────────────────────────
+
+function isPublishReady(item) {
+  if (item['o:is_public']) return false; // already public
+  if (!(item['o:media'] || []).length) return false;
+  if (!extractValue(item, 'dcterms:identifier')) return false;
+  if (!extractValue(item, 'dcterms:type')) return false;
+  if (!extractAllValues(item, 'dcterms:medium').length) return false;
+  if (!extractValue(item, 'schema:artworkSurface')) return false;
+  const h = extractValue(item, 'schema:height');
+  const w = extractValue(item, 'schema:width');
+  if (!h || !w || isNaN(parseFloat(h)) || isNaN(parseFloat(w))) return false;
+  const sig = extractValue(item, 'schema:distinguishingSign');
+  if (!sig || !SIGNATURE_ARROWS.includes(sig)) return false;
+  const date = extractValue(item, 'dcterms:date');
+  if (!date) return false;
+  if (EXIF_TS_RE.test(date) || ISO_TS_RE.test(date)) return false;
+  const ym = date.match(YEAR_RE);
+  if (ym) {
+    const y = parseInt(ym[0], 10);
+    if (y < EARLIEST_YEAR || y > DEATH_YEAR) return false;
+  }
+  if (!extractValue(item, 'dcterms:format')) return false;
+  if (!extractValue(item, 'bibo:owner')) return false;
+  return true;
+}
+
+function getPublishWarnings(item) {
+  const warnings = [];
+  if (!extractAllValues(item, 'dcterms:subject').length) warnings.push('No motifs');
+  if (!extractValue(item, 'bibo:content')) warnings.push('No transcription');
+  if (!extractValue(item, 'curation:category')) warnings.push('No category');
+  if (!extractValue(item, 'schema:box')) warnings.push('No box');
+  if (!extractValue(item, 'schema:itemCondition')) warnings.push('No condition');
+  if (!extractValue(item, 'dcterms:spatial')) warnings.push('No location');
+  return warnings;
+}
+
+// ── Publish: queue ───────────────────────────────────────────────────────────
+
+function buildPublishQueue() {
+  publishQueue = allItems.filter(isPublishReady);
+  publishQueue.sort((a, b) => (a._identifier || '').localeCompare(b._identifier || ''));
+  publishIndex = Math.min(publishIndex, Math.max(0, publishQueue.length - 1));
+}
+
+function updatePublishCount() {
+  const count = allItems.filter(isPublishReady).length;
+  dom.countPublish.textContent = `(${count})`;
+}
+
+// ── Publish: mode switching ──────────────────────────────────────────────────
+
+function enterPublishMode() {
+  if (bucketMode) exitBucketMode();
+  if (sprintMode) exitSprintMode();
+  publishMode = true;
+  filterMode = 'publish';
+
+  dom.main.classList.remove('hidden');
+  $('#curate-panel').classList.add('hidden');
+  dom.sprintView.classList.remove('hidden');
+  dom.sprintViewDone.classList.add('hidden');
+
+  for (const b of $$('.filter-btn')) b.classList.toggle('active', b.dataset.filter === 'publish');
+
+  dom.sprintViewFieldLabel.textContent = 'Publish';
+
+  buildPublishQueue();
+  updatePublishProgress();
+
+  if (publishQueue.length) {
+    renderPublishItem();
+  } else {
+    showPublishComplete();
+  }
+
+  savePosition();
+}
+
+function exitPublishMode() {
+  publishMode = false;
+  dom.sprintView.classList.add('hidden');
+}
+
+// ── Publish: progress ────────────────────────────────────────────────────────
+
+function updatePublishProgress() {
+  const remaining = publishQueue.length - publishIndex;
+  dom.sprintViewCount.textContent = `${publishIndex} done · ${remaining} remaining`;
+  dom.sprintViewUndo.disabled = !publishLastAction;
+
+  const pct = publishQueue.length > 0 ? (publishIndex / publishQueue.length) * 100 : 0;
+  dom.progressFill.style.width = `${pct}%`;
+
+  dom.queueStatus.textContent = publishQueue.length
+    ? `${publishIndex + 1} / ${publishQueue.length}`
+    : '0 / 0';
+}
+
+// ── Publish: render ──────────────────────────────────────────────────────────
+
+async function renderPublishItem() {
+  if (publishIndex >= publishQueue.length) {
+    showPublishComplete();
+    return;
+  }
+
+  const item = publishQueue[publishIndex];
+  const identifier = item._identifier || `item-${item['o:id']}`;
+
+  // Nav link
+  dom.itemLink.textContent = identifier;
+  dom.itemLink.href = `/admin/item/${item['o:id']}/edit`;
+
+  // Load image
+  dom.imageLoading.classList.remove('hidden');
+  dom.image.style.opacity = '0.3';
+  const url = await getImageUrl(item);
+  if (url) {
+    dom.image.src = url;
+    dom.image.onload = () => {
+      dom.image.style.opacity = '1';
+      dom.imageLoading.classList.add('hidden');
+    };
+  } else {
+    dom.image.src = '';
+    dom.image.style.opacity = '1';
+    dom.imageLoading.classList.add('hidden');
+  }
+
+  // Metadata summary
+  const type = extractValue(item, 'dcterms:type');
+  const medium = extractAllValues(item, 'dcterms:medium').join(', ');
+  const h = extractValue(item, 'schema:height');
+  const w = extractValue(item, 'schema:width');
+  const dims = (h && w) ? `${h}″ × ${w}″` : '';
+  const date = extractValue(item, 'dcterms:date');
+  const support = extractValue(item, 'schema:artworkSurface');
+  const owner = extractValue(item, 'bibo:owner');
+  const sig = extractValue(item, 'schema:distinguishingSign');
+  const framing = extractValue(item, 'dcterms:format');
+
+  const rows = [
+    ['Type', type], ['Medium', medium], ['Dimensions', dims],
+    ['Date', date], ['Support', support], ['Owner', owner],
+    ['Signature', sig], ['Framing', framing],
+  ].filter(([, v]) => v);
+
+  dom.sprintViewMeta.innerHTML = `<div class="sv-meta-id">${identifier}</div>`;
+  dom.sprintViewCurrent.textContent = '';
+
+  // Build review card
+  const zone = dom.sprintViewZone;
+  zone.innerHTML = '';
+
+  // Metadata grid
+  const grid = document.createElement('div');
+  grid.className = 'publish-meta';
+  for (const [label, val] of rows) {
+    grid.innerHTML += `<div class="publish-meta-row"><span class="publish-meta-label">${label}</span><span class="publish-meta-value">${val}</span></div>`;
+  }
+  zone.appendChild(grid);
+
+  // Warnings
+  const warnings = getPublishWarnings(item);
+  if (warnings.length) {
+    const warnWrap = document.createElement('div');
+    warnWrap.className = 'publish-warnings';
+    for (const w of warnings) {
+      const chip = document.createElement('span');
+      chip.className = 'publish-warning-chip';
+      chip.textContent = w;
+      warnWrap.appendChild(chip);
+    }
+    zone.appendChild(warnWrap);
+  }
+
+  // Action buttons
+  const actions = document.createElement('div');
+  actions.className = 'publish-actions';
+
+  const publishBtn = document.createElement('button');
+  publishBtn.className = 'btn btn-save';
+  publishBtn.textContent = 'Publish';
+  publishBtn.addEventListener('click', () => publishAndAdvance(item['o:id']));
+
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'btn btn-skip';
+  skipBtn.textContent = 'Skip';
+  skipBtn.addEventListener('click', publishSkip);
+
+  actions.appendChild(publishBtn);
+  actions.appendChild(skipBtn);
+  zone.appendChild(actions);
+
+  // Hide sprint's default actions (we render our own)
+  dom.sprintViewActions.classList.add('hidden');
+
+  dom.formPanel.scrollTop = 0;
+
+  // Preload next
+  if (publishIndex + 1 < publishQueue.length) {
+    getImageUrl(publishQueue[publishIndex + 1]);
+  }
+}
+
+// ── Publish: save ────────────────────────────────────────────────────────────
+
+async function publishAndAdvance(itemId) {
+  if (publishActing) return;
+  publishActing = true;
+
+  // Advance immediately
+  publishIndex++;
+  publishLastAction = { itemId };
+  updatePublishProgress();
+
+  publishActing = false;
+  renderPublishItem();
+
+  // API call in background
+  try {
+    const { json: freshItem } = await apiGet(`items/${itemId}`);
+    const payload = buildBasePayload(freshItem);
+    payload['o:is_public'] = true;
+
+    const updated = await apiPatch(`items/${itemId}`, payload);
+
+    // Update local state
+    const idx = allItems.findIndex(it => it['o:id'] === itemId);
+    if (idx >= 0) {
+      allItems[idx] = updated;
+      allItems[idx]._issues = validateItem(updated);
+      allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
+    }
+
+    updatePublishCount();
+    showToast('✓ Published');
+  } catch (err) {
+    showToast(`Error: ${err.message}`, true);
+    console.error('Publish failed:', err);
+    publishLastAction = null;
+  }
+}
+
+// ── Publish: skip ────────────────────────────────────────────────────────────
+
+function publishSkip() {
+  if (publishActing || publishIndex >= publishQueue.length) return;
+  publishIndex++;
+  publishLastAction = null;
+  updatePublishProgress();
+  renderPublishItem();
+}
+
+// ── Publish: undo ────────────────────────────────────────────────────────────
+
+async function publishUndo() {
+  if (!publishLastAction || publishActing) return;
+  publishActing = true;
+
+  const { itemId } = publishLastAction;
+  publishLastAction = null;
+
+  try {
+    const { json: freshItem } = await apiGet(`items/${itemId}`);
+    const payload = buildBasePayload(freshItem);
+    payload['o:is_public'] = false;
+
+    const updated = await apiPatch(`items/${itemId}`, payload);
+
+    const idx = allItems.findIndex(it => it['o:id'] === itemId);
+    if (idx >= 0) {
+      allItems[idx] = updated;
+      allItems[idx]._issues = validateItem(updated);
+      allItems[idx]._identifier = extractValue(updated, 'dcterms:identifier') || `item-${updated['o:id']}`;
+    }
+
+    // Re-insert item into queue and step back
+    publishIndex = Math.max(0, publishIndex - 1);
+    buildPublishQueue();
+    updatePublishProgress();
+    updatePublishCount();
+    renderPublishItem();
+
+    showToast('↩ Unpublished');
+  } catch (err) {
+    showToast(`Error undoing: ${err.message}`, true);
+  }
+
+  publishActing = false;
+}
+
+// ── Publish: complete ────────────────────────────────────────────────────────
+
+function showPublishComplete() {
+  dom.sprintViewZone.innerHTML = '';
+  dom.sprintViewCurrent.textContent = '';
+  dom.sprintViewMeta.innerHTML = '';
+  dom.sprintViewActions.classList.add('hidden');
+  dom.sprintViewDone.classList.remove('hidden');
+  dom.sprintViewDone.innerHTML = `
+    <h2>All done</h2>
+    <p>${publishIndex} items published · no more items ready</p>
+  `;
+  dom.image.src = '';
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -3060,7 +3407,9 @@ async function init() {
   dom.loading.classList.add('hidden');
 
   // Enter the saved mode
-  if (filterMode === 'exhibit') {
+  if (filterMode === 'publish') {
+    enterPublishMode();
+  } else if (filterMode === 'exhibit') {
     enterExhibitMode();
   } else if (filterMode === 'sprint' && sprintField && FIELD_SPRINTS[sprintField]) {
     enterSprintMode(sprintField);
