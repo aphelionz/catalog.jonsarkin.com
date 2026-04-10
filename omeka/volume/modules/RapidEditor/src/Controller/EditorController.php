@@ -249,6 +249,27 @@ class EditorController extends AbstractActionController
     }
 
     /**
+     * Proxy media reads through Omeka's internal API so private items'
+     * media (which is also private) is accessible to the editor.
+     */
+    public function mediaAction(): JsonModel
+    {
+        $mediaId = (int) $this->params('id');
+        if ($mediaId < 1) {
+            return new JsonModel(['error' => 'Invalid media ID']);
+        }
+
+        try {
+            $response = $this->api()->read('media', $mediaId);
+            $media = $response->getContent();
+            return new JsonModel(json_decode(json_encode($media), true));
+        } catch (\Throwable $e) {
+            $this->getResponse()->setStatusCode(404);
+            return new JsonModel(['error' => 'Media not found: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Proxy PATCH requests through Omeka's internal API so the JS editor
      * doesn't need REST API credentials — the admin session handles auth.
      */

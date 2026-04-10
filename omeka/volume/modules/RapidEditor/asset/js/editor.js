@@ -147,13 +147,17 @@ function apiUrl(path, params = {}) {
 }
 
 async function apiGet(path, params = {}) {
-  // Route item reads through the module's PHP proxy so private values
-  // (is_public=0) are included.  The public REST API strips them, which
-  // causes saves to silently drop those properties.
+  // Route item and media reads through the module's PHP proxy so private
+  // resources are accessible.  The public REST API strips private items
+  // and their media, which breaks image loading and causes saves to
+  // silently drop private property values.
   const itemMatch = path.match(/^items\/(\d+)$/);
+  const mediaMatch = path.match(/^media\/(\d+)$/);
   const url = itemMatch
     ? `/admin/rapid-editor/read/${itemMatch[1]}`
-    : apiUrl(path, params);
+    : mediaMatch
+      ? `/admin/rapid-editor/media/${mediaMatch[1]}`
+      : apiUrl(path, params);
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`API ${resp.status}: ${path}`);
   return { json: await resp.json(), headers: resp.headers };

@@ -38,6 +38,14 @@ return [
                                     'defaults' => ['action' => 'read'],
                                 ],
                             ],
+                            'media' => [
+                                'type' => Segment::class,
+                                'options' => [
+                                    'route' => '/media/:id',
+                                    'constraints' => ['id' => '\d+'],
+                                    'defaults' => ['action' => 'media'],
+                                ],
+                            ],
                             'patch' => [
                                 'type' => Segment::class,
                                 'options' => [
