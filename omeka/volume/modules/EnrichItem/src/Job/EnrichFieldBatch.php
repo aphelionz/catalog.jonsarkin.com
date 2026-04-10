@@ -36,6 +36,7 @@ class EnrichFieldBatch extends AbstractJob
         $model = $this->getArg('model', 'haiku');
         $vocabTerms = $this->getArg('vocab_terms');
         $sourcePropertyId = $this->getArg('source_property_id');
+        $emptyValue = $this->getArg('empty_value');
         $itemIds = $this->getArg('item_ids', []);
         $force = (bool) $this->getArg('force', false);
 
@@ -58,7 +59,7 @@ class EnrichFieldBatch extends AbstractJob
             try {
                 $this->processItem(
                     (int) $itemId, $propertyId, $term, $systemPrompt, $userPrompt,
-                    $model, $vocabTerms, $sourcePropertyId, $force, $api, $anthropicClient, $cache, $logger
+                    $model, $vocabTerms, $sourcePropertyId, $emptyValue, $force, $api, $anthropicClient, $cache, $logger
                 );
                 $succeeded++;
                 if ($succeeded % 10 === 0) {
@@ -84,6 +85,7 @@ class EnrichFieldBatch extends AbstractJob
         string $model,
         ?array $vocabTerms,
         ?int $sourcePropertyId,
+        ?string $emptyValue,
         bool $force,
         $api,
         AnthropicClient $anthropicClient,
@@ -97,6 +99,10 @@ class EnrichFieldBatch extends AbstractJob
         if (!$force) {
             $cached = $cache->get($itemId, $propertyId);
             if ($cached !== null) {
+                if ($cached === '') {
+                    // Previously returned empty — skip without API call
+                    return;
+                }
                 $this->applyValue($itemId, $itemJson, $propertyId, $term, $cached, $force, $api);
                 return;
             }
@@ -133,7 +139,14 @@ class EnrichFieldBatch extends AbstractJob
         $value = $result['value'];
 
         if ($value === '') {
-            $logger->info(sprintf('EnrichFieldBatch: item %d returned empty value, skipping', $itemId));
+            if ($emptyValue) {
+                $logger->info(sprintf('EnrichFieldBatch: item %d returned empty, applying "%s"', $itemId, $emptyValue));
+                $cache->put($itemId, $propertyId, $emptyValue, $model);
+                $this->applyValue($itemId, $itemJson, $propertyId, $term, $emptyValue, $force, $api);
+            } else {
+                $logger->info(sprintf('EnrichFieldBatch: item %d returned empty value, caching as empty', $itemId));
+                $cache->put($itemId, $propertyId, '', $model);
+            }
             return;
         }
 

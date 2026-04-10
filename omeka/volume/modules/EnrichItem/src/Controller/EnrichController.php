@@ -192,6 +192,7 @@ class EnrichController extends AbstractActionController
             'model' => $saved['model'],
             'vocab_terms' => $fieldMeta['vocab_terms'],
             'source_property_id' => $saved['source_property_id'] ?? null,
+            'empty_value' => $saved['empty_value'] ?? null,
             'item_ids' => $itemIds,
             'force' => $force,
         ]);
@@ -321,6 +322,7 @@ class EnrichController extends AbstractActionController
             'model' => $saved['model'],
             'vocab_terms' => $fieldMeta['vocab_terms'],
             'source_property_id' => $saved['source_property_id'] ?? null,
+            'empty_value' => $saved['empty_value'] ?? null,
             'item_ids' => $itemIds,
             'force' => $force,
         ]);

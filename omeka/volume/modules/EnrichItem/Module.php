@@ -107,6 +107,8 @@ class Module extends AbstractModule
                 'instructions' => $saved['instructions'],
                 'model' => $saved['model'],
                 'vocab_terms' => null,
+                'source_property_id' => $saved['source_property_id'] ?? null,
+                'empty_value' => $saved['empty_value'] ?? null,
                 'item_ids' => [$itemId],
                 'force' => false,
             ]);

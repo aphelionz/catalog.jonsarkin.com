@@ -24,6 +24,7 @@ class FieldInstructions
                 instructions TEXT NOT NULL,
                 model VARCHAR(16) NOT NULL DEFAULT 'haiku',
                 source_property_id INT DEFAULT NULL,
+                empty_value VARCHAR(255) DEFAULT NULL,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ");
@@ -36,25 +37,35 @@ class FieldInstructions
         } catch (\Throwable $e) {
             // Column already exists — ignore
         }
+
+        // Migration: add empty_value if table already exists without it
+        try {
+            $this->conn->executeStatement(
+                'ALTER TABLE enrich_field_instructions ADD COLUMN empty_value VARCHAR(255) DEFAULT NULL AFTER source_property_id'
+            );
+        } catch (\Throwable $e) {
+            // Column already exists — ignore
+        }
     }
 
     public function get(int $propertyId): ?array
     {
         $row = $this->conn->fetchAssociative(
-            'SELECT instructions, model, source_property_id FROM enrich_field_instructions WHERE property_id = ?',
+            'SELECT instructions, model, source_property_id, empty_value FROM enrich_field_instructions WHERE property_id = ?',
             [$propertyId]
         );
         if (!$row) {
             return null;
         }
         $row['source_property_id'] = $row['source_property_id'] ? (int) $row['source_property_id'] : null;
+        $row['empty_value'] = $row['empty_value'] ?: null;
         return $row;
     }
 
     public function getAll(): array
     {
         $rows = $this->conn->fetchAllAssociative(
-            'SELECT property_id, instructions, model, source_property_id FROM enrich_field_instructions'
+            'SELECT property_id, instructions, model, source_property_id, empty_value FROM enrich_field_instructions'
         );
         $result = [];
         foreach ($rows as $row) {
@@ -62,19 +73,21 @@ class FieldInstructions
                 'instructions' => $row['instructions'],
                 'model' => $row['model'],
                 'source_property_id' => $row['source_property_id'] ? (int) $row['source_property_id'] : null,
+                'empty_value' => $row['empty_value'] ?: null,
             ];
         }
         return $result;
     }
 
-    public function save(int $propertyId, string $instructions, string $model, ?int $sourcePropertyId = null): void
+    public function save(int $propertyId, string $instructions, string $model, ?int $sourcePropertyId = null, ?string $emptyValue = null): void
     {
         $this->conn->executeStatement(
-            'INSERT INTO enrich_field_instructions (property_id, instructions, model, source_property_id, updated_at)
-             VALUES (?, ?, ?, ?, NOW())
+            'INSERT INTO enrich_field_instructions (property_id, instructions, model, source_property_id, empty_value, updated_at)
+             VALUES (?, ?, ?, ?, ?, NOW())
              ON DUPLICATE KEY UPDATE instructions = VALUES(instructions), model = VALUES(model),
-                                      source_property_id = VALUES(source_property_id), updated_at = NOW()',
-            [$propertyId, $instructions, $model, $sourcePropertyId]
+                                      source_property_id = VALUES(source_property_id),
+                                      empty_value = VALUES(empty_value), updated_at = NOW()',
+            [$propertyId, $instructions, $model, $sourcePropertyId, $emptyValue]
         );
     }
 }

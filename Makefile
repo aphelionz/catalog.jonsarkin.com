@@ -95,6 +95,7 @@ deploy: ## Push code (modules/themes) to production and restart Omeka
 		--exclude='harvest/' --exclude='search_index/' --exclude='.DS_Store' \
 		--exclude='.git/' --exclude='node_modules/' --exclude='.claude/' \
 		--exclude='acme.json' --exclude='omeka/volume/logs/' \
+		--exclude='omeka/volume/config/database.ini' --exclude='social/' \
 		./ $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/
 	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml restart omeka'
 

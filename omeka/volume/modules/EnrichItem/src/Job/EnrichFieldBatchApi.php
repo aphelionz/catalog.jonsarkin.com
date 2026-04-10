@@ -67,6 +67,17 @@ class EnrichFieldBatchApi extends AbstractJob
         $systemPrompt = AnthropicClient::buildSystemPrompt($fieldLabel, $instructions, $vocabTerms);
         $userPrompt = "Analyze this artwork and provide the value for: {$fieldLabel}";
 
+        // Filter out items already cached (including cached-empty) unless forcing
+        $cache = $services->get(EnrichmentCache::class);
+        if (!$force) {
+            $originalCount = count($itemIds);
+            $itemIds = $cache->getUncachedItemIds($itemIds, $propertyId);
+            $skipped = $originalCount - count($itemIds);
+            if ($skipped > 0) {
+                $logger->info(sprintf('EnrichFieldBatchApi: skipped %d cached items (including empty)', $skipped));
+            }
+        }
+
         $logger->info(sprintf('EnrichFieldBatchApi: preparing %d items for field "%s"', count($itemIds), $fieldLabel));
 
         // Build batch requests
@@ -252,13 +263,17 @@ class EnrichFieldBatchApi extends AbstractJob
             return;
         }
 
-        // Look up the term for this property
+        // Look up the term and empty_value for this property
         $propRow = $conn->fetchAssociative("
             SELECT CONCAT(v.prefix, ':', p.local_name) AS term
             FROM property p
             JOIN vocabulary v ON p.vocabulary_id = v.id
             WHERE p.id = ?
         ", [$propertyId]);
+
+        $fieldInstructions = $services->get(\EnrichItem\Service\FieldInstructions::class);
+        $savedInstr = $fieldInstructions->get($propertyId);
+        $emptyValue = $savedInstr['empty_value'] ?? null;
         $term = $propRow['term'] ?? '';
 
         // Check batch status
@@ -346,6 +361,17 @@ class EnrichFieldBatchApi extends AbstractJob
                 }
 
                 if ($rawText === '') {
+                    if ($emptyValue) {
+                        $cache->put($itemId, $propertyId, $emptyValue, $model);
+                        try {
+                            $this->applyValue($itemId, $propertyId, $term, $emptyValue, $api);
+                            $succeeded++;
+                        } catch (\Throwable $e) {
+                            $errors++;
+                        }
+                    } else {
+                        $cache->put($itemId, $propertyId, '', $model);
+                    }
                     continue;
                 }
 
