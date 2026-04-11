@@ -323,6 +323,13 @@ abbr[title] {
   color: var(--text);
 }
 
+/* Available Works shares /faceted-browse/2 with Catalog — Omeka marks both .active.
+   Override: only highlight Available Works via the explicit class, not the generic .active. */
+.site-nav:not(.available-works-active) > ul > li:nth-child(2).active > a {
+  background: transparent;
+  color: var(--text-muted);
+}
+
 /* Mobile nav toggle — hidden on desktop */
 .nav-toggle {
   display: none;
