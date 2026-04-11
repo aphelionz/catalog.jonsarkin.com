@@ -120,7 +120,31 @@ foreach ($activeFilters['resource_template_id'] as $tplId) {
 
 // Property facets (value filters — work type, medium, support, motifs, etc.)
 foreach ($activeFilters['property'] as $idx => $prop) {
+    $type = $prop['type'] ?? '';
     $text = $prop['text'] ?? '';
+    // Property-exists filters (ex/nex) have no text — show a descriptive label
+    if (in_array($type, ['ex', 'nex'])) {
+        $propId = $prop['property'] ?? '';
+        // Find the matching facet to get the configured label
+        $existsLabel = $type === 'ex' ? 'Has value' : 'No value';
+        if ($category) {
+            foreach ($category->facets() as $f) {
+                if ($f->type() === 'property_exists' && (string)$f->data('property_id') === (string)$propId) {
+                    $existsLabel = $type === 'ex'
+                        ? ($f->data('label_exists') ?: 'Has value')
+                        : ($f->data('label_not_exists') ?: 'No value');
+                    break;
+                }
+            }
+        }
+        $filterPills[] = [
+            'label' => $existsLabel,
+            'url' => '?' . http_build_query(array_merge($currentParams, [
+                'property' => array_values(array_filter($activeFilters['property'], function($k) use ($idx) { return $k !== $idx; }, ARRAY_FILTER_USE_KEY))
+            ]))
+        ];
+        continue;
+    }
     if ($text === '') continue;
     $filterPills[] = [
         'label' => $text,
@@ -179,10 +203,12 @@ if (!empty($activeFilters['fulltext_search'])) {
                 $hasVisibleValues = $isTextFacet || !empty(array_filter($myFacetCounts));
                 ?>
                 <?php if ($hasVisibleValues): ?>
-                <fieldset class="facet"
+                <?php $isHiddenFacet = ($facet->type() === 'property_exists'); ?>
+                <fieldset class="facet<?php echo $isHiddenFacet ? ' sr-only' : ''; ?>"
                     data-facet-id="<?php echo $escape($facet->id()); ?>"
                     data-facet-type="<?php echo $escape($facet->type()); ?>"
-                    data-facet-data="<?php echo $escape(json_encode($facet->data())); ?>">
+                    data-facet-data="<?php echo $escape(json_encode($facet->data())); ?>"
+                    <?php echo $isHiddenFacet ? 'aria-hidden="true"' : ''; ?>>
                     <legend><?php echo $facet->name(); ?></legend>
                     <?php echo $this->facetedBrowse()->renderFacet($facet); ?>
                 </fieldset>
@@ -385,6 +411,19 @@ function navigateWithSelections(extraParams) {
         });
     });
 
+    // Property-exists facets
+    sectionSidebar.find('.facet[data-facet-type="property_exists"]').each(function() {
+        const facet = $(this);
+        const fd = facet.data('facetData');
+        const selected = facet.find('input.value.selected');
+        if (selected.length) {
+            params.append('property[' + propIndex + '][joiner]', 'and');
+            params.append('property[' + propIndex + '][property]', fd.property_id);
+            params.append('property[' + propIndex + '][type]', selected.data('type'));
+            propIndex++;
+        }
+    });
+
     // Resource template
     sectionSidebar.find('input.resource-template.selected').each(function() {
         params.append('resource_template_id[]', $(this).data('templateId'));
@@ -452,7 +491,20 @@ function handleFacetClick(e, inputSelector) {
 container.on('click', 'input.resource-class', function(e) { handleFacetClick(e, 'input.resource-class'); });
 container.on('click', 'input.item-set', function(e) { handleFacetClick(e, 'input.item-set'); });
 container.on('click', 'input.resource-template', function(e) { handleFacetClick(e, 'input.resource-template'); });
-container.on('click', 'input.value[type="checkbox"], input.value[type="radio"]', function(e) { handleFacetClick(e, 'input.value'); });
+container.on('click', '.facet[data-facet-type="value"] input.value[type="checkbox"], .facet[data-facet-type="value"] input.value[type="radio"]', function(e) { handleFacetClick(e, 'input.value'); });
+
+// Property-exists facets: single-select radios with toggle-off
+container.on('click', '.facet[data-facet-type="property_exists"] input.value', function(e) {
+    const thisInput = $(this);
+    const facet = thisInput.closest('.facet');
+    // Deselect other radios in this facet
+    facet.find('input.value').not(thisInput).removeClass('selected').prop('checked', false);
+    thisInput.toggleClass('selected');
+    if (!thisInput.hasClass('selected')) {
+        thisInput.prop('checked', false);
+    }
+    navigateWithSelections();
+});
 
 // Dropdowns
 container.on('change', 'select.resource-class, select.item-set, select.value', function() {

@@ -1,10 +1,11 @@
+{%- if collection.handle == 'all' -%}
+  <meta http-equiv="refresh" content="0;url=https://catalog.jonsarkin.com/faceted-browse/2?property%5B0%5D%5Bjoiner%5D=and&property%5B0%5D%5Bproperty%5D=388&property%5B0%5D%5Btype%5D=ex">
+  <script>window.location.replace('https://catalog.jonsarkin.com/faceted-browse/2?property%5B0%5D%5Bjoiner%5D=and&property%5B0%5D%5Bproperty%5D=388&property%5B0%5D%5Btype%5D=ex');</script>
+{%- endif -%}
 {%- paginate collection.products by section.settings.products_per_page -%}
 <section class="section">
   <div class="page-width">
     {%- assign display_title = collection.title -%}
-    {%- if collection.handle == 'all' -%}
-      {%- assign display_title = 'Available Works' -%}
-    {%- endif -%}
     <div class="collection-header text-center">
       <h1>{{ display_title }}</h1>
       {%- if collection.description != blank -%}

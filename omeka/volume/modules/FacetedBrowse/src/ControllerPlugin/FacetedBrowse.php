@@ -185,7 +185,7 @@ class FacetedBrowse extends AbstractPlugin
 
             $type = $facet->type();
 
-            if (!in_array($type, ['resource_class', 'item_set', 'resource_template', 'value'])) {
+            if (!in_array($type, ['resource_class', 'item_set', 'resource_template', 'value', 'property_exists'])) {
                 continue;
             }
 
@@ -265,6 +265,32 @@ class FacetedBrowse extends AbstractPlugin
                 $facetCounts[$facet->id()] = $this->computeValueFacetCounts(
                     $em, $itemIds, $facet, $baseParams
                 );
+            }
+
+            if ($type === 'property_exists') {
+                $propertyId = $facet->data('property_id');
+                if (!$propertyId) {
+                    continue;
+                }
+                // Count items that HAVE a value for this property
+                $dql = 'SELECT COUNT(DISTINCT v.resource) AS cnt
+                        FROM Omeka\Entity\Value v
+                        WHERE v.resource IN (:itemIds) AND v.property = :propertyId';
+                $existsCount = (int) $em->createQuery($dql)
+                    ->setParameter('itemIds', $itemIds)
+                    ->setParameter('propertyId', $propertyId)
+                    ->getSingleScalarResult();
+
+                $totalItems = count($itemIds);
+                if ($itemIds === [0]) {
+                    $totalItems = 0;
+                }
+                $notExistsCount = $totalItems - $existsCount;
+
+                $facetCounts[$facet->id()] = [
+                    'ex' => $existsCount,
+                    'nex' => $notExistsCount,
+                ];
             }
         }
 

@@ -1,0 +1,57 @@
+<?php
+/**
+ * Sarkin-Jeppesen — Property Exists facet render
+ *
+ * Two-option radio list: "exists" / "not exists" with counts.
+ * Hides options with 0 count. Restores selection from URL params.
+ */
+$counts = $this->placeholder('facetCounts')->getValue() ?: [];
+$myCounts = $counts[$facet->id()] ?? [];
+
+$existsCount = $myCounts['ex'] ?? 0;
+$notExistsCount = $myCounts['nex'] ?? 0;
+
+$labelExists = $facet->data('label_exists') ?: 'Has value';
+$labelNotExists = $facet->data('label_not_exists') ?: 'No value';
+
+// Check URL params for active selection
+$activeFilters = $this->placeholder('activeFilters')->getValue() ?: [];
+$activeProps = is_array($activeFilters['property'] ?? null) ? $activeFilters['property'] : [];
+
+$selectedType = null;
+$propertyId = $facet->data('property_id');
+foreach ($activeProps as $propFilter) {
+    if (!isset($propFilter['property'])) continue;
+    if ((string)$propFilter['property'] !== (string)$propertyId) continue;
+    if (isset($propFilter['type']) && in_array($propFilter['type'], ['ex', 'nex'])) {
+        $selectedType = $propFilter['type'];
+        break;
+    }
+}
+
+$options = [];
+if ($existsCount > 0) {
+    $options[] = ['type' => 'ex', 'label' => $labelExists, 'count' => $existsCount];
+}
+if ($notExistsCount > 0) {
+    $options[] = ['type' => 'nex', 'label' => $labelNotExists, 'count' => $notExistsCount];
+}
+?>
+<?php if ($options): ?>
+<ul class="select-list">
+    <?php foreach ($options as $option): ?>
+    <li class="select-list-item">
+        <label>
+            <input
+                class="value<?php echo $selectedType === $option['type'] ? ' selected' : ''; ?>"
+                type="radio"
+                name="<?php echo sprintf('property_exists_%s', $facet->id()); ?>"
+                data-type="<?php echo $this->escapeHtml($option['type']); ?>"
+                <?php echo $selectedType === $option['type'] ? 'checked' : ''; ?>>
+                <?php echo $this->escapeHtml($option['label']); ?>
+                <span class="facet-count">(<?php echo $option['count']; ?>)</span>
+        </label>
+    </li>
+    <?php endforeach; ?>
+</ul>
+<?php endif; ?>

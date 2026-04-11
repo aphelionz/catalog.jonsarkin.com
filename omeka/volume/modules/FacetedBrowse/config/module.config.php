@@ -11,6 +11,7 @@ return [
             'resource_template' => Service\FacetType\FacetTypeFactory::class,
             'item_set' => Service\FacetType\FacetTypeFactory::class,
             'full_text' => Service\FacetType\FacetTypeFactory::class,
+            'property_exists' => Service\FacetType\FacetTypeFactory::class,
         ],
     ],
     'faceted_browse_column_types' => [
