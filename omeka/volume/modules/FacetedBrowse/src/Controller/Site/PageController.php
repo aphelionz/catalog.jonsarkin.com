@@ -80,6 +80,80 @@ class PageController extends AbstractActionController
         return [$items, $totalResults];
     }
 
+    /**
+     * Re-sort and paginate items by date with undated items always last.
+     *
+     * Items without a dcterms:date value sort to the end regardless of
+     * sort direction, so chronological browsing isn't polluted by undated work.
+     *
+     * @param array $query The API search query params
+     * @param string $resourceType The resource type (e.g. 'items')
+     * @param string $sortOrder 'asc' or 'desc'
+     * @param int $page Current page number
+     * @param int $perPage Items per page
+     * @return array [items, totalResults]
+     */
+    protected function searchSortedByDate(array $query, string $resourceType, string $sortOrder, int $page, int $perPage): array
+    {
+        // Get all matching item IDs (no pagination, no sort)
+        $query['sort_by'] = 'id';
+        unset($query['page'], $query['per_page'], $query['sort_order'], $query['limit'], $query['offset']);
+        $allIds = $this->api()
+            ->search($resourceType, $query, ['returnScalar' => 'id'])
+            ->getContent();
+        $totalResults = count($allIds);
+
+        if (!$allIds) {
+            return [[], 0];
+        }
+
+        // Sort by dcterms:date (property 7) with undated items always last
+        $conn = $this->getEvent()->getApplication()
+            ->getServiceManager()->get('Omeka\Connection');
+        $placeholders = implode(',', array_fill(0, count($allIds), '?'));
+        $dir = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
+        $offset = ($page - 1) * $perPage;
+
+        // Undated items always sort last: CASE yields 0 for dated, 1 for undated.
+        // The first ORDER BY column is always ASC, so dated (0) precedes undated (1)
+        // regardless of the $dir applied to the actual date value.
+        $sql = "SELECT r.id
+                FROM resource r
+                LEFT JOIN value d ON d.resource_id = r.id AND d.property_id = 7
+                WHERE r.id IN ($placeholders)
+                GROUP BY r.id
+                ORDER BY (CASE WHEN MAX(d.value) IS NULL OR MAX(d.value) = '' OR MAX(d.value) = '∅' THEN 1 ELSE 0 END),
+                         MAX(d.value) $dir,
+                         r.id DESC
+                LIMIT $perPage OFFSET $offset";
+
+        $stmt = $conn->executeQuery($sql, array_values($allIds));
+        $sortedIds = $stmt->fetchFirstColumn();
+
+        if (!$sortedIds) {
+            return [[], $totalResults];
+        }
+
+        // Fetch the actual items in the sorted order
+        $items = [];
+        $response = $this->api()->search($resourceType, [
+            'id' => $sortedIds,
+            'sort_by' => 'id',
+            'site_id' => $query['site_id'] ?? null,
+        ]);
+        $itemsById = [];
+        foreach ($response->getContent() as $item) {
+            $itemsById[$item->id()] = $item;
+        }
+        foreach ($sortedIds as $id) {
+            if (isset($itemsById[$id])) {
+                $items[] = $itemsById[$id];
+            }
+        }
+
+        return [$items, $totalResults];
+    }
+
     public function pageAction()
     {
         $pageId = $this->params('page-id');
@@ -147,13 +221,19 @@ class PageController extends AbstractActionController
             );
 
             $activeSortBy = $this->params()->fromQuery('sort_by', $sortBy);
-            if ($activeSortBy === 'size') {
+            if ($activeSortBy === 'size' || $activeSortBy === 'dcterms:date') {
                 $activeSortOrder = $this->params()->fromQuery('sort_order', $sortOrder);
                 $currentPage = (int) $this->params()->fromQuery('page', 1);
                 $perPage = (int) ($this->params()->fromQuery('per_page') ?: $this->settings()->get('pagination_per_page', 25));
-                [$items, $totalResults] = $this->searchSortedBySize(
-                    $query, $page->resourceType(), $activeSortOrder, $currentPage, $perPage
-                );
+                if ($activeSortBy === 'size') {
+                    [$items, $totalResults] = $this->searchSortedBySize(
+                        $query, $page->resourceType(), $activeSortOrder, $currentPage, $perPage
+                    );
+                } else {
+                    [$items, $totalResults] = $this->searchSortedByDate(
+                        $query, $page->resourceType(), $activeSortOrder, $currentPage, $perPage
+                    );
+                }
                 $this->paginator($totalResults, $currentPage);
             } else {
                 $response = $this->api()->search($page->resourceType(), $query);
