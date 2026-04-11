@@ -1846,8 +1846,8 @@ abbr[title] {
 }
 
 .faceted-browse-page #section-sidebar {
-  border: 2px solid var(--border-color);
-  padding: var(--gutter);
+  border: none;
+  padding: 0;
 }
 
 .faceted-browse-page #section-content {
@@ -1886,39 +1886,39 @@ abbr[title] {
 }
 
 .faceted-browse-page .facets-container > legend {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   letter-spacing: 0.04em;
   margin-bottom: var(--gutter);
 }
 
 .faceted-browse-page .category,
 .faceted-browse-page .facet {
-  margin-bottom: var(--gutter);
-  padding-bottom: var(--gutter);
+  margin-bottom: calc(var(--gutter) * 1.5);
+  padding-bottom: calc(var(--gutter) * 1.5);
   border-bottom: 1px solid var(--border-light);
 }
 
 .faceted-browse-page .facet:last-child { border-bottom: none; }
 
 .faceted-browse-page .facet legend {
-  font-size: 0.7rem;
-  margin-bottom: 4px;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
 }
 
 .faceted-browse-page .facet label {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   cursor: pointer;
 }
 
 .faceted-browse-page .facet label input {
-  margin: 0 6px 0 0;
+  margin: 0 8px 0 0;
 }
 
 .faceted-browse-page .facet-count {
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   margin-left: 1px;
 }
 
@@ -1929,7 +1929,7 @@ abbr[title] {
   padding: 0;
 }
 
-.faceted-browse-page .select-list-item { padding: 3px 0; }
+.faceted-browse-page .select-list-item { padding: 4px 0; }
 
 .faceted-browse-page .select-list-expand,
 .faceted-browse-page .select-list-collapse {
