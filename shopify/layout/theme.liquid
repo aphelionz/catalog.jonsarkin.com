@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ request.locale.iso_code }}">
 <head>
-  <script>(function(){var c=document.cookie.match('(?:^|; )sarkin-theme=([^;]*)');var t=(c&&c[1])||localStorage.getItem('sarkin-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.cookie='sarkin-theme='+t+';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';})()</script>
+  <script>(function(){var m=window.matchMedia('(prefers-color-scheme: dark)');document.documentElement.setAttribute('data-theme',m.matches?'dark':'light');m.addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light')});})()</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>
@@ -243,45 +243,6 @@
       });
     }
 
-    // ── Theme toggle (light/dark) ──
-    var themeToggle = document.getElementById('theme-toggle');
-    var mobileThemeToggle = document.getElementById('mobile-theme-toggle');
-
-    function updateThemeLabels(theme) {
-      var label = theme === 'dark' ? '[light]' : '[dark]';
-      if (themeToggle) themeToggle.textContent = label;
-      if (mobileThemeToggle) mobileThemeToggle.textContent = label;
-    }
-
-    if (themeToggle) {
-      var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      updateThemeLabels(currentTheme);
-
-      themeToggle.addEventListener('click', function (e) {
-        e.preventDefault();
-        var current = document.documentElement.getAttribute('data-theme') || 'dark';
-        var next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('sarkin-theme', next);
-        document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
-        updateThemeLabels(next);
-      });
-    }
-
-    if (mobileThemeToggle) {
-      var mobileCurrentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      updateThemeLabels(mobileCurrentTheme);
-
-      mobileThemeToggle.addEventListener('click', function (e) {
-        e.preventDefault();
-        var current = document.documentElement.getAttribute('data-theme') || 'dark';
-        var next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('sarkin-theme', next);
-        document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
-        updateThemeLabels(next);
-      });
-    }
   })();
   </script>
 </body>

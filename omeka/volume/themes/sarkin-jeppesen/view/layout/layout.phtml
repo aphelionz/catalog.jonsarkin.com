@@ -46,7 +46,7 @@ try {
 <!DOCTYPE html>
 <?php echo $this->htmlElement('html'); ?>
 <head>
-    <script>(function(){var c=document.cookie.match('(?:^|; )sarkin-theme=([^;]*)');var t=(c&&c[1])||localStorage.getItem('sarkin-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.cookie='sarkin-theme='+t+';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';})()</script>
+    <script>(function(){var m=window.matchMedia('(prefers-color-scheme: dark)');document.documentElement.setAttribute('data-theme',m.matches?'dark':'light');m.addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light')});})()</script>
     <?php echo $this->headMeta(); ?>
     <?php echo $this->headTitle(); ?>
     <?php echo $this->headLink(); ?>
@@ -77,7 +77,6 @@ try {
                     <a href="<?php echo $this->url('site/collector-submit', ['site-slug' => $site->slug()]); ?>" class="pill-button">[submit]</a>
                     <a href="#" class="pill-button" id="global-share">[share]</a>
                     <a href="<?php echo $advancedUrl; ?>" class="pill-button">[visual search]</a>
-                    <a href="#" class="pill-button" id="theme-toggle">[dark]</a>
                 </div>
                 <?php } catch (\Exception $e) { /* SimilarPieces not installed */ } ?>
             </div>
@@ -118,7 +117,6 @@ try {
                 <a href="<?php echo $this->url('site/collector-submit', ['site-slug' => $site->slug()]); ?>">[submit]</a>
                 <a href="#" id="mobile-share">[share]</a>
                 <a href="<?php echo $mobileAdvancedUrl; ?>">[visual search]</a>
-                <a href="#" id="mobile-theme-toggle">[dark]</a>
             </div>
             <?php } catch (\Exception $e) { /* SimilarPieces not installed */ } ?>
             <?php

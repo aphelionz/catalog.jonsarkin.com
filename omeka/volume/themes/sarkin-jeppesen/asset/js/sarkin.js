@@ -176,23 +176,6 @@
         });
     }
 
-    // ── Theme toggle (light/dark) ──
-    var themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        // Set initial label based on current theme
-        var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-        themeToggle.textContent = currentTheme === 'light' ? '[dark]' : '[light]';
-
-        themeToggle.addEventListener('click', function (e) {
-            e.preventDefault();
-            var current = document.documentElement.getAttribute('data-theme') || 'light';
-            var next = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('sarkin-theme', next);
-            document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
-            themeToggle.textContent = next === 'light' ? '[dark]' : '[light]';
-        });
-    }
 
     // ── Mobile share button ──
     var mobileShareBtn = document.getElementById('mobile-share');
@@ -210,33 +193,6 @@
         });
     }
 
-    // ── Mobile theme toggle ──
-    var mobileThemeToggle = document.getElementById('mobile-theme-toggle');
-    if (mobileThemeToggle) {
-        var mobileCurrentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-        mobileThemeToggle.textContent = mobileCurrentTheme === 'light' ? '[dark]' : '[light]';
-
-        mobileThemeToggle.addEventListener('click', function (e) {
-            e.preventDefault();
-            var current = document.documentElement.getAttribute('data-theme') || 'light';
-            var next = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('sarkin-theme', next);
-            document.cookie = 'sarkin-theme=' + next + ';domain=.jonsarkin.com;path=/;max-age=31536000;SameSite=Lax';
-            var label = next === 'light' ? '[dark]' : '[light]';
-            mobileThemeToggle.textContent = label;
-            if (themeToggle) themeToggle.textContent = label;
-        });
-
-        // Keep desktop toggle in sync when clicked
-        if (themeToggle) {
-            var origHandler = themeToggle.onclick;
-            themeToggle.addEventListener('click', function () {
-                var next = document.documentElement.getAttribute('data-theme') || 'light';
-                mobileThemeToggle.textContent = next === 'light' ? '[dark]' : '[light]';
-            });
-        }
-    }
 
     // ── Similar pieces (async) ──
     var similarSection = document.getElementById('similar-pieces');
