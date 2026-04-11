@@ -910,6 +910,118 @@ abbr[title] {
   }
 }
 
+/* ── Exhibition page ── */
+
+.record-header--exhibition {
+  border: 2px solid var(--border-color);
+  padding: 2rem;
+}
+
+.record-header--exhibition h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0 0;
+  color: var(--text);
+}
+
+.exhibition-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.2em 0.6em;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.exhibition-venue {
+  font-size: 1.1rem;
+  margin: 0.75rem 0 0 0;
+  color: var(--text);
+}
+
+.exhibition-date {
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0 0;
+  color: var(--text-muted);
+}
+
+.exhibition-description {
+  border: 2px solid var(--border-color);
+  border-top: none;
+  padding: 1.5rem 2rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.exhibition-works {
+  border: 2px solid var(--border-color);
+  border-top: none;
+  padding: 1.5rem 2rem;
+}
+
+.exhibition-works h2 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 1rem 0;
+  color: var(--text-muted);
+}
+
+.exhibition-works-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.exhibition-work-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.exhibition-work-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+}
+
+.exhibition-work-card span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exhibition-work-card:hover img {
+  border-color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .record-header--exhibition {
+    padding: 1.25rem;
+  }
+  .record-header--exhibition h1 {
+    font-size: 1.4rem;
+  }
+  .exhibition-description {
+    padding: 1.25rem;
+  }
+  .exhibition-works {
+    padding: 1.25rem;
+  }
+  .exhibition-works-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}
+
 /* ── Item-with-metadata block (About page bios) ── */
 
 .item-with-metadata {

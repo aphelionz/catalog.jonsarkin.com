@@ -60,16 +60,14 @@ docker compose restart omeka
 ```
 (Doctrine cache may serve stale data.)
 
-### Step 5 — Push schema to production
+### Step 5 — Deploy to production
 
 > **Requires user approval.**
 
-```bash
-make push-schema
-```
-
-Only needed if the change affects schema tables (custom vocabs, resource
-templates, faceted browse config, item sets). Not needed for item data changes.
+DB schema changes go live via `make deploy` (which pushes code and restarts
+Omeka on prod). Schema tables (faceted browse, resource templates, item sets,
+custom vocabs, navigation) are part of the deployment — there is no separate
+push-schema step.
 
 ---
 
@@ -93,4 +91,4 @@ templates, faceted browse config, item sets). Not needed for item data changes.
 - **JSON `\n` escaping** — double-backslash in heredocs
 - **Doctrine cache** — restart `omeka` container if changes don't appear
 - **Faceted browse facet positions** — facets have a `position` column; new facets need a position and may require shifting existing ones
-- **Item set push** — uses `SET FOREIGN_KEY_CHECKS = 0` to avoid cascade deletes
+- **Item set inserts** — use `SET FOREIGN_KEY_CHECKS = 0` if needed to avoid cascade deletes on `item_item_set`

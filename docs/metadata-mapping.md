@@ -55,7 +55,7 @@ Resource class: `schema:VisualArtwork` (id 225)
 |-------|----------|----|------|----------|-------------|----------------|
 | Inscriptions | `bibo:annotates` | 57 | Text | No | **Inscriptions** (alt label) | Rare. Only for text where Jon is directly addressing the viewer/recipient (dedications, messages). Most text is part of the art itself → use Transcription. |
 | Transcription | `bibo:content` | 91 | Text | No | content | Full text transcription of all words/text in the artwork. Include title text, marginal text, repeated phrases — everything visible. Use `[description]` for non-text elements like `[fish drawing]`. |
-| Exhibition History | `bibo:presentedAt` | 74 | Text | No | presented at | Repeatable. One value per show: "Solo Show Title, Gallery Name, City, Year" |
+| Exhibition History | `bibo:presentedAt` | 74 | Resource:Item | No | presented at | Repeatable. Resource link to an Exhibition item (template 4, class `schema:ExhibitionEvent`). |
 | Bibliography | `dcterms:bibliographicCitation` | 48 | Text | No | Bibliographic Citation | Repeatable. Standard citation format per entry. |
 | Description | `dcterms:description` | 4 | Text | No | Description | General notes, context, scholarly commentary about the work. |
 
@@ -65,6 +65,23 @@ Resource class: `schema:VisualArtwork` (id 225)
 |-------|----------|----|------|----------|-------------|----------------|
 | Motifs | `dcterms:subject` | 3 | CustomVocab:"Motifs" | No | Subject | Repeatable. Pick from controlled list: Eyes, Fish, Faces, Hands, etc. |
 | Display & Care | `curation:note` | 1710 | Text | No | **Display & Care** (alt label) | Conservation notes: "Light-sensitive. Recommend limited light exposure and archival storage." |
+
+## Resource Template: "Exhibition"
+
+Resource class: `schema:ExhibitionEvent` (id 879), Template ID: 4
+
+| Field | Property | ID | Type | Required | Admin Label | Entry Guidance |
+|-------|----------|----|------|----------|-------------|----------------|
+| Title | `dcterms:title` | 1 | Text | Yes | Title | Exhibition name, e.g. "SuperArtist", "How to Draw a Cactus" |
+| Date | `dcterms:date` | 7 | Text | No | Date | Date or date range: "July 2006", "April–August 2006", "Fall 2024 – March 2025" |
+| Venue | `schema:location` | 230 | Text | No | Venue | Venue name, City, State/Country: "DeCordova Museum, Lincoln, MA" |
+| Exhibition Type | `dcterms:type` | 8 | Text | No | Exhibition Type | "Solo" or "Group" |
+| Description | `dcterms:description` | 4 | Text | No | Description | Notes, context, significance |
+| Organizer | `schema:organizer` | 1202 | Text | No | organizer | Who organized the exhibition |
+
+Artworks link to exhibitions via `bibo:presentedAt` (property 74) as resource links. The exhibition item page shows a reverse-lookup grid of all linked artworks.
+
+All exhibitions belong to the "Exhibitions" item set (id 11307).
 
 ## Custom Vocabularies
 

@@ -65,6 +65,7 @@ $resourceTemplate = $item->resourceTemplate();
 $isWriting = ($resourceTemplate && $resourceTemplate->id() === 3);
 $resourceClass = $item->resourceClass();
 $isPerson  = ($resourceClass && $resourceClass->id() === 119); // schema:Person
+$isExhibition = ($resourceClass && $resourceClass->id() === 879); // schema:ExhibitionEvent
 $genre     = $val('schema:genre');
 $fullText  = $val('bibo:content');
 $sourceUrl  = $val('dcterms:source');
@@ -102,6 +103,13 @@ elseif ($surface) $mediumFull = strip_tags($surface);
 if ($isPerson) {
     $pageLabel = $item->displayTitle() ?: ('Item #' . $item->id());
     $pageLabelLong = $pageLabel;
+} elseif ($isExhibition) {
+    $pageLabel = $item->displayTitle() ?: ('Exhibition #' . $item->id());
+    $pageLabelLong = $pageLabel;
+    $venue = $val('schema:location');
+    $exhibitionType = $type; // Solo or Group
+    if ($venue) $pageLabelLong .= ' — ' . strip_tags($venue);
+    if ($date)  $pageLabelLong .= ', ' . strip_tags($date);
 } elseif ($isWriting) {
     // Writings have real titles
     $pageLabel = $item->displayTitle() ?: ($identifier ?: ('Item #' . $item->id()));
@@ -138,6 +146,7 @@ $provenanceVals = $allVals('dcterms:provenance');
 $inscriptions    = $allVals('bibo:annotates');
 $transcriptionRaw = $val('bibo:content');
 $transcription   = in_array(strtolower(trim(strip_tags($transcriptionRaw))), ['∅', 'no text', ''], true) ? '' : $transcriptionRaw;
+$exhibitionVals  = $item->value('bibo:presentedAt', ['all' => true, 'default' => []]);
 $exhibitions     = $allVals('bibo:presentedAt');
 $bibliography    = $allVals('dcterms:bibliographicCitation');
 $description     = $val('dcterms:description');
@@ -163,6 +172,11 @@ $this->headTitle(strip_tags($pageLabelLong) . ' — Jon Sarkin');
 
 if ($isPerson) {
     $metaDesc = strip_tags($pageLabel) . ' — artist biography, photographs, exhibition history. Jon Sarkin Catalog Raisonné.';
+} elseif ($isExhibition) {
+    $metaDesc = strip_tags($pageLabel)
+        . ($venue ? '. ' . strip_tags($venue) : '')
+        . ($date ? " ($date)" : '')
+        . '. Exhibition history — Jon Sarkin Catalog Raisonné.';
 } elseif ($isWriting) {
     $metaDesc = ($creator ?: 'Jon Sarkin') . '. ' . strip_tags($pageLabel)
         . ($genre ? ". $genre" : '')
@@ -202,6 +216,17 @@ if ($isPerson) {
     ];
     if ($description) $jsonLd['description'] = strip_tags($description);
     if ($imageUrl)    $jsonLd['image'] = $imageUrl;
+    $jsonLd['url'] = $this->serverUrl(true);
+} elseif ($isExhibition) {
+    $jsonLd = [
+        '@context'  => 'https://schema.org',
+        '@type'     => 'ExhibitionEvent',
+        'name'      => strip_tags($pageLabel),
+    ];
+    if ($date)  $jsonLd['startDate'] = strip_tags($date);
+    if ($venue) $jsonLd['location'] = ['@type' => 'Place', 'name' => strip_tags($venue)];
+    if ($description) $jsonLd['description'] = strip_tags($description);
+    $jsonLd['about'] = ['@type' => 'Person', 'name' => 'Jon Sarkin'];
     $jsonLd['url'] = $this->serverUrl(true);
 } elseif ($isWriting) {
     $jsonLd = [
@@ -368,6 +393,63 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     </section>
     <?php endif; ?>
 
+    <?php elseif ($isExhibition): ?>
+    <!-- ═══ EXHIBITION HEADER ═══ -->
+    <header class="record-header record-header--exhibition">
+        <div>
+            <?php if ($exhibitionType): ?>
+            <span class="exhibition-badge exhibition-badge--<?php echo strtolower(strip_tags($exhibitionType)); ?>"><?php echo $escape(strip_tags($exhibitionType)); ?></span>
+            <?php endif; ?>
+            <h1 id="record-title"><?php echo $escape($pageLabel); ?></h1>
+            <?php if ($venue): ?>
+            <p class="exhibition-venue"><?php echo $escape(strip_tags($venue)); ?></p>
+            <?php endif; ?>
+            <?php if ($date): ?>
+            <p class="exhibition-date"><?php echo $escape(strip_tags($date)); ?></p>
+            <?php endif; ?>
+        </div>
+    </header>
+
+    <?php if ($description): ?>
+    <section class="exhibition-description">
+        <div><?php echo nl2br($escape(strip_tags($description))); ?></div>
+    </section>
+    <?php endif; ?>
+
+    <!-- ═══ EXHIBITION WORKS ═══ -->
+    <?php
+    // Reverse lookup: find all artworks linked to this exhibition via bibo:presentedAt
+    $linkedItems = $this->api()->search('items', [
+        'property' => [[
+            'property' => 74,
+            'type'     => 'res',
+            'text'     => $item->id(),
+        ]],
+        'sort_by'  => 'created',
+        'per_page' => 100,
+    ])->getContent();
+    ?>
+    <?php if (!empty($linkedItems)): ?>
+    <section class="exhibition-works" aria-labelledby="exhibition-works-heading">
+        <h2 id="exhibition-works-heading"><?php echo $translate('Works in this exhibition'); ?></h2>
+        <div class="exhibition-works-grid">
+            <?php foreach ($linkedItems as $li):
+                $liMedia = $li->primaryMedia();
+                $liThumb = $liMedia ? ($liMedia->thumbnailUrl('medium') ?: $liMedia->thumbnailUrl('large')) : '';
+                $liTitle = $li->displayTitle();
+                $liUrl   = $li->siteUrl($this->currentSite()->slug());
+            ?>
+            <a href="<?php echo $escape($liUrl); ?>" class="exhibition-work-card">
+                <?php if ($liThumb): ?>
+                <img src="<?php echo $escape($liThumb); ?>" alt="<?php echo $escape($liTitle); ?>" loading="lazy" />
+                <?php endif; ?>
+                <span><?php echo $escape($liTitle); ?></span>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
+
     <?php elseif ($isWriting): ?>
     <header class="record-header record-header--writing">
         <div>
@@ -447,7 +529,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
     </header>
     <?php endif; ?>
 
-    <?php if (!$isPerson): ?>
+    <?php if (!$isPerson && !$isExhibition): ?>
     <!-- ═══ METADATA BAR ═══ -->
     <section class="record-metadata" aria-labelledby="object-metadata-heading">
         <h2 id="object-metadata-heading" class="sr-only"><?php echo $translate('Object metadata'); ?></h2>
@@ -604,9 +686,21 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <div class="item-condition">
                 <h3>Exhibition history</h3>
                 <ul>
-                    <?php foreach ($exhibitions as $exh): ?>
-                        <li><?php echo $exh; ?></li>
-                    <?php endforeach; ?>
+                    <?php foreach ($exhibitionVals as $exhVal):
+                        $exhResource = method_exists($exhVal, 'valueResource') ? $exhVal->valueResource() : null;
+                        if ($exhResource):
+                            $exhUrl = $exhResource->siteUrl($this->currentSite()->slug());
+                            $exhTitle = $exhResource->displayTitle();
+                            $exhDate = $exhResource->value('dcterms:date');
+                            $exhVenue = $exhResource->value('schema:location');
+                            $exhLabel = $escape($exhTitle);
+                            if ($exhVenue) $exhLabel .= ', ' . $escape(strip_tags((string) $exhVenue));
+                            if ($exhDate) $exhLabel .= ' (' . $escape(strip_tags((string) $exhDate)) . ')';
+                    ?>
+                        <li><a href="<?php echo $escape($exhUrl); ?>"><?php echo $exhLabel; ?></a></li>
+                    <?php else: ?>
+                        <li><?php echo $escape(trim((string) $exhVal)); ?></li>
+                    <?php endif; endforeach; ?>
                 </ul>
             </div>
             <?php endif; ?>
@@ -742,7 +836,7 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <div><?php echo $rights; ?></div>
     </footer>
     <?php endif; ?>
-    <?php endif; /* !$isPerson */ ?>
+    <?php endif; /* !$isPerson && !$isExhibition */ ?>
 
 </article>
 
