@@ -38,17 +38,16 @@ class PageController extends AbstractActionController
             ->getServiceManager()->get('Omeka\Connection');
         $placeholders = implode(',', array_fill(0, count($allIds), '?'));
         $dir = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
-        // Items without dimensions sort last
-        $nullSort = $dir === 'DESC' ? 1 : 0;
         $offset = ($page - 1) * $perPage;
 
+        // Items without dimensions always sort last (CASE 0=has size, 1=missing).
         $sql = "SELECT r.id
                 FROM resource r
                 LEFT JOIN value h ON h.resource_id = r.id AND h.property_id = 603
                 LEFT JOIN value w ON w.resource_id = r.id AND w.property_id = 1129
                 WHERE r.id IN ($placeholders)
                 GROUP BY r.id
-                ORDER BY (CASE WHEN h.value IS NULL OR w.value IS NULL THEN $nullSort ELSE 1-$nullSort END),
+                ORDER BY (CASE WHEN h.value IS NULL OR w.value IS NULL THEN 1 ELSE 0 END),
                          (MAX(h.value) * MAX(w.value)) $dir,
                          r.id DESC
                 LIMIT $perPage OFFSET $offset";
@@ -195,15 +194,16 @@ class PageController extends AbstractActionController
             );
 
             // Browse results (same logic as browseAction)
-            $browseDefaults = $this->siteSettings()->get('browse_defaults_public_items');
-            $sortBy = $browseDefaults['sort_by'] ?? 'created';
+            // Default to Year ASC (French tradition: oldest first)
+            $sortBy = 'dcterms:date';
+            $sortOrder = 'asc';
             $sortByValueOptions = $this->facetedBrowse()->getSortByValueOptions($category);
-            $sortBy = array_key_exists($category->sortBy(), $sortByValueOptions)
-                ? $category->sortBy()
-                : $sortBy;
-            $sortOrder = in_array($category->sortOrder(), ['desc', 'asc'])
-                ? $category->sortOrder()
-                : ($browseDefaults['sort_order'] ?? 'desc');
+            if (array_key_exists($category->sortBy(), $sortByValueOptions)) {
+                $sortBy = $category->sortBy();
+            }
+            if (in_array($category->sortOrder(), ['desc', 'asc'])) {
+                $sortOrder = $category->sortOrder();
+            }
             $this->setBrowseDefaults($sortBy, $sortOrder);
 
             $categoryResourceIds = null;
