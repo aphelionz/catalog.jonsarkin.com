@@ -314,20 +314,13 @@ abbr[title] {
   text-decoration: none;
 }
 
-.site-nav .active > a,
-.site-nav .active > .submenu-toggle,
+/* Nav active states — explicit PHP classes only, not Omeka's .active
+   (which matches URLs too broadly when multiple nav items share /faceted-browse/2) */
 .site-nav.submit-active > ul > li:first-child > a,
 .site-nav.submit-active > ul > li:first-child > .submenu-toggle,
 .site-nav.available-works-active > ul > li:nth-child(2) > a {
   background: var(--bg-surface);
   color: var(--text);
-}
-
-/* Available Works shares /faceted-browse/2 with Catalog — Omeka marks both .active.
-   Override: only highlight Available Works via the explicit class, not the generic .active. */
-.site-nav:not(.available-works-active) > ul > li:nth-child(2).active > a {
-  background: transparent;
-  color: var(--text-muted);
 }
 
 /* Mobile nav toggle — hidden on desktop */
