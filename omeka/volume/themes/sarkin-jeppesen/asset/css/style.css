@@ -2142,7 +2142,14 @@ abbr[title] {
 }
 .faceted-browse-page .export-bar {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.faceted-browse-page .export-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
 }
 .faceted-browse-page .bulk-export { display: contents; }
 .faceted-browse-page .bulk-export ul.exporters {

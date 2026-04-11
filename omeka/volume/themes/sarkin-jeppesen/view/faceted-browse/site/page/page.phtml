@@ -69,8 +69,8 @@ if ($category) {
     <h2><?php echo $typeLabel; ?></h2>
     <?php if ($apiExportUrl): ?>
     <div class="export-bar">
-        <a href="#" class="pill-button export-csv-btn">[export csv]</a>
-        <a href="<?php echo $escape($apiExportUrl); ?>" class="pill-button" target="_blank">[export json]</a>
+        <span class="export-label">Export:</span> <a href="#" class="pill-button export-csv-btn">[csv]</a>
+        <a href="<?php echo $escape($apiExportUrl); ?>" class="pill-button" target="_blank">[json]</a>
     </div>
     <?php endif; ?>
 </div>
