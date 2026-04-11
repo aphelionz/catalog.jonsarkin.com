@@ -89,8 +89,17 @@ try {
         <?php
         // Mark "Catalog" nav active on submit page (custom controller, not a site page)
         $isSubmitPage = strpos($this->serverUrl(true), '/submit') !== false;
+        // Mark "Available Works" active when filtering by schema:url existence
+        $isAvailableWorksActive = false;
+        $propertyFilters = $this->params()->fromQuery('property', []);
+        foreach ($propertyFilters as $pf) {
+            if (($pf['property'] ?? '') == '388' && ($pf['type'] ?? '') === 'ex') {
+                $isAvailableWorksActive = true;
+                break;
+            }
+        }
         ?>
-        <nav id="site-nav" class="site-nav<?php echo $isSubmitPage ? ' submit-active' : ''; ?>" aria-label="<?php echo $this->translate('Primary navigation'); ?>">
+        <nav id="site-nav" class="site-nav<?php echo $isSubmitPage ? ' submit-active' : ''; ?><?php echo $isAvailableWorksActive ? ' available-works-active' : ''; ?>" aria-label="<?php echo $this->translate('Primary navigation'); ?>">
             <?php echo $site->publicNav()->menu()->renderMenu(null, [
                 'maxDepth' => 1,
             ]); ?>

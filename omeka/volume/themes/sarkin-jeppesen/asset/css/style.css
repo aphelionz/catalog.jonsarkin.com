@@ -317,7 +317,8 @@ abbr[title] {
 .site-nav .active > a,
 .site-nav .active > .submenu-toggle,
 .site-nav.submit-active > ul > li:first-child > a,
-.site-nav.submit-active > ul > li:first-child > .submenu-toggle {
+.site-nav.submit-active > ul > li:first-child > .submenu-toggle,
+.site-nav.available-works-active > ul > li:nth-child(2) > a {
   background: var(--bg-surface);
   color: var(--text);
 }
