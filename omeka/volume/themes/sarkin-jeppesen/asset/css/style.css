@@ -2002,6 +2002,7 @@ abbr[title] {
   font-size: 0.95rem;
   letter-spacing: 0.04em;
   margin-bottom: var(--gutter);
+  display: none; /* redundant on desktop — facets are self-evident */
 }
 
 .faceted-browse-page .category,
