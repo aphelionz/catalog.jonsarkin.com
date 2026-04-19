@@ -27,6 +27,7 @@ PROPERTY_MAP: dict[int, str] = {
     931: "support",
     1129: "width",
     1343: "credit",
+    1424: "box",
     962: "mentions",     # repeatable
     1579: "condition",
     1710: "curation_note",
