@@ -122,12 +122,28 @@ class SubmitController extends AbstractActionController
                 continue;
             }
 
-            $ext = $this->extensionFromMime($mime, $file['name']);
+            $isHeic = in_array($mime, ['image/heic', 'image/heif'], true);
+            $ext = $isHeic ? 'jpg' : $this->extensionFromMime($mime, $file['name']);
             $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));
             $filename = time() . '_' . bin2hex(random_bytes(4)) . '_' . $safeName . '.' . $ext;
             $dest = $uploadDir . '/' . $filename;
 
-            if (move_uploaded_file($file['tmp_name'], $dest)) {
+            if ($isHeic) {
+                // ImageMagick in the Omeka container reads HEIC but cannot write it.
+                // Transcode to JPEG so every downstream path (admin preview, rotation,
+                // Omeka ingest) operates on JPEG — one place to fix, many wins.
+                $cmd = sprintf(
+                    'convert %s -auto-orient -quality 92 %s 2>&1',
+                    escapeshellarg($file['tmp_name']),
+                    escapeshellarg($dest)
+                );
+                exec($cmd, $out, $rc);
+                if ($rc === 0 && file_exists($dest)) {
+                    $saved[] = 'submissions/' . $filename;
+                } else {
+                    error_log('CollectorSubmission HEIC transcode failed: ' . implode("\n", $out));
+                }
+            } elseif (move_uploaded_file($file['tmp_name'], $dest)) {
                 $saved[] = 'submissions/' . $filename;
             }
         }

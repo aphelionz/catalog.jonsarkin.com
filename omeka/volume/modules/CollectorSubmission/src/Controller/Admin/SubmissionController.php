@@ -4,6 +4,8 @@ namespace CollectorSubmission\Controller\Admin;
 
 use Doctrine\DBAL\Connection;
 use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\Validator\Csrf as CsrfValidator;
+use Laminas\View\Model\JsonModel;
 use Laminas\View\Model\ViewModel;
 use Omeka\Stdlib\Mailer;
 
@@ -74,11 +76,129 @@ class SubmissionController extends AbstractActionController
 
         $submission['files'] = json_decode($submission['files'] ?? '[]', true) ?: [];
 
+        // Back-compat: the mapping table arrived in 1.3.0. If the migration hasn't
+        // been applied yet (code deployed, "Update Database" not yet clicked), the
+        // SELECT throws; fall back to the single-item view derived from item_id.
+        try {
+            $items = $this->conn->fetchAllAssociative(
+                'SELECT item_id, sort_order FROM collector_submission_item
+                 WHERE submission_id = ? ORDER BY sort_order',
+                [$id]
+            );
+        } catch (\Throwable $e) {
+            $items = [];
+        }
+        if (empty($items) && !empty($submission['item_id'])) {
+            $items = [['item_id' => (int) $submission['item_id'], 'sort_order' => 0]];
+        }
+        $submission['items'] = $items;
+
+        $csrf = new CsrfValidator(['name' => 'cs_rotate_' . $id, 'timeout' => 3600]);
+        $csrfToken = $csrf->getHash();
+
         $view = new ViewModel([
             'submission' => $submission,
+            'csrfToken' => $csrfToken,
         ]);
         $view->setTemplate('collector-submission/admin/submission/show');
         return $view;
+    }
+
+    public function rotateImageAction()
+    {
+        $id = (int) $this->params('id');
+        $request = $this->getRequest();
+
+        if (!$request->isPost()) {
+            return new JsonModel(['ok' => false, 'error' => 'POST required']);
+        }
+
+        $submission = $this->conn->fetchAssociative(
+            'SELECT * FROM collector_submission WHERE id = ?',
+            [$id]
+        );
+        if (!$submission) {
+            return new JsonModel(['ok' => false, 'error' => 'Submission not found']);
+        }
+
+        if (!empty($submission['item_id'])) {
+            return new JsonModel([
+                'ok' => false,
+                'error' => 'Catalog item already exists — rotate media in the Omeka item editor.',
+            ]);
+        }
+
+        $csrf = new CsrfValidator(['name' => 'cs_rotate_' . $id, 'timeout' => 3600]);
+        $token = $request->getPost('csrf');
+        if (!$token || !$csrf->isValid($token)) {
+            return new JsonModel(['ok' => false, 'error' => 'CSRF token invalid or expired']);
+        }
+
+        $degrees = (int) $request->getPost('degrees');
+        if (!in_array($degrees, [-90, 90, 180], true)) {
+            return new JsonModel(['ok' => false, 'error' => 'Invalid degrees']);
+        }
+        // rotate_hdr.py and `convert` both want positive degrees.
+        $positiveDeg = $degrees < 0 ? 360 + $degrees : $degrees;
+
+        $idx = (int) $request->getPost('index');
+        $files = json_decode($submission['files'] ?? '[]', true) ?: [];
+        if (!isset($files[$idx])) {
+            return new JsonModel(['ok' => false, 'error' => 'Invalid index']);
+        }
+
+        $relPath = $files[$idx];
+        $absPath = OMEKA_PATH . '/files/' . $relPath;
+        if (!file_exists($absPath)) {
+            return new JsonModel(['ok' => false, 'error' => 'File missing on disk']);
+        }
+
+        $ext = strtolower(pathinfo($relPath, PATHINFO_EXTENSION));
+        $dir = dirname($absPath);
+        $tmp = $dir . '/.rot_' . bin2hex(random_bytes(4)) . '.tmp';
+
+        if (in_array($ext, ['jpg', 'jpeg'], true)) {
+            // Lossless rotate + MPF/HDR gain-map reassembly (see CLAUDE.md footgun
+            // on mogrify destroying Apple HDR secondary images).
+            $scriptPath = realpath(__DIR__ . '/../../../scripts/rotate_hdr.py');
+            if (!$scriptPath) {
+                return new JsonModel(['ok' => false, 'error' => 'Rotation script missing']);
+            }
+            $cmd = sprintf(
+                'python3 %s %d %s %s 2>&1',
+                escapeshellarg($scriptPath),
+                $positiveDeg,
+                escapeshellarg($absPath),
+                escapeshellarg($tmp)
+            );
+        } elseif ($ext === 'png') {
+            $cmd = sprintf(
+                'convert %s -rotate %d -auto-orient %s 2>&1',
+                escapeshellarg($absPath),
+                $positiveDeg,
+                escapeshellarg($tmp)
+            );
+        } else {
+            return new JsonModel(['ok' => false, 'error' => 'Unsupported format: ' . $ext]);
+        }
+
+        $out = [];
+        $rc = 0;
+        exec($cmd, $out, $rc);
+        if ($rc !== 0 || !file_exists($tmp) || filesize($tmp) === 0) {
+            @unlink($tmp);
+            return new JsonModel([
+                'ok' => false,
+                'error' => 'Rotation failed: ' . implode(' | ', array_slice($out, -3)),
+            ]);
+        }
+
+        if (!rename($tmp, $absPath)) {
+            @unlink($tmp);
+            return new JsonModel(['ok' => false, 'error' => 'Failed to replace file']);
+        }
+
+        return new JsonModel(['ok' => true]);
     }
 
     public function statusAction()
@@ -165,14 +285,82 @@ class SubmissionController extends AbstractActionController
         }
 
         $files = json_decode($submission['files'] ?? '[]', true) ?: [];
+        // Drop any files that went missing from disk.
+        $files = array_values(array_filter(
+            $files,
+            fn($p) => file_exists(OMEKA_PATH . '/files/' . $p)
+        ));
+        if (empty($files)) {
+            $this->messenger()->addError('No uploaded photos found on disk for this submission.');
+            return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
+        }
 
-        // Build media specs using url ingester (files are served by Apache)
-        $mediaSpecs = [];
-        foreach ($files as $index => $relativePath) {
-            $absPath = OMEKA_PATH . '/files/' . $relativePath;
-            if (!file_exists($absPath)) {
-                continue;
+        $grouping = $request->getPost('grouping', 'one');
+        $splitEach = ($grouping === 'many' && count($files) > 1);
+
+        try {
+            if ($splitEach) {
+                $itemIds = [];
+                foreach ($files as $i => $relativePath) {
+                    $payload = $this->buildItemPayload($submission, [$relativePath], $i + 1, count($files));
+                    $response = $this->api()->create('items', $payload);
+                    $itemId = $response->getContent()->id();
+                    $itemIds[] = $itemId;
+                    $this->conn->insert('collector_submission_item', [
+                        'submission_id' => $id,
+                        'item_id' => $itemId,
+                        'sort_order' => $i,
+                    ]);
+                    $this->dispatchEnrichAndIngest($itemId);
+                }
+                // Keep submission.item_id pointing at the first id so existing guards
+                // (status-update, approval-email {item_url}) keep working unchanged.
+                $this->conn->update('collector_submission', ['item_id' => $itemIds[0]], ['id' => $id]);
+
+                $linkList = implode(', ', array_map(fn($iid) => '#' . $iid, $itemIds));
+                $this->messenger()->addSuccess(sprintf(
+                    '%d catalog items created (%s). Enrichment queued for each.',
+                    count($itemIds),
+                    $linkList
+                ));
+                return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
             }
+
+            // Single-item path (default / 1 photo / grouping=one)
+            $payload = $this->buildItemPayload($submission, $files);
+            $response = $this->api()->create('items', $payload);
+            $itemId = $response->getContent()->id();
+
+            $this->conn->update('collector_submission', ['item_id' => $itemId], ['id' => $id]);
+            $this->conn->insert('collector_submission_item', [
+                'submission_id' => $id,
+                'item_id' => $itemId,
+                'sort_order' => 0,
+            ]);
+            $this->dispatchEnrichAndIngest($itemId);
+
+            $this->messenger()->addSuccess("Catalog item #{$itemId} created. Edit it below, then return to approve the submission.");
+            return $this->redirect()->toUrl('/admin/item/' . $itemId . '/edit');
+        } catch (\Exception $e) {
+            $this->messenger()->addError('Failed to create item: ' . $e->getMessage());
+            return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
+        }
+    }
+
+    /**
+     * Build the Omeka item payload for a submission + subset of its files.
+     *
+     * When $partIndex/$partTotal are set, suffixes the title with "#n" so split
+     * items are distinguishable before enrichment fills in a real title.
+     */
+    private function buildItemPayload(
+        array $submission,
+        array $fileSubset,
+        ?int $partIndex = null,
+        ?int $partTotal = null
+    ): array {
+        $mediaSpecs = [];
+        foreach ($fileSubset as $relativePath) {
             $mediaSpecs[] = [
                 'o:ingester' => 'url',
                 'ingest_url' => 'http://localhost/files/' . $relativePath,
@@ -182,7 +370,6 @@ class SubmissionController extends AbstractActionController
 
         $collectorName = $submission['collector_name'];
 
-        // --- Build Owner value from credit preference ---
         $creditPref = $submission['credit_preference'] ?? 'full_name';
         $ownerLabels = [
             'full_name' => $collectorName,
@@ -192,7 +379,6 @@ class SubmissionController extends AbstractActionController
         ];
         $ownerValue = $ownerLabels[$creditPref] ?? $collectorName;
 
-        // --- Build Provenance from how_acquired + date_acquired ---
         $howLabels = [
             'purchased' => 'Purchased from artist',
             'gift' => 'Gift from artist',
@@ -205,25 +391,24 @@ class SubmissionController extends AbstractActionController
             $provenance .= ', ' . $submission['date_acquired'];
         }
 
-        // --- Build private provenance for Box field ---
         $privateProv = $collectorName . ' / ' . $submission['email'];
-        if ($submission['may_contact']) {
-            $privateProv .= ' / May contact: Yes';
-        } else {
-            $privateProv .= ' / May contact: No';
+        $privateProv .= $submission['may_contact'] ? ' / May contact: Yes' : ' / May contact: No';
+
+        $title = "Untitled — submitted by {$collectorName}";
+        if ($partIndex !== null && $partTotal !== null && $partTotal > 1) {
+            $title = "Untitled #{$partIndex} of {$partTotal} — submitted by {$collectorName}";
         }
 
-        // --- Item payload ---
         // Property IDs: title=1, creator=921, owner=72, provenance=51,
         //   height=603, width=1129, presentedAt=74, box=1424
         $itemData = [
-            'o:resource_template' => ['o:id' => 2],   // Artwork (Jon Sarkin)
-            'o:resource_class' => ['o:id' => 225],     // VisualArtwork
+            'o:resource_template' => ['o:id' => 2],
+            'o:resource_class' => ['o:id' => 225],
             'o:is_public' => true,
             'dcterms:title' => [[
                 'type' => 'literal',
                 'property_id' => 1,
-                '@value' => "Untitled — submitted by {$collectorName}",
+                '@value' => $title,
             ]],
             'schema:creator' => [[
                 'type' => 'literal',
@@ -248,7 +433,6 @@ class SubmissionController extends AbstractActionController
             ]],
         ];
 
-        // Height + Width
         if (!empty($submission['dimensions_height'])) {
             $unit = $submission['dimensions_unit'] ?? 'in';
             $itemData['schema:height'] = [[
@@ -266,7 +450,6 @@ class SubmissionController extends AbstractActionController
             ]];
         }
 
-        // Exhibition / publication history
         if (!empty($submission['exhibition_history'])) {
             $itemData['bibo:presentedAt'] = [[
                 'type' => 'literal',
@@ -279,22 +462,7 @@ class SubmissionController extends AbstractActionController
             $itemData['o:media'] = $mediaSpecs;
         }
 
-        try {
-            $response = $this->api()->create('items', $itemData);
-            $item = $response->getContent();
-            $itemId = $item->id();
-
-            $this->conn->update('collector_submission', ['item_id' => $itemId], ['id' => $id]);
-
-            // Dispatch enrichment + CLIP ingest jobs
-            $this->dispatchEnrichAndIngest($itemId);
-
-            $this->messenger()->addSuccess("Catalog item #{$itemId} created. Edit it below, then return to approve the submission.");
-            return $this->redirect()->toUrl('/admin/item/' . $itemId . '/edit');
-        } catch (\Exception $e) {
-            $this->messenger()->addError('Failed to create item: ' . $e->getMessage());
-            return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
-        }
+        return $itemData;
     }
 
     /**

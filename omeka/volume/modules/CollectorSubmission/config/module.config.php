@@ -58,6 +58,14 @@ return [
                                     'defaults' => ['action' => 'createItem'],
                                 ],
                             ],
+                            'rotate-image' => [
+                                'type' => 'Segment',
+                                'options' => [
+                                    'route' => '/:id/rotate-image',
+                                    'constraints' => ['id' => '\\d+'],
+                                    'defaults' => ['action' => 'rotateImage'],
+                                ],
+                            ],
                         ],
                     ],
                 ],

@@ -4,9 +4,13 @@
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var array $submission
+ * @var string $csrfToken
  */
 
 $s = $submission;
+$fileCount = count($s['files']);
+$numPieces = (int) ($s['num_pieces'] ?? 1);
+$defaultGrouping = ($numPieces > 1 && $numPieces === $fileCount) ? 'many' : 'one';
 $this->htmlElement('body')->appendAttribute('class', 'collector-submissions show');
 $this->headTitle('Submission #' . $s['id']);
 ?>
@@ -43,15 +47,90 @@ $this->headTitle('Submission #' . $s['id']);
     gap: 0.75rem;
     margin-bottom: 2rem;
 }
-.cs-photos a {
-    display: block;
+.cs-photo {
+    position: relative;
     border: 1px solid #ddd;
+    overflow: hidden;
 }
-.cs-photos img {
+.cs-photo img {
     width: 100%;
     height: 180px;
     object-fit: cover;
     display: block;
+}
+.cs-photo-placeholder {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f3f3;
+    font-size: 0.8rem;
+    color: #777;
+    padding: 0.5rem;
+    text-align: center;
+    word-break: break-all;
+}
+.cs-photo-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 6px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.cs-photo:hover .cs-photo-controls,
+.cs-photo:focus-within .cs-photo-controls {
+    opacity: 1;
+}
+.cs-photo-controls button {
+    background: #fff;
+    color: #333;
+    border: 0;
+    padding: 2px 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+.cs-photo-controls button[disabled] {
+    opacity: 0.4;
+    cursor: wait;
+}
+.cs-photo-controls a {
+    color: #fff;
+    font-size: 0.75rem;
+    text-decoration: underline;
+    margin-left: auto;
+}
+.cs-group-fieldset {
+    border: 1px solid #ccc;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+}
+.cs-group-fieldset legend {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #777;
+    padding: 0 0.4rem;
+}
+.cs-group-fieldset label {
+    display: block;
+    font-size: 0.85rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #333;
+    margin-bottom: 0.4rem;
+}
+.cs-group-fieldset label:last-child {
+    margin-bottom: 0;
+}
+.cs-group-fieldset label .muted {
+    color: #999;
 }
 .cs-status-form {
     border-top: 2px solid #333;
@@ -191,42 +270,74 @@ $this->headTitle('Submission #' . $s['id']);
 
     <?php if (!empty($s['files'])): ?>
         <div class="meta-group">
-            <div class="meta-label">Photos (<?= count($s['files']) ?>)</div>
+            <div class="meta-label">Photos (<?= $fileCount ?>)</div>
             <div class="cs-photos">
-                <?php foreach ($s['files'] as $file): ?>
-                    <?php $fileUrl = $this->basePath('files/' . $file); ?>
-                    <a href="<?= $this->escapeHtmlAttr($fileUrl) ?>" target="_blank">
-                        <?php
-                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                        if (in_array($ext, ['jpg', 'jpeg', 'png'], true)):
-                        ?>
+                <?php foreach ($s['files'] as $idx => $file):
+                    $fileUrl = $this->basePath('files/' . $file);
+                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    $isImg = in_array($ext, ['jpg', 'jpeg', 'png'], true);
+                    $canRotate = $isImg && empty($s['item_id']);
+                ?>
+                    <div class="cs-photo" data-idx="<?= (int) $idx ?>">
+                        <?php if ($isImg): ?>
                             <img src="<?= $this->escapeHtmlAttr($fileUrl) ?>"
+                                 data-base="<?= $this->escapeHtmlAttr($fileUrl) ?>"
                                  alt="<?= $this->escapeHtmlAttr(basename($file)) ?>">
                         <?php else: ?>
-                            <div style="height:180px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;font-size:0.8rem;color:#777;">
-                                <?= $this->escapeHtml(basename($file)) ?>
-                            </div>
+                            <div class="cs-photo-placeholder"><?= $this->escapeHtml(basename($file)) ?></div>
                         <?php endif ?>
-                    </a>
+                        <div class="cs-photo-controls">
+                            <?php if ($canRotate): ?>
+                                <button type="button" class="cs-rot" data-deg="-90" title="Rotate left 90&deg;">&#8634;</button>
+                                <button type="button" class="cs-rot" data-deg="90" title="Rotate right 90&deg;">&#8635;</button>
+                                <button type="button" class="cs-rot" data-deg="180" title="Rotate 180&deg;">&#8645;</button>
+                            <?php endif ?>
+                            <a href="<?= $this->escapeHtmlAttr($fileUrl) ?>" target="_blank">Open</a>
+                        </div>
+                    </div>
                 <?php endforeach ?>
             </div>
         </div>
     <?php endif ?>
 
-    <!-- Catalog Item -->
+    <!-- Catalog Item(s) -->
     <div class="cs-item-section">
-        <div class="meta-label">Catalog Item</div>
-        <?php if (!empty($s['item_id'])): ?>
-            <div class="cs-item-links">
-                <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'show', 'id' => $s['item_id']]) ?>">View Item #<?= (int) $s['item_id'] ?></a>
-                <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'edit', 'id' => $s['item_id']]) ?>">Edit</a>
-                <a href="/s/catalog/item/<?= (int) $s['item_id'] ?>" target="_blank">Public page</a>
-            </div>
+        <?php if (!empty($s['items'])): ?>
+            <div class="meta-label">Catalog Item<?= count($s['items']) > 1 ? 's' : '' ?> (<?= count($s['items']) ?>)</div>
+            <ul style="list-style:none;padding:0;margin:0.5rem 0 0;">
+                <?php foreach ($s['items'] as $it): $iid = (int) $it['item_id']; ?>
+                    <li style="margin-bottom:0.3rem;font-size:0.85rem;">
+                        <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'show', 'id' => $iid]) ?>">Item #<?= $iid ?></a>
+                        &nbsp;|&nbsp;
+                        <a href="<?= $this->url('admin/id', ['controller' => 'item', 'action' => 'edit', 'id' => $iid]) ?>">Edit</a>
+                        &nbsp;|&nbsp;
+                        <a href="/s/catalog/item/<?= $iid ?>" target="_blank">Public page</a>
+                    </li>
+                <?php endforeach ?>
+            </ul>
         <?php else: ?>
+            <div class="meta-label">Catalog Item</div>
             <form method="post" action="<?= $this->url('admin/collector-submissions/create-item', ['id' => $s['id']]) ?>" style="margin-top: 0.5rem;">
-                <button type="submit" class="cs-create-btn" onclick="return confirm('Create a new catalog item from this submission\'s photos?')">Create Catalog Item</button>
+                <?php if ($fileCount > 1): ?>
+                    <fieldset class="cs-group-fieldset">
+                        <legend>How to import <?= $fileCount ?> photos</legend>
+                        <label>
+                            <input type="radio" name="grouping" value="one" <?= $defaultGrouping === 'one' ? 'checked' : '' ?>>
+                            All <?= $fileCount ?> photos = <strong>1 artwork</strong>
+                            <span class="muted">(one item with <?= $fileCount ?> media)</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="grouping" value="many" <?= $defaultGrouping === 'many' ? 'checked' : '' ?>>
+                            Each photo = <strong>separate artwork</strong>
+                            <span class="muted">(creates <?= $fileCount ?> items)</span>
+                        </label>
+                    </fieldset>
+                <?php else: ?>
+                    <input type="hidden" name="grouping" value="one">
+                <?php endif ?>
+                <button type="submit" class="cs-create-btn" onclick="return confirm('Create catalog item(s) from this submission\'s photos?')">Create Catalog Item<?= $fileCount > 1 && $defaultGrouping === 'many' ? 's' : '' ?></button>
             </form>
-            <div class="cs-hint">Creates a draft item with the submitted photos, then opens it for editing.</div>
+            <div class="cs-hint">Enrichment (transcription + CLIP ingest) auto-queues for each item.</div>
         <?php endif ?>
     </div>
 
@@ -262,5 +373,49 @@ $this->headTitle('Submission #' . $s['id']);
     }
     statusSelect.addEventListener('change', toggle);
     toggle();
+})();
+
+(function() {
+    var rotateUrl = <?= json_encode($this->url('admin/collector-submissions/rotate-image', ['id' => $s['id']])) ?>;
+    var csrfToken = <?= json_encode($csrfToken) ?>;
+    document.querySelectorAll('.cs-rot').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var card = btn.closest('.cs-photo');
+            var idx = card.dataset.idx;
+            var deg = btn.dataset.deg;
+            var buttons = card.querySelectorAll('button');
+            buttons.forEach(function(b) { b.disabled = true; });
+
+            var body = 'index=' + encodeURIComponent(idx) +
+                       '&degrees=' + encodeURIComponent(deg) +
+                       '&csrf=' + encodeURIComponent(csrfToken);
+
+            fetch(rotateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: body,
+                credentials: 'same-origin'
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res && res.ok) {
+                    var img = card.querySelector('img');
+                    if (img) {
+                        img.src = img.dataset.base + '?v=' + Date.now();
+                    }
+                } else {
+                    alert('Rotation failed: ' + (res && res.error ? res.error : 'unknown error'));
+                }
+            })
+            .catch(function(e) { alert('Rotation failed: ' + e.message); })
+            .finally(function() {
+                buttons.forEach(function(b) { b.disabled = false; });
+            });
+        });
+    });
 })();
 </script>

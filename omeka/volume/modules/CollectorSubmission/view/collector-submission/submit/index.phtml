@@ -213,6 +213,7 @@ $this->headTitle('Submit Your Collection');
             <input type="number" name="num_pieces" id="num_pieces" min="1"
                    value="<?= $this->escapeHtmlAttr($form->get('num_pieces')->getValue() ?? '1') ?>"
                    required>
+            <div class="field-hint">Count distinct artworks, not photos. If you have 2 pieces and took 4 photos of each, that's 2.</div>
             <?php if ($msg = $form->get('num_pieces')->getMessages()): ?>
                 <div class="field-error"><?= $this->escapeHtml(reset($msg)) ?></div>
             <?php endif ?>
@@ -277,7 +278,7 @@ $this->headTitle('Submit Your Collection');
             <input type="file" name="photos[]" id="photos" multiple
                    accept="image/jpeg,image/png,image/heic,.jpg,.jpeg,.png,.heic"
                    required>
-            <div class="field-hint">JPG, PNG, or HEIC. Multiple files accepted.</div>
+            <div class="field-hint">JPG, PNG, or HEIC. Multiple files accepted. Don't worry about rotation &mdash; we'll fix it on our end.</div>
             <?php if (!empty($errors['photos'])): ?>
                 <div class="field-error"><?= $this->escapeHtml($errors['photos']) ?></div>
             <?php endif ?>

@@ -54,11 +54,26 @@ SQL);
             $conn->exec('ALTER TABLE collector_submission ADD COLUMN dimensions_width VARCHAR(50) DEFAULT NULL AFTER dimensions_height');
             $conn->exec("ALTER TABLE collector_submission ADD COLUMN dimensions_unit VARCHAR(10) NOT NULL DEFAULT 'in' AFTER dimensions_width");
         }
+        if (version_compare($oldVersion, '1.3.0', '<')) {
+            $conn->exec(<<<'SQL'
+CREATE TABLE collector_submission_item (
+    submission_id INT UNSIGNED NOT NULL,
+    item_id       INT UNSIGNED NOT NULL,
+    sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (submission_id, item_id),
+    INDEX idx_submission (submission_id),
+    INDEX idx_item (item_id),
+    CONSTRAINT fk_csi_submission FOREIGN KEY (submission_id)
+        REFERENCES collector_submission(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+        }
     }
 
     public function uninstall(ServiceLocatorInterface $services): void
     {
         $conn = $services->get('Omeka\Connection');
+        $conn->exec('DROP TABLE IF EXISTS collector_submission_item');
         $conn->exec('DROP TABLE IF EXISTS collector_submission');
     }
 
