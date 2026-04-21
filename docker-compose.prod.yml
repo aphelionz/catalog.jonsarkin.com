@@ -43,7 +43,10 @@ services:
       retries: 30
 
   omeka:
-    image: giocomai/omeka-s-docker:v4.2.0
+    build:
+      context: ./omeka
+      dockerfile: Dockerfile
+    image: catalogjonsarkincom-omeka
     restart: unless-stopped
     depends_on:
       db:

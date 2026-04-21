@@ -16,7 +16,10 @@ services:
       retries: 30
 
   omeka:
-    image: giocomai/omeka-s-docker:v4.2.0
+    build:
+      context: ./omeka
+      dockerfile: Dockerfile
+    image: catalogjonsarkincom-omeka
     ports:
       - "8888:80"
     depends_on:
