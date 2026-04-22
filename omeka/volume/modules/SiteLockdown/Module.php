@@ -23,9 +23,12 @@ class Module extends AbstractModule
     {
         parent::onBootstrap($event);
 
-        // Allow anonymous access to the robots.txt controller
+        // Allow anonymous access to the robots.txt and prelaunch signup controllers
         $acl = $event->getApplication()->getServiceManager()->get('Omeka\Acl');
-        $acl->allow(null, [Controller\RobotsController::class]);
+        $acl->allow(null, [
+            Controller\RobotsController::class,
+            Controller\SubscribeController::class,
+        ]);
 
         $eventManager = $event->getApplication()->getEventManager();
 
@@ -72,6 +75,10 @@ class Module extends AbstractModule
         }
         // Collector submission form — public access
         if ($routeName === 'site/collector-submit') {
+            return;
+        }
+        // Prelaunch email signup — public access
+        if ($routeName === 'prelaunch-signup') {
             return;
         }
         // Visual search — public access
