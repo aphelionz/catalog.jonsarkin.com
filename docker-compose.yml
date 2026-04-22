@@ -47,6 +47,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
+      SHOPIFY_ADMIN_API_TOKEN: ${SHOPIFY_ADMIN_API_TOKEN:-}
+      SHOPIFY_SHOP_DOMAIN: ${SHOPIFY_SHOP_DOMAIN:-jonsarkin.myshopify.com}
     restart: on-failure:5
 
   qdrant:
