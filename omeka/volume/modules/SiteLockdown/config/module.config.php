@@ -47,10 +47,4 @@ return [
             __DIR__ . '/../view',
         ],
     ],
-    'site_lockdown' => [
-        'shopify_shop_domain' => getenv('SHOPIFY_SHOP_DOMAIN') ?: 'jonsarkin.myshopify.com',
-        'shopify_admin_api_token' => getenv('SHOPIFY_ADMIN_API_TOKEN') ?: '',
-        'shopify_api_version' => '2025-01',
-        'signup_tag' => 'prelaunch-signup',
-    ],
 ];

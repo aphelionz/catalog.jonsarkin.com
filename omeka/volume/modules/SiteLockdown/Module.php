@@ -5,6 +5,7 @@ namespace SiteLockdown;
 use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Mvc\Controller\AbstractController;
 use Laminas\Mvc\MvcEvent;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Module\AbstractModule;
 
@@ -17,6 +18,42 @@ class Module extends AbstractModule
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
+    }
+
+    public function install(ServiceLocatorInterface $services): void
+    {
+        $conn = $services->get('Omeka\Connection');
+        $conn->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS prelaunch_signup (
+    id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    email VARCHAR(254) NOT NULL,
+    created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    user_agent VARCHAR(512) DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uniq_email (email),
+    INDEX idx_created (created)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+    }
+
+    public function upgrade($oldVersion, $newVersion, ServiceLocatorInterface $services): void
+    {
+        $conn = $services->get('Omeka\Connection');
+        if (version_compare($oldVersion, '0.2.0', '<')) {
+            $conn->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS prelaunch_signup (
+    id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    email VARCHAR(254) NOT NULL,
+    created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    user_agent VARCHAR(512) DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uniq_email (email),
+    INDEX idx_created (created)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+        }
     }
 
     public function onBootstrap(MvcEvent $event): void
