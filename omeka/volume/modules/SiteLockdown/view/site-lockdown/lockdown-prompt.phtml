@@ -268,6 +268,48 @@ $isNotMime = function ($str) {
             margin-bottom: 12px;
         }
 
+        /* ── Signup block ── */
+        .signup-divider {
+            max-width: 340px;
+            margin: 40px auto;
+            border-top: var(--border-light);
+        }
+        .signup-block {
+            text-align: center;
+        }
+        .signup-block .signup-subtext {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            max-width: 480px;
+            margin: 0 auto 16px;
+            line-height: 1.5;
+        }
+        .signup-form .hp {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+        .signup-note {
+            color: var(--primary);
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+        .substack-link {
+            margin-top: 18px;
+            font-size: 0.8rem;
+            color: var(--secondary);
+            letter-spacing: 0.02em;
+        }
+        .substack-link a {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+        .substack-link a:hover {
+            color: var(--primary);
+        }
+
         /* ── Footer ── */
         .landing-footer {
             border-top: var(--border);
@@ -365,6 +407,30 @@ $isNotMime = function ($str) {
     <?php endif; ?>
 
     <section class="access-section">
+        <div class="signup-block">
+            <h2>Launching May 1</h2>
+            <p class="signup-subtext">Leave your email and we&rsquo;ll notify you when the catalog opens.</p>
+            <?php $signupState = $_GET['signup'] ?? ''; ?>
+            <?php if ($signupState === 'invalid'): ?>
+                <p class="access-error">Please enter a valid email address.</p>
+            <?php elseif ($signupState === 'error'): ?>
+                <p class="access-error">Signup failed. Please try again.</p>
+            <?php endif; ?>
+            <form method="post" action="/prelaunch-signup" class="access-form signup-form">
+                <input type="email" name="email" placeholder="Your email" required maxlength="254">
+                <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+                <button type="submit">Notify me</button>
+            </form>
+            <?php if ($signupState === 'ok'): ?>
+                <p class="signup-note">Thanks &mdash; you&rsquo;re on the list.</p>
+            <?php endif; ?>
+            <p class="substack-link">
+                Or <a href="https://jonsarkin.substack.com/subscribe" target="_blank" rel="noopener">read the Substack</a>.
+            </p>
+        </div>
+
+        <div class="signup-divider"></div>
+
         <h2>Full Catalog Access</h2>
         <p class="access-subtext">The full catalog is available by invitation during the pre-launch review period.</p>
         <?php if (!empty($error)): ?>
