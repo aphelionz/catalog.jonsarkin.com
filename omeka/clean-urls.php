@@ -12,7 +12,7 @@ $path = parse_url($uri, PHP_URL_PATH);
 // Search needs the /index controller prefix: /search → /s/catalog/index/search
 if (preg_match('#^/(search)(/|$|\?)#', $path)) {
     $_SERVER['REQUEST_URI'] = '/s/catalog/index' . $uri;
-} elseif (preg_match('#^/(item|item-set|media|page|faceted-browse|submit|visual-search|asset)(/|$|\?)#', $path)) {
+} elseif (preg_match('#^/(item|item-set|media|page|faceted-browse|submit|visual-search|asset|exhibitions)(/|$|\?)#', $path)) {
     $_SERVER['REQUEST_URI'] = '/s/catalog' . $uri;
 }
 // Root URL → serve the catalog site homepage directly
