@@ -155,7 +155,7 @@ $siteSlug = $this->currentSite()->slug();
                         <?= $escape($title) ?>
                     <?php endif; ?>
                     <?php if ($isClickable): ?>
-                        <span class="piece-badge"><?= (int) $ex['linked_count'] ?> pieces</span>
+                        <span class="piece-badge"><?= (int) $ex['linked_count'] ?> <?= ((int) $ex['linked_count']) === 1 ? 'piece' : 'pieces' ?></span>
                     <?php endif; ?>
                 </td>
                 <td class="col-venue"><?= $escape($venue) ?></td>
