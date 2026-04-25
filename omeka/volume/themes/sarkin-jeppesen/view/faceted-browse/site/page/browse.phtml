@@ -51,14 +51,12 @@ $isNotMime = function ($str) {
         $height  = $val($item, 'schema:height', '');
         $width   = $val($item, 'schema:width', '');
         $extent  = $val($item, 'dcterms:extent', '');
-        // Build dimensions from height × width, or fall back to extent
-        if ($height && $width) {
-            $dims = $height . ' × ' . $width;
-        } elseif ($extent) {
-            $dims = $extent;
-        } else {
-            $dims = '';
-        }
+        // Build dimensions from height × width, or fall back to extent — dual-unit via shared partial
+        $dims = $this->partial('common/dimensions', [
+            'height' => $height,
+            'width'  => $width,
+            'extent' => $extent,
+        ]);
 
         $primaryMedia = $item->primaryMedia();
         $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;

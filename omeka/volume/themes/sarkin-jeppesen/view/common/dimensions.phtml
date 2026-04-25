@@ -1,0 +1,51 @@
+<?php
+/**
+ * Dimension formatter partial — dual-unit (inches + cm).
+ *
+ * Renders artwork dimensions with both imperial and metric, e.g.:
+ *   12.5 × 12.5 in (31.8 × 31.8 cm)
+ *
+ * Fallbacks:
+ *   - Only height set:     "12.5 in (31.8 cm)"
+ *   - Only width set:      same treatment
+ *   - Neither but extent:  echoes $extent verbatim
+ *   - Nothing:             empty string
+ *
+ * Non-numeric height/width values pass through unchanged; cm is skipped.
+ *
+ * Called as:
+ *   $dims = $this->partial('common/dimensions', [
+ *       'height' => $height,
+ *       'width'  => $width,
+ *       'extent' => $extent, // optional
+ *   ]);
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var string|null $height
+ * @var string|null $width
+ * @var string|null $extent
+ */
+$height = $height ?? null;
+$width  = $width ?? null;
+$extent = $extent ?? null;
+
+// Format a number: 1 decimal, trim trailing ".0" only.
+$fmt = function ($n) {
+    $s = number_format((float) $n, 1, '.', '');
+    return str_ends_with($s, '.0') ? substr($s, 0, -2) : $s;
+};
+
+// inches → cm, same formatting rules
+$toCm = function ($n) use ($fmt) {
+    return $fmt((float) $n * 2.54);
+};
+
+if (is_numeric($height) && is_numeric($width)) {
+    echo $fmt($height) . ' × ' . $fmt($width) . ' in ('
+         . $toCm($height) . ' × ' . $toCm($width) . ' cm)';
+} elseif (is_numeric($height) xor is_numeric($width)) {
+    $val = is_numeric($height) ? $height : $width;
+    echo $fmt($val) . ' in (' . $toCm($val) . ' cm)';
+} elseif ($extent) {
+    echo $extent;
+}

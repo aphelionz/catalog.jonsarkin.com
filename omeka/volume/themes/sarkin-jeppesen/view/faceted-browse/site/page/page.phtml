@@ -284,13 +284,12 @@ if (!empty($activeFilters['fulltext_search'])) {
                 $height  = $val($item, 'schema:height', '');
                 $width   = $val($item, 'schema:width', '');
                 $extent  = $val($item, 'dcterms:extent', '');
-                if ($height && $width) {
-                    $dims = $height . ' × ' . $width;
-                } elseif ($extent) {
-                    $dims = $extent;
-                } else {
-                    $dims = '';
-                }
+                // Dual-unit (inches + cm) via shared partial
+                $dims = $this->partial('common/dimensions', [
+                    'height' => $height,
+                    'width'  => $width,
+                    'extent' => $extent,
+                ]);
                 $primaryMedia = $item->primaryMedia();
                 $thumbUrl = $primaryMedia ? $primaryMedia->thumbnailUrl('large') : null;
             ?>

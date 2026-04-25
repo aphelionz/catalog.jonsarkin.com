@@ -83,14 +83,12 @@ $signed     = $val('schema:distinguishingSign');
 $condition  = $val('schema:itemCondition');
 $extent     = $val('dcterms:extent');
 
-// Build dimensions string
-if ($height && $width) {
-    $dimensions = $height . '″ × ' . $width . '″';
-} elseif ($extent) {
-    $dimensions = $extent;
-} else {
-    $dimensions = '';
-}
+// Build dimensions string — dual-unit (inches + cm) via shared partial
+$dimensions = $this->partial('common/dimensions', [
+    'height' => $height,
+    'width'  => $width,
+    'extent' => $extent,
+]);
 
 // No medium→format fallback: format (framing) and medium are distinct fields
 
