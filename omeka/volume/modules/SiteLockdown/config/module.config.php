@@ -27,6 +27,16 @@ return [
                     ],
                 ],
             ],
+            'sitemap-xml' => [
+                'type' => Literal::class,
+                'options' => [
+                    'route' => '/sitemap.xml',
+                    'defaults' => [
+                        'controller' => Controller\SitemapController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
         ],
     ],
     'controllers' => [
@@ -35,6 +45,7 @@ return [
         ],
         'factories' => [
             Controller\SubscribeController::class => Service\Controller\SubscribeControllerFactory::class,
+            Controller\SitemapController::class => Service\Controller\SitemapControllerFactory::class,
         ],
     ],
     'form_elements' => [

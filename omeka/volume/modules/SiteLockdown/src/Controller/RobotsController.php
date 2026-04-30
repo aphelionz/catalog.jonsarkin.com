@@ -16,6 +16,9 @@ class RobotsController extends AbstractActionController
 # Block AI/ML training crawlers to protect artwork images.
 # Updated: March 2026. Review quarterly for new crawlers.
 
+Sitemap: https://catalog.jonsarkin.com/sitemap.xml
+
+
 # AI/ML Training Crawlers - Do Not Scrape
 User-agent: GPTBot
 Disallow: /

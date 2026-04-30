@@ -60,11 +60,12 @@ SQL);
     {
         parent::onBootstrap($event);
 
-        // Allow anonymous access to the robots.txt and prelaunch signup controllers
+        // Allow anonymous access to the robots.txt, prelaunch signup, and sitemap controllers
         $acl = $event->getApplication()->getServiceManager()->get('Omeka\Acl');
         $acl->allow(null, [
             Controller\RobotsController::class,
             Controller\SubscribeController::class,
+            Controller\SitemapController::class,
         ]);
 
         $eventManager = $event->getApplication()->getEventManager();
@@ -98,6 +99,11 @@ SQL);
 
         // Skip robots.txt route (crawlers need to read the disallow)
         if ($routeMatch->getMatchedRouteName() === 'robots-txt') {
+            return;
+        }
+
+        // Skip sitemap.xml route (crawlers need to discover URLs)
+        if ($routeMatch->getMatchedRouteName() === 'sitemap-xml') {
             return;
         }
 
