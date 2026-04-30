@@ -29,6 +29,7 @@ class ExhibitionsController extends AbstractActionController
         $tplId = (int) ($this->config['resource_template_id'] ?? 4);
         $pTitle = (int) ($this->config['property_id_title'] ?? 1);
         $pDate = (int) ($this->config['property_id_date'] ?? 7);
+        $pStartDate = (int) ($this->config['property_id_start_date'] ?? 22);
         $pType = (int) ($this->config['property_id_type'] ?? 8);
         $pVenue = (int) ($this->config['property_id_venue'] ?? 230);
         $pOrganizer = (int) ($this->config['property_id_organizer'] ?? 1202);
@@ -36,11 +37,15 @@ class ExhibitionsController extends AbstractActionController
 
         // Pull exhibition items + key field values in one pass. We include
         // linked_count so the view can mark clickable rows without a second round trip.
+        // Sort by ISO start_date (dcterms:available, YYYY-MM-DD) — lexicographic
+        // sort matches chronological order. Tie-break by item id so newest-added
+        // stays on top among same-date entries.
         $sql = <<<SQL
 SELECT
     i.id AS id,
     MAX(CASE WHEN v.property_id = :pTitle     THEN v.value END) AS title,
     MAX(CASE WHEN v.property_id = :pDate      THEN v.value END) AS date,
+    MAX(CASE WHEN v.property_id = :pStartDate THEN v.value END) AS start_date,
     MAX(CASE WHEN v.property_id = :pType      THEN v.value END) AS type,
     MAX(CASE WHEN v.property_id = :pVenue     THEN v.value END) AS venue,
     MAX(CASE WHEN v.property_id = :pOrganizer THEN v.value END) AS organizer,
@@ -56,11 +61,13 @@ LEFT JOIN value v ON v.resource_id = i.id
 WHERE r.resource_template_id = :tplId
   AND r.is_public = 1
 GROUP BY i.id
+ORDER BY start_date DESC, i.id DESC
 SQL;
 
         $stmt = $this->conn->executeQuery($sql, [
             'pTitle' => $pTitle,
             'pDate' => $pDate,
+            'pStartDate' => $pStartDate,
             'pType' => $pType,
             'pVenue' => $pVenue,
             'pOrganizer' => $pOrganizer,
@@ -69,18 +76,6 @@ SQL;
         ]);
 
         $rows = $stmt->fetchAllAssociative();
-
-        // Sort reverse-chronological using strtotime() on the freeform date
-        // string. Unparseable dates sort last. Ties broken by item id desc
-        // so the newest-added stays on top.
-        usort($rows, function ($a, $b) {
-            $ta = $a['date'] ? (strtotime((string) $a['date']) ?: 0) : 0;
-            $tb = $b['date'] ? (strtotime((string) $b['date']) ?: 0) : 0;
-            if ($ta === $tb) {
-                return ((int) $b['id']) <=> ((int) $a['id']);
-            }
-            return $tb <=> $ta;
-        });
 
         $view = new ViewModel([
             'exhibitions' => $rows,

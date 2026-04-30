@@ -41,6 +41,8 @@ return [
         // Omeka property IDs used on Exhibition items
         'property_id_title' => 1,
         'property_id_date' => 7,
+        // dcterms:available — ISO YYYY-MM-DD start date used for sort
+        'property_id_start_date' => 22,
         'property_id_type' => 8,
         'property_id_description' => 4,
         'property_id_venue' => 230,
