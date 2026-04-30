@@ -346,8 +346,52 @@ INSERT INTO `value` (resource_id, property_id, type, `value`, is_public) VALUES
 (11368, 8, 'literal', 'Group', 1),
 (11368, 4, 'literal', 'Generated $11k+ in sales. Venue and date details TBD.', 1);
 
+-- Newspaper-archive exhibitions added 2026-04-25 (Gloucester Daily Times clippings)
+INSERT INTO resource (id, owner_id, resource_class_id, resource_template_id, is_public, created, modified, resource_type) VALUES
+(12207, 1, 879, 4, 1, NOW(), NOW(), 'Omeka\\Entity\\Item'),
+(12208, 1, 879, 4, 1, NOW(), NOW(), 'Omeka\\Entity\\Item'),
+(12209, 1, 879, 4, 1, NOW(), NOW(), 'Omeka\\Entity\\Item'),
+(12210, 1, 879, 4, 1, NOW(), NOW(), 'Omeka\\Entity\\Item');
+
+INSERT INTO item (id) VALUES (12207), (12208), (12209), (12210);
+
+INSERT INTO item_item_set (item_id, item_set_id) VALUES
+(12207, 11307), (12208, 11307), (12209, 11307), (12210, 11307);
+
+INSERT INTO `value` (resource_id, property_id, type, `value`, is_public) VALUES
+(12207, 1, 'literal', 'The Framery (Levine & Sarkin)', 1),
+(12207, 7, 'literal', 'March 4–30, 1994', 1),
+(12207, 230, 'literal', 'The Framery, 11 School St., Rockport, MA', 1),
+(12207, 8, 'literal', 'Group', 1),
+(12207, 4, 'literal', 'Two-person show with Ira Levine. Sarkin showed boxes and constructions with motifs of cacti, gargoyles, and imaginary buildings. Levine showed oils and black-and-white drawings (portraits and landscapes). Opening reception March 4, 7–9 p.m.', 1),
+
+(12208, 1, 'literal', 'The Framery (Clark, Levine & Sarkin)', 1),
+(12208, 7, 'literal', 'April 7–29, 1995', 1),
+(12208, 230, 'literal', 'The Framery, Rockport, MA', 1),
+(12208, 8, 'literal', 'Group', 1),
+(12208, 4, 'literal', 'Three-person show with Lynn Van Natta Clark (fanciful drawings) and Ira Levine (figurative landscapes and portraits). Sarkin showed whimsical sculptures and drawings. Opening April 7, 7–9 p.m.', 1),
+
+(12209, 1, 'literal', 'Workingman''s art', 1),
+(12209, 7, 'literal', 'December 7–27, 1996', 1),
+(12209, 230, 'literal', 'Local Colors Artists Co-op, 142 Main St., Gloucester, MA', 1),
+(12209, 8, 'literal', 'Group', 1),
+(12209, 4, 'literal', 'Two-person show with Chris Williams, a welder whose iron sculptures depicted fanciful animals and people. Sarkin showed drawings and sculptures of "a whimsical and humorous nature, often involving vividly-colored fanciful subject matter." Both artists resided in Rockport. Opening reception Dec 7, 7–9 p.m. Sarkin was a Local Colors member.', 1),
+
+(12210, 1, 'literal', 'Local Colors of Cape Ann — Open House', 1),
+(12210, 7, 'literal', '1996', 1),
+(12210, 230, 'literal', 'Local Colors of Cape Ann, 142 Main St., Gloucester, MA', 1),
+(12210, 8, 'literal', 'Group', 1),
+(12210, 4, 'literal', 'Meet-the-artists open house with live demonstrations, Thursday 6–8 p.m. Sarkin demonstrated multimedia work alongside fellow Local Colors members: Kathy Bucholska (jewelry — amulets and talismans), Bobbie Bush (Polaroid transfers), Barbara Thompson (jewelry — hanging beads), Debbie Clark (reverse glass painting / water gilding). Exact date in 1996 not visible on surviving clipping.', 1);
+
+-- Sibling. visibility fix: legacy record 10727 supersedes seed entry 11321
+-- (10727 has richer metadata mentioning Chris Gilroy and the TV-replacing-human-interaction theme).
+-- Without this update, Sibling. is hidden from /exhibitions because the legacy record is private.
+UPDATE resource SET is_public = 1 WHERE id = 10727;
+UPDATE `value` SET `value` = 'Sibling.' WHERE resource_id = 10727 AND property_id = 1;
+
 -- Update resource.title column
 UPDATE resource r
 JOIN value v ON v.resource_id = r.id AND v.property_id = 1
 SET r.title = v.value
-WHERE r.id BETWEEN 11307 AND 11368;
+WHERE r.id BETWEEN 11307 AND 11368
+   OR r.id IN (10727, 12207, 12208, 12209, 12210);
