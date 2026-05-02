@@ -240,6 +240,10 @@ function extractValue(item, term) {
   return (vals[0]['@value'] || vals[0]['o:label'] || '').trim();
 }
 
+function isBareNumber(v) {
+  return /^\d+(\.\d+)?$/.test(String(v).trim());
+}
+
 function extractAllValues(item, term) {
   return (item[term] || [])
     .map(v => (v['@value'] || v['o:label'] || '').trim())
@@ -283,7 +287,7 @@ function validateItem(item) {
     const v = extractValue(item, term);
     if (!v) {
       issues.push({ field: label, level: 'error', msg: 'missing' });
-    } else if (!/^\d+(\.\d+)?$/.test(String(v).trim())) {
+    } else if (!isBareNumber(v)) {
       issues.push({ field: label, level: 'error', msg: 'non-numeric (must be a bare number, no units)' });
     }
   }
@@ -2140,7 +2144,7 @@ function initFieldSprints() {
       filterFn: item => {
         const h = extractValue(item, 'schema:height');
         const w = extractValue(item, 'schema:width');
-        return !h || !w || isNaN(parseFloat(h)) || isNaN(parseFloat(w));
+        return !h || !w || !isBareNumber(h) || !isBareNumber(w);
       },
       inputType: 'dimensions',
     },
@@ -3080,7 +3084,7 @@ function isPublishReady(item) {
   if (!extractValue(item, 'schema:artworkSurface')) return false;
   const h = extractValue(item, 'schema:height');
   const w = extractValue(item, 'schema:width');
-  if (!h || !w || isNaN(parseFloat(h)) || isNaN(parseFloat(w))) return false;
+  if (!h || !w || !isBareNumber(h) || !isBareNumber(w)) return false;
   const sig = extractValue(item, 'schema:distinguishingSign');
   if (!sig || !SIGNATURE_ARROWS.includes(sig)) return false;
   const date = extractValue(item, 'dcterms:date');
