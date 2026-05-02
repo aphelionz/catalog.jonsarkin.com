@@ -433,21 +433,28 @@ class SubmissionController extends AbstractActionController
             ]],
         ];
 
+        $unit = $submission['dimensions_unit'] ?? 'in';
         if (!empty($submission['dimensions_height'])) {
-            $unit = $submission['dimensions_unit'] ?? 'in';
-            $itemData['schema:height'] = [[
-                'type' => 'literal',
-                'property_id' => 603,
-                '@value' => $submission['dimensions_height'] . ' ' . $unit,
-            ]];
+            $value = trim((string) $submission['dimensions_height']);
+            if (is_numeric($value)) {
+                $inches = $unit === 'cm' ? (float) $value / 2.54 : (float) $value;
+                $itemData['schema:height'] = [[
+                    'type' => 'literal',
+                    'property_id' => 603,
+                    '@value' => (string) round($inches, 2),
+                ]];
+            }
         }
         if (!empty($submission['dimensions_width'])) {
-            $unit = $submission['dimensions_unit'] ?? 'in';
-            $itemData['schema:width'] = [[
-                'type' => 'literal',
-                'property_id' => 1129,
-                '@value' => $submission['dimensions_width'] . ' ' . $unit,
-            ]];
+            $value = trim((string) $submission['dimensions_width']);
+            if (is_numeric($value)) {
+                $inches = $unit === 'cm' ? (float) $value / 2.54 : (float) $value;
+                $itemData['schema:width'] = [[
+                    'type' => 'literal',
+                    'property_id' => 1129,
+                    '@value' => (string) round($inches, 2),
+                ]];
+            }
         }
 
         if (!empty($submission['exhibition_history'])) {

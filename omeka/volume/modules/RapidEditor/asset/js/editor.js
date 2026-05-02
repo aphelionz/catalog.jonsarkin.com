@@ -283,8 +283,8 @@ function validateItem(item) {
     const v = extractValue(item, term);
     if (!v) {
       issues.push({ field: label, level: 'error', msg: 'missing' });
-    } else if (isNaN(parseFloat(v))) {
-      issues.push({ field: label, level: 'error', msg: 'non-numeric' });
+    } else if (!/^\d+(\.\d+)?$/.test(String(v).trim())) {
+      issues.push({ field: label, level: 'error', msg: 'non-numeric (must be a bare number, no units)' });
     }
   }
 
