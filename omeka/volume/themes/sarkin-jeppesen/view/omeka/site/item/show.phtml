@@ -212,7 +212,7 @@ if ($isPerson) {
         'deathDate' => '2024',
         'jobTitle'  => 'Artist',
     ];
-    if ($description) $jsonLd['description'] = strip_tags($description);
+    if ($description) $jsonLd['description'] = html_entity_decode(strip_tags($description), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     if ($imageUrl)    $jsonLd['image'] = $imageUrl;
     $jsonLd['url'] = $this->serverUrl(true);
 } elseif ($isExhibition) {
@@ -222,8 +222,8 @@ if ($isPerson) {
         'name'      => strip_tags($pageLabel),
     ];
     if ($date)  $jsonLd['startDate'] = strip_tags($date);
-    if ($venue) $jsonLd['location'] = ['@type' => 'Place', 'name' => strip_tags($venue)];
-    if ($description) $jsonLd['description'] = strip_tags($description);
+    if ($venue) $jsonLd['location'] = ['@type' => 'Place', 'name' => html_entity_decode(strip_tags($venue), ENT_QUOTES | ENT_HTML5, 'UTF-8')];
+    if ($description) $jsonLd['description'] = html_entity_decode(strip_tags($description), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $jsonLd['about'] = ['@type' => 'Person', 'name' => 'Jon Sarkin'];
     $jsonLd['url'] = $this->serverUrl(true);
 } elseif ($isWriting) {
@@ -400,17 +400,17 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
             <?php endif; ?>
             <h1 id="record-title"><?php echo $escape($pageLabel); ?></h1>
             <?php if ($venue): ?>
-            <p class="exhibition-venue"><?php echo $escape(strip_tags($venue)); ?></p>
+            <p class="exhibition-venue"><?php echo $venue; ?></p>
             <?php endif; ?>
             <?php if ($date): ?>
-            <p class="exhibition-date"><?php echo $escape(strip_tags($date)); ?></p>
+            <p class="exhibition-date"><?php echo $date; ?></p>
             <?php endif; ?>
         </div>
     </header>
 
     <?php if ($description): ?>
     <section class="exhibition-description">
-        <div><?php echo nl2br($escape(strip_tags($description))); ?></div>
+        <div><?php echo nl2br($description); ?></div>
     </section>
     <?php endif; ?>
 
@@ -432,17 +432,37 @@ $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
         <h2 id="exhibition-works-heading"><?php echo $translate('Works in this exhibition'); ?></h2>
         <div class="exhibition-works-grid">
             <?php foreach ($linkedItems as $li):
-                $liMedia = $li->primaryMedia();
-                $liThumb = $liMedia ? ($liMedia->thumbnailUrl('medium') ?: $liMedia->thumbnailUrl('large')) : '';
-                $liTitle = $li->displayTitle();
-                $liUrl   = $li->siteUrl($this->currentSite()->slug());
+                $liMedia  = $li->primaryMedia();
+                $liThumb  = $liMedia ? ($liMedia->thumbnailUrl('medium') ?: $liMedia->thumbnailUrl('large')) : '';
+                $liCatnum = (string)$li->value('dcterms:identifier', ['default' => '']);
+                $liUrl    = $li->siteUrl($this->currentSite()->slug());
             ?>
             <a href="<?php echo $escape($liUrl); ?>" class="exhibition-work-card">
                 <?php if ($liThumb): ?>
-                <img src="<?php echo $escape($liThumb); ?>" alt="<?php echo $escape($liTitle); ?>" loading="lazy" />
+                <img src="<?php echo $escape($liThumb); ?>" alt="<?php echo $escape($liCatnum); ?>" loading="lazy" />
                 <?php endif; ?>
-                <span><?php echo $escape($liTitle); ?></span>
+                <span><?php echo $escape($liCatnum); ?></span>
             </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <!-- ═══ EXHIBITION INSTALLATION ═══ -->
+    <?php $exhibitionMedia = $item->media(); ?>
+    <?php if (!empty($exhibitionMedia)): ?>
+    <section class="exhibition-installation" aria-labelledby="exhibition-installation-heading">
+        <h2 id="exhibition-installation-heading"><?php echo $translate('Installation views'); ?></h2>
+        <div class="exhibition-installation-grid">
+            <?php foreach ($exhibitionMedia as $em):
+                $emThumb = $em->thumbnailUrl('large') ?: $em->thumbnailUrl('medium');
+                $emFull  = $em->originalUrl();
+            ?>
+            <?php if ($emThumb): ?>
+            <a href="<?php echo $escape($emFull); ?>" class="exhibition-installation-card">
+                <img src="<?php echo $escape($emThumb); ?>" alt="" loading="lazy" />
+            </a>
+            <?php endif; ?>
             <?php endforeach; ?>
         </div>
     </section>
