@@ -32,6 +32,9 @@
                 loading="lazy"
               >
             {%- endif -%}
+            {%- unless product.available -%}
+              <span class="product-card__sold-dot" aria-label="Acquired"></span>
+            {%- endunless -%}
           </div>
           <div class="product-card__info">
             <div class="product-card__title">{{ product.title }}</div>
@@ -45,7 +48,7 @@
               {%- if product.available -%}
                 {{ product.price | money }}
               {%- else -%}
-                <span class="product-card__badge">Inquire</span>
+                <span class="product-card__badge product-card__badge--sold">Acquired</span><span class="product-card__sold-price">{{ product.price | money }}</span>
               {%- endif -%}
             </div>
           </div>

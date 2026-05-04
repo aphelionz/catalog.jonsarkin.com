@@ -44,7 +44,7 @@
       </div>
 
       <div class="product-detail__info">
-        <h1 class="product-detail__title">{{ product.title }}</h1>
+        <h1 class="product-detail__title">{{ product.title }}{% unless product.available %} <span class="product-detail__sold-dot" aria-label="Acquired"></span>{% endunless %}</h1>
 
         <div class="product-detail__metadata">
           {%- if product.metafields.artwork.medium -%}
@@ -106,9 +106,11 @@
               View in the Catalog Raisonné →
             </a>
           {%- endif -%}
-          <a href="/pages/contact" class="product-detail__catalog-link">
-            Request a condition report →
-          </a>
+          {%- if product.available -%}
+            <a href="/pages/contact" class="product-detail__catalog-link">
+              Request a condition report →
+            </a>
+          {%- endif -%}
         </div>
 
         {%- if product.description != blank -%}
@@ -129,6 +131,9 @@
                 {%- if product.featured_image -%}
                   {{ product.featured_image | image_url: width: 600 | image_tag: alt: product.title, loading: 'lazy' }}
                 {%- endif -%}
+                {%- unless product.available -%}
+                  <span class="product-card__sold-dot" aria-label="Acquired"></span>
+                {%- endunless -%}
               </div>
               <div class="product-card__info">
                 <div class="product-card__title">{{ product.title }}</div>
@@ -139,7 +144,7 @@
                   {%- if product.available -%}
                     {{ product.price | money }}
                   {%- else -%}
-                    <span class="product-card__badge">Inquire</span>
+                    <span class="product-card__badge product-card__badge--sold">Acquired</span><span class="product-card__sold-price">{{ product.price | money }}</span>
                   {%- endif -%}
                 </div>
               </div>
