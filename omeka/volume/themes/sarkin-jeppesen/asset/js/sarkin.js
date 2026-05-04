@@ -387,6 +387,8 @@
     }
 
     // ── Iconographic badges (async, browse page) ──
+    // TEMP — Roman-numeral rarity badge ("III", "II", etc.) suppressed for launch.
+    // Flip the `if (false)` below back to `if (cardIds.length)` to restore.
     var cards = document.querySelectorAll('.chart-card[data-item-id]');
     if (cards.length) {
         var cardIds = [];
@@ -395,7 +397,7 @@
             if (id) cardIds.push(id);
         });
 
-        if (cardIds.length) {
+        if (false /* cardIds.length — TEMP disabled for launch */) {
             var batchEndpoint = '/iconography/batch/json?ids=' + cardIds.join(',');
             fetch(batchEndpoint)
                 .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })

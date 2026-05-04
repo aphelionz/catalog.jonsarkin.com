@@ -1004,6 +1004,36 @@ abbr[title] {
   border-color: var(--text);
 }
 
+.exhibition-installation {
+  border: 2px solid var(--border-color);
+  border-top: none;
+  padding: 1.5rem 2rem;
+}
+
+.exhibition-installation h2 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 1rem 0;
+  color: var(--text-muted);
+}
+
+.exhibition-installation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.exhibition-installation-card img {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--border-color);
+}
+
+.exhibition-installation-card:hover img {
+  border-color: var(--text);
+}
+
 @media (max-width: 600px) {
   .record-header--exhibition {
     padding: 1.25rem;
@@ -1019,6 +1049,12 @@ abbr[title] {
   }
   .exhibition-works-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  .exhibition-installation {
+    padding: 1.25rem;
+  }
+  .exhibition-installation-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1740,9 +1776,11 @@ abbr[title] {
 }
 
 .card-id {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin-bottom: 2px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
 }
 
 .card-title {
@@ -2959,6 +2997,10 @@ nav.pagination span.row-count {
   border-bottom: 2px solid var(--border-color);
   padding-bottom: var(--gutter);
   margin-bottom: calc(var(--gutter) * 1.5);
+}
+
+.page-title-row--search {
+  margin-top: 2rem;
 }
 
 .page-title-row h1 {

@@ -56,23 +56,26 @@ $isNotMime = function ($str) {
 };
 ?>
 
-<div class="page-title-row">
-    <h1><?php echo $translate('Index of Works'); ?></h1>
+<?php
+$fulltextSearch = $this->params()->fromQuery('fulltext_search');
+$totalResults = $this->plugin('pagination')->getPaginator()->getTotalCount();
+// Strip whitespace + any surrounding straight or curly quotes so a search like
+// `"Robert Johnson"` doesn't render as `... for ""Robert Johnson""`.
+$fulltextSearchDisplay = $fulltextSearch !== null
+    ? trim((string) $fulltextSearch, " \t\n\r\0\x0B\"'\xE2\x80\x9C\xE2\x80\x9D\xE2\x80\x98\xE2\x80\x99")
+    : '';
+$pageTitleText  = $fulltextSearch
+    ? sprintf('%d %s for "%s"', $totalResults, $totalResults === 1 ? 'result' : 'results', ucwords($fulltextSearchDisplay))
+    : $translate('Index of Works');
+?>
+<div class="page-title-row<?php echo $fulltextSearch ? ' page-title-row--search' : ''; ?>">
+    <h1><?php echo $escape($pageTitleText); ?></h1>
     <span class="subtitle"><?php echo $escape($this->paginationInfo ?? ''); ?></span>
 </div>
 
-<?php echo $this->searchFilters(); ?>
+<?php // TEMP — search-filters strip ("Search full-text: X") suppressed; the page title above covers the fulltext case. Restore $this->searchFilters() in a future phase if multi-filter visualization is needed. ?>
 
-<div class="browse-controls">
-    <?php echo $this->browse()->renderSortSelector('items'); ?>
-    <span class="advanced-search-link">
-        <?php echo $this->hyperlink($translate('Advanced search'), $this->url(
-            'site/resource',
-            ['controller' => 'item', 'action' => 'search'],
-            true
-        )); ?>
-    </span>
-</div>
+<?php // TEMP — sort selector + advanced-search link hidden for launch. Restore the .browse-controls block in a future phase. ?>
 
 <?php $this->trigger('view.browse.before'); ?>
 
@@ -125,7 +128,7 @@ $isNotMime = function ($str) {
                 <?php if ($catId): ?>
                     <div class="card-id"><?php echo $catId; ?></div>
                 <?php endif; ?>
-                <div class="card-title"><?php echo $escape($title); ?></div>
+                <?php // TEMP — auto-generated titles ("brancusi 6", etc.) hidden because they're noise. Restore the .card-title div in a future phase if curated titles are added. ?>
                 <?php if ($mediumDisplay): ?>
                     <div class="card-medium"><?php echo $mediumDisplay; ?></div>
                 <?php endif; ?>
