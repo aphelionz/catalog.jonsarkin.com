@@ -277,6 +277,11 @@ SQL);
             return;
         }
 
+        $settings = $event->getApplication()->getServiceManager()->get('Omeka\Settings');
+        if (!$settings->get('site_lockdown_password_hash', '')) {
+            return;
+        }
+
         $response = $event->getResponse();
         if ($response instanceof \Laminas\Http\Response) {
             $response->getHeaders()->addHeaderLine('X-Robots-Tag', 'noindex, nofollow');
@@ -291,6 +296,10 @@ SQL);
         $services = $this->getServiceLocator();
 
         if (!$services->get('Omeka\Status')->isSiteRequest()) {
+            return;
+        }
+
+        if (!$services->get('Omeka\Settings')->get('site_lockdown_password_hash', '')) {
             return;
         }
 
