@@ -17,6 +17,51 @@ $this->pageTitle($page->title(), 2);
 $escape    = $this->plugin('escapeHtml');
 $translate = $this->plugin('translate');
 
+// ── Schema.org CollectionPage + ItemList JSON-LD ──
+// /faceted-browse/2 is the canonical browse (promoted in the sitemap, priority 0.9).
+// Emitting CollectionPage + ItemList tells Google this page is a structured listing
+// of artworks, not a thin shell. numberOfItems reflects total; itemListElement holds
+// just the visible page (Google understands paginated lists).
+$paginator    = $this->plugin('pagination')->getPaginator();
+$jsonLdTotal  = $paginator ? $paginator->getTotalCount() : count($items);
+$jsonLdStart  = $paginator ? ($paginator->getOffset() + 1) : 1;
+$jsonLdItems  = [];
+foreach ($items as $idx => $browseItem) {
+    $jsonLdItems[] = [
+        '@type'    => 'ListItem',
+        'position' => $jsonLdStart + $idx,
+        'url'      => 'https://catalog.jonsarkin.com/item/' . (int) $browseItem->id(),
+    ];
+}
+$collectionPageLd = [
+    '@context' => 'https://schema.org',
+    '@type'    => 'CollectionPage',
+    'name'     => strip_tags($page->title()) . ' · Jon Sarkin Catalog Raisonné',
+    'url'      => $this->serverUrl(true),
+    'isPartOf' => [
+        '@type' => 'CreativeWork',
+        'name'  => 'Jon Sarkin: Catalog Raisonné',
+        'url'   => 'https://catalog.jonsarkin.com',
+    ],
+    'about' => [
+        '@type'  => 'Person',
+        'name'   => 'Jon Sarkin',
+        'sameAs' => [
+            'https://en.wikipedia.org/wiki/Jon_Sarkin',
+            'https://www.wikidata.org/wiki/Q16185574',
+            'https://viaf.org/viaf/15968039',
+            'https://id.loc.gov/authorities/names/n2010078960',
+            'https://id.oclc.org/worldcat/entity/E39PBJxwxprWQxJsfwGMPDQq',
+        ],
+    ],
+    'mainEntity' => [
+        '@type'           => 'ItemList',
+        'numberOfItems'   => $jsonLdTotal,
+        'itemListElement' => $jsonLdItems,
+    ],
+];
+$this->headLink(['rel' => 'canonical', 'href' => $this->serverUrl(true)]);
+
 // Set placeholders for facet render templates
 $this->placeholder('facetCounts')->set($facetCounts);
 $this->placeholder('activeFilters')->set($activeFilters);
@@ -65,6 +110,8 @@ if ($category) {
     $apiExportUrl = $this->url('api/default', ['resource' => 'items'], ['query' => $exportQuery + ['per_page' => 5000]]);
 }
 ?>
+<script type="application/ld+json"><?php echo json_encode($collectionPageLd, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE); ?></script>
+
 <div class="browse-type-heading">
     <h2><?php echo $typeLabel; ?></h2>
     <?php if ($apiExportUrl): ?>

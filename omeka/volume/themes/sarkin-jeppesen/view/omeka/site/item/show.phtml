@@ -279,9 +279,26 @@ if ($isPerson) {
     if ($medium)     $jsonLd['artMedium'] = strip_tags($medium);
     if ($surface)    $jsonLd['artworkSurface'] = strip_tags($surface);
     if ($type)       $jsonLd['artform'] = strip_tags($type);
-    if ($height)     $jsonLd['height'] = strip_tags($height);
-    if ($width)      $jsonLd['width'] = strip_tags($width);
-    if ($imageUrl)   $jsonLd['image'] = $imageUrl;
+    // Dimensions as QuantitativeValue with explicit inch unit (UN/CEFACT INH).
+    // Bare numbers are ambiguous; explicit unit supports dimensional search.
+    if ($height && is_numeric(strip_tags($height))) {
+        $jsonLd['height'] = ['@type' => 'QuantitativeValue', 'value' => (float) strip_tags($height), 'unitCode' => 'INH'];
+    }
+    if ($width && is_numeric(strip_tags($width))) {
+        $jsonLd['width'] = ['@type' => 'QuantitativeValue', 'value' => (float) strip_tags($width), 'unitCode' => 'INH'];
+    }
+    // image: full array of media URLs (primary first), filtered to image MIME types.
+    // Items with verso/detail shots surface all views in Google Images.
+    $imageLd = [];
+    if ($imageUrl && !$isVideo) $imageLd[] = $imageUrl;
+    foreach ($extraMedia as $extraM) {
+        if (strpos((string) $extraM->mediaType(), 'image/') !== 0) continue;
+        $extraUrl = $extraM->originalUrl();
+        if ($extraUrl) $imageLd[] = $extraUrl;
+    }
+    if (!empty($imageLd)) {
+        $jsonLd['image'] = count($imageLd) === 1 ? $imageLd[0] : $imageLd;
+    }
     $jsonLd['copyrightHolder'] = [
         '@type' => 'Organization',
         'name' => 'The Jon Sarkin Estate',
@@ -329,6 +346,29 @@ if ($isPerson) {
     }
     if (!empty($mentionsLd)) {
         $jsonLd['mentions'] = $mentionsLd;
+    }
+
+    // subjectOf — exhibitions that featured this artwork. Links the artwork to
+    // its exhibition history pages in the catalog (or text-only entries for
+    // exhibitions not yet given their own item).
+    $subjectOfLd = [];
+    foreach ($exhibitionVals as $exVal) {
+        $exRes = $exVal->valueResource();
+        if ($exRes) {
+            $subjectOfLd[] = [
+                '@type' => 'ExhibitionEvent',
+                'name'  => $exRes->displayTitle(),
+                'url'   => 'https://catalog.jonsarkin.com/item/' . (int) $exRes->id(),
+            ];
+        } else {
+            $exText = trim((string) $exVal);
+            if ($exText !== '') {
+                $subjectOfLd[] = ['@type' => 'ExhibitionEvent', 'name' => $exText];
+            }
+        }
+    }
+    if (!empty($subjectOfLd)) {
+        $jsonLd['subjectOf'] = $subjectOfLd;
     }
 }
 $jsonLd['isPartOf'] = [
