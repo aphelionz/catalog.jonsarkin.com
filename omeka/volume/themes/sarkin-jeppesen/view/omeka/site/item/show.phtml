@@ -68,6 +68,23 @@ $isPerson  = ($resourceClass && $resourceClass->id() === 119); // schema:Person
 $isExhibition = ($resourceClass && $resourceClass->id() === 879); // schema:ExhibitionEvent
 $genre     = $val('schema:genre');
 $fullText  = $val('bibo:content');
+
+// ── Canonical Jon Sarkin Person reference (reused across JSON-LD branches) ──
+// sameAs links Wikipedia, Wikidata, and authority files so Google can disambiguate
+// the creator across the knowledge graph. Identifiers sourced from Wikidata Q16185574.
+$sarkinPersonRef = [
+    '@type'     => 'Person',
+    'name'      => 'Jon Sarkin',
+    'birthDate' => '1953-04-27',
+    'deathDate' => '2024-07-19',
+    'sameAs'    => [
+        'https://en.wikipedia.org/wiki/Jon_Sarkin',
+        'https://www.wikidata.org/wiki/Q16185574',
+        'https://viaf.org/viaf/15968039',
+        'https://id.loc.gov/authorities/names/n2010078960',
+        'https://id.oclc.org/worldcat/entity/E39PBJxwxprWQxJsfwGMPDQq',
+    ],
+];
 $sourceUrl  = $val('dcterms:source');
 $shopifyUrl = $val('schema:url');
 
@@ -204,14 +221,10 @@ $this->headLink(['rel' => 'canonical', 'href' => $this->serverUrl(true)]);
 
 // ── Schema.org JSON-LD ──
 if ($isPerson) {
-    $jsonLd = [
-        '@context'  => 'https://schema.org',
-        '@type'     => 'Person',
-        'name'      => strip_tags($pageLabel),
-        'birthDate' => '1953',
-        'deathDate' => '2024',
-        'jobTitle'  => 'Artist',
-    ];
+    $jsonLd = $sarkinPersonRef;
+    $jsonLd['@context'] = 'https://schema.org';
+    $jsonLd['name']     = strip_tags($pageLabel);
+    $jsonLd['jobTitle'] = 'Artist';
     if ($description) $jsonLd['description'] = html_entity_decode(strip_tags($description), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     if ($imageUrl)    $jsonLd['image'] = $imageUrl;
     $jsonLd['url'] = $this->serverUrl(true);
@@ -224,7 +237,7 @@ if ($isPerson) {
     if ($date)  $jsonLd['startDate'] = strip_tags($date);
     if ($venue) $jsonLd['location'] = ['@type' => 'Place', 'name' => html_entity_decode(strip_tags($venue), ENT_QUOTES | ENT_HTML5, 'UTF-8')];
     if ($description) $jsonLd['description'] = html_entity_decode(strip_tags($description), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    $jsonLd['about'] = ['@type' => 'Person', 'name' => 'Jon Sarkin'];
+    $jsonLd['about'] = $sarkinPersonRef;
     $jsonLd['url'] = $this->serverUrl(true);
 } elseif ($isWriting) {
     $jsonLd = [
@@ -233,12 +246,9 @@ if ($isPerson) {
         'name'     => strip_tags($pageLabel),
     ];
     if ($identifier) $jsonLd['identifier'] = strip_tags($identifier);
-    $jsonLd['author'] = [
-        '@type'     => 'Person',
-        'name'      => $creator ?: 'Jon Sarkin',
-        'birthDate' => '1953',
-        'deathDate' => '2024',
-    ];
+    $jsonLd['author'] = (!$creator || $creator === 'Jon Sarkin')
+        ? $sarkinPersonRef
+        : ['@type' => 'Person', 'name' => $creator];
     if ($date)       $jsonLd['datePublished'] = strip_tags($date);
     if ($genre)      $jsonLd['genre'] = strip_tags($genre);
     if ($fullText)   $jsonLd['articleBody'] = strip_tags($fullText);
@@ -262,12 +272,9 @@ if ($isPerson) {
         'name'     => strip_tags($pageLabel),
     ];
     if ($identifier) $jsonLd['identifier'] = strip_tags($identifier);
-    $jsonLd['creator'] = [
-        '@type'     => 'Person',
-        'name'      => $creator ?: 'Jon Sarkin',
-        'birthDate' => '1953',
-        'deathDate' => '2024',
-    ];
+    $jsonLd['creator'] = (!$creator || $creator === 'Jon Sarkin')
+        ? $sarkinPersonRef
+        : ['@type' => 'Person', 'name' => $creator];
     if ($date)       $jsonLd['dateCreated'] = strip_tags($date);
     if ($medium)     $jsonLd['artMedium'] = strip_tags($medium);
     if ($surface)    $jsonLd['artworkSurface'] = strip_tags($surface);
@@ -288,6 +295,41 @@ if ($isPerson) {
     ];
     if ($creditText) $jsonLd['creditText'] = strip_tags($creditText);
     if ($spatial)    $jsonLd['location'] = ['@type' => 'Place', 'name' => strip_tags($spatial)];
+
+    // schema:mentions — people, works, films the artwork references. Values follow
+    // the curated "Name [Type]" format (e.g. "Francisco Goya [Visual Artist]"). Type
+    // bracket maps to the corresponding schema.org @type so Google sees structured
+    // entity references, not just text.
+    $mentionsTypeMap = [
+        'Visual Artist'      => 'Person',
+        'Musician'           => 'Person',
+        'Historical Figure'  => 'Person',
+        'Sports Figure'      => 'Person',
+        'Writer'             => 'Person',
+        'Literary Character' => 'Person',
+        'Film'               => 'Movie',
+        'Literary Work'      => 'Book',
+        'Music Group'        => 'MusicGroup',
+        'Place'              => 'Place',
+    ];
+    // Only emit values that match the curated "Name [Type]" format. Untyped values
+    // (~50 in the whole catalog) are enrichment ruminations that leaked into the
+    // field — long, sentence-shaped text that would be junk in JSON-LD.
+    $mentionsLd = [];
+    foreach ($allVals('schema:mentions') as $m) {
+        $m = trim(strip_tags((string) $m));
+        if (!preg_match('/^(.+?)\s*\[([^\]]+)\]\s*$/', $m, $match)) {
+            continue;
+        }
+        $entityName = trim($match[1]);
+        $entityType = $mentionsTypeMap[trim($match[2])] ?? 'Thing';
+        if ($entityName !== '') {
+            $mentionsLd[] = ['@type' => $entityType, 'name' => $entityName];
+        }
+    }
+    if (!empty($mentionsLd)) {
+        $jsonLd['mentions'] = $mentionsLd;
+    }
 }
 $jsonLd['isPartOf'] = [
     '@type' => 'CreativeWork',
@@ -295,9 +337,32 @@ $jsonLd['isPartOf'] = [
     'url'   => 'https://catalog.jonsarkin.com',
 ];
 $jsonLd['mainEntityOfPage'] = $this->serverUrl(true);
+
+// BreadcrumbList — gives Google site-structure context, can render in SERPs.
+$breadcrumbParent = $isExhibition
+    ? ['name' => 'Exhibitions', 'url' => 'https://catalog.jonsarkin.com/exhibitions']
+    : ['name' => 'Browse',      'url' => 'https://catalog.jonsarkin.com/faceted-browse/2'];
+$breadcrumbList = [
+    '@context' => 'https://schema.org',
+    '@type'    => 'BreadcrumbList',
+    'itemListElement' => [
+        [
+            '@type'    => 'ListItem',
+            'position' => 1,
+            'name'     => $breadcrumbParent['name'],
+            'item'     => $breadcrumbParent['url'],
+        ],
+        [
+            '@type'    => 'ListItem',
+            'position' => 2,
+            'name'     => strip_tags($pageLabel),
+        ],
+    ],
+];
 ?>
 
 <script type="application/ld+json"><?php echo json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE); ?></script>
+<script type="application/ld+json"><?php echo json_encode($breadcrumbList, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE); ?></script>
 
 <?php $this->trigger('view.show.before'); ?>
 
