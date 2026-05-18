@@ -3,6 +3,8 @@
 .env.prod
 acme.json
 .claude.json
+.mcp.json
+cookies.txt
 
 # Python
 __pycache__/
@@ -20,6 +22,8 @@ sarkin-clip/segments/
 .omeka_media_cache/
 .ocr_cache.json
 .search_index.sqlite
+.search_index.sqlite-shm
+.search_index.sqlite-wal
 search_index/
 
 # Enrichment pipeline cache + batch state
@@ -58,3 +62,8 @@ omeka/volume/modules/Log/
 omeka/volume/themes/default/
 omeka/volume/themes/freedom/
 omeka/volume/themes/lively/
+
+# Local-only artifacts (not part of any deploy pipeline)
+exports/
+social/
+.claude/
