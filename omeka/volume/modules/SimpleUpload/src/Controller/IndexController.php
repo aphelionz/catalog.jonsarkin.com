@@ -57,12 +57,12 @@ class IndexController extends AbstractActionController
                             'is_public' => true,
                         ],
                     ],
-                    'o:is_public' => true,
+                    'o:is_public' => false,
                     'o:media' => [
                         [
                             'o:ingester' => 'upload',
                             'file_index' => 0,
-                            'o:is_public' => true,
+                            'o:is_public' => false,
                         ],
                     ],
                 ];

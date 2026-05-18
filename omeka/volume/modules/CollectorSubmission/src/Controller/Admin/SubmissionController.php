@@ -364,7 +364,7 @@ class SubmissionController extends AbstractActionController
             $mediaSpecs[] = [
                 'o:ingester' => 'url',
                 'ingest_url' => 'http://localhost/files/' . $relativePath,
-                'o:is_public' => true,
+                'o:is_public' => false,
             ];
         }
 
@@ -404,7 +404,7 @@ class SubmissionController extends AbstractActionController
         $itemData = [
             'o:resource_template' => ['o:id' => 2],
             'o:resource_class' => ['o:id' => 225],
-            'o:is_public' => true,
+            'o:is_public' => false,
             'dcterms:title' => [[
                 'type' => 'literal',
                 'property_id' => 1,
