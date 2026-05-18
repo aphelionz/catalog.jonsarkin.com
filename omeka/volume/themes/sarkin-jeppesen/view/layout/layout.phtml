@@ -12,6 +12,30 @@ $this->headMeta()->setCharset('utf-8');
 $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1');
 $this->headTitle($site->title())->setSeparator(' · ');
 
+// ── OG / Twitter card meta ──
+// Universal defaults (always set; harmless duplicates with item-level twitter:card)
+$this->headMeta()->appendProperty('og:site_name', $site->title());
+$this->headMeta()->appendName('twitter:card', 'summary_large_image');
+$this->headMeta()->appendName('twitter:site', '@jonsarkin');
+
+// Page-level fallbacks (only when an inner view template hasn't set its own OG block)
+if (!$this->placeholder('item_og_set')->getValue()) {
+    $siteTitle = $site->title();
+    $siteSummary = $site->summary();
+    $siteDescription = $siteSummary ?: 'The official catalog raisonné of Jon Sarkin (1953–2024), American outsider artist. Over 5,000 works documented and fully searchable, with scholarly framing by Colin Rhodes (Thames & Hudson) and neuroscience context by Dr. Alice Flaherty (Harvard / MGH).';
+    $pageUrl = $this->serverUrl(true);
+    $defaultOgImage = $this->serverUrl($this->assetUrl('img/JS-Signature.png'));
+
+    $this->headMeta()->appendProperty('og:type', 'website');
+    $this->headMeta()->appendProperty('og:title', $siteTitle);
+    $this->headMeta()->appendProperty('og:description', $siteDescription);
+    $this->headMeta()->appendProperty('og:url', $pageUrl);
+    $this->headMeta()->appendProperty('og:image', $defaultOgImage);
+    $this->headMeta()->appendName('twitter:title', $siteTitle);
+    $this->headMeta()->appendName('twitter:description', $siteDescription);
+    $this->headMeta()->appendName('twitter:image', $defaultOgImage);
+}
+
 // Theme assets
 $this->headLink()->prependStylesheet($this->assetUrl('css/style.css'), 'all');
 // Omeka core icons (needed for admin bar)

@@ -217,6 +217,9 @@ if ($imageUrl) {
 }
 $this->headMeta()->appendName('twitter:card', 'summary_large_image');
 
+// Signal to layout.phtml that this page has already set its own OG meta — skip layout-level defaults.
+$this->placeholder('item_og_set')->set(true);
+
 $this->headLink(['rel' => 'canonical', 'href' => $this->serverUrl(true)]);
 
 // ── Schema.org JSON-LD ──
