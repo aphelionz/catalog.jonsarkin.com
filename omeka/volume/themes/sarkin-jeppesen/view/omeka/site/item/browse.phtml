@@ -29,6 +29,18 @@ endif;
 $escape    = $this->plugin('escapeHtml');
 $translate = $this->plugin('translate');
 
+// Filter-query variants of /item are duplicates of the base browse from Google's
+// perspective — same template, different rows. Canonical browse is /faceted-browse/2
+// (promoted in the sitemap). noindex,follow keeps the crawler walking links to
+// individual items without polluting the index with thousands of filter permutations.
+$hasFilter = $this->params()->fromQuery('property') !== null
+    || $this->params()->fromQuery('fulltext_search') !== null
+    || $this->params()->fromQuery('item_set_id') !== null
+    || $this->params()->fromQuery('resource_class_id') !== null;
+if ($hasFilter) {
+    $this->headMeta()->appendName('robots', 'noindex, follow');
+}
+
 $this->htmlElement('body')->appendAttribute('class', 'item browse');
 
 $layoutSetting = $this->themeSetting('browse_layout') ?: 'grid';
