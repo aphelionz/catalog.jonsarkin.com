@@ -89,6 +89,21 @@ services:
       traefik.http.middlewares.omeka-compress.compress: "true"
       traefik.http.middlewares.omeka-headers.headers.customresponseheaders.X-Robots-Tag: "noimageai, noimageindex"
       traefik.http.services.omeka.loadbalancer.server.port: "80"
+      # Root-path 301 to jonsarkin.com (bypasses Omeka's 302 root handler).
+      # Higher priority than the catch-all omeka/omeka-http routers so Path(`/`)
+      # matches first. Same middleware handles HTTP + HTTPS entry points.
+      traefik.http.routers.omeka-root.rule: "Host(`catalog.jonsarkin.com`) && Path(`/`)"
+      traefik.http.routers.omeka-root.entrypoints: "websecure"
+      traefik.http.routers.omeka-root.tls: "true"
+      traefik.http.routers.omeka-root.middlewares: "omeka-root-redirect"
+      traefik.http.routers.omeka-root.priority: "100"
+      traefik.http.routers.omeka-root-http.rule: "Host(`catalog.jonsarkin.com`) && Path(`/`)"
+      traefik.http.routers.omeka-root-http.entrypoints: "web"
+      traefik.http.routers.omeka-root-http.middlewares: "omeka-root-redirect"
+      traefik.http.routers.omeka-root-http.priority: "100"
+      traefik.http.middlewares.omeka-root-redirect.redirectregex.regex: "^https?://catalog\\.jonsarkin\\.com/$"
+      traefik.http.middlewares.omeka-root-redirect.redirectregex.replacement: "https://jonsarkin.com"
+      traefik.http.middlewares.omeka-root-redirect.redirectregex.permanent: "true"
 
   qdrant:
     image: qdrant/qdrant:v1.16
