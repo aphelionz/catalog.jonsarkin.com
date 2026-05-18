@@ -80,6 +80,7 @@ services:
       traefik.http.routers.omeka-http.rule: "Host(`catalog.jonsarkin.com`)"
       traefik.http.routers.omeka-http.middlewares: "omeka-https-redirect"
       traefik.http.middlewares.omeka-https-redirect.redirectscheme.scheme: "https"
+      traefik.http.middlewares.omeka-https-redirect.redirectscheme.permanent: "true"
       traefik.http.routers.omeka.entrypoints: "websecure"
       traefik.http.routers.omeka.rule: "Host(`catalog.jonsarkin.com`)"
       traefik.http.routers.omeka.tls: "true"
