@@ -399,10 +399,182 @@ $breadcrumbList = [
         ],
     ],
 ];
+
+// ── Linked Art JSON-LD (CIDOC-CRM profile) ──
+// Parallel cultural-heritage data layer. Targets institutional aggregators
+// and museum-side data consumers — Getty, Yale BAC, Europeana, the LUX
+// project. Not direct SEO; an institutional credibility + interoperability
+// signal that compounds with the schema.org block above.
+//
+// AAT URIs are stable Getty identifiers for the controlled vocabulary terms
+// (work types, dimension types, units, identifier roles). Material entries
+// emit with _label only — Sarkin's medium vocabulary doesn't cleanly map to
+// AAT and forcing a mapping would introduce inaccurate authority claims.
+$sarkinLinkedArtPerson = [
+    'id'    => 'https://catalog.jonsarkin.com/item/3',
+    'type'  => 'Person',
+    '_label' => 'Jon Sarkin',
+    'equivalent' => [
+        ['id' => 'https://www.wikidata.org/wiki/Q16185574',                            'type' => 'Person', '_label' => 'Jon Sarkin'],
+        ['id' => 'https://viaf.org/viaf/15968039',                                     'type' => 'Person', '_label' => 'Jon Sarkin'],
+        ['id' => 'https://id.loc.gov/authorities/names/n2010078960',                   'type' => 'Person', '_label' => 'Jon Sarkin'],
+        ['id' => 'https://id.oclc.org/worldcat/entity/E39PBJxwxprWQxJsfwGMPDQq',       'type' => 'Person', '_label' => 'Jon Sarkin'],
+    ],
+];
+
+$linkedArt = null;
+if ($isPerson && $item->id() === 3) {
+    // Jon Sarkin (item 3) — full Person profile with born/died/activity.
+    $linkedArt = $sarkinLinkedArtPerson;
+    $linkedArt['@context'] = 'https://linked.art/ns/v1/linked-art.json';
+    $linkedArt['id']       = $this->serverUrl(true);
+    $linkedArt['born'] = [
+        'type' => 'Birth',
+        'timespan' => [
+            'type'               => 'TimeSpan',
+            'begin_of_the_begin' => '1953-04-27T00:00:00Z',
+            'end_of_the_end'     => '1953-04-27T23:59:59Z',
+            'identified_by'      => [['type' => 'Name', 'content' => '27 April 1953']],
+        ],
+        'took_place_at' => [['type' => 'Place', '_label' => 'Newark, New Jersey']],
+    ];
+    $linkedArt['died'] = [
+        'type' => 'Death',
+        'timespan' => [
+            'type'               => 'TimeSpan',
+            'begin_of_the_begin' => '2024-07-19T00:00:00Z',
+            'end_of_the_end'     => '2024-07-19T23:59:59Z',
+            'identified_by'      => [['type' => 'Name', 'content' => '19 July 2024']],
+        ],
+        'took_place_at' => [['type' => 'Place', '_label' => 'Gloucester, Massachusetts']],
+    ];
+    $linkedArt['professional_activity'] = [[
+        'type' => 'Activity',
+        'classified_as' => [[
+            'id'     => 'http://vocab.getty.edu/aat/300025103',
+            'type'   => 'Type',
+            '_label' => 'artists',
+        ]],
+    ]];
+    if ($imageUrl) {
+        $linkedArt['representation'] = [['id' => $imageUrl, 'type' => 'VisualItem', '_label' => 'Portrait']];
+    }
+} elseif ($isPerson) {
+    // Other Person items (Rhodes, Millionaire, Flaherty, etc.) — minimal profile.
+    // Their authority identifiers aren't tracked in our catalog, so just name + ID.
+    $linkedArt = [
+        '@context' => 'https://linked.art/ns/v1/linked-art.json',
+        'id'       => $this->serverUrl(true),
+        'type'     => 'Person',
+        '_label'   => strip_tags($pageLabel),
+    ];
+    if ($description) {
+        $linkedArt['referred_to_by'] = [[
+            'type'    => 'LinguisticObject',
+            'content' => html_entity_decode(strip_tags($description), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            'classified_as' => [[
+                'id'     => 'http://vocab.getty.edu/aat/300435422',
+                'type'   => 'Type',
+                '_label' => 'biography (general concept)',
+            ]],
+        ]];
+    }
+    if ($imageUrl) {
+        $linkedArt['representation'] = [['id' => $imageUrl, 'type' => 'VisualItem']];
+    }
+} elseif (!$isExhibition && !$isWriting) {
+    // VisualArtwork → HumanMadeObject
+    $aatWorkType = [
+        'Drawing'     => ['id' => 'http://vocab.getty.edu/aat/300033973', '_label' => 'drawings (visual works)'],
+        'Painting'    => ['id' => 'http://vocab.getty.edu/aat/300033618', '_label' => 'paintings (visual works)'],
+        'Collage'     => ['id' => 'http://vocab.getty.edu/aat/300033963', '_label' => 'collages (visual works)'],
+        'Mixed Media' => ['id' => 'http://vocab.getty.edu/aat/300033777', '_label' => 'mixed media (visual works)'],
+        'Sculpture'   => ['id' => 'http://vocab.getty.edu/aat/300047090', '_label' => 'sculpture (visual works)'],
+        'Print'       => ['id' => 'http://vocab.getty.edu/aat/300041273', '_label' => 'prints (visual works)'],
+    ];
+    $linkedArt = [
+        '@context' => 'https://linked.art/ns/v1/linked-art.json',
+        'id'       => $this->serverUrl(true),
+        'type'     => 'HumanMadeObject',
+        '_label'   => strip_tags($pageLabel),
+    ];
+    $typeStr = strip_tags($type);
+    if (isset($aatWorkType[$typeStr])) {
+        $linkedArt['classified_as'] = [$aatWorkType[$typeStr] + ['type' => 'Type']];
+    }
+    if ($identifier) {
+        $linkedArt['identified_by'] = [[
+            'type'    => 'Identifier',
+            'content' => strip_tags($identifier),
+            'classified_as' => [[
+                'id'     => 'http://vocab.getty.edu/aat/300404628',
+                'type'   => 'Type',
+                '_label' => 'accession numbers',
+            ]],
+        ]];
+    }
+    $productionLd = [
+        'type' => 'Production',
+        'carried_out_by' => [$sarkinLinkedArtPerson],
+    ];
+    if ($date && is_numeric(substr(strip_tags($date), 0, 4))) {
+        $year = (int) substr(strip_tags($date), 0, 4);
+        if ($year > 1900 && $year < 2100) {
+            $productionLd['timespan'] = [
+                'type'               => 'TimeSpan',
+                'begin_of_the_begin' => "{$year}-01-01T00:00:00Z",
+                'end_of_the_end'     => "{$year}-12-31T23:59:59Z",
+                'identified_by'      => [['type' => 'Name', 'content' => (string) $year]],
+            ];
+        }
+    }
+    $linkedArt['produced_by'] = $productionLd;
+    $madeOf = [];
+    foreach ($mediumVals as $mv) {
+        $mv = trim(strip_tags($mv));
+        if ($mv !== '') $madeOf[] = ['type' => 'Material', '_label' => $mv];
+    }
+    if ($surface) $madeOf[] = ['type' => 'Material', '_label' => strip_tags($surface)];
+    if (!empty($madeOf)) $linkedArt['made_of'] = $madeOf;
+    $dimensionLd = [];
+    if ($height && is_numeric(strip_tags($height))) {
+        $dimensionLd[] = [
+            'type'  => 'Dimension',
+            'value' => (float) strip_tags($height),
+            'unit'  => ['id' => 'http://vocab.getty.edu/aat/300379100', 'type' => 'MeasurementUnit', '_label' => 'inches'],
+            'classified_as' => [['id' => 'http://vocab.getty.edu/aat/300055644', 'type' => 'Type', '_label' => 'height']],
+        ];
+    }
+    if ($width && is_numeric(strip_tags($width))) {
+        $dimensionLd[] = [
+            'type'  => 'Dimension',
+            'value' => (float) strip_tags($width),
+            'unit'  => ['id' => 'http://vocab.getty.edu/aat/300379100', 'type' => 'MeasurementUnit', '_label' => 'inches'],
+            'classified_as' => [['id' => 'http://vocab.getty.edu/aat/300055647', 'type' => 'Type', '_label' => 'width']],
+        ];
+    }
+    if (!empty($dimensionLd)) $linkedArt['dimension'] = $dimensionLd;
+    if ($imageUrl && !$isVideo) {
+        $linkedArt['representation'] = [['id' => $imageUrl, 'type' => 'VisualItem']];
+    }
+    $linkedArt['current_owner'] = [[
+        'id'     => 'https://catalog.jonsarkin.com',
+        'type'   => 'Group',
+        '_label' => 'The Jon Sarkin Estate',
+    ]];
+    $linkedArt['member_of'] = [[
+        'id'     => 'https://catalog.jonsarkin.com/faceted-browse/2',
+        'type'   => 'Set',
+        '_label' => 'Jon Sarkin Catalog Raisonné',
+    ]];
+}
 ?>
 
 <script type="application/ld+json"><?php echo json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE); ?></script>
 <script type="application/ld+json"><?php echo json_encode($breadcrumbList, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE); ?></script>
+<?php if ($linkedArt): ?>
+<script type="application/ld+json"><?php echo json_encode($linkedArt, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE); ?></script>
+<?php endif; ?>
 
 <?php $this->trigger('view.show.before'); ?>
 
