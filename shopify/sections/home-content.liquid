@@ -63,28 +63,100 @@
       </div>
     </div>
 
-    <!-- COLLECTIONS -->
-    <h2 class="section-heading">Collections</h2>
-
-    <div class="body-text">
-      <p>The catalog groups Sarkin&#39;s output into series that trace distinct threads of his practice &mdash; from compulsive mailings to estate-held masterworks.</p>
-    </div>
-
-    <div class="collections-two-col">
-      <div class="collection-col">
-        <div class="col-image-area"><img alt="Boltflashed Pieces" src="https://catalog.jonsarkin.com/files/large/1571d1a647482295135fbb142e159c73d8ba17ff.jpg" /></div>
-        <h3><a href="https://catalog.jonsarkin.com/s/catalog/item-set/7491">Boltflashed Pieces</a></h3>
+    <!-- BOLTFLASHED PIECES -->
+    <h2 class="section-heading">Boltflashed Pieces</h2>
+    <div class="intro-row">
+      <div class="portrait-area">
+        <img alt="Boltflashed Pieces" src="https://catalog.jonsarkin.com/files/large/1571d1a647482295135fbb142e159c73d8ba17ff.jpg" />
+      </div>
+      <div class="intro-text">
         <p>For decades, Sarkin compulsively stuffed envelopes with drawings and mailed them unsolicited to strangers, critics, and public figures &mdash; a practice he called <em>boltflashing</em>. Known recipients include the New Yorker critic Calvin Tomkins (whose pieces are now in the MoMA Archives), the Eisner Award&ndash;winning cartoonist Tony Millionaire, and director Joel Schumacher. Many remain in unknown hands.</p>
-        <div class="boltflash-cta" style="margin-top: 1rem;">
+        <a class="bio-link" href="https://catalog.jonsarkin.com/s/catalog/item-set/7491">View the catalog set &rarr;</a>
+        <div class="boltflash-cta" style="margin-top: 1.5rem;">
           <p>Did you receive unsolicited artwork from Jon Sarkin? <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#97;&#114;&#116;&#64;&#106;&#111;&#110;&#115;&#97;&#114;&#107;&#105;&#110;&#46;&#99;&#111;&#109;">Contact the estate</a>.</p>
         </div>
       </div>
+    </div>
 
-      <div class="collection-col">
-        <div class="col-image-area"><img alt="Permanent Collection" src="https://catalog.jonsarkin.com/files/large/ae217c069e587735b26b3466f07ba10e1a4d9a8d.jpg" /></div>
-        <h3><a href="https://catalog.jonsarkin.com/s/catalog/item-set/7490">Permanent Collection</a></h3>
-        <p>A-group works held by the estate and designated for long-term institutional placement. These pieces represent the highest achievements of Sarkin&#39;s practice across media and period &mdash; selected with the rigor applied to any canonical artist&#39;s estate holdings.</p>
-      </div>
+    <!-- CURRENTLY AVAILABLE -->
+    <h2 class="section-heading">Currently Available</h2>
+    <div class="body-text">
+      <p>A current selection from the estate. The full inventory is in <a href="/collections/all">Available Works</a>.</p>
+    </div>
+
+    {%- assign featured_handles_raw = section.settings.featured_handles | default: 'js-0000-10070,alphabet-series-complete-set-of-26-a-z,js-2017-8764' -%}
+    {%- assign featured_handles = featured_handles_raw | split: ',' -%}
+    <div class="product-grid product-grid--featured">
+      {%- for handle in featured_handles -%}
+        {%- assign handle_clean = handle | strip -%}
+        {%- assign featured_product = all_products[handle_clean] -%}
+        {%- if featured_product != blank and featured_product.handle != blank -%}
+          <a href="{{ featured_product.url }}" class="product-card">
+            <div class="product-card__image{% if featured_product.metafields.artwork.original_image_url %} product-card__image--hdr{% endif %}">
+              {%- if featured_product.metafields.artwork.original_image_url -%}
+                <img
+                  class="product-card__img product-card__img--hdr"
+                  src="{{ featured_product.metafields.artwork.original_image_url | replace: '/files/original/', '/files/medium/' | replace: '.jpeg', '.jpg' | replace: '.png', '.jpg' }}"
+                  alt="{{ featured_product.title | escape }}"
+                  loading="lazy"
+                >
+              {%- endif -%}
+              {%- if featured_product.featured_image -%}
+                <img
+                  class="product-card__img product-card__img--shopify"
+                  src="{{ featured_product.featured_image | image_url: width: 600 }}"
+                  alt="{{ featured_product.title | escape }}"
+                  loading="lazy"
+                >
+              {%- endif -%}
+              {%- unless featured_product.available -%}
+                <span class="product-card__sold-dot" aria-label="Acquired"></span>
+              {%- endunless -%}
+            </div>
+            <div class="product-card__info">
+              <div class="product-card__title">{{ featured_product.title }}</div>
+              {%- if featured_product.metafields.artwork.medium -%}
+                <div class="product-card__meta">{{ featured_product.metafields.artwork.medium }}{% if featured_product.metafields.artwork.support %} on {{ featured_product.metafields.artwork.support | downcase }}{% endif %}</div>
+              {%- endif -%}
+              {%- if featured_product.metafields.artwork.dimensions -%}
+                <div class="product-card__meta">{{ featured_product.metafields.artwork.dimensions }}</div>
+              {%- endif -%}
+              <div class="product-card__price">
+                {%- if featured_product.available -%}
+                  {{ featured_product.price | money }}
+                {%- else -%}
+                  <span class="product-card__badge product-card__badge--sold">Acquired</span><span class="product-card__sold-price">{{ featured_product.price | money }}</span>
+                {%- endif -%}
+              </div>
+            </div>
+          </a>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    <!-- PRESS -->
+    <h2 class="section-heading">Press</h2>
+    <div class="press-list body-text">
+      <p class="press-list__item">
+        <strong>Urgent Matter</strong> &mdash; <a href="https://www.urgentmatter.press/how-generative-ai-tool-claude-helped-create-jon-sarkin-catalog-raisonne/" target="_blank" rel="noopener"><em>How generative A.I. tool Claude helped create Jon Sarkin&rsquo;s catalog raisonn&eacute;</em></a><br>
+        <span class="press-list__byline">Adam Schrader, May 2026</span>
+      </p>
+      <p class="press-list__item">
+        <strong>WBUR</strong> &mdash; <a href="https://www.wbur.org/news/2025/05/02/gloucester-gallery-opens-to-cement-jon-sarkins-artistic-legacy" target="_blank" rel="noopener"><em>Gloucester gallery opens to cement Jon Sarkin&rsquo;s artistic legacy</em></a><br>
+        <span class="press-list__byline">Amelia Mason, May 2025</span>
+      </p>
+      <p class="press-list__item">
+        <strong>Epidemiology and Psychiatric Sciences</strong> (Cambridge University Press) &mdash; <a href="https://www.cambridge.org/core/journals/epidemiology-and-psychiatric-sciences/article/jon-sarkin-the-eternal-now/DE3106B8C0F78C0557015414358FF42F" target="_blank" rel="noopener"><em>Jon Sarkin: The Eternal Now</em></a><br>
+        <span class="press-list__byline">Colin Rhodes, 2023</span>
+      </p>
+      <p class="press-list__item">
+        <strong>The Boston Globe</strong> &mdash; <a href="https://www.bostonglobe.com/2025/01/29/arts/jon-sarkin-outsider-artist-gloucester-exhibition/" target="_blank" rel="noopener"><em>Brain trauma drove Gloucester&rsquo;s Jon Sarkin to become an artist. He died an outsider art legend.</em></a><br>
+        <span class="press-list__byline">Murray Whyte, January 2025</span>
+      </p>
+      <p class="press-list__item">
+        <strong>Palate &amp; Palette</strong> &mdash; <a href="https://palateandpalette.substack.com/p/jon-sarkin-accidental-artist" target="_blank" rel="noopener"><em>Jon Sarkin, accidental artist</em></a><br>
+        <span class="press-list__byline">Amy Allen, July 2024</span>
+      </p>
     </div>
 
   </div>
@@ -93,7 +165,15 @@
 {% schema %}
 {
   "name": "Home content",
-  "settings": [],
+  "settings": [
+    {
+      "type": "text",
+      "id": "featured_handles",
+      "label": "Featured product handles (comma-separated)",
+      "info": "Three product handles for the 'Currently Available' module. Rotate quarterly. Pick one anchor / one institutional / one accessible.",
+      "default": "js-0000-10070,alphabet-series-complete-set-of-26-a-z,js-2017-8764"
+    }
+  ],
   "presets": [
     {
       "name": "Home content"

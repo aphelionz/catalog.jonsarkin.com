@@ -19,6 +19,67 @@
   {% endif %}
 
   <link rel="canonical" href="{{ canonical_url }}">
+
+  {%- comment -%} ── OG / Twitter Card meta ── {%- endcomment -%}
+  {%- capture estate_default_desc -%}The official estate of Jon Sarkin (1953–2024), American outsider artist. Catalog raisonné, available works, and studio notes from Gloucester, Massachusetts.{%- endcapture -%}
+
+  {%- if template.name == 'product' -%}
+    {%- assign og_type = 'product' -%}
+    {%- capture og_title -%}{% if product.metafields.artwork.medium %}{{ product.metafields.artwork.medium }}{% if product.metafields.artwork.year %}, {{ product.metafields.artwork.year }}{% endif %} — {% endif %}Jon Sarkin ({{ product.title }}){%- endcapture -%}
+    {%- if product.metafields.artwork.content_excerpt != blank -%}
+      {%- assign og_description = product.metafields.artwork.content_excerpt | strip_html | truncate: 200 -%}
+    {%- else -%}
+      {%- capture og_description -%}{% if product.metafields.artwork.medium %}{{ product.metafields.artwork.medium }}{% endif %}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | downcase }}{% endif %}{% if product.metafields.artwork.dimensions %}, {{ product.metafields.artwork.dimensions }}{% endif %}{% if product.metafields.artwork.year %}, {{ product.metafields.artwork.year }}{% endif %}. By Jon Sarkin (1953–2024).{%- endcapture -%}
+    {%- endif -%}
+    {%- if product.featured_image -%}
+      {%- assign og_image_url = product.featured_image | image_url: width: 1200 -%}
+    {%- endif -%}
+  {%- elsif template.name == 'article' -%}
+    {%- assign og_type = 'article' -%}
+    {%- assign og_title = article.title -%}
+    {%- assign og_description = article.excerpt_or_content | strip_html | truncate: 200 -%}
+    {%- if article.image -%}
+      {%- assign og_image_url = article.image | image_url: width: 1200 -%}
+    {%- endif -%}
+  {%- elsif template.name == 'collection' -%}
+    {%- assign og_type = 'website' -%}
+    {%- if collection.handle == 'all' -%}
+      {%- assign og_title = 'Available Works — The Jon Sarkin Estate' -%}
+    {%- else -%}
+      {%- capture og_title -%}{{ collection.title }} — The Jon Sarkin Estate{%- endcapture -%}
+    {%- endif -%}
+    {%- assign og_description = collection.description | default: estate_default_desc | strip_html | truncate: 200 -%}
+  {%- elsif template.name == 'blog' -%}
+    {%- assign og_type = 'website' -%}
+    {%- capture og_title -%}{{ blog.title }} — The Jon Sarkin Estate{%- endcapture -%}
+    {%- assign og_description = estate_default_desc -%}
+  {%- elsif template.name == 'index' -%}
+    {%- assign og_type = 'website' -%}
+    {%- assign og_title = 'The Jon Sarkin Estate' -%}
+    {%- assign og_description = estate_default_desc -%}
+  {%- else -%}
+    {%- assign og_type = 'website' -%}
+    {%- assign og_title = page_title | default: 'The Jon Sarkin Estate' -%}
+    {%- assign og_description = page_description | default: estate_default_desc -%}
+  {%- endif -%}
+
+  <meta property="og:type" content="{{ og_type }}">
+  <meta property="og:title" content="{{ og_title | escape }}">
+  <meta property="og:description" content="{{ og_description | escape }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:site_name" content="The Jon Sarkin Estate">
+  {%- if og_image_url -%}
+    <meta property="og:image" content="{{ og_image_url }}">
+  {%- endif -%}
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@jonsarkin">
+  <meta name="twitter:title" content="{{ og_title | escape }}">
+  <meta name="twitter:description" content="{{ og_description | escape }}">
+  {%- if og_image_url -%}
+    <meta name="twitter:image" content="{{ og_image_url }}">
+  {%- endif -%}
+
   <link rel="preload" href="{{ 'Jost-VF.woff2' | asset_url }}" as="font" type="font/woff2" crossorigin>
 
   {{ 'theme.css' | asset_url | stylesheet_tag }}

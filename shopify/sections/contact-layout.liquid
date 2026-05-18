@@ -30,6 +30,18 @@
           </div>
 
           <div class="form-field">
+            <label for="ContactForm-route">I&#39;m reaching out about</label>
+            <select id="ContactForm-route" name="contact[Inquiry Type]" required>
+              <option value="">&mdash; Please choose &mdash;</option>
+              <option value="Acquiring a work">Acquiring a work</option>
+              <option value="A piece I own">A piece I own</option>
+              <option value="Press inquiry">Press inquiry</option>
+              <option value="Loan or exhibition">Loan or exhibition</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-field">
             <label for="ContactForm-body">{{ 'templates.contact.form.comment' | t }}</label>
             <textarea id="ContactForm-body" name="contact[body]" required></textarea>
           </div>

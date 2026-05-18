@@ -721,6 +721,29 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
   font-size: 0.85rem;
 }
 
+.press-list__item {
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+.press-list__byline {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.why-this-matters {
+  margin-top: calc(var(--gutter) * 4);
+}
+.why-this-matters .press-strip {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: calc(var(--gutter) * 2);
+}
+.why-this-matters .press-strip a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .scholarly-quote {
   padding: calc(var(--gutter) * 2.5) 0;
   margin-bottom: calc(var(--gutter) * 2);
