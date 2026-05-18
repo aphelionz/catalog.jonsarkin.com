@@ -29,16 +29,19 @@ endif;
 $escape    = $this->plugin('escapeHtml');
 $translate = $this->plugin('translate');
 
-// Filter-query variants of /item are duplicates of the base browse from Google's
-// perspective — same template, different rows. Canonical browse is /faceted-browse/2
-// (promoted in the sitemap). noindex,follow keeps the crawler walking links to
-// individual items without polluting the index with thousands of filter permutations.
+// /item is Omeka's legacy browse URL; the canonical browse is /faceted-browse/2
+// (promoted in the sitemap). Filter variants get noindex,follow so the crawler
+// keeps walking item links without indexing thousands of permutations. The base
+// unfiltered /item gets a canonical pointing to /faceted-browse/2 so Google
+// consolidates the signal rather than treating /item as a competing browse page.
 $hasFilter = $this->params()->fromQuery('property') !== null
     || $this->params()->fromQuery('fulltext_search') !== null
     || $this->params()->fromQuery('item_set_id') !== null
     || $this->params()->fromQuery('resource_class_id') !== null;
 if ($hasFilter) {
     $this->headMeta()->appendName('robots', 'noindex, follow');
+} else {
+    $this->headLink(['rel' => 'canonical', 'href' => 'https://catalog.jonsarkin.com/faceted-browse/2']);
 }
 
 $this->htmlElement('body')->appendAttribute('class', 'item browse');
