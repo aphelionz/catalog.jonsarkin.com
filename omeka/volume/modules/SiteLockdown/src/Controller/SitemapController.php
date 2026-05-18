@@ -33,8 +33,8 @@ class SitemapController extends AbstractActionController
         $urls = [];
 
         // ── Top-level routes ──────────────────────────────────────────
-        $urls[] = $this->urlEntry('/',                      $today, 'weekly',  '1.0');
-        $urls[] = $this->urlEntry('/faceted-browse/2',      $today, 'daily',   '0.9');
+        // Catalog root (`/`) is a 301 to jonsarkin.com — no point in sitemap.
+        $urls[] = $this->urlEntry('/faceted-browse/2',      $today, 'daily',   '1.0');
         $urls[] = $this->urlEntry('/exhibitions',           $today, 'monthly', '0.8');
         $urls[] = $this->urlEntry('/visual-search',         $today, 'monthly', '0.5');
         $urls[] = $this->urlEntry('/submit',                $today, 'yearly',  '0.5');

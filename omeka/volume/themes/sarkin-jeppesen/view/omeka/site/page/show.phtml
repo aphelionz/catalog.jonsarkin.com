@@ -46,8 +46,16 @@ $this->headLink()->appendStylesheet($this->assetUrl('css/page-blocks.css', 'Omek
 $this->htmlElement('body')->appendAttribute('class', $pageBodyClass);
 $this->pageTitle($page->title(), 2);
 
-// Home page redirects to the canonical estate site
+// Home page is a permanent redirect to the canonical estate site. Emit a real
+// HTTP 301 (not a meta-refresh / JS hop) so Google consolidates link equity to
+// jonsarkin.com. Meta + JS fallback only runs if headers were already sent —
+// shouldn't happen in normal Omeka dispatch, but kept as belt-and-suspenders.
 if ($page->slug() === 'home') {
+    if (!headers_sent()) {
+        header('Location: https://jonsarkin.com', true, 301);
+        header('Cache-Control: public, max-age=86400');
+        exit;
+    }
     $this->headMeta()->appendHttpEquiv('refresh', '0;url=https://jonsarkin.com');
     $this->headLink(['rel' => 'canonical', 'href' => 'https://jonsarkin.com']);
     $this->headStyle()->appendStyle('body{display:none!important}');
