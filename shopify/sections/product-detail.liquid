@@ -114,9 +114,11 @@
         </div>
 
         {%- if product.description != blank -%}
-          <div class="product-detail__description">
-            {{ product.description }}
-          </div>
+          {%- unless product.description contains '<!-- agent-only -->' -%}
+            <div class="product-detail__description">
+              {{ product.description }}
+            </div>
+          {%- endunless -%}
         {%- endif -%}
       </div>
     </div>
