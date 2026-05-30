@@ -40,6 +40,11 @@
           <div class="cart-footer__total">
             {{ 'sections.cart.estimated_total' | t }}: {{ cart.total_price | money }}
           </div>
+          {%- if cart.total_price >= 500000 -%}
+            <div class="cart-notice" style="margin: 1rem 0; padding: 0.75rem 1rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; color: var(--text-secondary);">
+              Works over $5,000 are acquired by ACH (Bank Deposit) or Zcash rather than by card. Both are available at checkout.
+            </div>
+          {%- endif -%}
           <button type="submit" name="checkout" class="btn btn--primary">
             {{ 'sections.cart.checkout' | t }}
           </button>
