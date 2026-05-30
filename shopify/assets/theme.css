@@ -1309,6 +1309,13 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
 .page-content p { color: var(--text-secondary); line-height: 1.8; }
 .page-content a { text-decoration: underline; text-underline-offset: 3px; }
 .page-content a:hover { color: var(--accent); }
+.page-content ol,
+.page-content ul { margin: 1.5rem 0; padding-left: 1.75rem; color: var(--text-secondary); }
+.page-content ol { list-style: decimal; }
+.page-content ul { list-style: disc; }
+.page-content li { line-height: 1.8; margin-bottom: 0.75rem; }
+.page-content li:last-child { margin-bottom: 0; }
+.page-content li::marker { color: var(--text-secondary); }
 
 /* --- Article --- */
 .article-meta {
