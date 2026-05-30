@@ -85,18 +85,12 @@
 
         <div class="product-detail__actions">
           {%- if product.available -%}
-            {%- if product.price >= 1000000 -%}
-              <a href="/pages/contact?subject={{ product.title | url_encode }}" class="btn btn--primary">
-                Inquire About This Work
-              </a>
-            {%- else -%}
-              {%- form 'product', product -%}
-                <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
-                <button type="submit" class="btn btn--primary">
-                  {{ 'products.product.add_to_cart' | t }}
-                </button>
-              {%- endform -%}
-            {%- endif -%}
+            {%- form 'product', product -%}
+              <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+              <button type="submit" class="btn btn--primary">
+                {{ 'products.product.add_to_cart' | t }}
+              </button>
+            {%- endform -%}
           {%- else -%}
             <button disabled class="btn btn--primary btn--disabled">Acquired</button>
           {%- endif -%}

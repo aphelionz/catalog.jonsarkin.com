@@ -40,9 +40,9 @@ The theme auto-generates SEO titles from metafields:
 When adding new products, also set the Shopify admin SEO title field to the same value as a fallback (the `global.title_tag` metafield).
 
 ## Price routing
-- `product.price >= 1000000` (Liquid cents, i.e. ≥ $10,000) → "Inquire About This Work" button
-- Below that threshold + in stock → "Acquire This Work" button
+- In stock → "Acquire This Work" button (adds to cart) — all price tiers, including flagship
 - Out of stock → "Acquired" (disabled)
+- No price gate: the former `>= $10,000 → "Inquire About This Work"` contact-page route was removed 2026-05-30 (all works go to the cart). Purchases over $5,000 are steered to ACH/Zcash by the cart notice in `sections/cart.liquid`, not by hiding the cart.
 
 ## Files not to touch
 - Checkout templates (Shopify controls these)
