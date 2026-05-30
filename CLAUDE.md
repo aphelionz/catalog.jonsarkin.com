@@ -124,13 +124,14 @@ The Shopify store runs at jonsarkin.com. Theme source lives in `shopify/`.
 - Access token is in `shopify/.env` (never commit)
 - GraphQL endpoint: `https://jonsarkin.myshopify.com/admin/api/2025-01/graphql.json`
 - Use for: metafield definitions, collection sort order, menu reads, anything the MCP can't do
-- MCP covers: products, customers, orders (with scopes), variants, metafields on products
+- MCP covers: products, customers, orders (with scopes), variants, metafields on products, Online Store pages
 
-### MCP limitations
-- The `shopify-mcp` package only covers products, customers, orders, variants, and product metafields
-- No support for: navigation menus, pages, themes, collections (CRUD), metafield definitions
-- For those, use the Admin API directly via curl + GraphQL
-- Orders scope requires `read_orders` — currently may not be enabled
+### MCP server (vendored)
+- The `sarkin-shopify` MCP is now a **vendored fork** of `shopify-mcp` at `sarkin-shopify-mcp/` in this repo (was upstream `npx shopify-mcp`). Desktop config runs `node sarkin-shopify-mcp/dist/index.js`.
+- To add/edit tools: edit `sarkin-shopify-mcp/dist/tools/*.js`, wire into `dist/index.js` (import + `.initialize` + `server.tool`), then fully quit/reopen Claude Desktop. Auth (client-credentials token exchange) lives in `dist/lib/shopifyAuth.js`; creds are passed as CLI args in the Desktop config.
+- Covers: products, customers, orders, variants, product metafields, **and Online Store pages** (`get-pages`, `update-page`, `create-page` — added 2026-05-30; requires the app's `read/write_online_store_pages` scopes).
+- Still NOT covered (use Admin API): navigation menus, themes, collections CRUD, metafield definitions.
+- Orders scope requires `read_orders` — currently may not be enabled.
 
 ### Metafields
 - Artwork metafields (pinned to product admin): `artwork.catalog_number`, `artwork.catalog_url`, `artwork.medium`, `artwork.dimensions`, `artwork.year`
@@ -175,10 +176,11 @@ Both MCPs are connected globally in Claude Desktop. Use them — don't default t
 
 **Use the sarkin-shopify MCP for:**
 - Product CRUD, variant management, customer/order lookup
-- Anything the MCP supports (products, variants, options, customers, orders)
+- Online Store pages: `get-pages`, `update-page`, `create-page` (body is HTML; theme renders `{{ page.title }}` as H1, so don't repeat the title in the body)
+- Anything the MCP supports (products, variants, options, customers, orders, pages)
 
 **Use the Shopify Admin API (curl + GraphQL) for:**
-- Navigation menus, pages, themes, collections CRUD, metafield definitions
+- Navigation menus, themes, collections CRUD, metafield definitions
 - Anything not covered by the MCP
 
 ## Operational knowledge

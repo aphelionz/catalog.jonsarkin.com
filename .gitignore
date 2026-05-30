@@ -33,6 +33,9 @@ scripts/.enrich_batches/
 # Database backups
 backups/
 
+# Vendored MCP server deps (regenerable via npm install)
+sarkin-shopify-mcp/node_modules/
+
 # macOS
 .DS_Store
 

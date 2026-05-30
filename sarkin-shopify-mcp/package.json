@@ -1,0 +1,24 @@
+{
+  "name": "sarkin-shopify-mcp",
+  "version": "1.1.0",
+  "description": "Vendored fork of shopify-mcp (GeLi2001/shopify-mcp) for the Jon Sarkin Estate store, extended with Online Store page tools (get/create/update).",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "dotenv": "^16.0.3",
+    "graphql": "^16.6.0",
+    "graphql-request": "^5.1.0",
+    "minimist": "^1.2.8",
+    "zod": "^3.21.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
