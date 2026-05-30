@@ -98,6 +98,7 @@ deploy: ## Push code (modules/themes) to production and restart Omeka
 		--exclude='omeka/volume/config/database.ini' --exclude='social/' \
 		--exclude='cookies.txt' --exclude='.mcp.json' --exclude='exports/' \
 		--exclude='*.sqlite-shm' --exclude='*.sqlite-wal' \
+		--exclude='shopify/' --exclude='sarkin-shopify-mcp/' \
 		./ $(PROD_USER)@$(PROD_HOST):$(PROD_DIR)/
 	ssh $(PROD_USER)@$(PROD_HOST) 'cd $(PROD_DIR) && docker compose -f docker-compose.prod.yml restart omeka'
 
