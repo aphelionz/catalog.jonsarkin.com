@@ -828,44 +828,38 @@ if ($isPerson && $item->id() === 3) {
     <?php endif; ?>
 
     <?php if (!$isPerson && !$isExhibition): ?>
-    <!-- ═══ METADATA BAR ═══ -->
+    <?php if (!$isWriting): /* writings carry no metadata bar */ ?>
+    <!-- ═══ METADATA BAR (artwork only) ═══ -->
     <section class="record-metadata" aria-labelledby="object-metadata-heading">
         <h2 id="object-metadata-heading" class="sr-only"><?php echo $translate('Object metadata'); ?></h2>
         <div class="metadata-top">
             <div class="metadata-fields">
-                <?php if ($isWriting): ?>
-                    <?php if ($fullText): ?>
-                    <dl>
-                        <dt>Words</dt><dd><?php echo number_format(str_word_count(strip_tags($fullText))); ?></dd>
-                    </dl>
-                    <?php endif; ?>
-                <?php else: ?>
-                    <?php if ($medium): ?>
-                    <dl>
-                        <dt>Medium</dt><dd><?php echo $medium; ?></dd>
-                    </dl>
-                    <?php endif; ?>
-                    <?php if ($surface): ?>
-                    <dl>
-                        <dt>Support</dt><dd><?php echo $surface; ?></dd>
-                    </dl>
-                    <?php endif; ?>
-                    <?php /* Condition now shown in collector column below */ ?>
-                    <?php
-                    $ownerDisplay = $owner ?: (!empty($provenanceVals) ? $provenanceVals[0] : '');
-                    if ($ownerDisplay && $isPermanentCollection) {
-                        $ownerDisplay .= ' (permanent collection)';
-                    }
-                    if ($ownerDisplay): ?>
-                    <dl>
-                        <dt>Owner</dt><dd><?php echo $ownerDisplay; ?></dd>
-                    </dl>
-                    <?php endif; ?>
+                <?php if ($medium): ?>
+                <dl>
+                    <dt>Medium</dt><dd><?php echo $medium; ?></dd>
+                </dl>
+                <?php endif; ?>
+                <?php if ($surface): ?>
+                <dl>
+                    <dt>Support</dt><dd><?php echo $surface; ?></dd>
+                </dl>
+                <?php endif; ?>
+                <?php /* Condition now shown in collector column below */ ?>
+                <?php
+                $ownerDisplay = $owner ?: (!empty($provenanceVals) ? $provenanceVals[0] : '');
+                if ($ownerDisplay && $isPermanentCollection) {
+                    $ownerDisplay .= ' (permanent collection)';
+                }
+                if ($ownerDisplay): ?>
+                <dl>
+                    <dt>Owner</dt><dd><?php echo $ownerDisplay; ?></dd>
+                </dl>
                 <?php endif; ?>
             </div>
         </div>
 
     </section>
+    <?php endif; /* !$isWriting */ ?>
 
     <?php if ($isWriting): ?>
     <!-- ═══ WRITING CONTENT ═══ -->
@@ -873,11 +867,47 @@ if ($isPerson && $item->id() === 3) {
         <h2 id="writing-content-heading" class="sr-only"><?php echo $translate('Full text'); ?></h2>
         <h2 class="writing-title"><?php echo $escape($pageLabel); ?></h2>
         <?php if ($fullText): ?>
-            <div class="writing-text"><?php echo nl2br($fullText); ?></div>
+            <?php
+            // $fullText is already HTML-escaped by the value helper; just linkify bare URLs.
+            $writingHtml = preg_replace(
+                '~(https?://[^\s<]+[^\s<.,;:)\]])~',
+                '<a href="$1" target="_blank" rel="noopener">$1</a>',
+                $fullText
+            );
+            ?>
+            <div class="writing-text"><?php echo nl2br($writingHtml); ?></div>
         <?php else: ?>
             <p class="writing-no-text"><?php echo $translate('Full text not available.'); ?></p>
         <?php endif; ?>
     </section>
+    <?php
+    // Writing/documentation items can carry photos (e.g. installation views on
+    // harvested news posts). The text branch above never renders media, so show
+    // any attached images here as a gallery. Use $allMedia, not $extraMedia,
+    // since no "primary" is shown elsewhere on a writing page.
+    $writingImages = [];
+    foreach ($allMedia as $m) {
+        if (strpos((string) $m->mediaType(), 'image/') === 0) $writingImages[] = $m;
+    }
+    ?>
+    <?php if (!empty($writingImages)): ?>
+    <section class="person-gallery writing-gallery" aria-labelledby="writing-gallery-heading">
+        <h3 id="writing-gallery-heading"><?php echo $translate('Images'); ?></h3>
+        <div class="person-gallery-grid">
+            <?php foreach ($writingImages as $m): ?>
+            <figure>
+                <a href="<?php echo $escape($m->originalUrl() ?: $m->thumbnailUrl('large')); ?>" target="_blank" rel="noopener">
+                    <img src="<?php echo $escape($m->thumbnailUrl('large')); ?>"
+                         alt="<?php echo $escape(strip_tags($pageLabel) . ', ' . ($m->displayTitle() ?: 'photograph')); ?>" />
+                </a>
+                <?php $mediaTitle = $m->displayTitle(); if ($mediaTitle && $mediaTitle !== $m->source()): ?>
+                    <figcaption><?php echo $escape($mediaTitle); ?></figcaption>
+                <?php endif; ?>
+            </figure>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
     <?php else: ?>
     <!-- ═══ ARTWORK MEDIA ═══ -->
     <section class="record-media<?php if ($isVideo) echo ' record-media--video'; ?>" aria-labelledby="artwork-media-heading">
@@ -913,6 +943,7 @@ if ($isPerson && $item->id() === 3) {
 
     <!-- ═══ CONTEXT / DOCUMENTATION SECTION ═══ -->
     <?php if ($isWriting): ?>
+    <?php if (!empty($motifs) || !empty($bibliography)): /* skip the empty box when there's nothing to document */ ?>
     <section class="record-value writing-documentation" aria-labelledby="collector-context-heading">
         <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
 
@@ -946,6 +977,7 @@ if ($isPerson && $item->id() === 3) {
             </div>
         </div>
     </section>
+    <?php endif; /* motifs || bibliography */ ?>
     <?php else: ?>
     <section class="record-value" aria-labelledby="collector-context-heading">
         <h2 id="collector-context-heading" class="sr-only"><?php echo $translate('Context and documentation'); ?></h2>
