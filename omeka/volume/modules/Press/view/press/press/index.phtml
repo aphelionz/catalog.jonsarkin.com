@@ -1,0 +1,116 @@
+<?php
+/**
+ * Public chronological wall of press coverage about Jon Sarkin.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var array $press  Rows from PressController::indexAction (id, title, date, outlet, logo_slug)
+ * @var int   $total
+ */
+
+$this->headTitle('Press');
+
+$escape = $this->plugin('escapeHtml');
+$siteSlug = $this->currentSite()->slug();
+
+$logoUrl = function (string $slug): string {
+    $file = $slug !== '' ? 'img/press-logos/' . $slug . '.png' : 'img/press-logos/_placeholder.png';
+    return $this->assetUrl($file);
+};
+?>
+
+<style>
+.press-page {
+    max-width: 960px;
+    margin: calc(var(--gutter) * 2) auto calc(var(--gutter) * 4);
+    padding: 0 var(--gutter);
+}
+.press-page h1 {
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 0.35rem;
+}
+.press-page .page-intro {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #777);
+    margin: 0 0 calc(var(--gutter) * 2);
+    line-height: 1.6;
+}
+.press-list { display: flex; flex-direction: column; }
+.press-entry {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 0.5rem;
+    border-bottom: 1px solid var(--border-muted, rgba(0,0,0,0.08));
+    color: inherit;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+.press-entry:hover { background-color: var(--surface-hover, rgba(22, 26, 43, 0.04)); }
+.press-logo {
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #06080e;
+}
+.press-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.press-meta { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.press-kicker {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary, #777);
+    font-variant-numeric: tabular-nums;
+}
+.press-headline {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+.press-entry:hover .press-headline { text-decoration: underline; }
+
+@media (max-width: 640px) {
+    .press-entry { gap: 0.75rem; padding: 0.75rem 0.25rem; }
+    .press-logo { width: 56px; height: 56px; }
+    .press-headline { font-size: 0.95rem; }
+}
+</style>
+
+<div class="press-page">
+    <h1>Press</h1>
+    <p class="page-intro">
+        Jon Sarkin in the press since the 1990s, from Cape Ann's weeklies to GQ, The New York Times, the BBC, and NPR's Fresh Air.
+    </p>
+
+    <div class="press-list">
+    <?php foreach ($press as $p): ?>
+        <?php
+            $title = $p['title'] ?? '';
+            $outlet = $p['outlet'] ?? '';
+            $dateRaw = (string) ($p['date'] ?? '');
+            $dateDisp = '';
+            if ($dateRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}/', $dateRaw)) {
+                $ts = strtotime(substr($dateRaw, 0, 10));
+                $dateDisp = $ts ? date('F j, Y', $ts) : $dateRaw;
+            } elseif ($dateRaw !== '') {
+                $dateDisp = $dateRaw;
+            }
+            $kicker = trim($outlet . (($outlet !== '' && $dateDisp !== '') ? '  ·  ' : '') . $dateDisp);
+            // Rendered URL is cleaned to /item/{id} by clean-urls.php output filter.
+            $itemUrl = sprintf('/s/%s/item/%d', $siteSlug, (int) $p['id']);
+        ?>
+        <a class="press-entry" href="<?= $escape($itemUrl) ?>">
+            <span class="press-logo">
+                <img src="<?= $escape($logoUrl($p['logo_slug'] ?? '')) ?>" alt="<?= $escape($outlet !== '' ? $outlet : 'Press') ?>" loading="lazy">
+            </span>
+            <span class="press-meta">
+                <?php if ($kicker !== ''): ?><span class="press-kicker"><?= $escape($kicker) ?></span><?php endif; ?>
+                <span class="press-headline"><?= $escape($title) ?></span>
+            </span>
+        </a>
+    <?php endforeach; ?>
+    </div>
+</div>

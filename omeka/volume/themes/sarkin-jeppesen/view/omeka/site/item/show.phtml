@@ -866,13 +866,14 @@ if ($isPerson && $item->id() === 3) {
     <section class="record-media writing-content" aria-labelledby="writing-content-heading">
         <h2 id="writing-content-heading" class="sr-only"><?php echo $translate('Full text'); ?></h2>
         <h2 class="writing-title"><?php echo $escape($pageLabel); ?></h2>
-        <?php if ($fullText): ?>
+        <?php $bodyText = $fullText !== '' ? $fullText : $description; /* press items keep their text in dcterms:description */ ?>
+        <?php if ($bodyText !== ''): ?>
             <?php
-            // $fullText is already HTML-escaped by the value helper; just linkify bare URLs.
+            // Body is already HTML-escaped by the value helper; just linkify bare URLs.
             $writingHtml = preg_replace(
                 '~(https?://[^\s<]+[^\s<.,;:)\]])~',
                 '<a href="$1" target="_blank" rel="noopener">$1</a>',
-                $fullText
+                $bodyText
             );
             ?>
             <div class="writing-text"><?php echo nl2br($writingHtml); ?></div>
