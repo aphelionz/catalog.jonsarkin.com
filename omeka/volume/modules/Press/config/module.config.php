@@ -51,6 +51,7 @@ return [
         'outlet_logos' => [
             'ARTnews' => 'artnews',
             'AXNS Collective' => 'axns-collective',
+            'Album Cover Hall of Fame' => 'album-cover-hall-of-fame',
             'Art Finder' => 'art-finder',
             'Art New England' => 'art-new-england',
             'ArtThrob' => 'artthrob',
