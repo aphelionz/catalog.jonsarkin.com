@@ -2492,6 +2492,7 @@ function renderSprintInput(zone, item, config) {
       const tagger = document.createElement('div');
       tagger.className = 'sprint-tagger';
       const selectedTags = new Set(extractAllValues(item, config.term));
+      const clipHigh = new Set();  // motifs pre-filled from high-confidence CLIP suggestions
 
       // Tag pills container
       const tagsWrap = document.createElement('div');
@@ -2562,8 +2563,9 @@ function renderSprintInput(zone, item, config) {
         tagsWrap.innerHTML = '';
         for (const tag of selectedTags) {
           const pill = document.createElement('span');
-          pill.className = 'sprint-tagger-pill';
+          pill.className = 'sprint-tagger-pill' + (clipHigh.has(tag) ? ' clip-high' : '');
           pill.textContent = tag;
+          if (clipHigh.has(tag)) pill.title = 'CLIP high-confidence (review before saving)';
           const rm = document.createElement('button');
           rm.className = 'sprint-tagger-remove';
           rm.textContent = '×';
@@ -2682,6 +2684,9 @@ function renderSprintInput(zone, item, config) {
       zone.appendChild(tagger);
       zone.appendChild(saveBtn);
       setTimeout(() => tagInput.focus(), 100);
+      if (config.term === 'dcterms:subject') {
+        loadClipSuggestions(itemId, selectedTags, tagger, renderPills, clipHigh);
+      }
       break;
     }
 
@@ -2848,6 +2853,79 @@ function renderSuggestionPills(suggestions, selectedTags, tagger, renderPillsFn)
   } else {
     tagger.prepend(wrap);
   }
+}
+
+// ── Sprint: CLIP motif suggestions (precomputed, confidence-banded) ──────────
+// Fetches staged suggestions from motif_pretag.py. High-confidence motifs are
+// pre-filled (and flagged) so the reviewer confirms by glance; medium ones are
+// offered as clickable pills. Silent no-op when no suggestions exist for an item.
+
+async function loadClipSuggestions(itemId, selectedTags, tagger, renderPillsFn, clipHigh) {
+  try {
+    const resp = await fetch(`/admin/rapid-editor/motif-suggestions/${itemId}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const sugg = (data.suggestions || []).filter(s => !selectedTags.has(s.motif));
+    const high = sugg.filter(s => s.band === 'high');
+    const med = sugg.filter(s => s.band === 'medium');
+
+    for (const s of high) {
+      selectedTags.add(s.motif);
+      clipHigh.add(s.motif);
+      if (!ALL_MOTIF_TAGS.includes(s.motif)) {
+        ALL_MOTIF_TAGS.push(s.motif);
+        ALL_MOTIF_TAGS.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      }
+    }
+    if (high.length) renderPillsFn();
+    if (med.length) renderClipMediumPills(med, selectedTags, tagger, renderPillsFn);
+  } catch (err) {
+    // staging/clip optional — fail silently; the Claude ✨ button still works
+  }
+}
+
+function renderClipMediumPills(suggestions, selectedTags, tagger, renderPillsFn) {
+  tagger.querySelector('.sprint-tagger-clip')?.remove();
+  const wrap = document.createElement('div');
+  wrap.className = 'sprint-tagger-suggestions sprint-tagger-clip';
+  const label = document.createElement('span');
+  label.className = 'sprint-tagger-suggestions-label';
+  label.textContent = 'CLIP suggestions';
+  wrap.appendChild(label);
+
+  for (const s of suggestions) {
+    const pct = Math.round((s.score || 0) * 100);
+    const pill = document.createElement('span');
+    pill.className = 'sprint-tagger-suggestion-pill clip-medium';
+    pill.textContent = `${s.motif} ${pct}%`;
+    pill.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      selectedTags.add(s.motif);
+      if (!ALL_MOTIF_TAGS.includes(s.motif)) {
+        ALL_MOTIF_TAGS.push(s.motif);
+        ALL_MOTIF_TAGS.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      }
+      pill.remove();
+      renderPillsFn();
+      if (!wrap.querySelector('.sprint-tagger-suggestion-pill')) wrap.remove();
+    });
+    const dismiss = document.createElement('button');
+    dismiss.className = 'sprint-tagger-suggestion-dismiss';
+    dismiss.textContent = '×';
+    dismiss.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      pill.remove();
+      if (!wrap.querySelector('.sprint-tagger-suggestion-pill')) wrap.remove();
+    });
+    pill.appendChild(dismiss);
+    wrap.appendChild(pill);
+  }
+
+  const tagsWrap = tagger.querySelector('.sprint-tagger-tags');
+  if (tagsWrap) tagsWrap.after(wrap); else tagger.prepend(wrap);
 }
 
 function preloadSprintNext() {
@@ -3019,6 +3097,33 @@ function setupSprintButtons() {
   dom.sprintViewUndo.addEventListener('click', () => {
     if (publishMode) publishUndo();
     else sprintUndo();
+  });
+}
+
+// ── Mobile: collapsible image ────────────────────────────────────────────────
+// On phone widths the layout stacks (image on top, form below). Tapping the
+// image expands it near-fullscreen for inspection; focusing a form input
+// collapses it to a strip so the keyboard + suggestion dropdown have room.
+// All no-ops on desktop (the column grid ignores the state classes).
+function setupMobileImageToggle() {
+  const phone = window.matchMedia('(max-width: 640px)');
+
+  const imagePanel = $('#image-panel');
+  imagePanel.addEventListener('click', () => {
+    if (!phone.matches) return;
+    dom.main.classList.remove('image-collapsed');
+    dom.main.classList.toggle('image-expanded');
+  });
+
+  dom.formPanel.addEventListener('focusin', (e) => {
+    if (!phone.matches) return;
+    if (!e.target.matches('input, textarea')) return;
+    dom.main.classList.remove('image-expanded');
+    dom.main.classList.add('image-collapsed');
+  });
+  dom.formPanel.addEventListener('focusout', (e) => {
+    if (!e.target.matches('input, textarea')) return;
+    dom.main.classList.remove('image-collapsed');
   });
 }
 
@@ -3399,6 +3504,7 @@ async function init() {
   setupBucketButtons();
   setupSprintButtons();
   setupSprintMenu();
+  setupMobileImageToggle();
 
   // Restore saved position
   restorePosition();

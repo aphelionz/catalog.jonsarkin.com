@@ -769,6 +769,25 @@
 }
 .rapid-editor-container .sprint-tagger-suggestion-dismiss:hover { color: #c0392b; }
 
+/* CLIP precomputed motif suggestions (banded) */
+.rapid-editor-container .sprint-tagger-pill.clip-high {
+  background: #15663f;
+  box-shadow: inset 0 0 0 1px #2ecc71;
+}
+.rapid-editor-container .sprint-tagger-pill.clip-high::before {
+  content: '\2728';
+  font-size: 10px;
+}
+.rapid-editor-container .sprint-tagger-clip .sprint-tagger-suggestions-label { color: #e08e0b; }
+.rapid-editor-container .sprint-tagger-suggestion-pill.clip-medium {
+  background: rgba(243, 156, 18, 0.12);
+  border: 1px dashed #e08e0b;
+}
+.rapid-editor-container .sprint-tagger-suggestion-pill.clip-medium:hover {
+  background: rgba(243, 156, 18, 0.25);
+  border-style: solid;
+}
+
 /* Save button inside sprint controls */
 .rapid-editor-container .sprint-save {
   display: block;
@@ -1127,6 +1146,58 @@
   .rapid-editor-container .tournament-matchup { flex-direction: column; }
   .rapid-editor-container .tournament-vs { min-width: auto; padding: 4px 0; }
   .rapid-editor-container .tournament-card .card-img-wrap { height: min(250px, 35vh); }
+}
+
+/* ── Phone layout (sprint / motif tagging) ─────────────────────────────
+   Stacks the desktop 2-column grid into image-on-top + form-below.
+   Image height is driven by --img-h so editor.js can swap states by
+   toggling .image-expanded / .image-collapsed on #main. Desktop is
+   untouched: its column grid ignores grid-template-rows / --img-h. */
+@media (max-width: 640px) {
+  .rapid-editor-container { height: 100dvh; }
+
+  /* Stack: image on top (tappable), scrollable form below */
+  .rapid-editor-container #main {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--img-h, 38vh) 1fr;
+  }
+  .rapid-editor-container #main.image-expanded { --img-h: 82vh; }
+  .rapid-editor-container #main.image-collapsed { --img-h: 64px; }
+
+  .rapid-editor-container #image-panel {
+    cursor: pointer;
+    transition: none;
+  }
+  .rapid-editor-container #form-panel { padding: 12px 14px 24px; }
+
+  /* Touch targets */
+  .rapid-editor-container .btn { min-height: 44px; padding: 10px 16px; }
+  .rapid-editor-container #sprint-view-undo { min-height: 36px; padding: 6px 12px; }
+  .rapid-editor-container #sprint-view-zone .sprint-pill { padding: 10px 16px; }
+  .rapid-editor-container .sprint-pill { padding: 8px 12px; }
+  .rapid-editor-container .sprint-chip { padding: 8px 14px; }
+  .rapid-editor-container .sprint-tagger-pill { padding: 6px 10px; font-size: 13px; }
+  .rapid-editor-container .sprint-tagger-remove { font-size: 18px; padding: 0 6px; }
+  .rapid-editor-container .sprint-tagger-info-btn { width: 28px; height: 28px; font-size: 15px; }
+  .rapid-editor-container .sprint-tagger-tags { max-height: 120px; }
+
+  /* 16px inputs prevent iOS auto-zoom on focus */
+  .rapid-editor-container .sprint-text,
+  .rapid-editor-container .sprint-tagger-input,
+  .rapid-editor-container .sprint-dims input { font-size: 16px; }
+
+  /* Keep the motif suggestion dropdown from covering the whole screen */
+  .rapid-editor-container .sprint-tagger-dropdown { max-height: 40vh; }
+
+  /* Nav: let the item link truncate so filter buttons never overflow */
+  .rapid-editor-container #nav { gap: 8px; padding: 0 8px; }
+  .rapid-editor-container .nav-center { flex: 1 1 auto; min-width: 0; }
+  .rapid-editor-container .nav-center a {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* ── Publish Mode ──────────────────────────────────────────────── */
