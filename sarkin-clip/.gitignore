@@ -6,3 +6,6 @@ venv
 .ocr_cache.json
 .search_index.sqlite
 search_index
+
+# Motif pre-tagging artifacts (regenerable via `make pretag-motifs`)
+clip_api/motif_out/

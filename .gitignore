@@ -70,3 +70,4 @@ omeka/volume/themes/lively/
 exports/
 social/
 .claude/
+scripts/box_derived_backup.csv

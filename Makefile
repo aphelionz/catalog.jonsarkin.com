@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key push-schema
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new pretag-motifs sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key push-schema
 .DEFAULT_GOAL := help
 
 -include .env
@@ -62,6 +62,11 @@ ingest-dry: ## Preview what incremental ingest would process
 
 process-new: ## Re-index search (enrichment now via Omeka admin UI)
 	docker compose run --rm ingest
+
+pretag-motifs: ## CLIP motif pre-tagging: export -> score untagged -> load staging table
+	python3 scripts/export_motif_data.py
+	docker compose exec -T clip-api python -m clip_api.motif_pretag --targets untagged
+	python3 scripts/load_motif_suggestions.py --truncate
 
 # ── Data Sync ────────────────────────────────────────────────────────
 

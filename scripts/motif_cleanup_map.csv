@@ -1,0 +1,153 @@
+value,count,action,target
+Desert,546,keep,Desert
+Portraits,429,rename,Portrait
+Ladies,407,rename,Portrait
+Comic,405,nonvisual (keep),Comic
+Eyes,378,keep,Eyes
+Glyphs,314,keep,Glyphs
+Creature,299,keep,Creature
+_,296,drop,
+Word Ladder,283,rename,Name Repetition
+Pop Culture,197,nonvisual (keep),Pop Culture
+Cactus,162,keep,Cactus
+Illustrated Text,159,rename,Text
+Bottle,139,keep,Bottle
+Names/Words,126,rename,Name Repetition
+Drop Caps,124,rename,Drop Cap
+Boat,117,keep,Boat
+Fish,117,keep,Fish
+Super Artist,114,nonvisual (keep),Super Artist
+Comics,106,nonvisual (keep),Comics
+Creatures,106,rename,Creature
+Star,103,keep,Star
+Moon,100,keep,Moon
+Building,97,keep,Building
+Contortion,94,rename,Figure
+Swirl,91,rename,Spiral
+Tree,89,keep,Tree
+Border,87,keep,Border
+Stars,85,rename,Star
+Cardboard Artist,85,nonvisual (keep),Cardboard Artist
+Cloud,83,keep,Cloud
+Ocean,82,keep,Ocean
+Saturn,81,rename,Planet
+??,81,drop,
+Named Characters,74,nonvisual (keep),Named Characters
+Mesa,73,rename,Desert
+Names,66,rename,Name Repetition
+Trees,65,rename,Tree
+Collage,64,nonvisual (keep),Collage
+Quotes,63,rename,Text
+Waves,57,keep,Waves
+Contour Hatching,56,rename,Crosshatching
+Musical Instruments,56,rename,Musical Instrument
+Vehicle,55,keep,Vehicle
+Batman,54,nonvisual (keep),Batman
+Window,54,keep,Window
+Nipple,54,rename,Figure
+Guitar,54,rename,Musical Instrument
+Clouds,52,rename,Cloud
+Sailboats,52,rename,Boat
+Skull,51,keep,Skull
+States,50,rename,Map
+Crosshatching,46,keep,Crosshatching
+Aloe,45,rename,Plant
+Seascape,43,rename,Ocean
+Spiral,41,keep,Spiral
+Spiral/Mouth,38,rename,Spiral
+MRI,37,nonvisual (keep),MRI
+Abstract Fish,36,rename,Fish
+Blotches,35,rename,Pattern
+Judith,35,nonvisual (keep),Judith
+Cowskull,34,rename,Skull
+Heart,34,keep,Heart
+Sunken Eyes,33,rename,Eyes
+Detective,27,nonvisual (keep),Detective
+Bird in Space,27,nonvisual (keep),Bird in Space
+Buildings,26,rename,Building
+Brancusi,26,nonvisual (keep),Brancusi
+Teeth,24,rename,Mouth
+Notes,24,rename,Text
+Pencil,24,nonvisual (keep),Pencil
+Scream,24,rename,Mouth
+Faces,23,rename,Face
+Mesas,23,rename,Desert
+Rocket,20,keep,Rocket
+Car,19,rename,Vehicle
+Tailfin,17,rename,Vehicle
+Cowskulls,16,rename,Skull
+Superman,15,nonvisual (keep),Superman
+Grids,15,rename,Grid
+CBM,15,nonvisual (keep),CBM
+Text Fragments,15,rename,Text
+Cowlick,13,nonvisual (keep),Cowlick
+Countries,13,rename,Map
+Perspective,12,nonvisual (keep),Perspective
+Splotches,11,rename,Pattern
+Math,11,rename,Number
+Spirals,10,rename,Spiral
+Stripes,10,rename,Pattern
+Boats,10,rename,Boat
+Plant,10,keep,Plant
+Scribble,9,keep,Scribble
+Landscape,9,nonvisual (keep),Landscape
+Wave,9,rename,Waves
+Silhouette,8,nonvisual (keep),Silhouette
+Torn,8,nonvisual (keep),Torn
+MYBH,8,nonvisual (keep),MYBH
+Still Life,7,rename,Bottle
+Emotional Self Portrait,6,rename,Portrait
+Waving,6,rename,Figure
+Sailboat,6,rename,Boat
+Grid,5,keep,Grid
+Cities,5,rename,Building
+Cow,5,keep,Cow
+Skulls,5,rename,Skull
+Self Portrait,4,rename,Portrait
+Television,4,nonvisual (keep),Television
+Snake,4,keep,Snake
+Van Gogh,3,nonvisual (keep),Van Gogh
+Cowboy,3,nonvisual (keep),Cowboy
+Fruit,3,rename,Plant
+Lists,2,rename,Text
+Flying Saucer,2,nonvisual (keep),Flying Saucer
+Falcon,2,rename,Bird
+Portrait,2,keep,Portrait
+Cows,2,rename,Cow
+Gloucester,2,nonvisual (keep),Gloucester
+Drop,2,drop,
+Whistle,2,nonvisual (keep),Whistle
+Quote,2,rename,Text
+Flowchart,2,nonvisual (keep),Flowchart
+Minotaur,2,rename,Creature
+Flowcharts,2,nonvisual (keep),Flowcharts
+Dog,2,rename,Creature
+Jim,1,drop,
+Name,1,rename,Name Repetition
+Frame,1,rename,Border
+Createures,1,rename,Creature
+Cars,1,rename,Vehicle
+Tailfins,1,rename,Vehicle
+Horns,1,nonvisual (keep),Horns
+Rockets,1,rename,Rocket
+∅,1,drop,
+Named,1,rename,Name Repetition
+The Redhead,1,nonvisual (keep),The Redhead
+Bird,1,keep,Bird
+Cow Skull,1,rename,Skull
+Blood,1,nonvisual (keep),Blood
+Borders,1,rename,Border
+Cretures,1,rename,Creature
+MEsa,1,rename,Desert
+Carrot,1,rename,Plant
+Glyph,1,rename,Glyphs
+GlyphsMoon,1,split,Glyphs + Moon
+NAmes,1,rename,Name Repetition
+Circle,1,keep,Circle
+Stencil,1,nonvisual (keep),Stencil
+Lyrics,1,rename,Text
+How-to,1,drop,
+Palindromes,1,rename,Name Repetition
+Sun,1,keep,Sun
+Eggplant,1,rename,Plant
+Bamboo,1,rename,Plant

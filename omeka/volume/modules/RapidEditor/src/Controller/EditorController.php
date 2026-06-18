@@ -372,6 +372,40 @@ class EditorController extends AbstractActionController
     }
 
     /**
+     * Return precomputed CLIP motif suggestions for an item (staging table,
+     * written by sarkin-clip/clip_api/motif_pretag.py). No Claude/API cost.
+     * GET /admin/rapid-editor/motif-suggestions/:id
+     */
+    public function motifSuggestionsAction(): JsonModel
+    {
+        $itemId = (int) $this->params('id');
+        if ($itemId < 1) {
+            return new JsonModel(['suggestions' => []]);
+        }
+        $conn = $this->entityManager->getConnection();
+        try {
+            $rows = $conn->fetchAllAssociative(
+                "SELECT motif, score, band FROM motif_suggestions
+                 WHERE item_id = ?
+                 ORDER BY FIELD(band, 'high', 'medium', 'low'), score DESC",
+                [$itemId]
+            );
+        } catch (\Throwable $e) {
+            // table absent (pipeline not yet run) — degrade gracefully
+            return new JsonModel(['suggestions' => []]);
+        }
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'motif' => $r['motif'],
+                'score' => (float) $r['score'],
+                'band'  => $r['band'],
+            ];
+        }
+        return new JsonModel(['suggestions' => $out, 'from_cache' => true]);
+    }
+
+    /**
      * Suggest motif tags for an item using Claude with few-shot examples.
      * GET /admin/rapid-editor/suggest-motifs/:id
      */

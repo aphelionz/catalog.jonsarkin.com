@@ -83,6 +83,14 @@ return [
                                     'defaults' => ['action' => 'suggestMotifs'],
                                 ],
                             ],
+                            'motif-suggestions' => [
+                                'type' => Segment::class,
+                                'options' => [
+                                    'route' => '/motif-suggestions/:id',
+                                    'constraints' => ['id' => '\d+'],
+                                    'defaults' => ['action' => 'motifSuggestions'],
+                                ],
+                            ],
                         ],
                     ],
                 ],
