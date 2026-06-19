@@ -64,13 +64,13 @@ class Module extends AbstractModule
 
         $response = $event->getParam('response');
         $media = $response->getContent();
-        $mediaType = $media->mediaType();
+        $mediaType = $media->getMediaType();
 
         if (!$mediaType || !str_starts_with($mediaType, 'image/')) {
             return;
         }
 
-        $itemId = $media->item()->id();
+        $itemId = $media->getItem()->getId();
         if (!$itemId) {
             return;
         }
