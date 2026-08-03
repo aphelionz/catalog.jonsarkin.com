@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gcloud compute instances list *)",
+      "mcp__sarkin-catalog__search_catalog",
+      "mcp__sarkin-catalog__fulltext_search",
+      "mcp__sarkin-catalog__get_item",
+      "mcp__sarkin-catalog__corpus_statistics",
+      "mcp__sarkin-catalog__find_similar",
+      "mcp__sarkin-catalog__search_by_image",
+      "mcp__sarkin-catalog__search_transcriptions",
+      "mcp__sarkin-catalog__iconographic_profile",
+      "mcp__fishcity-shopify__get-products",
+      "mcp__fishcity-shopify__get-product-by-id",
+      "mcp__fishcity-shopify__get-orders",
+      "mcp__fishcity-shopify__get-order-by-id",
+      "mcp__fishcity-shopify__get-customers",
+      "mcp__fishcity-shopify__get-customer-orders",
+      "mcp__sarkin-shopify__get-products",
+      "mcp__sarkin-shopify__get-product-by-id",
+      "mcp__sarkin-shopify__get-orders",
+      "mcp__sarkin-shopify__get-order-by-id",
+      "mcp__sarkin-shopify__get-pages",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__read_console_messages",
+      "mcp__Claude_Browser__read_network_requests",
+      "mcp__Claude_Browser__tabs_context",
+      "mcp__ccd_session_mgmt__list_sessions",
+      "mcp__5d612db2-5c6a-4785-a604-c5e90b60a9a0__search_files",
+      "mcp__6ab2966f-4e70-45ec-a671-d55d2af41eaf__palette"
+    ],
+    "ask": [
+      "Bash(npx shopify theme push)",
+      "Bash(npx shopify theme push *)",
+      "Bash(make deploy)",
+      "Bash(make deploy *)",
+      "Bash(make pull)",
+      "Bash(ssh omeka*)"
+    ]
+  }
+}
