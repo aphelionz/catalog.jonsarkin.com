@@ -3,7 +3,7 @@
   <div class="page-width">
     {%- assign display_title = collection.title -%}
     {%- if collection.handle == 'all' -%}
-      {%- assign display_title = 'Available Works' -%}
+      {%- assign display_title = 'Works' -%}
     {%- endif -%}
     <div class="collection-header text-center">
       <h1>{{ display_title }}</h1>
@@ -12,51 +12,30 @@
       {%- endif -%}
     </div>
 
-    <div class="product-grid">
-      {%- for product in collection.products -%}
-        <a href="{{ product.url }}" class="product-card">
-          <div class="product-card__image{% if product.metafields.artwork.original_image_url %} product-card__image--hdr{% endif %}">
-            {%- if product.metafields.artwork.original_image_url -%}
-              <img
-                class="product-card__img product-card__img--hdr"
-                src="{{ product.metafields.artwork.original_image_url | replace: '/files/original/', '/files/medium/' | replace: '.jpeg', '.jpg' | replace: '.png', '.jpg' }}"
-                alt="{{ product.title | escape }}"
-                loading="lazy"
-              >
-            {%- endif -%}
-            {%- if product.featured_image -%}
-              <img
-                class="product-card__img product-card__img--shopify"
-                src="{{ product.featured_image | image_url: width: 600 }}"
-                alt="{{ product.title | escape }}"
-                loading="lazy"
-              >
-            {%- endif -%}
-            {%- unless product.available -%}
-              <span class="product-card__sold-dot" aria-label="Acquired"></span>
-            {%- endunless -%}
-          </div>
-          <div class="product-card__info">
-            <div class="product-card__title">{{ product.title }}</div>
-            {%- if product.metafields.artwork.medium -%}
-              <div class="product-card__meta">{{ product.metafields.artwork.medium }}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | downcase }}{% endif %}</div>
-            {%- endif -%}
-            {%- if product.metafields.artwork.dimensions -%}
-              <div class="product-card__meta">{{ product.metafields.artwork.dimensions }}</div>
-            {%- endif -%}
-            <div class="product-card__price">
-              {%- if product.available -%}
-                {{ product.price | money }}
-              {%- else -%}
-                <span class="product-card__badge product-card__badge--sold">Acquired</span><span class="product-card__sold-price">{{ product.price | money }}</span>
-              {%- endif -%}
-            </div>
-          </div>
-        </a>
-      {%- else -%}
-        <p>No works found in this collection.</p>
-      {%- endfor -%}
-    </div>
+    {%- assign available_works = collection.products | where: 'available', true -%}
+    {%- assign acquired_works = collection.products | where: 'available', false -%}
+
+    {%- if available_works.size > 0 -%}
+      <h2 class="section-heading collection-group__heading">Available</h2>
+      <div class="product-grid">
+        {%- for product in available_works -%}
+          {%- render 'product-card', product: product -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    {%- if acquired_works.size > 0 -%}
+      <h2 class="section-heading collection-group__heading collection-group__heading--acquired">Acquired</h2>
+      <div class="product-grid product-grid--acquired">
+        {%- for product in acquired_works -%}
+          {%- render 'product-card', product: product -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    {%- if available_works.size == 0 and acquired_works.size == 0 -%}
+      <p>No works found in this collection.</p>
+    {%- endif -%}
 
     {%- if paginate.pages > 1 -%}
       <div class="pagination">
