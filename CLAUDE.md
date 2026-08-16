@@ -114,8 +114,15 @@ The Shopify store runs at jonsarkin.com. Theme source lives in `shopify/`.
 ### Theme push/pull
 - **ALWAYS `cd shopify/` before running `npx shopify theme push/pull`**. Running from the project root pushes the wrong directory and creates junk files on the remote theme.
 - Theme ID: `157306650854` ("Sarkin Estate v2")
+- **Non-interactive auth:** prefix push/pull/dev with the theme access token, or the CLI hangs forever on a browser login prompt with no output:
+  ```
+  export SHOPIFY_CLI_THEME_TOKEN=$(grep -m1 password config.yml | sed 's/.*password: *//;s/"//g')
+  export SHOPIFY_FLAG_STORE=jonsarkin.myshopify.com
+  ```
+  (`config.yml` is gitignored; the grep keeps the password out of shell history and docs.)
 - Push to live: `cd shopify && npx shopify theme push --theme 157306650854 --allow-live --nodelete`
 - Push specific files: `cd shopify && npx shopify theme push --theme 157306650854 --only sections/header.liquid --allow-live`
+- Local preview: `cd shopify && npx shopify theme dev --theme 157306650854 --port 9292` (serves the live theme's data against local files at 127.0.0.1:9292)
 - `--nodelete` prevents removing remote files not in local (safe default). Omit it only for full sync, but beware it will try to delete required files (harmless errors).
 - `settings_data.json` may not update via `--nodelete` push if the theme editor has already "owned" the settings. Use `--only config/settings_data.json` to force.
 - Shopify CLI config is in `shopify/config.yml` (theme access password, not Admin API token).
@@ -140,6 +147,7 @@ The Shopify store runs at jonsarkin.com. Theme source lives in `shopify/`.
 
 ### Footguns
 - **Theme push from wrong directory:** `npx shopify theme push` uses CWD as the theme root. Pushing from project root uploads CLAUDE.md, docker-compose.yml, etc. as theme files. Always `cd shopify/` first.
+- **Theme CLI hangs with no output:** it's waiting on an interactive browser login. Set `SHOPIFY_CLI_THEME_TOKEN` (see Theme push/pull above) and re-run.
 - **Liquid `sort` filter on collections:** `collection.products | sort: 'price'` does NOT work — it silently returns empty, rendering a blank page. Set collection sort order via Admin API (`collectionUpdate` mutation with `sortOrder: PRICE_ASC`) instead.
 - **`settings_data.json` caching:** Shopify's theme editor stores its own copy. Pushing this file may silently fail to update values. Verify with a pull after pushing settings changes.
 - **`image_tag` and JS image switching:** Shopify's `image_tag` helper generates `<img srcset="...">` with responsive images. Setting `.src` via JS doesn't work because `srcset` takes priority. Use a plain `<img src="...">` tag when you need JS to swap the image source.

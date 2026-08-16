@@ -52,6 +52,7 @@ When adding new products, also set the Shopify admin SEO title field to the same
 
 ## Footguns
 - **Always `cd shopify/` before `npx shopify theme push/pull`** — pushing from project root uploads CLAUDE.md, docker-compose.yml, etc. as theme files
+- **CLI hangs with no output** — it's blocked on an interactive browser login. Export the theme access token first: `export SHOPIFY_CLI_THEME_TOKEN=$(grep -m1 password config.yml | sed 's/.*password: *//;s/"//g')` (plus `SHOPIFY_FLAG_STORE=jonsarkin.myshopify.com`)
 - **`image_tag` and JS image switching** — Shopify's `image_tag` generates `srcset`, so `.src` swaps via JS don't work. Use plain `<img src>` when JS needs to swap images
 - **`settings_data.json` caching** — Shopify's theme editor stores its own copy; verify with a pull after pushing settings changes
 - **SVGs in footer** — use `stroke="currentColor"` (not `fill`) for Feather-style icons
