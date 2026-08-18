@@ -117,9 +117,7 @@ def fetch_item_metadata(conn: pymysql.Connection, item_ids: list[int], cfg: Conf
                 rid = row["item_id"]
                 if rid in result and "thumbnail_url" not in result[rid]:
                     if row["has_thumbnails"] and row["storage_id"]:
-                        result[rid]["thumbnail_url"] = cfg.thumbnail_url(
-                            row["storage_id"], row["extension"]
-                        )
+                        result[rid]["thumbnail_url"] = cfg.thumbnail_url(row["storage_id"])
                         result[rid]["original_url"] = cfg.original_url(
                             row["storage_id"], row["extension"]
                         )

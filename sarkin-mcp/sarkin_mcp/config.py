@@ -22,8 +22,9 @@ class Config:
     def item_url(self, item_id: int) -> str:
         return f"{self.catalog_base_url}/s/catalog/item/{item_id}"
 
-    def thumbnail_url(self, storage_id: str, extension: str) -> str:
-        return f"{self.catalog_base_url}/files/large/{storage_id}.{extension}"
+    def thumbnail_url(self, storage_id: str) -> str:
+        # Omeka thumbnail derivatives are always .jpg regardless of original extension
+        return f"{self.catalog_base_url}/files/large/{storage_id}.jpg"
 
     def original_url(self, storage_id: str, extension: str) -> str:
         return f"{self.catalog_base_url}/files/original/{storage_id}.{extension}"
