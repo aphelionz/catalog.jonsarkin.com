@@ -72,6 +72,14 @@ def fetch_item_metadata(conn: pymysql.Connection, item_ids: list[int], cfg: Conf
         return {}
 
     result: dict[int, dict] = {}
+    # Seed from resource so every item carries its publication status
+    for chunk in _chunks(item_ids, 500):
+        placeholders = ",".join(["%s"] * len(chunk))
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT id, is_public FROM resource WHERE id IN ({placeholders})", chunk)
+            for row in cur.fetchall():
+                result[row["id"]] = {"id": row["id"], "is_public": bool(row["is_public"])}
+
     for chunk in _chunks(item_ids, 500):
         placeholders = ",".join(["%s"] * len(chunk))
         sql = f"""
@@ -177,10 +185,12 @@ def search_catalog(conn: pymysql.Connection, cfg: Config, **filters: Any) -> dic
     conditions: list[str] = []
     params: list[Any] = []
 
+    # No is_public filter: this MCP is a private research tool and must see
+    # unpublished items (the public site enforces its own visibility).
     base = """
         FROM resource r
         JOIN item i ON i.id = r.id
-        WHERE r.is_public = 1
+        WHERE 1 = 1
     """
 
     # Date range
@@ -294,14 +304,19 @@ def search_catalog(conn: pymysql.Connection, cfg: Config, **filters: Any) -> dic
 
 def corpus_statistics(conn: pymysql.Connection, breakdown: str = "summary") -> dict:
     """Get aggregate corpus statistics."""
-    base_where = "r.is_public = 1"
+    base_where = "1 = 1"
 
     result: dict[str, Any] = {}
 
     if breakdown == "summary":
         with conn.cursor() as cur:
-            cur.execute(f"SELECT COUNT(*) AS total FROM resource r JOIN item i ON i.id = r.id WHERE {base_where}")
-            result["total_items"] = cur.fetchone()["total"]
+            cur.execute(
+                "SELECT COUNT(*) AS total, COALESCE(SUM(r.is_public = 1), 0) AS pub "
+                "FROM resource r JOIN item i ON i.id = r.id"
+            )
+            row = cur.fetchone()
+            result["total_items"] = row["total"]
+            result["public_items"] = int(row["pub"])
 
             cur.execute(f"""
                 SELECT
@@ -385,7 +400,6 @@ def fulltext_search(conn: pymysql.Connection, cfg: Config, query: str, limit: in
         JOIN item i ON i.id = r.id
         WHERE v.property_id = 91
           AND v.value LIKE CONCAT('%%', %s, '%%')
-          AND r.is_public = 1
     """
     with conn.cursor() as cur:
         cur.execute(count_sql, (query,))
@@ -399,7 +413,6 @@ def fulltext_search(conn: pymysql.Connection, cfg: Config, query: str, limit: in
         JOIN item i ON i.id = r.id
         WHERE v.property_id = 91
           AND v.value LIKE CONCAT('%%', %s, '%%')
-          AND r.is_public = 1
         ORDER BY v.resource_id
         LIMIT %s OFFSET %s
     """

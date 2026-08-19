@@ -72,6 +72,7 @@ def search_catalog(
 ) -> str:
     """Search the catalog by structured metadata filters. Supports filtering by date range,
     motifs (AND logic), work type, medium, support, collection, owner, dimensions, and condition.
+    Covers the full catalog including unpublished items; each result carries is_public.
 
     Work types: Drawing, Painting, Collage, Mixed Media, Sculpture, Print, Other.
     Supports: Paper, Cardboard, Canvas, Board, Wood, Found Object, Album Sleeve, etc.
@@ -157,7 +158,8 @@ def fulltext_search(
 
 @mcp.tool()
 def corpus_statistics(breakdown: str = "summary") -> str:
-    """Get aggregate statistics about the Jon Sarkin catalog.
+    """Get aggregate statistics about the Jon Sarkin catalog, including unpublished items
+    (summary reports total_items and public_items separately).
 
     Breakdown options: summary, by_year, by_type, by_motif, by_support, by_medium,
     by_collection, by_condition.
