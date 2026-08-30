@@ -66,7 +66,7 @@
             <div class="product-detail__provenance-line">Condition: {{ product.metafields.artwork.condition }}</div>
           {%- endif -%}
           <div class="product-detail__provenance-line">Certificate of Authenticity included</div>
-          {%- if product.metafields.artwork.support contains 'album sleeve' -%}
+          {%- if product.metafields.artwork.support contains 'album sleeve' and product.metafields.artwork.unframed == blank -%}
             <div class="product-detail__provenance-line">Ships framed with 99% UV conservation glass</div>
           {%- endif -%}
           <div class="product-detail__provenance-line">Right of first refusal retained by the estate.</div>

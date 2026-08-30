@@ -31,7 +31,7 @@ All product pages are driven by `artwork.*` metafields — not the description f
 | `artwork.content_excerpt` | (text fragment from the work) |
 | `artwork.original_image_url` | (full-res image URL from catalog) |
 
-Leave `descriptionHtml` empty — the template ignores it in favor of metafields. The framing line ("Ships framed with 99% UV conservation glass") is rendered by the theme template for any product whose `artwork.support` contains "album sleeve".
+Leave `descriptionHtml` empty — the template ignores it in favor of metafields. The framing line ("Ships framed with 99% UV conservation glass") is rendered by the theme template for any product whose `artwork.support` contains "album sleeve"; set `artwork.unframed` = `true` (single line text) on a product to suppress it (currently set on JS-2021-1834).
 
 ## SEO titles
 The theme auto-generates SEO titles from metafields:
