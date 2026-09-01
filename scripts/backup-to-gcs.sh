@@ -25,6 +25,12 @@
 #   0 3 * * *  /opt/catalog/scripts/backup-to-gcs.sh files   >> /var/log/catalog-backup.log 2>&1
 #   0 4 * * 0  /opt/catalog/scripts/backup-to-gcs.sh weekly  >> /var/log/catalog-backup.log 2>&1
 #   0 5 1 * *  /opt/catalog/scripts/backup-to-gcs.sh monthly >> /var/log/catalog-backup.log 2>&1
+#   17 * * * * /opt/catalog/scripts/backup-monitor.sh >/dev/null 2>&1
+#
+# Monitoring: each successful job touches /var/lib/catalog-backup/last-success-<job>.
+# backup-monitor.sh reports the age of those stamps to Cloud Monitoring hourly,
+# and alert policies page if any job goes stale. See setup-gcp-monitoring.sh.
+# A job that fails therefore surfaces on its own; nobody has to read this log.
 #
 set -euo pipefail
 
@@ -37,10 +43,20 @@ ENV_FILE="${COMPOSE_DIR}/.env"
 FILES_DIR="/var/www/omeka-s/files"
 LOG_FILE="/var/log/catalog-backup.log"
 LOCK_FILE="/var/lock/catalog-backup.lock"
+STATE_DIR="/var/lib/catalog-backup"
 
 # ── Helpers ────────────────────────────────────────────────────────────
 log() {
   printf '[%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
+}
+
+# Touch the per-job success stamp. backup-monitor.sh turns these into the
+# catalog/backup_age_hours gauge that the alert policies threshold on, so
+# this must only ever run after the upload has actually completed.
+mark_success() {
+  mkdir -p "$STATE_DIR"
+  touch "${STATE_DIR}/last-success-$1"
+  log "success stamp written: $1"
 }
 
 die() {
@@ -85,6 +101,7 @@ cmd_db() {
   log "DB upload to ${BUCKET}/${prefix}/"
   gcs cp "$out" "${BUCKET}/${prefix}/$(basename "$out")"
   log "DB upload complete"
+  mark_success "$prefix"
 }
 
 cmd_files() {
@@ -95,6 +112,7 @@ cmd_files() {
   # www-data user and unreadable from the host (matches pull_new_items.sh).
   gcs rsync --recursive --exclude='^tmp/.*' "$FILES_DIR" "${BUCKET}/files/"
   log "Files rsync complete"
+  mark_success files
 }
 
 # ── Entrypoint ─────────────────────────────────────────────────────────
