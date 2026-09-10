@@ -1,0 +1,37 @@
+/* Kiosk mode for the catalog. Loaded by layout.phtml only when the `kiosk` cookie
+   is set (asset/kiosk/index.html writes it). Nothing here applies to normal visitors. */
+
+html[data-kiosk] { cursor: auto; }
+html[data-kiosk] body { zoom: 1.25; }   /* the 920px column reads at 2-3 m */
+
+html[data-kiosk] .site-search-advanced,
+html[data-kiosk] .mobile-nav__actions,
+html[data-kiosk] .icon-actions,
+html[data-kiosk] .similar-more,
+html[data-kiosk] .footer-social,
+html[data-kiosk] .footer-links,
+html[data-kiosk] .estate-key,
+html[data-kiosk] .zoom,
+html[data-kiosk] a[data-kiosk-blocked],
+html[data-kiosk] .site-nav li:has(> a[data-kiosk-blocked]) { display: none !important; }
+
+html[data-kiosk] .site-wrapper { padding-bottom: 90px; }   /* room for the return pill */
+
+html[data-kiosk] .kiosk-return {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 13px 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  text-decoration: none;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+html[data-kiosk] .kiosk-return [lang="ja"] { margin-left: 14px; opacity: 0.85; }

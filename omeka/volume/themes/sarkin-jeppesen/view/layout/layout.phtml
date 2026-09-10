@@ -8,6 +8,13 @@ $site   = $this->site;
 $searchQuery = isset($_GET['fulltext_search']) ? $escape($_GET['fulltext_search']) : '';
 
 $this->htmlElement('html')->setAttribute('lang', $this->lang());
+
+// Kiosk mode (wall display): asset/kiosk/index.html sets a `kiosk` cookie whose
+// value is the idle timeout in seconds. Nothing below renders without it.
+$kioskIdle = (isset($_COOKIE['kiosk']) && ctype_digit((string) $_COOKIE['kiosk'])) ? (int) $_COOKIE['kiosk'] : 0;
+if ($kioskIdle) {
+    $this->htmlElement('html')->setAttribute('data-kiosk', (string) $kioskIdle);
+}
 $this->headMeta()->setCharset('utf-8');
 $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1');
 $this->headTitle($site->title())->setSeparator(' · ');
@@ -38,6 +45,7 @@ if (!$this->placeholder('item_og_set')->getValue()) {
 
 // Theme assets
 $this->headLink()->prependStylesheet($this->assetUrl('css/style.css'), 'all');
+if ($kioskIdle) $this->headLink()->appendStylesheet($this->assetUrl('css/kiosk-mode.css'));
 // Omeka core icons (needed for admin bar)
 $this->headLink()->appendStylesheet($this->assetUrl('css/iconfonts.css', 'Omeka'));
 
@@ -49,6 +57,7 @@ $this->jsTranslate();
 // Theme JS (loaded at end of body)
 $this->inlineScript()->appendFile($this->assetUrl('js/qrcode.min.js'));
 $this->inlineScript()->appendFile($this->assetUrl('js/sarkin.js'));
+if ($kioskIdle) $this->inlineScript()->appendFile($this->assetUrl('js/kiosk-mode.js'));
 
 $this->trigger('view.layout');
 
@@ -70,7 +79,7 @@ try {
 <!DOCTYPE html>
 <?php echo $this->htmlElement('html'); ?>
 <head>
-    <script>(function(){var m=window.matchMedia('(prefers-color-scheme: dark)');document.documentElement.setAttribute('data-theme',m.matches?'dark':'light');m.addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light')});})()</script>
+    <script>(function(){var d=document.documentElement,k=d.hasAttribute('data-kiosk'),m=window.matchMedia('(prefers-color-scheme: dark)');d.setAttribute('data-theme',k||m.matches?'dark':'light');m.addEventListener('change',function(e){if(!k)d.setAttribute('data-theme',e.matches?'dark':'light')});})()</script>
     <?php echo $this->headMeta(); ?>
     <?php echo $this->headTitle(); ?>
     <?php echo $this->headLink(); ?>

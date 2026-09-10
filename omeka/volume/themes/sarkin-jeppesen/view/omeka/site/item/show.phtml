@@ -174,7 +174,11 @@ $displayCare     = $val('curation:note');
 $primaryMedia = $item->primaryMedia();
 $allMedia     = $item->media();
 $isVideo      = $primaryMedia && strpos($primaryMedia->mediaType(), 'video/') === 0;
-$imageUrl     = $primaryMedia ? ($primaryMedia->originalUrl() ?: $primaryMedia->thumbnailUrl('large')) : '';
+$imageUrl     = $primaryMedia
+    ? (!empty($_COOKIE['kiosk'])   // kiosk mode: never ship a multi-MB original to the wall
+        ? $primaryMedia->thumbnailUrl('large')
+        : ($primaryMedia->originalUrl() ?: $primaryMedia->thumbnailUrl('large')))
+    : '';
 
 $extraMedia = [];
 foreach ($allMedia as $m) {
