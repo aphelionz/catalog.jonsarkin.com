@@ -1,0 +1,42 @@
+# Kiosk attract-loop deck (AIPS Tokyo, Sep 27 2026). One catalog number per line.
+# Add `video` to the 8 slides rendered into the standalone mp4. Order = loop order.
+# Bias: clean-cropped album sleeves (2012-2024); the early paper works are shot
+# on the gray table with the ruler and tape and read as inventory photos on a wall.
+
+JS-2016-8346   video   # ARCHIVE sleeve, the one-pager hero
+JS-2013-9434           # HONEY
+JS-2017-9454   video   # "Like a Picasso painting, you are slip-streamed..."
+JS-2019-9516           # HAH / HUH / HOH grid
+JS-2022-9768   video   # CAT
+JS-2013-9382           # CONTROL
+JS-2016-9274   video   # James Dagostino, born 1933 in Omaha
+JS-2021-9648           # RHOMBUS / TRAPEZOID
+JS-2019-8998   video   # I went down to a crossroad
+JS-2015-9592           # BBB colour grid
+JS-2023-9290   video   # Tim looked at the sky, greyer than gray
+JS-2018-9794           # MARK / MARE / PARE / PURE portrait
+JS-2016-12360  video   # WEIRD TALES, Johnny "Guitar" Watson
+JS-2013-9408           # HOWL
+JS-2021-9464   video   # MAN RAY / DUCHAMP creature
+JS-2009-12247          # Cyrillic-ish glyphs, "exceedingly genteel in our chase"
+JS-2017-9456           # GHOST COW
+JS-2013-8928           # VERMONT
+JS-2022-9326           # Cyrillic-ish text, OUT HERE
+JS-2016-9110           # Based on a novel by a man named Lear
+JS-2019-9496           # EGYPT / ASSYRIA / BABYLON
+JS-2012-9146           # STEICHEN, blue face
+JS-2021-9268           # I consulted my optometrist about my mouth
+JS-2023-8918           # CADILLAC OPTION
+JS-2017-9126           # The sky was grimy
+JS-2020-9414           # STEADMAN
+JS-2016-9948           # BOTTLE / THROTTLE / METTLE
+JS-2022-9748           # YOU MUST REMEMBER THIS
+JS-2017-9202           # wwwww / I walk the street
+JS-2023-9106           # I found myself on some kind of precipice
+JS-2019-9802           # BRANCUSI
+JS-2021-10443          # A "twist-ending" to the raconteur
+JS-2017-9418           # I went down to the crossroads, sun face
+JS-2022-9756           # FISH
+JS-2024-9140           # This reptile's name's Yorick
+JS-2017-9216           # w w w w face
+JS-2023-9182           # BBBBBBBB
