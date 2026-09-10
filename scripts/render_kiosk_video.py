@@ -53,6 +53,9 @@ def main() -> None:
         "-f", "image2pipe", "-framerate", str(args.fps), "-c:v", "mjpeg", "-i", "-",
         "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
         "-shortest",
+        # JPEG frames are full-range; convert to limited-range yuv420p so TVs and
+        # signage players do not crush or wash the blacks (avoids a yuvj420p tag).
+        "-vf", "scale=in_range=pc:out_range=tv", "-color_range", "tv",
         "-c:v", "libx264", "-profile:v", "high", "-level", "4.1", "-preset", "slow",
         "-crf", str(args.crf), "-pix_fmt", "yuv420p", "-r", str(args.fps),
         "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart",
