@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ジョン・サーキン カタログ・レゾネ</title>
+<style>
+  @font-face {
+    font-family: 'Jost';
+    src: url('../fonts/Jost-VF.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: swap;
+  }
+  :root {
+    --bg: #06080e;
+    --surface: #0c0f18;
+    --text: #e8e8e8;
+    --text-secondary: #a0a0a0;
+    --text-muted: #8a8a8a;
+    --border: #1e2530;
+    --nav-bg: #1a1e32;
+  }
+  html { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Jost', 'Hiragino Sans', 'Noto Sans JP', 'Noto Sans CJK JP', 'Yu Gothic', 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 640px; margin: 0 auto; padding: 36px 22px 56px; }
+  .signature { height: 56px; width: auto; filter: invert(1); display: block; margin-bottom: 26px; }
+  h1 { margin: 0 0 4px; font-size: 26px; font-weight: 500; letter-spacing: 0.04em; line-height: 1.4; }
+  .sub { margin: 0 0 26px; color: var(--text-secondary); font-size: 15px; letter-spacing: 0.08em; }
+  p { margin: 0 0 18px; font-size: 16px; }
+  .en { color: var(--text-secondary); font-size: 14px; letter-spacing: 0.02em; }
+  h2 { margin: 34px 0 12px; font-size: 12px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 8px; }
+  .grid a { display: block; aspect-ratio: 1 / 1; background: var(--surface); border: 1px solid var(--border); }
+  .grid img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .buttons { display: flex; flex-direction: column; gap: 12px; margin: 26px 0 8px; }
+  .buttons a {
+    display: block; padding: 15px 20px; border-radius: 999px; text-align: center;
+    background: var(--nav-bg); color: var(--text); text-decoration: none;
+    border: 1px solid var(--border); font-size: 16px; letter-spacing: 0.04em;
+  }
+  .buttons a.primary { background: #ffffff; color: #06080e; border-color: #ffffff; font-weight: 500; }
+  .buttons a span { display: block; font-size: 12px; color: inherit; opacity: 0.7; letter-spacing: 0.06em; }
+  .buttons a.primary span { opacity: 0.6; }
+  .credit { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+</style>
+</head>
+<body>
+<main>
+  <img class="signature" src="../img/JS-Signature.png" alt="Jon Sarkin">
+  <h1>ジョン・サーキン</h1>
+  <p class="sub">Jon Sarkin · 1953–2024 · Gloucester, Massachusetts</p>
+
+  <p>ジョン・サーキンは、マサチューセッツ州グロスターのカイロプラクターでした。1989年に脳卒中を起こし、その後、描かずにはいられない芸術家になりました。</p>
+  <p>以後35年間、週7日、1日8時間、主にLPレコードのボール紙ジャケットの裏面に、手書きの言葉と意識の流れのようなイメージを描き続けました。作品はポンピドゥー・センター、MoMAアーカイブ、デコルドバ美術館、ケープ・アン美術館に収蔵され、GQ、ニューヨーカー、NPRが彼の物語を伝えています。</p>
+  <p>2023年から2024年にかけては、パリのアル・サン・ピエール美術館の展覧会「Aux Frontières de l'Art Brut」で、日本のアール・ブリュット作家 Shinichi Sawada、Yoshihiro Watanabe とともに展示されました。</p>
+
+  <h2>カタログ・レゾネについて</h2>
+  <p>カタログ・レゾネとは、ひとりの作家の全作品に番号を付けて記録する、500年の歴史を持つ形式です。このカタログは、2人の人間とClaude（AI）で作りました。5,500点を超える作品を撮影・記録し、手書きの文字はClaudeが読み取って、全文検索できるようにしています。AIは作品を「読む」ために使い、「作る」ためには使っていません。</p>
+  <p class="en">The catalog itself is in English. / カタログ本体は英語です。</p>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="buttons">
+    <a class="primary" href="/faceted-browse/2">カタログを見る <span>Browse the catalog</span></a>
+    <a href="https://jonsarkin.com">公式サイト <span>jonsarkin.com</span></a>
+    <a href="mailto:art@jonsarkin.com">展示のお問い合わせ <span>Exhibition inquiries · art@jonsarkin.com</span></a>
+  </div>
+  <p class="en">展覧会や貸出のご相談は、エステート（遺族による管理団体）までお気軽にご連絡ください。</p>
+
+  <p class="credit">AI Psychosis Summit Tokyo（2026年9月27日）出展作品。<br>&copy; The Jon Sarkin Estate / Artists Rights Society (ARS), New York.</p>
+</main>
+<script>
+  // Six works from the kiosk deck; the page is complete without them.
+  fetch('slides.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+    var grid = document.getElementById('grid');
+    d.slides.slice(0, 6).forEach(function (s) {
+      var a = document.createElement('a');
+      a.href = s.url;
+      var im = document.createElement('img');
+      im.src = s.thumb;
+      im.alt = s.catalog_no;
+      im.loading = 'lazy';
+      a.appendChild(im);
+      grid.appendChild(a);
+    });
+  }).catch(function () {});
+</script>
+</body>
+</html>
