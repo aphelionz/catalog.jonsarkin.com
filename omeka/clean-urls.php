@@ -20,6 +20,15 @@ if ($path === '/' || $path === '') {
     $_SERVER['REQUEST_URI'] = '/s/catalog';
 }
 
+// Kiosk attract loop + Japanese landing page: static theme files, no Omeka boot.
+$kioskAliases = ['/kiosk' => 'index.html', '/ja' => 'ja.html'];
+if (isset($kioskAliases[$path])) {
+    $qs = $_SERVER['QUERY_STRING'] ?? '';
+    header('Location: /themes/sarkin-jeppesen/asset/kiosk/' . $kioskAliases[$path]
+        . ($qs !== '' ? '?' . $qs : ''), true, 302);
+    exit;
+}
+
 // Rewrite /s/catalog/ out of HTML responses so links use clean URLs.
 // Skip admin and API pages — they use /s/catalog/ internally (e.g. /admin/site/s/catalog/).
 $isAdmin = strpos($path, '/admin') === 0 || strpos($path, '/api') === 0;
