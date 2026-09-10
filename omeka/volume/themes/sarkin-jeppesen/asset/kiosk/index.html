@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Jon Sarkin Catalogue Raisonné</title>
+<link rel="stylesheet" href="kiosk.css?v=1">
+</head>
+<body>
+<div id="stage" aria-hidden="true">
+
+  <div class="art">
+    <img class="layer" id="layerA" decoding="sync" alt="">
+    <img class="layer" id="layerB" decoding="sync" alt="">
+  </div>
+
+  <aside class="panel">
+    <header class="brand">
+      <img class="signature" src="../img/JS-Signature.png" alt="Jon Sarkin">
+      <div class="brand-text">Catalogue Raisonné <span lang="ja">カタログ・レゾネ</span></div>
+    </header>
+
+    <dl class="caption">
+      <div><dt>Catalog no. <span lang="ja">作品番号</span></dt><dd class="cat" id="capCat"></dd></div>
+      <div><dt>Year <span lang="ja">制作年</span></dt><dd id="capYear"></dd></div>
+      <div><dt>Medium <span lang="ja">技法・素材</span></dt><dd id="capMedium"></dd></div>
+      <div><dt>Size <span lang="ja">寸法</span></dt><dd id="capDims"></dd></div>
+    </dl>
+
+    <section class="transcription">
+      <h2>AI transcription (Claude) <span lang="ja">Claude による文字起こし</span></h2>
+      <div class="typed" id="typed"></div>
+    </section>
+
+    <section class="similar">
+      <h2>Similar pieces (CLIP) <span lang="ja">類似作品</span></h2>
+      <div class="similar-grid" id="similarGrid"></div>
+    </section>
+
+    <div class="corner">
+      <div class="qr"><img src="qr-ja.svg" alt=""></div>
+      <div class="corner-text">
+        <div class="url">catalog.jonsarkin.com/ja</div>
+        <div lang="ja">スマホで読み取ると日本語の紹介ページが開きます</div>
+        <div class="en">Scan for the Japanese introduction</div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="intro" id="intro">
+    <img class="signature" src="../img/JS-Signature.png" alt="">
+    <h1>Jon Sarkin <span class="dates">1953–2024</span> <span class="dates" lang="ja">ジョン・サーキン</span></h1>
+    <p class="en">A Gloucester, Massachusetts chiropractor until a 1989 stroke turned him into a compulsive artist. For thirty-five years he drew seven days a week, mostly on the blank backs of cardboard LP sleeves. This catalogue raisonné documents more than 5,500 of those works, with the handwriting read by Claude.</p>
+    <p lang="ja">マサチューセッツ州グロスターのカイロプラクターだったジョン・サーキンは、1989年の脳卒中をきっかけに、描かずにはいられない芸術家になりました。以後35年間、週7日、主にLPレコードのボール紙ジャケットの裏面に描き続けました。このカタログ・レゾネは5,500点を超える作品を記録し、手書きの文字はClaudeが読み取っています。</p>
+    <div class="corner intro-corner">
+      <div class="qr"><img src="qr-ja.svg" alt=""></div>
+      <div class="corner-text">
+        <div class="url">catalog.jonsarkin.com/ja</div>
+        <div lang="ja">スマホで読み取ると日本語の紹介ページが開きます</div>
+        <div class="en">Scan for the Japanese introduction</div>
+      </div>
+    </div>
+  </section>
+
+
+</div>
+<script src="kiosk.js?v=1"></script>
+</body>
+</html>
