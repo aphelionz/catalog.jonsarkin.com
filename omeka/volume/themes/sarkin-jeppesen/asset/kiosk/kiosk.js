@@ -238,18 +238,27 @@
     similarGrid.style.opacity = ramp(lt, T.similarAt, T.similarIn);
   }
 
-  /* ---- live loop ---- */
+  /* ---- kiosk session ----
+   * Kiosk mode in the catalog starts only with a tap on the slideshow (session
+   * cookie for the server-side bits, sessionStorage flag so only THIS tab counts)
+   * and ends whenever the slideshow loads again. Nothing is set on plain load. */
 
-  function setCookie() {
-    document.cookie = 'kiosk=' + IDLE + '; path=/; max-age=14400; SameSite=Lax';
+  function beginKioskSession() {
+    document.cookie = 'kiosk=' + IDLE + '; path=/; SameSite=Lax';
+    try { sessionStorage.setItem('kiosk', String(IDLE)); } catch (e) { /* private mode */ }
   }
+  function endKioskSession() {
+    document.cookie = 'kiosk=; path=/; max-age=0; SameSite=Lax';
+    try { sessionStorage.removeItem('kiosk'); } catch (e) { /* private mode */ }
+  }
+
+  /* ---- live loop ---- */
 
   function loop(now) {
     var t = now - t0;
     if (t >= totalMs) {
       t0 += Math.floor(t / totalMs) * totalMs;
       t = now - t0;
-      setCookie();
       if (Date.now() - startWall > T.reloadAfter) { location.reload(); return; }
     }
     render(t);
@@ -260,7 +269,7 @@
     var go = function (e) {
       if (e.type === 'keydown' && (e.key === 'F11' || e.key === 'Escape' || e.altKey || e.ctrlKey || e.metaKey)) return;
       var seg = segments[current];
-      setCookie();
+      beginKioskSession();
       location.href = (seg && seg.type === 'slide') ? seg.slide.url : '/faceted-browse/2';
     };
     ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
@@ -294,7 +303,7 @@
           .then(function () { render(0); window.kiosk.ready = true; });
       } else {
         document.documentElement.setAttribute('data-live', '');
-        setCookie();
+        endKioskSession();
         bindInteraction();
         preloadAround(-1);
         startWall = Date.now();

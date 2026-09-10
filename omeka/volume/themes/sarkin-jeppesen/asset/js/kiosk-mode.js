@@ -4,7 +4,10 @@
  * `kiosk` cookie, which asset/kiosk/index.html writes. Returns to the attract loop
  * after idle and neuters everything that would strand a Chromium kiosk with no
  * address bar: external links, originals, downloads, print, new tabs.
- * `?kiosk=0` on any catalog URL clears the cookie (for a phone that opened /kiosk).
+ * The mode belongs to the tab that tapped the slideshow: the kiosk page sets a
+ * session cookie (server-side gating) plus a sessionStorage flag (this tab only).
+ * Any other tab that inherits the cookie is switched straight back to normal.
+ * `?kiosk=0` on any catalog URL also ends the session.
  */
 (function () {
   'use strict';
@@ -13,9 +16,15 @@
   var idle = parseInt(root.getAttribute('data-kiosk') || '0', 10);
   if (!idle) return;
 
-  if (/[?&]kiosk=0\b/.test(location.search)) {
-    document.cookie = 'kiosk=; path=/; max-age=0';
+  var fromSlideshow = false;
+  try { fromSlideshow = !!sessionStorage.getItem('kiosk'); } catch (e) { /* private mode */ }
+
+  if (!fromSlideshow || /[?&]kiosk=0(&|$)/.test(location.search)) {
+    document.cookie = 'kiosk=; path=/; max-age=0; SameSite=Lax';
+    try { sessionStorage.removeItem('kiosk'); } catch (e) { /* private mode */ }
     root.removeAttribute('data-kiosk');
+    root.setAttribute('data-theme',
+      window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     return;
   }
 
