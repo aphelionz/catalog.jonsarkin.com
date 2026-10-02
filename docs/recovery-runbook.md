@@ -6,15 +6,14 @@ Paste-in-order commands for getting the catalog back from `gs://catalog-jonsarki
 
 | Path in bucket | Source on VM | Cadence |
 |---|---|---|
-| `daily/` | `mariadb-dump --all-databases` (includes the `mysql` grants DB) | 02:00 UTC, 30 kept |
+| `daily/` | `mariadb-dump --all-databases` (includes the `mysql` grants DB; `omeka.session` schema only) | 02:00 UTC, 30 kept |
 | `weekly/` | same | Sun 04:00 UTC |
-| `monthly/` | same | 1st, 05:00 UTC |
+| `weekly/state/<stamp>/` | `qdrant-omeka_items.snapshot`, `search-index.sqlite` (clip-api FTS), `env` (`/opt/catalog/.env`) | Sun, after the weekly dump |
+| `monthly/` | same as `daily/` | 1st, 05:00 UTC |
 | `files/` | `/var/www/omeka-s/files/` (minus `tmp/`) | 03:00 UTC rsync, append-only, versioned |
 
-Outside the bucket, so plan for them separately:
+Outside the bucket:
 
-- `/opt/catalog/.env`: DB passwords, `ANTHROPIC_API_KEY`, SMTP creds. Keep a copy in a password manager. Template: `.env.prod.example`.
-- Qdrant vectors and the SQLite search index: rebuild path still undocumented (see step 5).
 - `acme.json`: Traefik re-issues the TLS cert on first start.
 - Code: this repo. `/opt/catalog` is a checkout of it plus `make deploy` rsyncs.
 
@@ -94,9 +93,24 @@ sudo chown -R 33:33 /var/www/omeka-s/files   # www-data inside the omeka contain
 
 The bucket holds about 600 more objects than the live tree (files deleted on the VM stay in the bucket by design). Restoring them is harmless; Omeka ignores files no media row points to.
 
-## 5. Bring it up and verify
+## 5. Restore state: .env, Qdrant, search index
 
-> [!question] Undrilled: how prod Qdrant and the search index get rebuilt. `docker-compose.prod.yml` has no `ingest` service, and `/opt/catalog` holds a hand-made `qdrant-omeka_items-20260309.snapshot`. Until this is written down, similarity search and full-text may be empty after a VM rebuild while the catalog itself works.
+The 2026-10-02 state backup was downloaded and checked (snapshot is a valid tar, index passes `integrity_check` with row counts equal to live, `env` byte-identical). The recover commands below have not been run against a live Qdrant yet.
+
+```bash
+S=$($G ls gs://catalog-jonsarkin-backups/weekly/state/ | tail -1)   # newest stamp
+$G cp "${S}*" $D/
+cp $D/env /opt/catalog/.env && chmod 600 /opt/catalog/.env      # before `up` on a fresh VM
+docker compose -f docker-compose.prod.yml up -d qdrant clip-api
+docker compose -f docker-compose.prod.yml cp $D/qdrant-omeka_items.snapshot qdrant:/qdrant/snapshots/restore.snapshot
+docker compose -f docker-compose.prod.yml exec -T clip-api python -c "import urllib.request as u; print(u.urlopen(u.Request('http://qdrant:6333/collections/omeka_items/snapshots/recover?wait=true', data=b'{\"location\":\"file:///qdrant/snapshots/restore.snapshot\"}', headers={'Content-Type':'application/json'}, method='PUT')).read())"
+docker compose -f docker-compose.prod.yml cp $D/search-index.sqlite clip-api:/app/search_index/index.sqlite
+docker compose -f docker-compose.prod.yml restart clip-api
+```
+
+The 2026-10-02 snapshot held 6,109 points (90 MB) and the index 1,280 rows; the whole state backup takes about 20 s.
+
+## 6. Bring it up and verify
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
@@ -111,3 +125,4 @@ If `/api/items` returns HTML, visit `/admin` and click "Update database".
 | Date | Dump | Result |
 |---|---|---|
 | 2026-10-01 | `monthly/omeka-20261001T050001Z.sql.gz` | Imported clean into scratch `mariadb:10.11`. `item`, `media`, `resource` matched prod exactly; `value` was 172 short, all 172 on the 34 resources edited after the 05:00 dump. 6 sampled files byte-identical. |
+| 2026-10-02 | `weekly/state/20261002T041008Z/` | First state backup. Snapshot tar valid, index `integrity_check` ok with counts equal to live, `env` identical. Recover step not run. |

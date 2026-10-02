@@ -12,12 +12,15 @@
 # catalog-backups SA.
 #
 # Usage:
-#   backup-to-gcs.sh [daily|weekly|monthly|files|all]
+#   backup-to-gcs.sh [daily|weekly|monthly|files|state|all]
 #
 #     daily    DB dump → gs://.../daily/  (default; lifecycle deletes after 30d)
 #     weekly   DB dump → gs://.../weekly/ (lifecycle: nearline @ 30d, delete @ 365d)
+#              plus state → gs://.../weekly/state/<stamp>/: Qdrant snapshot,
+#              search index, and .env (everything outside the DB and files/)
 #     monthly  DB dump → gs://.../monthly/ (lifecycle: coldline @ 60d, no auto-delete)
 #     files    Files rsync → gs://.../files/ (versioned bucket, no --delete)
+#     state    State backup alone, for manual runs (writes no success stamp)
 #     all      daily + files
 #
 # Cron schedule (mark's crontab):
@@ -87,11 +90,14 @@ cmd_db() {
 
   log "DB dump start (prefix=${prefix})"
   cd "$COMPOSE_DIR"
+  # omeka.session keeps its schema but drops its rows: Omeka refuses any
+  # session older than gc_maxlifetime (24 min), so they never restore usefully.
   docker compose exec -T -e "MYSQL_PWD=${root_pw}" db \
     mariadb-dump --user=root \
                  --single-transaction --quick \
                  --routines --triggers --events \
                  --hex-blob \
+                 --ignore-table-data=omeka.session \
                  --all-databases \
     | gzip -9 > "$out"
 
@@ -101,7 +107,55 @@ cmd_db() {
   log "DB upload to ${BUCKET}/${prefix}/"
   gcs cp "$out" "${BUCKET}/${prefix}/$(basename "$out")"
   log "DB upload complete"
-  mark_success "$prefix"
+}
+
+# State that lives outside MariaDB and files/: the Qdrant collection, the
+# clip-api SQLite search index, and the .env secrets. All three are pulled
+# out through the running containers so the script needs no root access to
+# the Docker volumes.
+cmd_state() {
+  local stamp; stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  local tmpdir; tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' RETURN
+  cd "$COMPOSE_DIR"
+
+  log "Qdrant snapshot start"
+  # Snapshot server-side, stream it out, then delete the server-side copy so
+  # the qdrant_snapshots volume does not accumulate one per week.
+  docker compose exec -T clip-api python - > "${tmpdir}/qdrant-omeka_items.snapshot" <<'PY'
+import json, shutil, sys, urllib.request
+base = "http://qdrant:6333/collections/omeka_items/snapshots"
+req = urllib.request.Request(base + "?wait=true", method="POST")
+name = json.load(urllib.request.urlopen(req))["result"]["name"]
+try:
+    with urllib.request.urlopen(f"{base}/{name}") as r:
+        shutil.copyfileobj(r, sys.stdout.buffer)
+finally:
+    urllib.request.urlopen(urllib.request.Request(f"{base}/{name}", method="DELETE"))
+PY
+  [ -s "${tmpdir}/qdrant-omeka_items.snapshot" ] || die "Qdrant snapshot is empty"
+
+  log "Search index backup start"
+  # sqlite3's online backup API gives a consistent copy even mid-write.
+  docker compose exec -T clip-api python - > "${tmpdir}/search-index.sqlite" <<'PY'
+import os, sqlite3, sys, tempfile
+fd, path = tempfile.mkstemp(suffix=".sqlite"); os.close(fd)
+try:
+    src = sqlite3.connect("/app/search_index/index.sqlite")
+    dst = sqlite3.connect(path)
+    src.backup(dst); dst.close(); src.close()
+    with open(path, "rb") as f:
+        sys.stdout.buffer.write(f.read())
+finally:
+    os.unlink(path)
+PY
+  [ -s "${tmpdir}/search-index.sqlite" ] || die "Search index backup is empty"
+
+  cp "$ENV_FILE" "${tmpdir}/env"
+
+  log "State upload to ${BUCKET}/weekly/state/${stamp}/ ($(du -sh "$tmpdir" | cut -f1))"
+  gcs cp "${tmpdir}"/* "${BUCKET}/weekly/state/${stamp}/"
+  log "State upload complete"
 }
 
 cmd_files() {
@@ -118,11 +172,14 @@ cmd_files() {
 # ── Entrypoint ─────────────────────────────────────────────────────────
 {
   case "${1:-daily}" in
-    daily)   cmd_db daily ;;
-    weekly)  cmd_db weekly ;;
-    monthly) cmd_db monthly ;;
+    daily)   cmd_db daily; mark_success daily ;;
+    # The weekly stamp waits for the state backup too, so a broken Qdrant
+    # or index export trips the weekly staleness alert.
+    weekly)  cmd_db weekly; cmd_state; mark_success weekly ;;
+    monthly) cmd_db monthly; mark_success monthly ;;
     files)   cmd_files ;;
-    all)     cmd_db daily; cmd_files ;;
-    *)       echo "usage: $0 [daily|weekly|monthly|files|all]" >&2; exit 1 ;;
+    state)   cmd_state ;;
+    all)    cmd_db daily; mark_success daily; cmd_files ;;
+    *)       echo "usage: $0 [daily|weekly|monthly|files|state|all]" >&2; exit 1 ;;
   esac
 } 2>&1 | tee -a "$LOG_FILE"
