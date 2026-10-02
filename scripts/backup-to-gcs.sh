@@ -12,15 +12,20 @@
 # catalog-backups SA.
 #
 # Usage:
-#   backup-to-gcs.sh [daily|weekly|monthly|files|state|all]
+#   backup-to-gcs.sh [daily|weekly|monthly|files|state|accesslog [YYYY-MM]|all]
 #
 #     daily    DB dump → gs://.../daily/  (default; lifecycle deletes after 30d)
 #     weekly   DB dump → gs://.../weekly/ (lifecycle: nearline @ 30d, delete @ 365d)
 #              plus state → gs://.../weekly/state/<stamp>/: Qdrant snapshot,
 #              search index, and .env (everything outside the DB and files/)
 #     monthly  DB dump → gs://.../monthly/ (lifecycle: coldline @ 60d, no auto-delete)
+#              plus last month's Traefik access log → gs://.../access-logs/
 #     files    Files rsync → gs://.../files/ (versioned bucket, no --delete)
 #     state    State backup alone, for manual runs (writes no success stamp)
+#     accesslog [YYYY-MM]
+#              Access log export alone (default: last month), for backfills and
+#              for a month-to-date copy right before recreating the traefik
+#              container (writes no success stamp)
 #     all      daily + files
 #
 # Cron schedule (mark's crontab):
@@ -29,6 +34,7 @@
 #   0 4 * * 0  /opt/catalog/scripts/backup-to-gcs.sh weekly  >> /var/log/catalog-backup.log 2>&1
 #   0 5 1 * *  /opt/catalog/scripts/backup-to-gcs.sh monthly >> /var/log/catalog-backup.log 2>&1
 #   17 * * * * /opt/catalog/scripts/backup-monitor.sh >/dev/null 2>&1
+#   30 1 * * * /opt/catalog/scripts/prune-sessions.sh >/dev/null 2>&1
 #
 # Monitoring: each successful job touches /var/lib/catalog-backup/last-success-<job>.
 # backup-monitor.sh reports the age of those stamps to Cloud Monitoring hourly,
@@ -158,6 +164,31 @@ PY
   log "State upload complete"
 }
 
+# Traefik access log for one calendar month (default: the month just ended).
+# Traefik logs to the container's stdout, which lasts only as long as the
+# container, so this is the durable copy. Objects are keyed by month and
+# container ID: a re-run for the same container overwrites with a superset,
+# and a container recreated mid-month adds a second object for that month.
+cmd_accesslog() {
+  local month="${1:-$(date -u -d "$(date -u +%Y-%m-01) -1 month" +%Y-%m)}"
+  local last; last="$(date -u -d "${month}-01 +1 month -1 day" +%F)"
+  local cid; cid="$(docker compose -f "${COMPOSE_DIR}/docker-compose.prod.yml" ps -q traefik)"
+  [ -n "$cid" ] || die "traefik container not found"
+  local tmpdir; tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' RETURN
+  local out="${tmpdir}/${month}-${cid:0:12}.log.gz"
+
+  log "Access log export start (${month}, container ${cid:0:12})"
+  docker logs --since "${month}-01T00:00:00Z" --until "${last}T23:59:59.999999999Z" "$cid" 2>&1 \
+    | gzip -9 > "$out"
+  local lines; lines="$(zcat "$out" | wc -l)"
+  [ "$lines" -gt 0 ] || die "No access log lines for ${month}"
+
+  log "Access log upload: $(basename "$out") (${lines} lines, $(stat -c %s "$out") bytes)"
+  gcs cp "$out" "${BUCKET}/access-logs/$(basename "$out")"
+  log "Access log upload complete"
+}
+
 cmd_files() {
   log "Files rsync start (${FILES_DIR} → ${BUCKET}/files/)"
   # No --delete-unmatched-destination-objects: bucket is append-mostly,
@@ -176,10 +207,11 @@ cmd_files() {
     # The weekly stamp waits for the state backup too, so a broken Qdrant
     # or index export trips the weekly staleness alert.
     weekly)  cmd_db weekly; cmd_state; mark_success weekly ;;
-    monthly) cmd_db monthly; mark_success monthly ;;
+    monthly) cmd_db monthly; cmd_accesslog; mark_success monthly ;;
     files)   cmd_files ;;
     state)   cmd_state ;;
+    accesslog) cmd_accesslog "${2:-}" ;;
     all)    cmd_db daily; mark_success daily; cmd_files ;;
-    *)       echo "usage: $0 [daily|weekly|monthly|files|state|all]" >&2; exit 1 ;;
+    *)       echo "usage: $0 [daily|weekly|monthly|files|state|accesslog [YYYY-MM]|all]" >&2; exit 1 ;;
   esac
 } 2>&1 | tee -a "$LOG_FILE"

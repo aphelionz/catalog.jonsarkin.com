@@ -10,6 +10,7 @@ Paste-in-order commands for getting the catalog back from `gs://catalog-jonsarki
 | `weekly/` | same | Sun 04:00 UTC |
 | `weekly/state/<stamp>/` | `qdrant-omeka_items.snapshot`, `search-index.sqlite` (clip-api FTS), `env` (`/opt/catalog/.env`) | Sun, after the weekly dump |
 | `monthly/` | same as `daily/` | 1st, 05:00 UTC |
+| `access-logs/<YYYY-MM>-<container>.log.gz` | Traefik access log for the month just ended, from the container's stdout. Analytics only, nothing to restore. Before recreating the traefik container, run `backup-to-gcs.sh accesslog <current YYYY-MM>` or the month so far is lost. | 1st, with the monthly dump; kept indefinitely |
 | `files/` | `/var/www/omeka-s/files/` (minus `tmp/`) | 03:00 UTC rsync, append-only, versioned |
 
 Outside the bucket:
