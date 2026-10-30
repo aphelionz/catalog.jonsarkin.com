@@ -84,55 +84,43 @@
       <p>A current selection from the estate. The full inventory is in <a href="/collections/all">Available Works</a>.</p>
     </div>
 
-    {%- assign featured_handles_raw = section.settings.featured_handles | default: 'js-0000-10070,alphabet-series-complete-set-of-26-a-z,js-2017-8764' -%}
-    {%- assign featured_handles = featured_handles_raw | split: ',' -%}
+    {%- comment -%}
+      Shows only works that are still available: pinned handles first (if
+      any are set in the theme editor), then the rest of the collection, up
+      to the card count. Works at or above the price cap (the Alphabet set)
+      stay in Available Works but don't lead the homepage.
+    {%- endcomment -%}
+    {%- liquid
+      assign featured_max = section.settings.featured_count | default: 4
+      assign featured_cap_cents = section.settings.featured_max_price | default: 5000 | times: 100
+      assign featured_shown = 0
+      assign featured_seen = ','
+      assign featured_pins = section.settings.pinned_handles | default: '' | split: ','
+    -%}
     <div class="product-grid product-grid--featured">
-      {%- for handle in featured_handles -%}
+      {%- for handle in featured_pins -%}
         {%- assign handle_clean = handle | strip -%}
+        {%- if handle_clean == blank or featured_shown >= featured_max -%}{%- continue -%}{%- endif -%}
         {%- assign featured_product = all_products[handle_clean] -%}
-        {%- if featured_product != blank and featured_product.handle != blank -%}
-          <a href="{{ featured_product.url }}" class="product-card">
-            <div class="product-card__image{% if featured_product.metafields.artwork.original_image_url %} product-card__image--hdr{% endif %}">
-              {%- if featured_product.metafields.artwork.original_image_url -%}
-                <img
-                  class="product-card__img product-card__img--hdr"
-                  src="{{ featured_product.metafields.artwork.original_image_url | replace: '/files/original/', '/files/medium/' | replace: '.jpeg', '.jpg' | replace: '.png', '.jpg' }}"
-                  alt="{{ featured_product.title | escape }}"
-                  loading="lazy"
-                >
-              {%- endif -%}
-              {%- if featured_product.featured_image -%}
-                <img
-                  class="product-card__img product-card__img--shopify"
-                  src="{{ featured_product.featured_image | image_url: width: 600 }}"
-                  alt="{{ featured_product.title | escape }}"
-                  loading="lazy"
-                >
-              {%- endif -%}
-              {%- unless featured_product.available -%}
-                <span class="product-card__sold-dot" aria-label="Acquired"></span>
-              {%- endunless -%}
-            </div>
-            <div class="product-card__info">
-              <div class="product-card__title">{{ featured_product.title }}</div>
-              {%- if featured_product.metafields.artwork.medium -%}
-                <div class="product-card__meta">{{ featured_product.metafields.artwork.medium }}{% if featured_product.metafields.artwork.support %} on {{ featured_product.metafields.artwork.support | downcase }}{% endif %}</div>
-              {%- endif -%}
-              {%- if featured_product.metafields.artwork.dimensions -%}
-                <div class="product-card__meta">{{ featured_product.metafields.artwork.dimensions }}</div>
-              {%- endif -%}
-              <div class="product-card__price">
-                {%- if featured_product.available -%}
-                  {{ featured_product.price | money }}
-                {%- else -%}
-                  <span class="product-card__badge product-card__badge--sold">Acquired</span><span class="product-card__sold-price">{{ featured_product.price | money }}</span>
-                {%- endif -%}
-              </div>
-            </div>
-          </a>
+        {%- if featured_product != blank and featured_product.available -%}
+          {%- render 'product-card', product: featured_product -%}
+          {%- assign featured_shown = featured_shown | plus: 1 -%}
+          {%- assign featured_seen = featured_seen | append: featured_product.handle | append: ',' -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- for featured_product in collections.all.products -%}
+        {%- if featured_shown >= featured_max -%}{%- break -%}{%- endif -%}
+        {%- assign featured_key = ',' | append: featured_product.handle | append: ',' -%}
+        {%- if featured_product.available and featured_product.price < featured_cap_cents -%}
+          {%- unless featured_seen contains featured_key -%}
+            {%- render 'product-card', product: featured_product -%}
+            {%- assign featured_shown = featured_shown | plus: 1 -%}
+          {%- endunless -%}
         {%- endif -%}
       {%- endfor -%}
     </div>
+
+    {%- render 'release-signup', source: 'home' -%}
 
     <!-- PRESS -->
     <h2 class="section-heading">Press</h2>
@@ -168,10 +156,25 @@
   "settings": [
     {
       "type": "text",
-      "id": "featured_handles",
-      "label": "Featured product handles (comma-separated)",
-      "info": "Three product handles for the 'Currently Available' module. Rotate quarterly. Pick one anchor / one institutional / one accessible.",
-      "default": "js-0000-10070,alphabet-series-complete-set-of-26-a-z,js-2017-8764"
+      "id": "pinned_handles",
+      "label": "Pinned product handles (comma-separated, optional)",
+      "info": "Shown first, and only while still available. Leave empty to show the first available works in Available Works order."
+    },
+    {
+      "type": "range",
+      "id": "featured_count",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "default": 4,
+      "label": "Works shown in 'Currently Available'"
+    },
+    {
+      "type": "number",
+      "id": "featured_max_price",
+      "default": 5000,
+      "label": "Price cap for automatic picks (USD)",
+      "info": "Works at or above this price stay in Available Works but aren't picked for the homepage."
     }
   ],
   "presets": [
