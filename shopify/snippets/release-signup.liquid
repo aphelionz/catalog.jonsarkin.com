@@ -1,0 +1,36 @@
+{%- comment -%}
+  Release list signup. Creates a Shopify customer subscribed to email
+  marketing, tagged `release-list` plus `signup-<source>` so Shopify
+  Messaging can segment by where people joined.
+
+  Params:
+    source  - home | product | acquired | 404 (required)
+    compact - true for the one-line version under a product
+    lead    - optional sentence for the compact version
+{%- endcomment -%}
+{%- assign signup_form_id = 'ReleaseSignup-' | append: source -%}
+<div class="release-signup{% if compact %} release-signup--compact{% endif %}">
+  {%- if compact -%}
+    <p class="release-signup__lead">{{ lead | default: 'New works go to the Release list first, 48 hours before anyone else.' }}</p>
+  {%- else -%}
+    <h2 class="section-heading">The Release List</h2>
+    <p class="release-signup__lead">Jon left some twenty thousand works. The estate releases them a few dozen at a time, and the Release list sees each Release 48 hours before anyone else.</p>
+  {%- endif -%}
+
+  {%- form 'customer', id: signup_form_id, class: 'release-signup__form' -%}
+    <input type="hidden" name="contact[tags]" value="release-list,signup-{{ source }}">
+    {%- if form.posted_successfully? -%}
+      <p class="release-signup__done" role="status">You're on the Release list. The next Release reaches you 48 hours early.</p>
+    {%- else -%}
+      {%- if form.errors -%}
+        <div class="release-signup__error" role="alert">{{ form.errors | default_errors }}</div>
+      {%- endif -%}
+      <div class="release-signup__row">
+        <label for="{{ signup_form_id }}-email" class="visually-hidden">Email address</label>
+        <input type="email" id="{{ signup_form_id }}-email" name="contact[email]" autocomplete="email" placeholder="Email address" required>
+        <button type="submit" class="btn btn--primary">Join the Release list</button>
+      </div>
+      <p class="release-signup__fine">A few emails per Release. Nothing else.</p>
+    {%- endif -%}
+  {%- endform -%}
+</div>

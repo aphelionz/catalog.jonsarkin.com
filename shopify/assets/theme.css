@@ -1350,9 +1350,39 @@ small { font-size: 0.85rem; color: var(--text-secondary); }
 .blog-card__excerpt { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
 
 /* --- 404 --- */
-.not-found { text-align: center; padding: 6rem 0; }
+.not-found { text-align: center; padding: 6rem 0 3rem; }
 .not-found h1 { margin-bottom: 1rem; }
-.not-found p { color: var(--text-secondary); }
+.not-found p { color: var(--text-secondary); margin: 0 0 1.25rem; }
+.not-found .btn--primary { align-self: auto; }
+
+/* --- Release list signup --- */
+.release-signup { margin: calc(var(--gutter) * 4) 0; max-width: 640px; }
+.release-signup__lead { line-height: 1.6; margin: 0 0 1rem; }
+.release-signup__row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: stretch; }
+.release-signup__row input[type="email"] {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+.release-signup__row input[type="email"]:focus { border-color: var(--text-secondary); }
+.release-signup__row .btn--primary { align-self: stretch; }
+.release-signup__fine { font-size: 0.8rem; color: var(--text-muted); margin: 0.75rem 0 0; }
+.release-signup__done { margin: 0; }
+.release-signup__error { color: var(--sold-red); font-size: 0.85rem; margin-bottom: 0.75rem; }
+.release-signup__error ul { margin: 0; padding-left: 1.1rem; }
+.release-signup--compact {
+  margin: 2rem 0 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.release-signup--compact .release-signup__lead { font-size: 0.9rem; color: var(--text-secondary); }
+.not-found + .release-signup { margin-left: auto; margin-right: auto; text-align: left; }
 
 /* --- Utilities --- */
 .visually-hidden {
