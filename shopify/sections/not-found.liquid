@@ -2,33 +2,45 @@
   404 page. Old product links (from Jon's own store, or works since
   acquired) get a useful landing instead of a dead end: the works available
   now, a catalogue search for the old title, and the Release list.
+  On a 404, Liquid sees request.path as /404, so the script below reads the
+  requested path from the browser and swaps in the work version.
 {%- endcomment -%}
-{%- liquid
-  assign nf_path = request.path | append: ''
-  assign nf_is_work = false
-  if nf_path contains '/products/'
-    assign nf_is_work = true
-  endif
-  assign nf_words = nf_path | split: '/' | last | replace: '-', ' ' | strip
--%}
 <section class="section">
   <div class="page-width">
-    <div class="not-found">
-      {%- if nf_is_work -%}
-        <h1>This work is no longer offered here</h1>
-        <p>It may have been acquired. The works available now are in Available Works, and the catalogue raisonné documents more than 5,000 of Jon's works.</p>
-      {%- else -%}
+    <div class="not-found" data-not-found>
+      <div data-nf-page>
         <h1>Page not found</h1>
         <p>The page you requested does not exist.</p>
-      {%- endif -%}
+      </div>
+      <div data-nf-work hidden>
+        <h1>This work is no longer offered here</h1>
+        <p>It may have been acquired. The works available now are in Available Works, and the catalogue raisonné documents more than 5,000 of Jon's works.</p>
+      </div>
       <p><a href="{{ routes.all_products_collection_url }}" class="btn btn--primary">See available works</a></p>
-      {%- if nf_is_work and nf_words != blank -%}
-        <p><a href="https://catalog.jonsarkin.com/item?fulltext_search={{ nf_words | url_encode }}" class="product-detail__catalog-link">Search the catalogue for &ldquo;{{ nf_words | escape }}&rdquo; →</a></p>
-      {%- endif -%}
+      <p data-nf-search hidden><a href="https://catalog.jonsarkin.com/item" class="product-detail__catalog-link">Search the catalogue for &ldquo;<span></span>&rdquo; →</a></p>
     </div>
     {%- render 'release-signup', source: '404' -%}
   </div>
 </section>
+
+<script>
+  (function () {
+    var m = window.location.pathname.match(/\/products\/([^\/]+)/);
+    if (!m) return;
+    var root = document.querySelector('[data-not-found]');
+    root.querySelector('[data-nf-page]').hidden = true;
+    root.querySelector('[data-nf-work]').hidden = false;
+    var words;
+    try { words = decodeURIComponent(m[1]); } catch (e) { words = m[1]; }
+    words = words.replace(/[-_]+/g, ' ').trim();
+    if (!words) return;
+    var search = root.querySelector('[data-nf-search]');
+    var link = search.querySelector('a');
+    link.href = 'https://catalog.jonsarkin.com/item?fulltext_search=' + encodeURIComponent(words);
+    link.querySelector('span').textContent = words;
+    search.hidden = false;
+  })();
+</script>
 
 {% schema %}
 {
