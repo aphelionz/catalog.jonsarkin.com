@@ -1,10 +1,13 @@
+{%- capture card_alt -%}{% render 'artwork-alt', product: product %}{%- endcapture -%}
+{%- assign card_alt = card_alt | strip -%}
 <a href="{{ product.url }}" class="product-card">
   <div class="product-card__image{% if product.metafields.artwork.original_image_url %} product-card__image--hdr{% endif %}">
+    {%- comment -%} Two layers of the same image: only the first carries alt text. {%- endcomment -%}
     {%- if product.metafields.artwork.original_image_url -%}
       <img
         class="product-card__img product-card__img--hdr"
         src="{{ product.metafields.artwork.original_image_url | replace: '/files/original/', '/files/medium/' | replace: '.jpeg', '.jpg' | replace: '.png', '.jpg' }}"
-        alt="{{ product.title | escape }}"
+        alt="{{ card_alt | escape }}"
         loading="lazy"
       >
     {%- endif -%}
@@ -12,7 +15,7 @@
       <img
         class="product-card__img product-card__img--shopify"
         src="{{ product.featured_image | image_url: width: 600 }}"
-        alt="{{ product.title | escape }}"
+        alt="{% unless product.metafields.artwork.original_image_url %}{{ card_alt | escape }}{% endunless %}"
         loading="lazy"
       >
     {%- endif -%}

@@ -1,0 +1,17 @@
+{%- comment -%}
+  Alt text for an artwork image, built from the artwork.* metafields.
+  Capture it, then escape it where it's used:
+    {%- capture artwork_alt -%}{% render 'artwork-alt', product: product %}{%- endcapture -%}
+    alt="{{ artwork_alt | strip | escape }}"
+  Works titled by catalog number (JS-...) keep the number at the end.
+{%- endcomment -%}
+{%- liquid
+  assign alt_medium = product.metafields.artwork.medium | append: '' | strip | downcase
+  assign alt_support = product.metafields.artwork.support | append: '' | strip | downcase
+  assign alt_dims = product.metafields.artwork.dimensions | append: '' | strip
+  assign alt_titled = true
+  if product.title contains 'JS-'
+    assign alt_titled = false
+  endif
+-%}
+Jon Sarkin{% if alt_titled %}, {{ product.title }}{% endif %}{% if alt_medium != blank %}: {{ alt_medium }}{% if alt_support != blank %} on {{ alt_support }}{% endif %}{% endif %}{% if alt_dims != blank %}, {{ alt_dims }}{% endif %}{% unless alt_titled %} ({{ product.title }}){% endunless %}
