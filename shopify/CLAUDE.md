@@ -35,9 +35,22 @@ Leave `descriptionHtml` empty — the template ignores it in favor of metafields
 
 ## SEO titles
 The theme auto-generates SEO titles from metafields:
-`{medium}, {year} — Jon Sarkin ({catalog_number})`
+`{medium} on {support}, {year} — Jon Sarkin ({catalog_number})`
 
 When adding new products, also set the Shopify admin SEO title field to the same value as a fallback (the `global.title_tag` metafield).
+
+- **Page titles.** Works stay untitled and named by catalog number (the catalog's convention). Their `<title>` leads with medium and support, which puts the searchable words first.
+- **Titled products.** A product whose title is not a `JS-` number (sets and series, e.g. the Alphabet Series) gets `{title} — Jon Sarkin` as its page title, the title as H1 with the catalog number beneath (when it has one), and alt text that leads with the title.
+- **Years in titles.** Only a four-digit `artwork.year` goes into the `<title>`/OG title; ranges like `c. '89–'24` stay on the page only.
+- **Signature line.** `artwork.signed` follows the catalog convention (arrow = position, optional initials/date, `∅` = unsigned) and renders as words, e.g. `↘ JMS 17` → "Signed lower right (JMS 17)".
+- **Structured data.** `sections/product-detail.liquid` emits Product + VisualArtwork JSON-LD with an Offer (price, availability, free US shipping).
+- **Alt text** comes from `snippets/artwork-alt.liquid` (artist, title, medium, support, dimensions).
+
+## Release list
+- `snippets/release-signup.liquid` is a Shopify customer (newsletter) form. Signups become customers subscribed to email marketing, tagged `release-list` plus `signup-home`, `signup-product`, `signup-acquired` or `signup-404`. Segment on those tags in Shopify Messaging.
+- It appears on the homepage, under every product (different line for acquired works) and on the 404 page.
+- The homepage "Currently Available" module now shows only available works: optional pinned handles first (`pinned_handles`), then the rest of Available Works under the price cap, up to `featured_count`.
+- `sections/not-found.liquid` turns dead `/products/` links into a landing page: available works, a catalogue search for the old handle, and the Release list.
 
 ## Price routing
 - In stock → "Acquire This Work" button (adds to cart) — all price tiers, including flagship
