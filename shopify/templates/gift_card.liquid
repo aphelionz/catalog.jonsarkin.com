@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ 'gift_cards.issued.title' | t: value: gift_card.initial_value | format_address, shop: shop.name }}</title>
+  <title>{{ 'gift_cards.issued.title' | t: value: gift_card.initial_value | format_address: shop: shop.name }}</title>
   <style>
     @font-face {
       font-family: 'Jost';
