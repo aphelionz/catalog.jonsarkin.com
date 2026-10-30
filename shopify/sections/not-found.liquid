@@ -1,0 +1,37 @@
+{%- comment -%}
+  404 page. Old product links (from Jon's own store, or works since
+  acquired) get a useful landing instead of a dead end: the works available
+  now, a catalogue search for the old title, and the Release list.
+{%- endcomment -%}
+{%- liquid
+  assign nf_path = request.path | append: ''
+  assign nf_is_work = false
+  if nf_path contains '/products/'
+    assign nf_is_work = true
+  endif
+  assign nf_words = nf_path | split: '/' | last | replace: '-', ' ' | strip
+-%}
+<section class="section">
+  <div class="page-width">
+    <div class="not-found">
+      {%- if nf_is_work -%}
+        <h1>This work is no longer offered here</h1>
+        <p>It may have been acquired. The works available now are in Available Works, and the catalogue raisonné documents more than 5,000 of Jon's works.</p>
+      {%- else -%}
+        <h1>Page not found</h1>
+        <p>The page you requested does not exist.</p>
+      {%- endif -%}
+      <p><a href="{{ routes.all_products_collection_url }}" class="btn btn--primary">See available works</a></p>
+      {%- if nf_is_work and nf_words != blank -%}
+        <p><a href="https://catalog.jonsarkin.com/item?fulltext_search={{ nf_words | url_encode }}" class="product-detail__catalog-link">Search the catalogue for &ldquo;{{ nf_words | escape }}&rdquo; →</a></p>
+      {%- endif -%}
+    </div>
+    {%- render 'release-signup', source: '404' -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Not found"
+}
+{% endschema %}

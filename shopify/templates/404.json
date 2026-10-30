@@ -1,13 +1,7 @@
 {
   "sections": {
     "main": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "Page Not Found",
-        "text": "<p>The page you requested does not exist.</p>",
-        "button_label": "Continue Browsing",
-        "button_link": "/"
-      }
+      "type": "not-found"
     }
   },
   "order": [
