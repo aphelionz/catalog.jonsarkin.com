@@ -58,14 +58,14 @@
       {%- capture og_description -%}{% if product.metafields.artwork.medium %}{{ product.metafields.artwork.medium }}{% endif %}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | downcase }}{% endif %}{% if product.metafields.artwork.dimensions %}, {{ product.metafields.artwork.dimensions }}{% endif %}{% if product.metafields.artwork.year %}, {{ product.metafields.artwork.year }}{% endif %}. By Jon Sarkin (1953–2024).{%- endcapture -%}
     {%- endif -%}
     {%- if product.featured_image -%}
-      {%- assign og_image_url = product.featured_image | image_url: width: 1200 -%}
+      {%- assign og_image_url = product.featured_image | image_url: width: 1200 | prepend: 'https:' -%}
     {%- endif -%}
   {%- elsif template.name == 'article' -%}
     {%- assign og_type = 'article' -%}
     {%- assign og_title = article.title -%}
     {%- assign og_description = article.excerpt_or_content | strip_html | truncate: 200 -%}
     {%- if article.image -%}
-      {%- assign og_image_url = article.image | image_url: width: 1200 -%}
+      {%- assign og_image_url = article.image | image_url: width: 1200 | prepend: 'https:' -%}
     {%- endif -%}
   {%- elsif template.name == 'collection' -%}
     {%- assign og_type = 'website' -%}
