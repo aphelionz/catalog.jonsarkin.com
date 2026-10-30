@@ -1,3 +1,16 @@
+{%- liquid
+  assign cat_no = product.selected_or_first_available_variant.sku | append: '' | strip
+  if cat_no == blank
+    assign cat_no = product.metafields.artwork.catalog_number | append: '' | strip
+  endif
+  assign has_work_title = true
+  if product.title contains 'JS-'
+    assign has_work_title = false
+  endif
+-%}
+{%- capture artwork_alt -%}{% render 'artwork-alt', product: product %}{%- endcapture -%}
+{%- assign artwork_alt = artwork_alt | strip -%}
+
 <section class="section">
   <div class="page-width">
     <div class="product-detail{% if template.suffix == 'wide' %} product-detail--wide{% endif %}">
@@ -7,14 +20,14 @@
             <img
               id="product-hero-img"
               src="{{ product.metafields.artwork.original_image_url }}"
-              alt="{{ product.title | escape }}"
+              alt="{{ artwork_alt | escape }}"
               loading="eager"
             >
           {%- elsif product.featured_image -%}
             <img
               id="product-hero-img"
               src="{{ product.featured_image | image_url }}"
-              alt="{{ product.title | escape }}"
+              alt="{{ artwork_alt | escape }}"
               loading="eager"
             >
           {%- endif -%}
@@ -22,10 +35,16 @@
         {%- if product.images.size > 1 -%}
           <div class="product-detail__thumbnails">
             {%- for image in product.images -%}
+              {%- liquid
+                assign thumb_alt = image.alt | append: ''
+                if thumb_alt == blank or thumb_alt contains 'JS-'
+                  assign thumb_alt = artwork_alt | append: ', view ' | append: forloop.index
+                endif
+              -%}
               <button type="button" class="product-detail__thumb-btn{% if forloop.first %} is-active{% endif %}" data-full-src="{% if forloop.first and product.metafields.artwork.original_image_url %}{{ product.metafields.artwork.original_image_url }}{% else %}{{ image | image_url }}{% endif %}" aria-label="View image {{ forloop.index }} of {{ product.images.size }}">
                 <img
                   src="{{ image | image_url: width: 120 }}"
-                  alt="{{ image.alt | default: product.title | escape }}"
+                  alt="{{ thumb_alt | escape }}"
                   loading="lazy"
                 >
               </button>
@@ -45,6 +64,9 @@
 
       <div class="product-detail__info">
         <h1 class="product-detail__title">{{ product.title }}{% unless product.available %} <span class="product-detail__sold-dot" aria-label="Acquired"></span>{% endunless %}</h1>
+        {%- if has_work_title and cat_no != blank -%}
+          <div class="product-detail__catalog-number">{{ cat_no }}</div>
+        {%- endif -%}
 
         <div class="product-detail__metadata">
           {%- if product.metafields.artwork.medium -%}
@@ -59,8 +81,27 @@
         </div>
 
         <div class="product-detail__provenance">
-          {%- if product.metafields.artwork.signed -%}
-            <div class="product-detail__provenance-line">Signed: {{ product.metafields.artwork.signed }}</div>
+          {%- assign signed_raw = product.metafields.artwork.signed | append: '' | strip -%}
+          {%- if signed_raw != blank -%}
+            {%- comment -%}
+              Catalog convention: an arrow gives the signature's position,
+              optionally followed by initials/date ("↘ JMS 17"); ∅ = unsigned.
+            {%- endcomment -%}
+            {%- assign sig_mark = signed_raw | slice: 0 -%}
+            {%- assign sig_rest = signed_raw | slice: 1, 80 | strip -%}
+            {%- case sig_mark -%}
+              {%- when '∅' -%}{%- assign sig_text = 'Unsigned' -%}{%- assign sig_rest = '' -%}
+              {%- when '↘' -%}{%- assign sig_text = 'Signed lower right' -%}
+              {%- when '↙' -%}{%- assign sig_text = 'Signed lower left' -%}
+              {%- when '↗' -%}{%- assign sig_text = 'Signed upper right' -%}
+              {%- when '↖' -%}{%- assign sig_text = 'Signed upper left' -%}
+              {%- when '↓' -%}{%- assign sig_text = 'Signed bottom center' -%}
+              {%- when '↑' -%}{%- assign sig_text = 'Signed top center' -%}
+              {%- when '←' -%}{%- assign sig_text = 'Signed center left' -%}
+              {%- when '→' -%}{%- assign sig_text = 'Signed center right' -%}
+              {%- else -%}{%- assign sig_text = 'Signed: ' | append: signed_raw -%}{%- assign sig_rest = '' -%}
+            {%- endcase -%}
+            <div class="product-detail__provenance-line">{{ sig_text }}{% if sig_rest != blank %} ({{ sig_rest }}){% endif %}</div>
           {%- endif -%}
           {%- if product.metafields.artwork.condition -%}
             <div class="product-detail__provenance-line">Condition: {{ product.metafields.artwork.condition }}</div>
@@ -101,6 +142,9 @@
             </a>
           {%- endif -%}
           {%- if product.available -%}
+            <a href="/pages/book-a-private-studio-appointment" class="product-detail__catalog-link">
+              Book a private viewing →
+            </a>
             <a href="/pages/contact" class="product-detail__catalog-link">
               Request a condition report →
             </a>
@@ -113,6 +157,12 @@
               {{ product.description }}
             </div>
           {%- endunless -%}
+        {%- endif -%}
+
+        {%- if product.available -%}
+          {%- render 'release-signup', source: 'product', compact: true -%}
+        {%- else -%}
+          {%- render 'release-signup', source: 'acquired', compact: true, lead: 'This work has been acquired. New works go to the Release list first, 48 hours before anyone else.' -%}
         {%- endif -%}
       </div>
     </div>
@@ -131,15 +181,80 @@
       <p class="press-strip">Featured in: <a href="https://www.wbur.org/news/2025/05/02/gloucester-gallery-opens-to-cement-jon-sarkins-artistic-legacy" target="_blank" rel="noopener"><em>Gloucester gallery opens to cement Jon Sarkin&rsquo;s artistic legacy</em></a> &mdash; Amelia Mason, WBUR, May 2025.</p>
     </div>
 
+    {%- comment -%}
+      Structured data for search engines and AI shopping assistants.
+      Kept above the related-works loop, which reuses the `product` name.
+    {%- endcomment -%}
+    {%- liquid
+      assign ld_variant = product.selected_or_first_available_variant
+      assign ld_url = shop.url | append: product.url
+      assign ld_desc = product.description | strip_html | strip_newlines | strip
+      if ld_desc == blank
+        assign ld_desc = product.metafields.artwork.content_excerpt | append: '' | strip_html | strip_newlines | strip
+      endif
+      if ld_desc == blank
+        assign ld_desc = artwork_alt
+      endif
+      assign ld_desc = ld_desc | truncate: 600
+      assign ld_year = product.metafields.artwork.year | append: '' | strip
+      assign ld_medium = product.metafields.artwork.medium | append: '' | strip
+      assign ld_support = product.metafields.artwork.support | append: '' | strip
+      assign ld_catalog = product.metafields.artwork.catalog_url | append: '' | strip
+    -%}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["Product", "VisualArtwork"],
+      "@id": {{ ld_url | append: '#artwork' | json }},
+      "name": {{ product.title | json }},
+      "url": {{ ld_url | json }},
+      {%- if cat_no != blank %}
+      "sku": {{ cat_no | json }},
+      {%- endif %}
+      {%- if product.featured_image %}
+      "image": [{{ product.featured_image | image_url: width: 1600 | prepend: 'https:' | json }}],
+      {%- endif %}
+      "description": {{ ld_desc | json }},
+      "brand": { "@type": "Brand", "name": "Jon Sarkin" },
+      "creator": { "@type": "Person", "name": "Jon Sarkin", "sameAs": "https://en.wikipedia.org/wiki/Jon_Sarkin" },
+      {%- if ld_medium != blank %}
+      "artMedium": {{ ld_medium | json }},
+      {%- endif %}
+      {%- if ld_support != blank %}
+      "artworkSurface": {{ ld_support | json }},
+      {%- endif %}
+      {%- if ld_year.size == 4 %}
+      "dateCreated": {{ ld_year | json }},
+      {%- endif %}
+      {%- if ld_catalog != blank %}
+      "subjectOf": { "@type": "WebPage", "name": "Jon Sarkin catalogue raisonné entry", "url": {{ ld_catalog | json }} },
+      {%- endif %}
+      "offers": {
+        "@type": "Offer",
+        "url": {{ ld_url | json }},
+        "price": {{ ld_variant.price | divided_by: 100.0 | json }},
+        "priceCurrency": {{ cart.currency.iso_code | json }},
+        "availability": "https://schema.org/{% if product.available %}InStock{% else %}SoldOut{% endif %}",
+        "seller": { "@type": "Organization", "name": "The Jon Sarkin Estate" },
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingRate": { "@type": "MonetaryAmount", "value": 0, "currency": "USD" },
+          "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "US" }
+        }
+      }
+    }
+    </script>
+
     {%- if section.settings.show_related and recommendations.products_count > 0 -%}
       <div class="related-products">
         <h2>Related Works</h2>
         <div class="product-grid">
           {%- for product in recommendations.products limit: 8 -%}
+            {%- capture related_alt -%}{% render 'artwork-alt', product: product %}{%- endcapture -%}
             <a href="{{ product.url }}" class="product-card">
               <div class="product-card__image">
                 {%- if product.featured_image -%}
-                  {{ product.featured_image | image_url: width: 600 | image_tag: alt: product.title, loading: 'lazy' }}
+                  {{ product.featured_image | image_url: width: 600 | image_tag: alt: related_alt, loading: 'lazy' }}
                 {%- endif -%}
                 {%- unless product.available -%}
                   <span class="product-card__sold-dot" aria-label="Acquired"></span>
