@@ -4,9 +4,31 @@
   <script>(function(){var m=window.matchMedia('(prefers-color-scheme: dark)');document.documentElement.setAttribute('data-theme',m.matches?'dark':'light');m.addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light')});})()</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {%- comment -%}
+    Works are untitled and go by catalog number (see docs/omeka-invariants.md),
+    so their titles lead with medium and support. Products with a real title
+    (sets and series, e.g. the Alphabet Series) lead with that title.
+    Only a four-digit year goes in titles; ranges like c. '89–'24 stay on the page.
+  {%- endcomment -%}
+  {%- liquid
+    assign work_titled = false
+    assign work_year = ''
+    if template.name == 'product'
+      unless product.title contains 'JS-'
+        assign work_titled = true
+      endunless
+      assign work_year = product.metafields.artwork.year | append: '' | strip
+      if work_year.size != 4
+        assign work_year = ''
+      endif
+      assign work_cat_no = product.selected_or_first_available_variant.sku | append: '' | strip
+    endif
+  -%}
   <title>
-    {%- if template.name == 'product' and product.metafields.artwork.medium -%}
-      {{ product.metafields.artwork.medium | strip }}{% if product.metafields.artwork.year %}, {{ product.metafields.artwork.year }}{% endif %} — {{ shop.name }} ({{ product.title }})
+    {%- if work_titled -%}
+      {{ product.title }} — Jon Sarkin{% if work_cat_no != blank %} ({{ work_cat_no }}){% endif %}
+    {%- elsif template.name == 'product' and product.metafields.artwork.medium -%}
+      {{ product.metafields.artwork.medium | strip }}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | strip | downcase }}{% endif %}{% if work_year != blank %}, {{ work_year }}{% endif %} — Jon Sarkin ({{ product.title }})
     {%- elsif template.name == 'collection' and collection.handle == 'all' -%}
       Available Works — {{ shop.name }}
     {%- else -%}
@@ -25,7 +47,11 @@
 
   {%- if template.name == 'product' -%}
     {%- assign og_type = 'product' -%}
-    {%- capture og_title -%}{% if product.metafields.artwork.medium %}{{ product.metafields.artwork.medium }}{% if product.metafields.artwork.year %}, {{ product.metafields.artwork.year }}{% endif %} — {% endif %}Jon Sarkin ({{ product.title }}){%- endcapture -%}
+    {%- if work_titled -%}
+      {%- capture og_title -%}{{ product.title }} — Jon Sarkin{%- endcapture -%}
+    {%- else -%}
+      {%- capture og_title -%}{% if product.metafields.artwork.medium %}{{ product.metafields.artwork.medium | strip }}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | strip | downcase }}{% endif %}{% if work_year != blank %}, {{ work_year }}{% endif %} — {% endif %}Jon Sarkin ({{ product.title }}){%- endcapture -%}
+    {%- endif -%}
     {%- if product.metafields.artwork.content_excerpt != blank -%}
       {%- assign og_description = product.metafields.artwork.content_excerpt | strip_html | truncate: 200 -%}
     {%- else -%}
