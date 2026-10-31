@@ -136,10 +136,13 @@ class IconographyController extends AbstractActionController
      */
     private function getItemSubjects(int $itemId): ?array
     {
+        $viewAll = $this->canViewAll();
+
         // Check item exists (artwork template or NULL — excludes writings)
         $exists = $this->db->fetchOne(
             'SELECT 1 FROM resource r JOIN item i ON i.id = r.id
-             WHERE r.id = ? AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)',
+             WHERE r.id = ? AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)'
+             . ($viewAll ? '' : ' AND r.is_public = 1'),
             [$itemId, self::TEMPLATE_ID]
         );
         if (!$exists) {
@@ -147,7 +150,8 @@ class IconographyController extends AbstractActionController
         }
 
         $rows = $this->db->fetchAllAssociative(
-            'SELECT v.value FROM value v WHERE v.resource_id = ? AND v.property_id = ? ORDER BY v.id',
+            'SELECT v.value FROM value v WHERE v.resource_id = ? AND v.property_id = ?'
+            . ($viewAll ? '' : ' AND v.is_public = 1') . ' ORDER BY v.id',
             [$itemId, self::SUBJECT_PROPERTY_ID]
         );
 
@@ -170,7 +174,7 @@ class IconographyController extends AbstractActionController
              JOIN item i ON i.id = r.id
              WHERE v.resource_id IN ($placeholders)
                AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)
-               AND v.property_id = ?
+               AND v.property_id = ?" . ($this->canViewAll() ? '' : ' AND r.is_public = 1 AND v.is_public = 1') . "
              ORDER BY v.resource_id, v.id",
             $params
         );
@@ -194,10 +198,12 @@ class IconographyController extends AbstractActionController
             return self::$corpusCache;
         }
 
+        // Public data only: this cache is shared by every user.
         // Count total artwork items (template 2 or NULL — excludes writings)
         $totalItems = (int) $this->db->fetchOne(
             'SELECT COUNT(*) FROM resource r JOIN item i ON i.id = r.id
-             WHERE r.resource_template_id = ? OR r.resource_template_id IS NULL',
+             WHERE (r.resource_template_id = ? OR r.resource_template_id IS NULL)
+               AND r.is_public = 1',
             [self::TEMPLATE_ID]
         );
 
@@ -209,6 +215,8 @@ class IconographyController extends AbstractActionController
              JOIN item i ON i.id = r.id
              WHERE (r.resource_template_id = ? OR r.resource_template_id IS NULL)
                AND v.property_id = ?
+               AND r.is_public = 1
+               AND v.is_public = 1
              GROUP BY v.value',
             [self::TEMPLATE_ID, self::SUBJECT_PROPERTY_ID]
         );
@@ -225,6 +233,15 @@ class IconographyController extends AbstractActionController
         self::$corpusCacheTime = $now;
 
         return self::$corpusCache;
+    }
+
+    /**
+     * Raw SQL skips Omeka's visibility filters. Users without view-all see
+     * public items and public values only.
+     */
+    private function canViewAll(): bool
+    {
+        return $this->userIsAllowed('Omeka\Entity\Resource', 'view-all');
     }
 
     /**
