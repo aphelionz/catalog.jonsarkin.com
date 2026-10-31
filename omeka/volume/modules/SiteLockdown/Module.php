@@ -112,8 +112,10 @@ SQL);
         if (strpos($routeName, 'api') === 0 || strpos($routeName, '/api') !== false) {
             return;
         }
-        $uri = $event->getRequest()->getUriString();
-        if (preg_match('#/api(/|$|\?)#', $uri)) {
+        // Path only: the full URI includes the query string, so
+        // /item/1?x=/api/ used to skip the gate.
+        $path = $event->getRequest()->getUri()->getPath();
+        if (preg_match('#^/api(/|$)#', $path)) {
             return;
         }
         // Collector submission form — public access
