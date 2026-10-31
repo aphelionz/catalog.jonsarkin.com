@@ -31,6 +31,21 @@ class EditorController extends AbstractActionController
     }
 
     /**
+     * CSRF guard for writes. A cross-site page cannot send a JSON
+     * Content-Type without a CORS preflight, which this app never grants.
+     */
+    private function rejectNonJsonPost(): ?JsonModel
+    {
+        $request = $this->getRequest();
+        $contentType = $request->getHeader('Content-Type');
+        if ($request->isPost() && $contentType && $contentType->getMediaType() === 'application/json') {
+            return null;
+        }
+        $this->getResponse()->setStatusCode(400);
+        return new JsonModel(['error' => 'Expected a JSON POST']);
+    }
+
+    /**
      * Return all Piece items, custom vocabs, and item sets in a single JSON
      * response.  Uses direct DB queries to avoid Omeka's heavy serialisation
      * (which OOMs on large catalogs).
@@ -197,6 +212,9 @@ class EditorController extends AbstractActionController
      */
     public function createSetAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true);
         $title = trim($body['title'] ?? '');
 
@@ -275,6 +293,9 @@ class EditorController extends AbstractActionController
      */
     public function patchAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $itemId = (int) $this->params('id');
         if ($itemId < 1) {
             return new JsonModel(['error' => 'Invalid item ID']);
@@ -303,6 +324,9 @@ class EditorController extends AbstractActionController
      */
     public function addToSetAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true);
         $setId = (int) ($body['set_id'] ?? 0);
         $itemIds = $body['item_ids'] ?? [];
@@ -341,6 +365,9 @@ class EditorController extends AbstractActionController
      */
     public function tournamentSeedAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true);
         if (!is_array($body) || empty($body['item_ids'])) {
             return new JsonModel(['error' => 'item_ids required']);
@@ -414,6 +441,13 @@ class EditorController extends AbstractActionController
         $itemId = (int) $this->params('id');
         if ($itemId < 1) {
             return new JsonModel(['error' => 'Invalid item ID', 'suggestions' => []]);
+        }
+
+        // Each call spends Claude credit. SameSite=Lax still sends the session on
+        // top-level GETs, so require the XHR header a cross-site link cannot set.
+        if (!$this->getRequest()->isXmlHttpRequest()) {
+            $this->getResponse()->setStatusCode(400);
+            return new JsonModel(['error' => 'Expected an XHR request', 'suggestions' => []]);
         }
 
         if (!$this->anthropicClient) {
