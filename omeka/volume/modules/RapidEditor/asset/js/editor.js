@@ -240,6 +240,17 @@ function extractValue(item, term) {
   return (vals[0]['@value'] || vals[0]['o:label'] || '').trim();
 }
 
+// Item values can come from public input (collector submissions become
+// bibo:owner, provenance, etc.), so escape them before any innerHTML use.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function isBareNumber(v) {
   return /^\d+(\.\d+)?$/.test(String(v).trim());
 }
@@ -784,9 +795,9 @@ async function renderBucketCard(item, zIndex) {
       <div class="card-img-loading">Loading…</div>
     </div>
     <div class="card-meta">
-      <div class="card-meta-id"><a href="${editUrl}" target="_blank">${identifier}</a></div>
-      ${detail ? `<div class="card-meta-detail">${detail}</div>` : ''}
-      ${date ? `<div class="card-meta-date">${date}</div>` : ''}
+      <div class="card-meta-id"><a href="${editUrl}" target="_blank">${escapeHtml(identifier)}</a></div>
+      ${detail ? `<div class="card-meta-detail">${escapeHtml(detail)}</div>` : ''}
+      ${date ? `<div class="card-meta-date">${escapeHtml(date)}</div>` : ''}
     </div>
   `;
 
@@ -1195,8 +1206,8 @@ function renderExhibitList() {
     const totalR1 = storedEx && storedEx.rounds[0] ? storedEx.rounds[0].total : '?';
 
     html += `
-      <button class="exhibit-card" data-exhibit="${ex.name}">
-        <div class="exhibit-card-name">${ex.name}</div>
+      <button class="exhibit-card" data-exhibit="${escapeHtml(ex.name)}">
+        <div class="exhibit-card-name">${escapeHtml(ex.name)}</div>
         <div class="exhibit-card-stats">
           Round ${ex.maxRound} · ${survivors} survivors${totalR1 !== '?' ? ` of ${totalR1}` : ''}
         </div>
@@ -1373,7 +1384,7 @@ function renderExhibitRoundSetup(state) {
 
   let html = `
     <div class="exhibit-round-setup">
-      <h2>${state.name}</h2>
+      <h2>${escapeHtml(state.name)}</h2>
       <div class="exhibit-round-label">Round ${round}</div>
       <div class="exhibit-round-pool">${pool.length.toLocaleString()} ${sourceLabel}</div>`;
 
@@ -1738,16 +1749,16 @@ function renderTournamentMatch() {
         <div class="tournament-card" data-pick="a">
           <div class="card-img-wrap"><div class="card-img-loading">Loading…</div></div>
           <div class="tournament-card-meta">
-            <div class="tournament-card-id">${idA}</div>
-            <div class="tournament-card-detail">${[medA, dateA].filter(Boolean).join(', ')}</div>
+            <div class="tournament-card-id">${escapeHtml(idA)}</div>
+            <div class="tournament-card-detail">${escapeHtml([medA, dateA].filter(Boolean).join(', '))}</div>
           </div>
         </div>
         <div class="tournament-vs">VS</div>
         <div class="tournament-card" data-pick="b">
           <div class="card-img-wrap"><div class="card-img-loading">Loading…</div></div>
           <div class="tournament-card-meta">
-            <div class="tournament-card-id">${idB}</div>
-            <div class="tournament-card-detail">${[medB, dateB].filter(Boolean).join(', ')}</div>
+            <div class="tournament-card-id">${escapeHtml(idB)}</div>
+            <div class="tournament-card-detail">${escapeHtml([medB, dateB].filter(Boolean).join(', '))}</div>
           </div>
         </div>
       </div>
@@ -2357,8 +2368,8 @@ async function renderSprintItem() {
   const dims = (h && w) ? `${h}″ × ${w}″` : '';
   const detail = [medium, dims].filter(Boolean).join(', ');
   dom.sprintViewMeta.innerHTML = `
-    <div class="sv-meta-id">${identifier}</div>
-    ${detail || date ? `<div class="sv-meta-detail">${[detail, date].filter(Boolean).join(' · ')}</div>` : ''}
+    <div class="sv-meta-id">${escapeHtml(identifier)}</div>
+    ${detail || date ? `<div class="sv-meta-detail">${escapeHtml([detail, date].filter(Boolean).join(' · '))}</div>` : ''}
   `;
 
   // Current value for this field
@@ -3327,7 +3338,7 @@ async function renderPublishItem() {
     ['Signature', sig], ['Framing', framing],
   ].filter(([, v]) => v);
 
-  dom.sprintViewMeta.innerHTML = `<div class="sv-meta-id">${identifier}</div>`;
+  dom.sprintViewMeta.innerHTML = `<div class="sv-meta-id">${escapeHtml(identifier)}</div>`;
   dom.sprintViewCurrent.textContent = '';
 
   // Build review card
@@ -3338,7 +3349,7 @@ async function renderPublishItem() {
   const grid = document.createElement('div');
   grid.className = 'publish-meta';
   for (const [label, val] of rows) {
-    grid.innerHTML += `<div class="publish-meta-row"><span class="publish-meta-label">${label}</span><span class="publish-meta-value">${val}</span></div>`;
+    grid.innerHTML += `<div class="publish-meta-row"><span class="publish-meta-label">${label}</span><span class="publish-meta-value">${escapeHtml(val)}</span></div>`;
   }
   zone.appendChild(grid);
 
