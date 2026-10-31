@@ -97,5 +97,6 @@ return [
         'site_url' => 'https://catalog.jonsarkin.com/s/catalog',
         'max_files' => 20,
         'max_file_size' => 15 * 1024 * 1024,
+        'max_submissions_per_ip_per_hour' => 20,
     ],
 ];
