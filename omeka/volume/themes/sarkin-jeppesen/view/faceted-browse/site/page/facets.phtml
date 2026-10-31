@@ -42,7 +42,7 @@ $facetCounts = $this->placeholder('facetCounts')->getValue() ?: [];
             data-facet-id="<?php echo $this->escapeHtml($facet->id()); ?>"
             data-facet-type="<?php echo $this->escapeHtml($facet->type()); ?>"
             data-facet-data="<?php echo $this->escapeHtml(json_encode($facet->data())); ?>">
-            <legend><?php echo $this->escapeHtml($facet->name()); ?></legend>
+            <legend id="facet-legend-<?php echo $this->escapeHtml($facet->id()); ?>"><?php echo $this->escapeHtml($facet->name()); ?></legend>
             <?php echo $this->facetedBrowse()->renderFacet($facet); ?>
         </fieldset>
         <?php endif; ?>

@@ -283,7 +283,21 @@ class Value implements FacetTypeInterface
         // A label of only whitespace has nothing to show and nothing to add, so
         // drop it rather than list a row "Add all" would skip. Not done centrally:
         // a facet type that selects an ID stays usable with a blank label.
-        $rows = $qb->getQuery()->getResult();
-        return array_values(array_filter($rows, fn ($row) => '' !== trim((string) $row['label'])));
+        // Page past dropped rows so the limit counts usable rows only; the caller
+        // asks for one row more than it shows to detect a cut-off list.
+        $query = $qb->getQuery();
+        $limit = $options['limit'];
+        $rows = [];
+        $offset = 0;
+        do {
+            $batch = $query->setFirstResult($offset)->getResult();
+            $offset += count($batch);
+            foreach ($batch as $row) {
+                if ('' !== trim((string) $row['label'])) {
+                    $rows[] = $row;
+                }
+            }
+        } while ($limit && count($batch) === $limit && count($rows) < $limit);
+        return $limit ? array_slice($rows, 0, $limit) : $rows;
     }
 }
