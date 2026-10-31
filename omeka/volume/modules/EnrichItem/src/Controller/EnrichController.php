@@ -50,6 +50,22 @@ class EnrichController extends AbstractActionController
     }
 
     /**
+     * CSRF guard for actions that write or spend Claude credit. A cross-site
+     * page cannot send a JSON Content-Type without a CORS preflight, which
+     * this app never grants.
+     */
+    private function rejectNonJsonPost(): ?JsonModel
+    {
+        $request = $this->getRequest();
+        $contentType = $request->getHeader('Content-Type');
+        if ($request->isPost() && $contentType && $contentType->getMediaType() === 'application/json') {
+            return null;
+        }
+        $this->getResponse()->setStatusCode(400);
+        return new JsonModel(['error' => 'Expected a JSON POST']);
+    }
+
+    /**
      * GET /admin/enrich-queue/fields — JSON: template properties with metadata.
      */
     public function fieldsAction(): JsonModel
@@ -142,6 +158,9 @@ class EnrichController extends AbstractActionController
      */
     public function saveInstructionsAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true) ?? [];
         $propertyId = (int) ($body['property_id'] ?? 0);
         $instructions = trim($body['instructions'] ?? '');
@@ -161,6 +180,9 @@ class EnrichController extends AbstractActionController
      */
     public function runBatchAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true) ?? [];
         $propertyId = (int) ($body['property_id'] ?? 0);
         $force = !empty($body['force']);
@@ -205,6 +227,9 @@ class EnrichController extends AbstractActionController
      */
     public function previewAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true) ?? [];
         $propertyId = (int) ($body['property_id'] ?? 0);
 
@@ -293,6 +318,9 @@ class EnrichController extends AbstractActionController
      */
     public function batchSubmitAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true) ?? [];
         $propertyId = (int) ($body['property_id'] ?? 0);
         $force = !empty($body['force']);
@@ -351,6 +379,9 @@ class EnrichController extends AbstractActionController
      */
     public function batchCollectAction(): JsonModel
     {
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
+        }
         $body = json_decode($this->getRequest()->getContent(), true) ?? [];
         $batchId = $body['batch_id'] ?? '';
 
@@ -371,9 +402,8 @@ class EnrichController extends AbstractActionController
      */
     public function ingestClipAction(): JsonModel
     {
-        $request = $this->getRequest();
-        if (!$request->isPost()) {
-            return new JsonModel(['error' => 'POST required']);
+        if ($error = $this->rejectNonJsonPost()) {
+            return $error;
         }
         $this->jobDispatcher->dispatch(\EnrichItem\Job\IngestClip::class, []);
         return new JsonModel(['status' => 'dispatched', 'type' => 'clip']);
