@@ -8,7 +8,8 @@
 -- Afterwards: Admin > Settings > "Index full-text search" (bulk SQL leaves the index stale).
 --
 -- Left private on purpose: schema:box, curation:category, curation:note (internal fields,
--- Private on the template).
+-- Private on the template). Left private for Mark: bibo:owner (one prod row names a private
+-- collection's state).
 
 CREATE TEMPORARY TABLE _drift_term (
   term VARCHAR(190) COLLATE utf8mb4_unicode_ci PRIMARY KEY
@@ -18,7 +19,8 @@ INSERT INTO _drift_term (term) VALUES
   ('dcterms:title'), ('dcterms:date'), ('dcterms:type'), ('dcterms:subject'),
   ('dcterms:medium'), ('dcterms:format'), ('dcterms:provenance'),
   ('bibo:content'), ('bibo:presentedAt'),
-  ('schema:creator'), ('schema:itemCondition'), ('schema:mentions');
+  ('schema:creator'), ('schema:itemCondition'), ('schema:mentions'),
+  ('schema:artworkSurface'), ('schema:width'), ('schema:distinguishingSign'), ('schema:creditText');
 
 -- dcterms:spatial is public (Mark, 2026-10-30), but on Artwork it is "Location": where the
 -- work is now. Each drifted row was judged on its own, so these are value ids. Restored:
