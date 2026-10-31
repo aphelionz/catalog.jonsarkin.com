@@ -49,8 +49,9 @@ class FacetedBrowseCategoryRepresentation extends AbstractEntityRepresentation
     }
 
     /**
-     * The category lives in the URL fragment, so server-side this is
-     * indistinguishable from its page's URL.
+     * The category goes in the query string for server-rendered themes, which
+     * read faceted_browse_category_id, and in the fragment for the stock AJAX
+     * view.
      */
     public function siteUrl($siteSlug = null, $canonical = false)
     {
@@ -65,8 +66,9 @@ class FacetedBrowseCategoryRepresentation extends AbstractEntityRepresentation
             'facetQueries' => [],
         ]);
         return sprintf(
-            '%s#%s',
+            '%s?%s#%s',
             $this->page()->siteUrl($siteSlug, $canonical),
+            http_build_query(['faceted_browse_category_id' => $this->id()]),
             rawurlencode($fragment)
         );
     }

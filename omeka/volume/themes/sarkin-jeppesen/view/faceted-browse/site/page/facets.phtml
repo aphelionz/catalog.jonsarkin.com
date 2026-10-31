@@ -20,7 +20,7 @@ $facetCounts = $this->placeholder('facetCounts')->getValue() ?: [];
 </div>
 <?php echo $this->hyperlink($this->translate('Back'), [], ['id' => 'categories-return', 'class' => 'button']); ?>
 <fieldset class="facets-container">
-    <legend><?php echo $category->name(); ?></legend>
+    <legend><?php echo $this->escapeHtml($category->name()); ?></legend>
     <?php
     $categoryOptions = [
         'value_facet_mode' => $category->valueFacetMode(),
@@ -42,7 +42,7 @@ $facetCounts = $this->placeholder('facetCounts')->getValue() ?: [];
             data-facet-id="<?php echo $this->escapeHtml($facet->id()); ?>"
             data-facet-type="<?php echo $this->escapeHtml($facet->type()); ?>"
             data-facet-data="<?php echo $this->escapeHtml(json_encode($facet->data())); ?>">
-            <legend><?php echo $facet->name(); ?></legend>
+            <legend><?php echo $this->escapeHtml($facet->name()); ?></legend>
             <?php echo $this->facetedBrowse()->renderFacet($facet); ?>
         </fieldset>
         <?php endif; ?>

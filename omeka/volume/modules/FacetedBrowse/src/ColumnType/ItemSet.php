@@ -85,7 +85,8 @@ class ItemSet implements ColumnTypeInterface
             }
             $content .= '</ul>';
         } else {
-            $content = $itemSets[0]->linkPretty();
+            // itemSets() keys by item set ID, so there may be no key 0.
+            $content = reset($itemSets)->linkPretty();
         }
 
         return $content;

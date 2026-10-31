@@ -11,6 +11,9 @@
  */
 $sortBy = $sortBy ?? null;
 $sortOrder = $sortOrder ?? null;
+// $truncated: the endpoint cut the list off. "Add all" would then replace the
+// facet's values with a partial list, so the button stays out.
+$truncated = $truncated ?? false;
 $sortable = null !== $sortBy;
 $ariaSort = function ($column) use ($sortBy, $sortOrder) {
     if ($column !== $sortBy) {
@@ -20,7 +23,11 @@ $ariaSort = function ($column) use ($sortBy, $sortOrder) {
 };
 ?>
 <?php if ($rows): ?>
+<?php if ($truncated): ?>
+<p><?php echo $this->escapeHtml(sprintf($this->translate('Showing the first %s values. Add values by hand.'), count($rows))); ?></p>
+<?php else: ?>
 <button id="add-all" type="button"><?php echo $this->translate('Add all'); ?></button>
+<?php endif; ?>
 <table id="show-all-table" data-rows="<?php echo $this->escapeHtml(json_encode($rows)); ?>">
     <thead>
         <tr>

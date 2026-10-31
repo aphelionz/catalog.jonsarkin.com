@@ -300,8 +300,11 @@ class CategoryController extends AbstractActionController
             'data' => $this->params()->fromQuery('facet_data', []),
             'sort_by' => $sort['sort_by'],
             'sort_order' => $sort['sort_order'],
-            'limit' => self::SHOW_ALL_LIMIT,
+            // One extra row tells us the list is cut off.
+            'limit' => self::SHOW_ALL_LIMIT + 1,
         ]);
+        $truncated = count($rows) > self::SHOW_ALL_LIMIT;
+        $rows = array_slice($rows, 0, self::SHOW_ALL_LIMIT);
 
         foreach ($rows as $row) {
             if (!is_array($row) || !array_key_exists('label', $row) || !array_key_exists('has_count', $row)) {
@@ -316,6 +319,7 @@ class CategoryController extends AbstractActionController
         $view->setTerminal(true);
         $view->setTemplate('faceted-browse/site-admin/category/show-all-table');
         $view->setVariable('rows', $rows);
+        $view->setVariable('truncated', $truncated);
         $view->setVariable('sortBy', $sort['sort_by']);
         $view->setVariable('sortOrder', $sort['sort_order']);
         return $view;

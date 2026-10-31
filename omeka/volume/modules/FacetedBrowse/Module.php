@@ -80,7 +80,11 @@ SQL;
         if (Comparator::lessThan($oldVersion, '1.6.0-alpha')) {
             $conn->exec('ALTER TABLE faceted_browse_category ADD value_facet_mode VARCHAR(255) DEFAULT NULL AFTER helper_text_button_label');
         }
-        if (Comparator::lessThan($oldVersion, '1.9.0')) {
+        // Our fork was labeled 1.9.2 while still based on 1.8.0, so a DB at that
+        // label lacks this 1.9.0 column. Check the column, not only the version.
+        if (Comparator::lessThan($oldVersion, '1.10.0')
+            && !$conn->fetchOne("SHOW COLUMNS FROM faceted_browse_page LIKE 'thumbnail_type'")
+        ) {
             $conn->exec('ALTER TABLE faceted_browse_page ADD thumbnail_type VARCHAR(255) DEFAULT NULL AFTER resource_type');
         }
     }

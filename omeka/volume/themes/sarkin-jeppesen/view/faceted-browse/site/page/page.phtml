@@ -232,7 +232,7 @@ if (!empty($activeFilters['fulltext_search'])) {
             This is a dialog window which overlays the main content of the page. Pressing the Close Modal button at the top right of the modal will close the modal and bring you back to where you were on the page.
         </div>
         <fieldset class="facets-container">
-            <legend><?php echo $category->name(); ?></legend>
+            <legend><?php echo $escape($category->name()); ?></legend>
             <?php
             $categoryOptions = [
                 'value_facet_mode' => $category->valueFacetMode(),
@@ -256,7 +256,7 @@ if (!empty($activeFilters['fulltext_search'])) {
                     data-facet-type="<?php echo $escape($facet->type()); ?>"
                     data-facet-data="<?php echo $escape(json_encode($facet->data())); ?>"
                     <?php echo $isHiddenFacet ? 'aria-hidden="true"' : ''; ?>>
-                    <legend id="facet-legend-<?php echo $escape($facet->id()); ?>"><?php echo $facet->name(); ?></legend>
+                    <legend id="facet-legend-<?php echo $escape($facet->id()); ?>"><?php echo $escape($facet->name()); ?></legend>
                     <?php echo $this->facetedBrowse()->renderFacet($facet); ?>
                 </fieldset>
                 <?php endif; ?>
