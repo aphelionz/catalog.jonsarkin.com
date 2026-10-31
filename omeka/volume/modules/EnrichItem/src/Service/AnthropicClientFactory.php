@@ -9,7 +9,7 @@ use Psr\Log\NullLogger;
 
 class AnthropicClientFactory implements FactoryInterface
 {
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null)
     {
         $apiKey = getenv('ANTHROPIC_API_KEY') ?: '';
 

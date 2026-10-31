@@ -11,7 +11,7 @@ use Psr\Container\ContainerInterface;
 
 class SimilarControllerFactory implements FactoryInterface
 {
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null)
     {
         $httpClient = $container->get('Omeka\HttpClient');
         $api = $container->get('Omeka\ApiManager');

@@ -64,7 +64,7 @@ if ($page->slug() === 'home') {
 $nav = $site->publicNav();
 $activePage = $nav->findActive($nav->getContainer());
 switch ($this->siteSetting('subnav_display')) {
-    case 'show';
+    case 'show':
         $displaySubnav = $this->displayNavigation;
         break;
     case 'hide':

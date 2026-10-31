@@ -13,7 +13,7 @@ use Psr\Log\NullLogger;
 
 class EnrichControllerFactory implements FactoryInterface
 {
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null)
     {
         $api = $container->get('Omeka\ApiManager');
         $entityManager = $container->get('Omeka\EntityManager');
