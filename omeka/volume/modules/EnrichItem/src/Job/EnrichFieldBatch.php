@@ -193,7 +193,7 @@ class EnrichFieldBatch extends AbstractJob
         foreach ($itemJson as $key => $val) {
             if (strpos($key, ':') !== false && strpos($key, 'o:') !== 0 && is_array($val)) {
                 $payload[$key] = array_map(function ($v) {
-                    $writeKeys = ['type', 'property_id', '@value', '@id', '@language', 'o:label', 'value_resource_id', 'uri', 'o:is_public'];
+                    $writeKeys = ['type', 'property_id', '@value', '@id', '@language', 'o:label', 'value_resource_id', 'uri', 'is_public'];
                     $clean = [];
                     foreach ($writeKeys as $k) {
                         if (array_key_exists($k, $v)) {

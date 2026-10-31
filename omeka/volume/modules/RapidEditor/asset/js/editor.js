@@ -57,7 +57,7 @@ let SIGNATURE_ARROWS = ['↖', '↑', '↗', '←', '∅', '→', '↙', '↓', 
 // Write-safe keys for PATCH (from enrich_metadata.py:_clean_value)
 const WRITE_KEYS = new Set([
   'type', 'property_id', '@value', '@id', '@language',
-  'o:label', 'value_resource_id', 'uri', 'o:is_public',
+  'o:label', 'value_resource_id', 'uri', 'is_public',
 ]);
 
 // Doctor validation patterns

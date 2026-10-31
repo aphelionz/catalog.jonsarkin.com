@@ -113,7 +113,7 @@ class EditorController extends AbstractActionController
                 if ($v['lang']) {
                     $val['@language'] = $v['lang'];
                 }
-                $val['o:is_public'] = (bool) $v['is_public'];
+                $val['is_public'] = (bool) $v['is_public'];
 
                 $items[$resId][$term][] = $val;
             }
