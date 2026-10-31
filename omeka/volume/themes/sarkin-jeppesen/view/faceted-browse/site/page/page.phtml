@@ -256,7 +256,7 @@ if (!empty($activeFilters['fulltext_search'])) {
                     data-facet-type="<?php echo $escape($facet->type()); ?>"
                     data-facet-data="<?php echo $escape(json_encode($facet->data())); ?>"
                     <?php echo $isHiddenFacet ? 'aria-hidden="true"' : ''; ?>>
-                    <legend><?php echo $facet->name(); ?></legend>
+                    <legend id="facet-legend-<?php echo $escape($facet->id()); ?>"><?php echo $facet->name(); ?></legend>
                     <?php echo $this->facetedBrowse()->renderFacet($facet); ?>
                 </fieldset>
                 <?php endif; ?>
