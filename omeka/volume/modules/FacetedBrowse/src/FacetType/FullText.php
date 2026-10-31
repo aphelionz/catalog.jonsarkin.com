@@ -1,6 +1,7 @@
 <?php
 namespace FacetedBrowse\FacetType;
 
+use Doctrine\ORM\EntityManager;
 use FacetedBrowse\Api\Representation\FacetedBrowseFacetRepresentation;
 use Laminas\Form\Element as LaminasElement;
 use Laminas\ServiceManager\ServiceLocatorInterface;
@@ -10,9 +11,12 @@ class FullText implements FacetTypeInterface
 {
     protected $formElements;
 
-    public function __construct(ServiceLocatorInterface $formElements)
+    protected $entityManager;
+
+    public function __construct(ServiceLocatorInterface $formElements, EntityManager $entityManager)
     {
         $this->formElements = $formElements;
+        $this->entityManager = $entityManager;
     }
 
     public function getLabel(): string
@@ -50,6 +54,7 @@ class FullText implements FacetTypeInterface
         $fullText = new LaminasElement\Text('full_text');
         $fullText->setAttribute('class', 'full-text');
         $fullText->setAttribute('style', 'width: 90%;');
+        $fullText->setAttribute('aria-labelledby', sprintf('facet-legend-%s', $facet->id()));
         return $view->formText($fullText);
     }
 }

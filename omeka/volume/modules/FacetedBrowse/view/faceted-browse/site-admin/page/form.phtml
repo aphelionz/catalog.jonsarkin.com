@@ -20,6 +20,7 @@ $form->prepare();
 
 <div id="page-actions">
     <?php if ($page): ?>
+    <?php echo $this->hyperlink($this->translate('View'), $page->siteUrl(), ['class' => 'button', 'target' => '_blank']); ?>
     <a href="#" id="delete-button" class="delete button"><?php echo $this->translate('Delete'); ?></a>
     <?php endif; ?>
     <?php echo $this->hyperlink($this->translate('Cancel'), $this->url('admin/site/slug/faceted-browse-page', ['action' => 'browse'], true), ['class' => 'button']); ?>
@@ -42,6 +43,7 @@ $form->prepare();
 <fieldset>
     <?php echo $this->formRow($form->get('o:title')); ?>
     <?php echo $this->formRow($form->get($page ? 'resource_type' : 'o-module-faceted_browse:resource_type')); ?>
+    <?php echo $this->formRow($form->get('o-module-faceted_browse:thumbnail_type')); ?>
 </fieldset>
 
 <?php if ($page): ?>
@@ -50,7 +52,7 @@ $form->prepare();
     <?php echo $this->hyperlink($this->translate('Add category'), $this->url('admin/site/slug/faceted-browse-category', ['action' => 'add'], true), ['class' => 'button']); ?>
     <ul id="categories" class="sortable-list">
         <?php foreach ($page->categories() as $index => $category): ?>
-        <?php echo $this->partial('category-row.phtml', ['index' => $index, 'category' => $category->jsonSerialize()]); ?>
+        <?php echo $this->partial('category-row.phtml', ['index' => $index, 'category' => $category]); ?>
         <?php endforeach; ?>
     </ul>
 </fieldset>
