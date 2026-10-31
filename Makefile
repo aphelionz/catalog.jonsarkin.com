@@ -1,4 +1,4 @@
-.PHONY: help local down logs ingest ingest-full ingest-dry process-new pretag-motifs sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key push-schema
+.PHONY: help local down logs ingest ingest-full ingest-dry process-new pretag-motifs sync deploy pull pull-new pull-db pull-files doctor backup-db restore-db ensure-api-key push-schema modules
 .DEFAULT_GOAL := help
 
 -include .env
@@ -22,7 +22,7 @@ help: ## Show available targets
 	@grep -E '^(sync|pull-new|pull-db|pull-files|pull|deploy):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Utilities"
-	@grep -E '^(backup-db|restore-db|ensure-api-key):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(backup-db|restore-db|ensure-api-key|modules):.*?## ' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Enrichment is now in the Omeka admin UI: Admin > Enrich Queue"
 	@echo ""
@@ -94,6 +94,7 @@ pull-files: ## Pull production uploaded files to local
 	@echo "Files synced."
 
 deploy: ## Push code (modules/themes) to production and restart Omeka
+	@bash scripts/fetch-omeka-modules.sh --check || (echo "Third-party modules differ from the pins. Run 'make modules' first." && exit 1)
 	rsync -avz --compress --partial --progress \
 		--exclude='.env' --exclude='omeka/volume/files/' --exclude='backups/' \
 		--exclude='.hf_cache/' --exclude='__pycache__/' --exclude='.venv/' \
@@ -133,6 +134,9 @@ restore-db: ## Restore local MariaDB from a backup file (usage: make restore-db 
 	@docker compose exec -T db mariadb -uomeka -pomeka omeka \
 		-e "SELECT COUNT(*) AS items FROM item;"
 	@$(MAKE) --no-print-directory ensure-api-key
+
+modules: ## Install the pinned third-party Omeka modules (versions in scripts/fetch-omeka-modules.sh)
+	bash scripts/fetch-omeka-modules.sh
 
 ensure-api-key: ## Create local-only API key (safe to re-run; never use on prod)
 	@HASH=$$(docker compose exec -T omeka php -r "echo password_hash('sarkin2024', PASSWORD_BCRYPT);") && \
