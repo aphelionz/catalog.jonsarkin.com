@@ -58,7 +58,7 @@ SELECT
 FROM item i
 JOIN resource r ON r.id = i.id
 JOIN item_item_set iis ON iis.item_id = i.id AND iis.item_set_id = :setId
-LEFT JOIN value v ON v.resource_id = i.id
+LEFT JOIN value v ON v.resource_id = i.id AND v.is_public = 1
 WHERE r.resource_template_id = :tplId
   AND r.is_public = 1
 GROUP BY i.id

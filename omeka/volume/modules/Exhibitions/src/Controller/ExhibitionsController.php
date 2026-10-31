@@ -52,12 +52,15 @@ SELECT
     (
         SELECT COUNT(*)
         FROM value vp
+        JOIN resource rp ON rp.id = vp.resource_id
         WHERE vp.property_id = :pPresentedAt
           AND vp.value_resource_id = i.id
+          AND vp.is_public = 1
+          AND rp.is_public = 1
     ) AS linked_count
 FROM item i
 JOIN resource r ON r.id = i.id
-LEFT JOIN value v ON v.resource_id = i.id
+LEFT JOIN value v ON v.resource_id = i.id AND v.is_public = 1
 WHERE r.resource_template_id = :tplId
   AND r.is_public = 1
 GROUP BY i.id
