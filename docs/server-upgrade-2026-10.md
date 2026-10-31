@@ -58,10 +58,10 @@ It took 0.15 s on 171k rows locally. Worth reporting upstream (Daniel-KM/Omeka-S
 
 Two isolated Docker stacks ran on the same pre-upgrade dump of the local DB:
 
-- baseline: old image, `main` at `d876246`, old modules (port 8891)
+- baseline: old image, old modules, `main` code (port 8891)
 - upgraded: this branch (port 8890)
 
-Mark's dev stack stayed untouched. Both stacks used a copy-on-write clone of the local media files.
+Mark's dev stack stayed untouched. Both stacks used a copy-on-write clone of the local media files. The suite ran twice: first against `main` at `d876246`, then again after merging `main` at `19acfb1` (the security-audit and private-field fixes), with both DBs reloaded and the upgrade steps replayed. Both runs gave the results below.
 
 | Check | Result |
 |---|---|
@@ -115,3 +115,4 @@ Rollback: restore the dump taken before step 4, then rebuild with the previous D
 - [ ] CustomVocab: uninstall it (inactive since the 2026-03-22 literal conversion; uninstall drops its tables) or keep it pinned at 2.1.0. Recommendation: uninstall after the rebuild.
 - [ ] Qdrant and the search index: restore the weekly state backup (fast), then re-run "Ingest All Items" to rebuild from the audited DB. Recommendation: both.
 - [ ] Report the Common `--batch` bug upstream.
+- [ ] After the rebuild, move `make deploy` from laptop rsync to `git checkout <sha>` plus `scripts/fetch-omeka-modules.sh` on the VM, so prod always equals a known commit.
