@@ -64,6 +64,10 @@ class SearchController extends AbstractActionController
                 foreach ($rawResults as $entry) {
                     $id = $entry['id'];
                     $item = $itemsById[$id] ?? null;
+                    // The search index also holds private items; skip any the API hides.
+                    if (!$item) {
+                        continue;
+                    }
                     $snippet = $this->truncateSnippet($entry['snippet'] ?? null);
                     if ($snippet === null) {
                         $snippet = $this->fallbackSnippetFromItem($item);

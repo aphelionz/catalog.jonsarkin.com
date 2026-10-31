@@ -55,6 +55,10 @@ class VisualSearchController extends AbstractActionController
                     foreach ($rawResults as $entry) {
                         $id = $entry['id'];
                         $item = $itemsById[$id] ?? null;
+                        // Qdrant also indexes private items; skip any the API hides.
+                        if (!$item) {
+                            continue;
+                        }
                         $results[] = [
                             'id' => $id,
                             'item' => $item,
@@ -115,28 +119,21 @@ class VisualSearchController extends AbstractActionController
             foreach ($rawResults as $entry) {
                 $id = $entry['id'];
                 $item = $itemsById[$id] ?? null;
-
-                $url = null;
-                $thumbnail = null;
-                $title = null;
-                if ($item) {
-                    $url = $siteSlug ? $item->siteUrl($siteSlug) : $item->url();
-                    $title = $item->displayTitle();
-                    $pm = $item->primaryMedia();
-                    if ($pm) {
-                        $thumbnail = $pm->thumbnailUrl('medium');
-                    }
+                // Qdrant also indexes private items. Return only items the API
+                // lets this user read; clip-api payloads carry private storage URLs.
+                if (!$item) {
+                    continue;
                 }
-                $thumbnail = $thumbnail ?: ($entry['thumb_url'] ?? null);
-                if (!$thumbnail) {
+                $pm = $item->primaryMedia();
+                if (!$pm) {
                     continue;
                 }
 
                 $results[] = [
                     'id' => $id,
-                    'title' => $title ?? sprintf('Item %d', $id),
-                    'url' => $url,
-                    'thumbnail' => $thumbnail,
+                    'title' => $item->displayTitle(),
+                    'url' => $siteSlug ? $item->siteUrl($siteSlug) : $item->url(),
+                    'thumbnail' => $pm->thumbnailUrl('medium'),
                     'score' => $entry['score'] ?? null,
                 ];
             }
