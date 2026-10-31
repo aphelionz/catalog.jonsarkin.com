@@ -122,7 +122,7 @@ New VM: packages from the Ubuntu archive and Google's Ops Agent. The host gets D
 ssh $NEW.$Z.$P
 sudo apt-get update && sudo apt-get -y upgrade
 sudo apt-get -y install docker.io docker-compose-v2 git unzip
-sudo usermod -aG docker $USER && exit      # log in again for the docker group
+sudo usermod -aG docker $USER              # applies at the next login, before the Images block
 curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh && sudo bash add-google-cloud-ops-agent-repo.sh --also-install
 sudo mkdir -p /opt/catalog /var/www/omeka-s/files && sudo chown $USER /opt/catalog /var/www/omeka-s/files
 git clone https://github.com/aphelionz/catalog.jonsarkin.com.git /opt/catalog
@@ -149,9 +149,10 @@ touch acme.json && chmod 600 acme.json
 
 `COMPOSE_FILE` makes every plain `docker compose` on the VM (the backup scripts included) read the prod file. The old VM ran `db`, `qdrant` and `clip-api` from the dev file.
 
-Images: build both locally. The prod compose names `aphelionz/sarkin-clip-api`; a local build keeps Docker Hub out of the path, so skip `docker compose pull`.
+Images: build both locally. The prod compose names `aphelionz/sarkin-clip-api`; a local build keeps Docker Hub out of the path, so skip `docker compose pull`. Log out and SSH in again first, so the docker group applies.
 
 ```bash
+cd /opt/catalog
 docker compose build omeka
 docker build -t aphelionz/sarkin-clip-api:latest -f sarkin-clip/Dockerfile.api sarkin-clip/
 docker compose up -d db
@@ -159,7 +160,7 @@ docker compose up -d db
 
 ## 5. Restore and audit the data (1 to 2 h)
 
-Content freeze: announce it, then make zero admin edits on the old site from here to cutover.
+Content freeze: announce it, then make zero admin edits on the old site from here to cutover. Two public forms keep writing to the old DB: collector submissions (`/submit`, with photos) and the SiteLockdown email signup. CollectorSubmission has no off switch, and its link sits in every page header, so deactivating the module would break the site. Step 8 copies any late rows instead.
 
 Old VM: take a fresh dump and a fresh files sync into the bucket. `all` runs both, so the DB and the files restore from the same frozen state.
 
@@ -198,20 +199,22 @@ UNION ALL SELECT 'event', EVENT_NAME, DEFINER FROM information_schema.EVENTS WHE
 UNION ALL SELECT 'view', TABLE_NAME, DEFINER FROM information_schema.VIEWS WHERE TABLE_SCHEMA = 'omeka';
 SQL
 docker exec -i -e MYSQL_PWD=scratch audit mariadb -uroot omeka < $D/objects.sql
-docker rm -f audit
 ```
 
-Expected: the known users and modules, settings whose URLs point at our own hosts, and page or media embeds Mark recognizes. Delete or fix anything else in the real import below, then record it here.
+Expected: the known users and modules, settings whose URLs point at our own hosts, and page or media embeds Mark recognizes. Delete or fix anything else in the scratch DB before the re-export below, then record it here.
 
-The last query lists code stored in the DB. The dump carries triggers, routines and events (`--routines --triggers --events`), and the import below would install them. Omeka and our modules create none: the local DB returned zero rows on 2026-10-31. Any row here is an attacker's foothold. Stop and review it with Mark before the real import.
+The last query lists code stored in the DB. The dump carries triggers, routines and events (`--routines --triggers --events`). Omeka and our modules create none: the local DB returned zero rows on 2026-10-31. Any row here is an attacker's foothold. Stop and review it with Mark.
 
-Import the `omeka` database only. The dump also carries the old `mysql` grants, and `--one-database` skips them. The object check runs again before the first write, because a trigger fires on writes.
+The real DB imports a re-export from the scratch container. `--one-database` only filters statements by their `USE`; root could still run a `GRANT`, a `CREATE USER` or a write to a fully qualified `mysql.*` table from the source dump. The scratch container absorbs whatever that dump does and is then deleted. The re-export holds only the `omeka` tables and their rows. The app user imports it, and its grants cover `omeka.*` only. Tested 2026-10-31 on a dump with the backup's flags: all 52 tables checksum-identical to the source.
 
 ```bash
+docker exec -e MYSQL_PWD=scratch audit mariadb-dump -uroot --single-transaction --quick --hex-blob \
+  --skip-triggers --no-create-db omeka > $D/omeka-clean.sql
+docker rm -f audit
 cd /opt/catalog
-gunzip -c $D/omeka-*.sql.gz | docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot --one-database omeka'
-docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot omeka' < $D/objects.sql   # expect zero rows
-docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot omeka' <<'SQL'
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" omeka' < $D/omeka-clean.sql
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" omeka' < $D/objects.sql   # expect zero rows
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" omeka' <<'SQL'
 TRUNCATE session;
 DELETE FROM api_key;
 DELETE FROM password_creation;
@@ -233,7 +236,7 @@ find original -type f -print0 | xargs -0 file --mime-type | grep -vE ': (image|v
 sudo chown -R 33:33 /var/www/omeka-s/files
 ```
 
-Delete every hit from the first `find`. Review the rest with Mark before deleting.
+The first `find` is an inventory of extensions. Delete every hit from the second `find`, the code sweep (PHP, PHTML, PHAR, `.htaccess`, JavaScript). Review the SVG, HTML and MIME-type hits with Mark before deleting.
 
 Qdrant and the search index start empty; skip recovery runbook §5. A restored store keeps every point and row it held, and an ingest only overwrites the items it touches. Points for deleted items, or an attacker's points, would survive. Step 7 fills both stores from the audited DB. The FTS index needs nothing: clip-api creates it on the first ingest. Qdrant needs the empty collection (tested against Qdrant v1.16 on 2026-10-31):
 
@@ -306,7 +309,25 @@ curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/     
 
 ## 8. Stop the old VM and contain its identity
 
-Run this once the new VM serves the traffic (step 7.4). The old VM's final export uses the old identity, so it goes first.
+Run this once the new VM serves the traffic (step 7.4). The old VM's final exports use the old identity, so they go first.
+
+Late public rows: compare the newest restored IDs with the old DB. The old VM runs `db` from the dev compose file, as `make pull-db` assumes.
+
+```bash
+cd /opt/catalog      # new VM
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" -N omeka -e \
+  "SELECT COALESCE(MAX(id), 0) FROM collector_submission; SELECT COALESCE(MAX(id), 0) FROM prelaunch_signup"'
+ssh omeka.us-east1-b.folkloric-rite-468520-r2 'cd /opt/catalog && . ./.env && docker compose exec -T db \
+  mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" omeka -e \
+  "SELECT id, email, created FROM collector_submission WHERE id > <N1>; SELECT id, email, created FROM prelaunch_signup WHERE id > <N2>"'
+```
+
+Expect zero rows. For each late row, copy it before the stop:
+
+1. Old VM: `backup-to-gcs.sh files` puts the submission photos (`files/submissions/`) in the bucket.
+2. Old VM: `mariadb-dump --no-create-info --where='id > <N>'` for each of the two tables, piped to a file on the laptop.
+3. Read that file. It must hold `INSERT`s into those two tables only.
+4. New VM: import it as the app user, `$G rsync` the bucket's `files/submissions/` into `/var/www/omeka-s/files/submissions/`, and run the step 5 sweep on the new photos.
 
 ```bash
 ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh accesslog $(date -u +%Y-%m)'

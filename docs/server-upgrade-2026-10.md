@@ -50,7 +50,8 @@ Fixes on top of upstream 1.10.0, from the Copilot review of PR #1. All are upstr
 |---|---|
 | `src/ColumnType/Value.php` | A single value renders through `asHtml()`. Before, it printed unescaped (stored XSS in the table view). |
 | `src/ColumnType/ItemSet.php` | One item set renders with `reset()`. `itemSets()` keys by ID, so `[0]` was null. |
-| `view/.../site/page/facets.phtml` and the theme's `facets.phtml`, `page.phtml` | Category and facet names are escaped in `aria-label` and `<legend>`. |
+| `view/.../site/page/facets.phtml` and the theme's `facets.phtml`, `page.phtml` | Category and facet names are escaped in `aria-label` and `<legend>`. The theme's `facets.phtml` legend carries `id="facet-legend-N"`, like `page.phtml`. |
+| `src/FacetType/Value.php` | Show-all pages past blank labels, so the limit counts usable rows and a blank row cannot hide a cut-off list. Reproduced with one blank title, then fixed. |
 | `src/Controller/SiteAdmin/CategoryController.php`, `show-all-table.phtml` | Show-all fetches one row past its 1,000 limit. A cut-off list shows a note and hides "Add all", which would replace the facet's values with a partial list. |
 | `src/Api/Representation/FacetedBrowseCategoryRepresentation.php` | The category View link carries `?faceted_browse_category_id=N`, which our server-rendered page reads, plus upstream's fragment. |
 | `Module.php` | The column check above. |
