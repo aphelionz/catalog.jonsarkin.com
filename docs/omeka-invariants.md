@@ -50,9 +50,19 @@ Source of truth: `scripts/enrich_metadata.py` lines 88–114.
 | 931 | `schema:artworkSurface` | literal | Support from controlled vocab |
 | 1129 | `schema:width` | literal | Width in inches |
 | 1343 | `schema:creditText` | literal | Credit/attribution |
-| 1424 | `schema:box` | literal | Box identifier, parsed for item sets |
+| 1424 | `schema:box` | literal | Box identifier, parsed for item sets. **Private** |
 | 1579 | `schema:itemCondition` | literal | Condition from controlled vocab |
-| 1710 | `curation:note` | literal | Internal curation note |
+| 1698 | `curation:category` | literal | Internal A–D grade (RapidEditor). **Private** |
+| 1710 | `curation:note` | literal | Internal curation note. **Private** |
+
+### Private fields
+
+A value with `value.is_public = 0` is hidden from anonymous visitors everywhere: public pages, the REST API, property search, and full-text search (core `ValueVisibilityFilter`). Logged-in admins and editors see it, and RapidEditor reads values with SQL, so it sees them too.
+
+The source of truth is the **Private** checkbox on each property of the Artwork template (Admin > Resource templates, stored in `resource_template_property.is_private`). Core Omeka uses that flag only as a form default. RapidEditor's `api.hydrate.post` listener (`RapidEditor\Module::enforcePrivateTemplateProperties`) enforces it on every item write, so a private field stays private whatever the caller sends.
+
+- To make a field private: tick Private on the template, then run `UPDATE value SET is_public = 0 WHERE property_id = <id>`, then Admin > Settings > "Index full-text search" (bulk SQL leaves the full-text index stale).
+- Seller handles, eBay item numbers, and unverified owner claims go in `schema:box` or `curation:note`. `dcterms:provenance` is public and holds the ownership chain only.
 
 ---
 
@@ -106,7 +116,9 @@ PATCH **replaces ALL properties**. The correct pattern:
 6. PATCH with the complete merged payload
 
 ### Cleaning values for PATCH
-Strip read-only keys from each value dict before sending. Keep only: `type`, `property_id`, `@value`, `@language`, `value_resource_id`, `uri`, `o:is_public`.
+Strip read-only keys from each value dict before sending. Keep only: `type`, `property_id`, `@value`, `@language`, `value_resource_id`, `uri`, `is_public`.
+
+Value visibility is `is_public` (no `o:` prefix; `o:is_public` is the item-level key). Omeka reuses existing value rows by position and changes a row's visibility only when the payload carries `is_public`, so a payload without it shifts private flags onto other properties whenever the order changes.
 
 ---
 
