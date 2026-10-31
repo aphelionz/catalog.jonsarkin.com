@@ -10,6 +10,14 @@ JOIN vocabulary v ON v.id = p.vocabulary_id
 SET rtp.is_private = 1
 WHERE CONCAT(v.prefix, ':', p.local_name) IN ('schema:box', 'curation:category', 'curation:note');
 
+-- dcterms:spatial is public (Mark, 2026-10-30). Clear its old Private flag so
+-- the listener leaves it public.
+UPDATE resource_template_property rtp
+JOIN property p ON p.id = rtp.property_id
+JOIN vocabulary v ON v.id = p.vocabulary_id
+SET rtp.is_private = 0
+WHERE CONCAT(v.prefix, ':', p.local_name) = 'dcterms:spatial';
+
 -- 2. Existing values.
 UPDATE value val
 JOIN property p ON p.id = val.property_id
