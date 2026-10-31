@@ -1475,8 +1475,6 @@ abbr[title] {
 
 .collector-details { padding: var(--gutter); }
 
-.care { margin: 0 0 var(--gutter) 0; }
-
 /* Documentation section */
 .documentation {
   padding-top: var(--gutter);
@@ -3347,7 +3345,6 @@ nav.pagination span.row-count {
 
   /* Collector details */
   .collector-details { padding: var(--gutter); }
-  .care { font-size: 7.5pt; }
   .documentation h4 { font-size: 8pt; margin-bottom: 2px; }
   .documentation section { margin-bottom: 4px; }
   .documentation ul, .documentation dl { font-size: 7.5pt; margin: 0; padding-left: 1em; }
