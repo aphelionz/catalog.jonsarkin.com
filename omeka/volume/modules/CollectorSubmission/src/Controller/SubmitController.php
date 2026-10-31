@@ -72,16 +72,25 @@ class SubmitController extends AbstractActionController
                 $errors['photos'] = 'At least one photo is required.';
             }
 
-            if ($form->isValid() && empty($errors)) {
+            $valid = $form->isValid() && empty($errors);
+            if ($valid && !$this->takeRateLimitSlot()) {
+                $this->getResponse()->setStatusCode(429);
+                $errors['form'] = 'Too many submissions from your network. Please try again in an hour.';
+            } elseif ($valid) {
                 $data = $form->getData();
                 $savedFiles = $this->processUploads($photos);
 
                 if (empty($savedFiles)) {
                     $errors['photos'] = 'File upload failed. Please try again.';
                 } else {
+                    // One thank-you per address per day, so the form can't be
+                    // used to flood someone else's inbox.
+                    $sendThankYou = !$this->hasRecentSubmission($data['email']);
                     $this->saveSubmission($data, $savedFiles);
                     $this->sendNotification($data, count($savedFiles));
-                    $this->sendThankYouEmail($data);
+                    if ($sendThankYou) {
+                        $this->sendThankYouEmail($data);
+                    }
 
                     return $this->redirect()->toRoute('site/collector-submit', [
                         'site-slug' => $this->currentSite()->slug(),
@@ -98,6 +107,76 @@ class SubmitController extends AbstractActionController
         ]);
         $view->setTemplate('collector-submission/submit/index');
         return $view;
+    }
+
+    /**
+     * Count a valid submission against the client IP's hourly budget.
+     * Returns false when the budget is spent. Counters live in the
+     * container temp dir and are lost when the container is recreated,
+     * which is fine for throttling.
+     */
+    private function takeRateLimitSlot(): bool
+    {
+        $limit = (int) ($this->config['max_submissions_per_ip_per_hour'] ?? 20);
+        $dir = sys_get_temp_dir() . '/collector-submit-rate';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0700, true);
+        }
+
+        $handle = @fopen($dir . '/' . hash('sha256', $this->clientIp()), 'c+');
+        if ($handle === false) {
+            return true;
+        }
+
+        try {
+            flock($handle, LOCK_EX);
+            $cutoff = time() - 3600;
+            $hits = json_decode(stream_get_contents($handle) ?: '[]', true);
+            $hits = array_values(array_filter(
+                is_array($hits) ? $hits : [],
+                fn($t) => is_int($t) && $t > $cutoff
+            ));
+            if (count($hits) >= $limit) {
+                return false;
+            }
+            $hits[] = time();
+            ftruncate($handle, 0);
+            rewind($handle);
+            fwrite($handle, json_encode($hits));
+            return true;
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Traefik replaces any client-sent X-Forwarded-For with the real peer
+     * address, so its last entry is the client. Only trust the header when
+     * the request came from a private (proxy) address.
+     */
+    private function clientIp(): string
+    {
+        $remote = $_SERVER['REMOTE_ADDR'] ?? '';
+        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+        $isPublic = filter_var($remote, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+        if ($forwarded !== '' && $isPublic === false) {
+            $parts = array_map('trim', explode(',', $forwarded));
+            $last = end($parts);
+            if (filter_var($last, FILTER_VALIDATE_IP)) {
+                return $last;
+            }
+        }
+        return $remote;
+    }
+
+    private function hasRecentSubmission(string $email): bool
+    {
+        $since = (new \DateTime('-1 day'))->format('Y-m-d H:i:s');
+        return (bool) $this->conn->fetchOne(
+            'SELECT 1 FROM collector_submission WHERE email = ? AND created > ? LIMIT 1',
+            [$email, $since]
+        );
     }
 
     private function processUploads(array $photos): array

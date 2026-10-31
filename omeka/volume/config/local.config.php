@@ -22,6 +22,15 @@ return [
         ],
     ],
 
+    // SameSite=Lax keeps cross-site POSTs (CSRF) from carrying the admin
+    // session. Secure when Traefik terminates TLS in front of Apache.
+    'session' => [
+        'config' => [
+            'cookie_samesite' => 'Lax',
+            'cookie_secure' => ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https',
+        ],
+    ],
+
     // Persist uploads/derivatives in the bind-mounted volume.
     'file_store' => [
         'local' => [

@@ -625,13 +625,8 @@ document.querySelectorAll('#partyModeGroup input[type="radio"]').forEach(functio
         statusEl.innerHTML = '<span class="sra-dns-status sra-dns-status--checking">Checking...</span>';
         checkBtn.disabled = true;
 
-        var formData = new FormData();
-        formData.append('domain', <?= json_encode($domain) ?>);
-        formData.append('pk_r', <?= json_encode($pkR) ?>);
-
         fetch(<?= json_encode($this->url('admin/shielded-registry/check-dns')) ?>, {
-            method: 'POST',
-            body: formData
+            method: 'POST'
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {

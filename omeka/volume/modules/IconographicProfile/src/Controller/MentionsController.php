@@ -66,9 +66,14 @@ class MentionsController extends AbstractActionController
 
     private function getItemMentions(int $itemId): ?array
     {
+        // Raw SQL skips Omeka's visibility filters. Users without view-all
+        // see public items and public values only.
+        $viewAll = $this->userIsAllowed('Omeka\Entity\Resource', 'view-all');
+
         $exists = $this->db->fetchOne(
             'SELECT 1 FROM resource r JOIN item i ON i.id = r.id
-             WHERE r.id = ? AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)',
+             WHERE r.id = ? AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)'
+             . ($viewAll ? '' : ' AND r.is_public = 1'),
             [$itemId, self::TEMPLATE_ID]
         );
         if (!$exists) {
@@ -76,7 +81,8 @@ class MentionsController extends AbstractActionController
         }
 
         $rows = $this->db->fetchAllAssociative(
-            'SELECT v.value FROM value v WHERE v.resource_id = ? AND v.property_id = ? ORDER BY v.id',
+            'SELECT v.value FROM value v WHERE v.resource_id = ? AND v.property_id = ?'
+            . ($viewAll ? '' : ' AND v.is_public = 1') . ' ORDER BY v.id',
             [$itemId, self::MENTIONS_PROPERTY_ID]
         );
 
@@ -90,6 +96,7 @@ class MentionsController extends AbstractActionController
             return self::$corpusCache;
         }
 
+        // Public data only: this cache is shared by every user.
         $totalItems = (int) $this->db->fetchOne(
             'SELECT COUNT(DISTINCT v.resource_id)
              FROM value v
@@ -97,7 +104,9 @@ class MentionsController extends AbstractActionController
              JOIN item i ON i.id = r.id
              WHERE v.property_id = ?
                AND v.value != ?
-               AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)',
+               AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)
+               AND r.is_public = 1
+               AND v.is_public = 1',
             [self::MENTIONS_PROPERTY_ID, 'NONE', self::TEMPLATE_ID]
         );
 
@@ -109,6 +118,8 @@ class MentionsController extends AbstractActionController
              WHERE v.property_id = ?
                AND v.value != ?
                AND (r.resource_template_id = ? OR r.resource_template_id IS NULL)
+               AND r.is_public = 1
+               AND v.is_public = 1
              GROUP BY v.value',
             [self::MENTIONS_PROPERTY_ID, 'NONE', self::TEMPLATE_ID]
         );

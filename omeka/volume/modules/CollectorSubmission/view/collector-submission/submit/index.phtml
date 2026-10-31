@@ -176,6 +176,10 @@ $this->headTitle('Submit Your Collection');
         Please share what you can — every submission helps build a more complete record of his work.
     </p>
 
+    <?php if (!empty($errors['form'])): ?>
+        <div class="field-error"><?= $this->escapeHtml($errors['form']) ?></div>
+    <?php endif; ?>
+
     <?php
     $form->prepare();
     $form->setAttribute('action', $this->url('site/collector-submit', ['site-slug' => $site->slug()]));

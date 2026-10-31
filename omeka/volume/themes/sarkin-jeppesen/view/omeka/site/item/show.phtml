@@ -168,7 +168,6 @@ $description     = $val('dcterms:description');
 
 // ── Collector layer ──
 $motifs          = $allVals('dcterms:subject');
-$displayCare     = $val('curation:note');
 
 // ── Media ──
 $primaryMedia = $item->primaryMedia();
@@ -1101,10 +1100,6 @@ if ($isPerson && $item->id() === 3) {
             <?php endif; ?>
 
             <div class="collector-details">
-                <?php if ($displayCare): ?>
-                    <p class="care"><strong>Display &amp; care:</strong> <?php echo $displayCare; ?></p>
-                <?php endif; ?>
-
                 <section class="documentation">
 
                     <?php if (!empty($inscriptions)): ?>

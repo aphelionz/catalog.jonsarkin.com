@@ -86,6 +86,12 @@ class SimilarController extends AbstractActionController
             $ids = array_values(array_unique(array_filter($ids)));
             $itemsById = $this->fetchItemsById($ids);
 
+            // Qdrant also indexes private items. Show only items the API lets
+            // this user read, and never the clip-api title/thumbnail of others.
+            if (!isset($itemsById[$sourceId])) {
+                return $this->notFoundAction();
+            }
+
             $source = [
                 'id' => $sourceId,
                 'item' => $itemsById[$sourceId] ?? null,
@@ -96,9 +102,12 @@ class SimilarController extends AbstractActionController
 
             foreach ($rawResults as $entry) {
                 $id = $entry['id'];
+                if (!isset($itemsById[$id])) {
+                    continue;
+                }
                 $results[] = [
                     'id' => $id,
-                    'item' => $itemsById[$id] ?? null,
+                    'item' => $itemsById[$id],
                     'title' => $entry['title'] ?? null,
                     'url' => $entry['url'] ?? null,
                     'thumb_url' => $entry['thumb_url'] ?? null,
@@ -142,41 +151,38 @@ class SimilarController extends AbstractActionController
             $rawResults = $parsed['results'];
 
             $ids = array_column($rawResults, 'id');
+            $ids[] = $itemId;
             $ids = array_values(array_unique(array_filter($ids)));
             $itemsById = $this->fetchItemsById($ids);
+
+            // Qdrant also indexes private items. Return only items the API
+            // lets this user read; clip-api payloads carry private storage URLs.
+            if (!isset($itemsById[$itemId])) {
+                $response->setStatusCode(404);
+                $response->setContent(json_encode(['error' => 'Item not found']));
+                return $response;
+            }
 
             $results = [];
             foreach ($rawResults as $entry) {
                 $id = $entry['id'];
                 $item = $itemsById[$id] ?? null;
-
-                $url = null;
-                $thumbnail = null;
-                $original = null;
-                if ($item) {
-                    $url = $siteSlug ? $item->siteUrl($siteSlug) : $item->url();
-                    $catalogNum = $item->value('dcterms:identifier');
-                    $title = $catalogNum ? (string) $catalogNum : $item->displayTitle();
-                    $pm = $item->primaryMedia();
-                    if ($pm) {
-                        $thumbnail = $pm->thumbnailUrl('medium');
-                        $original = $pm->originalUrl();
-                    }
-                }
-
-                $url = $url ?: $entry['url'];
-                $thumbnail = $thumbnail ?: $entry['thumb_url'];
-
-                if (!$thumbnail) {
+                if (!$item) {
                     continue;
                 }
 
+                $pm = $item->primaryMedia();
+                if (!$pm) {
+                    continue;
+                }
+                $catalogNum = $item->value('dcterms:identifier');
+
                 $results[] = [
                     'id' => $id,
-                    'title' => $title ?? sprintf('Item %d', $id),
-                    'url' => $url,
-                    'thumbnail' => $thumbnail,
-                    'original' => $original,
+                    'title' => $catalogNum ? (string) $catalogNum : $item->displayTitle(),
+                    'url' => $siteSlug ? $item->siteUrl($siteSlug) : $item->url(),
+                    'thumbnail' => $pm->thumbnailUrl('medium'),
+                    'original' => $pm->originalUrl(),
                 ];
             }
 
@@ -258,8 +264,13 @@ class SimilarController extends AbstractActionController
     private function fetchItemTranscription(int $itemId): ?string
     {
         $conn = $this->entityManager->getConnection();
-        $sql = 'SELECT v.value FROM value v WHERE v.resource_id = ? AND v.property_id = ? AND v.value IS NOT NULL LIMIT 1';
-        $result = $conn->fetchOne($sql, [$itemId, self::BIBO_CONTENT_PROPERTY_ID]);
+        $sql = 'SELECT v.value FROM value v JOIN resource r ON r.id = v.resource_id
+                WHERE v.resource_id = ? AND v.property_id = ? AND v.value IS NOT NULL';
+        // Raw SQL skips Omeka's visibility filters, so apply them here.
+        if (!$this->userIsAllowed('Omeka\Entity\Resource', 'view-all')) {
+            $sql .= ' AND r.is_public = 1 AND v.is_public = 1';
+        }
+        $result = $conn->fetchOne($sql . ' LIMIT 1', [$itemId, self::BIBO_CONTENT_PROPERTY_ID]);
         if ($result === false || trim($result) === '') {
             return null;
         }
@@ -291,7 +302,8 @@ class SimilarController extends AbstractActionController
      */
     private function getLexicalCorpus(): array
     {
-        $cacheFile = OMEKA_PATH . '/files/lexical-corpus-cache.json';
+        // Outside files/, which Apache serves to anyone.
+        $cacheFile = sys_get_temp_dir() . '/lexical-corpus-cache.json';
 
         if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < self::LEXICAL_CACHE_TTL) {
             $cached = json_decode(file_get_contents($cacheFile), true);
@@ -308,6 +320,8 @@ class SimilarController extends AbstractActionController
     }
 
     /**
+     * Public items and values only: the cached corpus is shared by every user.
+     *
      * @return array{corpus_size: int, word_counts: array<string, int>}
      */
     private function buildLexicalCorpus(): array
@@ -319,7 +333,9 @@ class SimilarController extends AbstractActionController
                 JOIN item i ON i.id = r.id
                 WHERE v.property_id = ?
                   AND v.value IS NOT NULL
-                  AND r.resource_template_id = 2';
+                  AND r.resource_template_id = 2
+                  AND r.is_public = 1
+                  AND v.is_public = 1';
         $rows = $conn->fetchAllAssociative($sql, [self::BIBO_CONTENT_PROPERTY_ID]);
 
         $itemCount = 0;

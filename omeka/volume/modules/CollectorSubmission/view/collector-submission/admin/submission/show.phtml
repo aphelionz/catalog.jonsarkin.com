@@ -318,6 +318,7 @@ $this->headTitle('Submission #' . $s['id']);
         <?php else: ?>
             <div class="meta-label">Catalog Item</div>
             <form method="post" action="<?= $this->url('admin/collector-submissions/create-item', ['id' => $s['id']]) ?>" style="margin-top: 0.5rem;">
+                <input type="hidden" name="csrf" value="<?= $this->escapeHtmlAttr($csrfToken) ?>">
                 <?php if ($fileCount > 1): ?>
                     <fieldset class="cs-group-fieldset">
                         <legend>How to import <?= $fileCount ?> photos</legend>
@@ -344,6 +345,7 @@ $this->headTitle('Submission #' . $s['id']);
     <!-- Status + Notes -->
     <div class="cs-status-form">
         <form method="post" action="<?= $this->url('admin/collector-submissions/status', ['id' => $s['id']]) ?>">
+            <input type="hidden" name="csrf" value="<?= $this->escapeHtmlAttr($csrfToken) ?>">
             <label for="status">Status</label>
             <select name="status" id="status">
                 <?php foreach (['new', 'reviewed', 'accepted', 'rejected'] as $st): ?>
