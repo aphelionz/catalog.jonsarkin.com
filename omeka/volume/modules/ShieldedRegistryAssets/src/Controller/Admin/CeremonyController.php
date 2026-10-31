@@ -75,14 +75,15 @@ class CeremonyController extends AbstractActionController
             return new JsonModel(['error' => 'POST required']);
         }
 
-        $post = $request->getPost()->toArray();
-        $domain = trim($post['domain'] ?? '');
-        $expectedPkR = trim($post['pk_r'] ?? '');
+        // Verify the saved domain and key. The verified flag vouches for what
+        // /.well-known publishes, so it must never come from request values.
+        $domain = trim((string) (Module::getCeremonyConfig($this->settings)['domain'] ?? ''));
+        $expectedPkR = trim((string) (Module::getCeremonyResult($this->settings)['pk_r'] ?? ''));
 
         if ($domain === '' || $expectedPkR === '') {
             return new JsonModel([
                 'status' => 'error',
-                'message' => 'Domain and PK_R are required.',
+                'message' => 'Save the domain and PK_R first.',
             ]);
         }
 
@@ -195,6 +196,13 @@ class CeremonyController extends AbstractActionController
             if ($genesisTxid !== '') {
                 $result['genesis_txid'] = strtolower($genesisTxid);
             }
+        }
+
+        // A new key or domain needs a fresh DNS check.
+        if (($config['domain'] ?? '') !== ($existingConfig['domain'] ?? '')
+            || ($result['pk_r'] ?? '') !== ($existingResult['pk_r'] ?? '')
+        ) {
+            unset($result['dns_verified'], $result['dns_verified_at']);
         }
 
         $this->settings->set('sra_ceremony_config', json_encode($config));
