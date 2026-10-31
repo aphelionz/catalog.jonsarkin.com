@@ -223,8 +223,11 @@ class PageController extends AbstractActionController
             $activeSortBy = $this->params()->fromQuery('sort_by', $sortBy);
             if ($activeSortBy === 'size' || $activeSortBy === 'dcterms:date') {
                 $activeSortOrder = $this->params()->fromQuery('sort_order', $sortOrder);
-                $currentPage = (int) $this->params()->fromQuery('page', 1);
+                // These feed raw LIMIT/OFFSET: negatives are SQL errors, and an
+                // unbounded per_page renders the whole corpus in one page.
+                $currentPage = max(1, (int) $this->params()->fromQuery('page', 1));
                 $perPage = (int) ($this->params()->fromQuery('per_page') ?: $this->settings()->get('pagination_per_page', 25));
+                $perPage = max(1, min(100, $perPage));
                 if ($activeSortBy === 'size') {
                     [$items, $totalResults] = $this->searchSortedBySize(
                         $query, $page->resourceType(), $activeSortOrder, $currentPage, $perPage
