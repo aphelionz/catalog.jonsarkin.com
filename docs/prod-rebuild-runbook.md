@@ -8,8 +8,11 @@ Each numbered step needs Mark's explicit go-ahead (CLAUDE.md guardrails). Run `g
 flowchart LR
   S0[0 Merge, dev stack] --> S1[1 Snapshot old VM] --> S2[2 GCP audit]
   S2 --> S4[4 Build new VM] --> S5[5 Restore + audit data] --> S6[6 Upgrade + verify]
-  S6 --> S7[7 Cutover] --> S8[8 Stop old VM] --> S9[9 Rotate + revoke]
+  S6 --> S7[7 Cutover + ingest] --> S8[8 Stop old VM, contain its SA]
+  S8 --> S9[9 Backups + monitoring] --> S10[10 Rotate + revoke]
 ```
+
+Order matters at the end: the old identity loses bucket access (step 8) before the new VM writes its first backup (step 9). The backups carry the new secrets.
 
 Variables for the laptop shell:
 
@@ -22,17 +25,18 @@ OLDSA=915596988253-compute@developer.gserviceaccount.com
 
 ## 0. Laptop: merge, then upgrade the dev stack
 
+> [!warning] Deploy freeze
+> From the merge until step 9 changes `PROD_HOST`, run zero `make deploy`. `PROD_HOST` still names the old VM. A deploy there would push the new modules onto the old DB and break faceted browse on the live site.
+
 1. Merge the upgrade branch into `main`. Record the merge commit as `SHA`.
 2. In the main checkout:
 
 ```bash
 make modules                                   # pinned third-party modules
 docker compose up -d --build omeka             # PHP 8.5.12 + Omeka 4.2.1 image
-docker compose exec -T db mariadb -uomeka -pomeka omeka -e \
-  "ALTER TABLE faceted_browse_page ADD thumbnail_type VARCHAR(255) DEFAULT NULL AFTER resource_type"
 ```
 
-3. Admin > Modules at localhost:8888: Upgrade Common, then Log, BulkEdit, Custom Vocab, Faceted Browse.
+3. Admin > Modules at localhost:8888: Upgrade Common, then Log, BulkEdit, Custom Vocab, Faceted Browse. The Faceted Browse upgrade adds the missing `thumbnail_type` column itself.
 4. Add Common's index (its background launcher fails; see the plan):
 
 ```bash
@@ -60,15 +64,21 @@ The old VM ran as `$OLDSA` with the `cloud-platform` scope. Root on the VM had e
 gcloud projects get-iam-policy $P --flatten=bindings \
   --filter="bindings.members:serviceAccount:$OLDSA" --format='value(bindings.role)'
 gcloud iam service-accounts keys list --iam-account $OLDSA --managed-by=user --project $P
-gcloud logging read "protoPayload.authenticationInfo.principalEmail=\"$OLDSA\" AND logName:\"cloudaudit.googleapis.com%2Factivity\"" \
-  --project $P --freshness=400d --limit 500 \
-  --format='table(timestamp,protoPayload.methodName,protoPayload.resourceName)'
+A="protoPayload.authenticationInfo"
+WHO="($A.principalEmail=\"$OLDSA\" OR $A.serviceAccountDelegationInfo.firstPartyPrincipal.principalEmail=\"$OLDSA\")"
+for log in activity data_access; do echo "== $log"
+  gcloud logging read "$WHO AND logName:\"cloudaudit.googleapis.com%2F$log\"" \
+    --project $P --freshness=400d --limit 500 \
+    --format='table(timestamp,protoPayload.authenticationInfo.principalEmail,protoPayload.methodName,protoPayload.resourceName)'
+done
 gcloud storage buckets describe gs://catalog-jonsarkin-backups \
   --format='yaml(versioning,retention_policy,soft_delete_policy)'
 gcloud storage buckets get-iam-policy gs://catalog-jonsarkin-backups
 ```
 
-Expected audit entries: storage writes from the backups. Escalate on anything else: `SetIamPolicy`, `CreateServiceAccountKey`, `compute.instances.insert`, firewall changes, `setMetadata` (SSH keys). A role of `roles/editor` on `$OLDSA` widens the review to every project resource. If the backups SA can overwrite or delete objects and versioning is off, treat older backups as equally suspect.
+`WHO` matches the old SA directly and through impersonation. With impersonation the log names `catalog-backups` as the principal and records `$OLDSA` in `serviceAccountDelegationInfo`.
+
+Expected in `activity` (Admin Activity, always on): zero entries, because the backups only write objects. Expected in `data_access`: token minting for `catalog-backups` and `storage.objects.create`. These entries exist only if Data Access logging was on for IAM and Cloud Storage; an empty list there proves nothing. Escalate on anything else: `SetIamPolicy`, `CreateServiceAccountKey`, `compute.instances.insert`, firewall changes, `setMetadata` (SSH keys), object deletes. A role of `roles/editor` on `$OLDSA` widens the review to every project resource. If the backups SA can overwrite or delete objects and versioning is off, treat older backups as equally suspect.
 
 ## 3. Optional: host triage on the old VM (30 min)
 
@@ -114,7 +124,7 @@ sudo apt-get update && sudo apt-get -y upgrade
 sudo apt-get -y install docker.io docker-compose-v2 git unzip
 sudo usermod -aG docker $USER && exit      # log in again for the docker group
 curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh && sudo bash add-google-cloud-ops-agent-repo.sh --also-install
-sudo mkdir -p /opt/catalog /var/www/omeka-s/files && sudo chown $USER /opt/catalog
+sudo mkdir -p /opt/catalog /var/www/omeka-s/files && sudo chown $USER /opt/catalog /var/www/omeka-s/files
 git clone https://github.com/aphelionz/catalog.jonsarkin.com.git /opt/catalog
 cd /opt/catalog && git checkout <SHA> && git log -1 --oneline
 bash scripts/fetch-omeka-modules.sh
@@ -151,10 +161,10 @@ docker compose up -d db
 
 Content freeze: announce it, then make zero admin edits on the old site from here to cutover.
 
-Old VM: take a fresh dump into the bucket.
+Old VM: take a fresh dump and a fresh files sync into the bucket. `all` runs both, so the DB and the files restore from the same frozen state.
 
 ```bash
-ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh daily'
+ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh all'
 ```
 
 New VM: fetch the dump and audit it in a scratch container first.
@@ -181,16 +191,26 @@ SELECT resource_id, property_id, LEFT(COALESCE(value, uri), 200) FROM value
   WHERE value REGEXP '<script|javascript:|onerror=|onload=|<iframe' OR uri REGEXP '^javascript:';
 SELECT id, ingester, LEFT(data, 200) FROM media WHERE ingester IN ('html', 'oembed') AND data REGEXP '<script|onerror=|<iframe';
 SQL
+cat > $D/objects.sql <<'SQL'
+SELECT 'trigger', TRIGGER_NAME, DEFINER FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = 'omeka'
+UNION ALL SELECT 'routine', ROUTINE_NAME, DEFINER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = 'omeka'
+UNION ALL SELECT 'event', EVENT_NAME, DEFINER FROM information_schema.EVENTS WHERE EVENT_SCHEMA = 'omeka'
+UNION ALL SELECT 'view', TABLE_NAME, DEFINER FROM information_schema.VIEWS WHERE TABLE_SCHEMA = 'omeka';
+SQL
+docker exec -i -e MYSQL_PWD=scratch audit mariadb -uroot omeka < $D/objects.sql
 docker rm -f audit
 ```
 
 Expected: the known users and modules, settings whose URLs point at our own hosts, and page or media embeds Mark recognizes. Delete or fix anything else in the real import below, then record it here.
 
-Import the `omeka` database only. The dump also carries the old `mysql` grants, and `--one-database` skips them.
+The last query lists code stored in the DB. The dump carries triggers, routines and events (`--routines --triggers --events`), and the import below would install them. Omeka and our modules create none: the local DB returned zero rows on 2026-10-31. Any row here is an attacker's foothold. Stop and review it with Mark before the real import.
+
+Import the `omeka` database only. The dump also carries the old `mysql` grants, and `--one-database` skips them. The object check runs again before the first write, because a trigger fires on writes.
 
 ```bash
 cd /opt/catalog
 gunzip -c $D/omeka-*.sql.gz | docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot --one-database omeka'
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot omeka' < $D/objects.sql   # expect zero rows
 docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot omeka' <<'SQL'
 TRUNCATE session;
 DELETE FROM api_key;
@@ -203,6 +223,7 @@ SQL
 Files: restore from the bucket (recovery runbook §4), then sweep for code and script-bearing files.
 
 ```bash
+umask 022      # step 4 set 077 for .env; media must stay readable for the files backup
 $G rsync --recursive gs://catalog-jonsarkin-backups/files/ /var/www/omeka-s/files/
 cd /var/www/omeka-s/files
 find . -type f | sed -nE 's/.*\.([^./]+)$/\1/p' | tr A-Z a-z | sort | uniq -c | sort -rn
@@ -214,15 +235,30 @@ sudo chown -R 33:33 /var/www/omeka-s/files
 
 Delete every hit from the first `find`. Review the rest with Mark before deleting.
 
-Qdrant and the search index: follow recovery runbook §5, but skip its `cp $D/env` line, since this VM has a fresh `.env`. After cutover, run Admin > Enrich Fields > Ingest All Items. It calls clip-api only (zero Claude cost) and rebuilds the vectors from the audited DB.
+Qdrant and the search index start empty; skip recovery runbook §5. A restored store keeps every point and row it held, and an ingest only overwrites the items it touches. Points for deleted items, or an attacker's points, would survive. Step 7 fills both stores from the audited DB. The FTS index needs nothing: clip-api creates it on the first ingest. Qdrant needs the empty collection (tested against Qdrant v1.16 on 2026-10-31):
+
+```bash
+cd /opt/catalog && docker compose up -d qdrant clip-api
+docker compose exec -T clip-api python - <<'PY'
+import json, urllib.request as u
+q = "http://qdrant:6333/collections/omeka_items"
+def put(url, body):
+    req = u.Request(url, data=json.dumps(body).encode(), method="PUT",
+                    headers={"Content-Type": "application/json"})
+    print(u.urlopen(req).read().decode())
+put(q, {"vectors": {n: {"size": 512, "distance": "Cosine"} for n in ("visual_vec", "text_vec_clip")},
+        "on_disk_payload": True})
+for field, kind in [("omeka_item_id", "integer"), ("year", "integer"), ("subjects", "keyword"),
+                    ("collection", "keyword"), ("dominant_color", "keyword")]:
+    put(q + "/index?wait=true", {"field_name": field, "field_schema": kind})
+PY
+```
 
 ## 6. Upgrade and verify on the new VM (30 min)
 
 ```bash
 cd /opt/catalog
 docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb-dump -uroot omeka' | gzip > /tmp/pre-upgrade.sql.gz
-docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot omeka -e \
-  "ALTER TABLE faceted_browse_page ADD thumbnail_type VARCHAR(255) DEFAULT NULL AFTER resource_type"'
 docker compose up -d
 ```
 
@@ -244,7 +280,7 @@ for u in /api/items /faceted-browse/2 /item/7308 /visual-search /admin; do
 
 For the admin, add `<NEWIP> catalog.jonsarkin.com` to the laptop's `/etc/hosts`, accept the self-signed cert, and remove the line before step 7:
 
-1. Modules: Upgrade Common, then Log, BulkEdit, Custom Vocab, Faceted Browse.
+1. Modules: Upgrade Common, then Log, BulkEdit, Custom Vocab, Faceted Browse. Faceted Browse adds its missing `thumbnail_type` column.
 2. Common's index:
 
 ```bash
@@ -252,7 +288,7 @@ docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot
   "ALTER TABLE value ADD INDEX idx_property_value_resource (property_id, value_resource_id), ALGORITHM=INPLACE, LOCK=NONE"'
 ```
 
-3. Check: faceted browse with a filter, an item page with similar works, visual search, RapidEditor loads, Enrich Fields loads, ICC Thumbnailer page, a test upload through Simple Upload (its thumbnails keep the ICC profile), "Forgot password" email arrives.
+3. Check: faceted browse with a filter, an item page, RapidEditor loads, Enrich Fields loads, ICC Thumbnailer page, a test upload through Simple Upload (its thumbnails keep the ICC profile), "Forgot password" email arrives. Similar works and visual search stay empty until the ingest in step 7.
 
 ## 7. Cutover (15 min plus DNS)
 
@@ -266,9 +302,37 @@ curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/api/i
 curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/            # 301
 ```
 
-5. Install the cron jobs from the repo scripts:
+5. Admin > Enrich Fields > Ingest All Items. It calls clip-api only (zero Claude cost) and fills Qdrant and the search index from the audited DB. It runs after the DNS switch because clip-api fetches each image from `catalog.jonsarkin.com`, which named the old VM until now. Follow it in Admin > Jobs. When it finishes, check similar works on an item page and a visual search.
+
+## 8. Stop the old VM and contain its identity
+
+Run this once the new VM serves the traffic (step 7.4). The old VM's final export uses the old identity, so it goes first.
 
 ```bash
+ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh accesslog $(date -u +%Y-%m)'
+gcloud compute instances stop $OLD --zone $Z --project $P
+gcloud iam service-accounts remove-iam-policy-binding catalog-backups@$P.iam.gserviceaccount.com \
+  --member serviceAccount:$OLDSA --role roles/iam.serviceAccountTokenCreator --project $P
+gcloud storage buckets get-iam-policy gs://catalog-jonsarkin-backups | grep -n "$OLDSA"   # expect nothing
+gcloud compute instances list --project $P --format='value(name,serviceAccounts[0].email)'
+```
+
+Then remove every project role that step 2 found on `$OLDSA`, and delete its user-managed keys. The last command lists other VMs that run as the default compute SA; keep any role they need.
+
+Access tokens already minted for `catalog-backups` stay valid until they expire (one hour by default). Wait one hour before step 9.
+
+Keep the old disk and the forensic snapshot for 90 days. Deletion is Mark's call after that.
+
+## 9. Backups and monitoring on the new VM
+
+The backup jobs run as the SSH user. They write a log, a lock and per-job success stamps. Provision the root-owned paths, prove one full run, and seed the weekly and monthly stamps from the bucket before cron starts. Without those stamps the monitor reports both jobs as stale at once.
+
+```bash
+sudo install -d -o $USER /var/lib/catalog-backup
+sudo install -o $USER -m 644 /dev/null /var/log/catalog-backup.log
+/opt/catalog/scripts/backup-to-gcs.sh all          # daily + files; proves the new SA can write
+/opt/catalog/scripts/backup-monitor.sh bootstrap   # weekly and monthly stamps from the bucket
+ls -l /var/lib/catalog-backup                      # expect four last-success-* stamps
 crontab - <<'EOF'
 PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SHELL=/bin/bash
@@ -279,22 +343,13 @@ SHELL=/bin/bash
 17 * * * * /opt/catalog/scripts/backup-monitor.sh >/dev/null 2>&1
 30 1 * * * /opt/catalog/scripts/prune-sessions.sh >/dev/null 2>&1
 EOF
-/opt/catalog/scripts/backup-to-gcs.sh daily     # proves the new SA can write
 ```
 
-6. Laptop: re-run `scripts/setup-gcp-monitoring.sh` so host alerts follow the new instance. Update the SSH host alias in `Makefile` (`PROD_HOST`) and `omeka/ansible/inventory.ini` to `$NEW.$Z.$P`.
-7. End the content freeze.
+Laptop: re-run `scripts/setup-gcp-monitoring.sh` so host alerts follow the new instance. Update the SSH host alias in `Makefile` (`PROD_HOST`) and `omeka/ansible/inventory.ini` to `$NEW.$Z.$P`. That ends the deploy freeze from step 0.
 
-## 8. Stop the old VM
+End the content freeze.
 
-```bash
-ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh accesslog $(date -u +%Y-%m)'
-gcloud compute instances stop $OLD --zone $Z --project $P
-```
-
-Keep its disk and the forensic snapshot for 90 days. Deletion is Mark's call after that.
-
-## 9. Rotate and revoke
+## 10. Rotate and revoke
 
 | Secret | Held by the old VM in | Action |
 |---|---|---|
@@ -303,7 +358,7 @@ Keep its disk and the forensic snapshot for 90 days. Deletion is Mark's call aft
 | MariaDB passwords | `.env`, DB grants | Done: the new VM generated new ones and skipped the old grants. |
 | Omeka passwords, API keys, sessions | DB | Done in step 5. Each user sets a new password through "Forgot password". Recreate API keys only where needed. |
 | SiteLockdown password | DB setting | Set a new one in the module config. |
-| Default compute SA `$OLDSA` | VM identity | Remove its `serviceAccountTokenCreator` binding on `catalog-backups` and every role found in step 2. Delete any user-managed keys found. |
+| Default compute SA `$OLDSA` | VM identity | Done in step 8, before the first backup that carries new secrets. |
 | SSH keys in `authorized_keys` and GCE metadata | VM | Remove old entries from project metadata. Mark checks the laptop's `~/.ssh/config` for `ForwardAgent` to this host; if it was on, generate a new laptop key. |
 | TLS key in `acme.json` and `/etc/letsencrypt` | VM | The new VM issued its own. Revoking the old certificate is optional. |
 | Old static IP | GCP | Release it after the 90 days. |
@@ -311,7 +366,7 @@ Keep its disk and the forensic snapshot for 90 days. Deletion is Mark's call aft
 ## Rollback
 
 - Before step 7: users still reach the old VM. Stop or delete the new one.
-- Upgrade problem on the new VM: restore `/tmp/pre-upgrade.sql.gz`, check out the pre-upgrade commit for `omeka/Dockerfile`, `omeka/volume/modules/FacetedBrowse` and `scripts/fetch-omeka-modules.sh`, set the old pins below, run `bash scripts/fetch-omeka-modules.sh`, then `docker compose build omeka && docker compose up -d omeka`.
+- Upgrade problem on the new VM: restore `/tmp/pre-upgrade.sql.gz`. Check out `omeka/Dockerfile` and `omeka/volume/modules/FacetedBrowse` from the merge's first parent (`git checkout <SHA>^1 -- <paths>`). Keep the current `scripts/fetch-omeka-modules.sh` (it is new in this upgrade) and change its `PINS` to the versions, checksums and URLs below. Then run `bash scripts/fetch-omeka-modules.sh`, `docker compose build omeka && docker compose up -d omeka`.
 - New VM unusable after cutover: point DNS back to the old IP and start the old VM. It counts as compromised, so use it for hours at most.
 
 Pre-upgrade pins:
@@ -323,6 +378,8 @@ Pre-upgrade pins:
 | Log | 3.4.37 | `8271d49115f9e7825609a3a8f392cd2efdf84a0cd8d390acc5b908f09b998abc` |
 | BulkEdit | 3.4.39 | `ee704bb71d4e9b3f5ba76761bc7f9f08e118b5f646cc4c211cd8c8fd9dc6a378` |
 | CustomVocab | 2.0.2 | `7d405fa9293af9a679430bf0b317d7b1e71f36ae2951c20798a5d7a3b4283993` |
+
+The module URLs follow the current pins with the old version in both places, for example `https://github.com/Daniel-KM/Omeka-S-module-Common/releases/download/3.4.82/Common-3.4.82.zip`. CustomVocab's tag carries a `v`: `.../download/v2.0.2/CustomVocab-2.0.2.zip`.
 
 ## After the rebuild
 

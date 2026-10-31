@@ -30,7 +30,7 @@ Third-party module versions now live in `scripts/fetch-omeka-modules.sh` with SH
 Facts:
 
 - The fork started from upstream 1.8.0 (`cd919d3`). Commit `6dd954b` ported a few 1.9.x fixes and set the label to 1.9.2.
-- Because of that label, the upstream 1.9.0 migration never ran. Prod and local DBs lack `faceted_browse_page.thumbnail_type`. Upstream 1.10.0 maps that column, so the runbook adds it with one `ALTER` before the module upgrade.
+- Because of that label, the upstream 1.9.0 migration never ran. Prod and local DBs lack `faceted_browse_page.thumbnail_type`. Upstream 1.10.0 maps that column. Our `Module::upgrade()` now checks for the column itself when the old version is below 1.10.0, so the module upgrade adds it. Tested both ways on 2026-10-31: a 1.9.2 DB without the column, and a 1.9.2 DB that already had it.
 - The theme overrides `page.phtml`, `facets.phtml`, `browse.phtml` and four facet templates. The page loads one module script, `faceted-browse.js`.
 
 Method: a three-way merge with base 1.8.0, ours, and upstream 1.10.0. Eight files conflicted.
@@ -43,6 +43,19 @@ Method: a three-way merge with base 1.8.0, ours, and upstream 1.10.0. Eight file
 | `src/FacetType/PropertyExists.php` (ours) | Unchanged. Upstream's new "show all values" table is opt-in per facet type, so it skips this type. |
 
 The fork label is now 1.10.0, so future upstream migrations run. Visible change: with a filter active, selected values keep their place in the list (upstream 1.10.0 behavior). The theme legend now carries `id="facet-legend-N"`, which upstream's Year select references with `aria-labelledby`.
+
+Fixes on top of upstream 1.10.0, from the Copilot review of PR #1. All are upstream bugs, so they are worth reporting there too:
+
+| File | Fix |
+|---|---|
+| `src/ColumnType/Value.php` | A single value renders through `asHtml()`. Before, it printed unescaped (stored XSS in the table view). |
+| `src/ColumnType/ItemSet.php` | One item set renders with `reset()`. `itemSets()` keys by ID, so `[0]` was null. |
+| `view/.../site/page/facets.phtml` and the theme's `facets.phtml`, `page.phtml` | Category and facet names are escaped in `aria-label` and `<legend>`. |
+| `src/Controller/SiteAdmin/CategoryController.php`, `show-all-table.phtml` | Show-all fetches one row past its 1,000 limit. A cut-off list shows a note and hides "Add all", which would replace the facet's values with a partial list. |
+| `src/Api/Representation/FacetedBrowseCategoryRepresentation.php` | The category View link carries `?faceted_browse_category_id=N`, which our server-rendered page reads, plus upstream's fragment. |
+| `Module.php` | The column check above. |
+
+Our theme renders neither table column type. The escaping fixes change output only for names that contain HTML characters, and the current names contain none.
 
 ## Upstream bug in Common 3.4.94
 
@@ -103,16 +116,15 @@ These checks found zero signs of tampering in the application layer. The host OS
 
 1. Base image (PHP 8.5.12 + Omeka 4.2.1): rebuild the Omeka image.
 2. Omeka core: the DB version bumps on first admin load.
-3. One-time SQL: `faceted_browse_page.thumbnail_type`.
-4. Modules in Admin > Modules: Common, Log, BulkEdit, CustomVocab, Faceted Browse.
-5. One-time SQL: Common's `idx_property_value_resource`.
+3. Modules in Admin > Modules: Common, Log, BulkEdit, CustomVocab, Faceted Browse. Faceted Browse adds `thumbnail_type`.
+4. One-time SQL: Common's `idx_property_value_resource`.
 
-Rollback: restore the dump taken before step 4, then rebuild with the previous Dockerfile and module pins. The runbook lists the commands and the old checksums.
+Rollback: restore the dump taken before step 3, then rebuild with the previous Dockerfile and FacetedBrowse, and the old module pins in the current fetch script. The runbook lists the commands and the old checksums.
 
 ## Decisions for Mark
 
 - [ ] Approve the assume-breach rebuild in the runbook (new VM, new service account, rotated secrets).
 - [ ] CustomVocab: uninstall it (inactive since the 2026-03-22 literal conversion; uninstall drops its tables) or keep it pinned at 2.1.0. Recommendation: uninstall after the rebuild.
-- [ ] Qdrant and the search index: restore the weekly state backup (fast), then re-run "Ingest All Items" to rebuild from the audited DB. Recommendation: both.
+- [ ] Qdrant and the search index: the runbook now starts both empty and fills them with "Ingest All Items" after cutover. A restored store would keep points that no audited item backs. Cost: similar works and visual search stay empty until the ingest finishes. Accept that window, or ask for a restore-and-reconcile step instead.
 - [ ] Report the Common `--batch` bug upstream.
 - [ ] After the rebuild, move `make deploy` from laptop rsync to `git checkout <sha>` plus `scripts/fetch-omeka-modules.sh` on the VM, so prod always equals a known commit.
