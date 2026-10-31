@@ -93,8 +93,7 @@ class SubmissionController extends AbstractActionController
         }
         $submission['items'] = $items;
 
-        $csrf = new CsrfValidator(['name' => 'cs_rotate_' . $id, 'timeout' => 3600]);
-        $csrfToken = $csrf->getHash();
+        $csrfToken = $this->csrfValidator($id)->getHash();
 
         $view = new ViewModel([
             'submission' => $submission,
@@ -128,9 +127,8 @@ class SubmissionController extends AbstractActionController
             ]);
         }
 
-        $csrf = new CsrfValidator(['name' => 'cs_rotate_' . $id, 'timeout' => 3600]);
         $token = $request->getPost('csrf');
-        if (!$token || !$csrf->isValid($token)) {
+        if (!$token || !$this->csrfValidator($id)->isValid($token)) {
             return new JsonModel(['ok' => false, 'error' => 'CSRF token invalid or expired']);
         }
 
@@ -209,6 +207,9 @@ class SubmissionController extends AbstractActionController
         if (!$request->isPost()) {
             return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
         }
+        if ($expired = $this->rejectInvalidCsrf($id)) {
+            return $expired;
+        }
 
         $submission = $this->conn->fetchAssociative(
             'SELECT * FROM collector_submission WHERE id = ?',
@@ -269,6 +270,9 @@ class SubmissionController extends AbstractActionController
 
         if (!$request->isPost()) {
             return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
+        }
+        if ($expired = $this->rejectInvalidCsrf($id)) {
+            return $expired;
         }
 
         $submission = $this->conn->fetchAssociative(
@@ -345,6 +349,29 @@ class SubmissionController extends AbstractActionController
             $this->messenger()->addError('Failed to create item: ' . $e->getMessage());
             return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
         }
+    }
+
+    /**
+     * One token per submission covers the rotate, status and create-item
+     * posts from the show page.
+     */
+    private function csrfValidator(int $id): CsrfValidator
+    {
+        return new CsrfValidator(['name' => 'cs_submission_' . $id, 'timeout' => 3600]);
+    }
+
+    /**
+     * The status form emails the collector, so a forged post would send
+     * attacker text from the estate. Redirect back when the token fails.
+     */
+    private function rejectInvalidCsrf(int $id)
+    {
+        $token = (string) $this->getRequest()->getPost('csrf', '');
+        if ($token !== '' && $this->csrfValidator($id)->isValid($token)) {
+            return null;
+        }
+        $this->messenger()->addError('The form expired. Reload the page and try again.');
+        return $this->redirect()->toRoute('admin/collector-submissions/show', ['id' => $id]);
     }
 
     /**
