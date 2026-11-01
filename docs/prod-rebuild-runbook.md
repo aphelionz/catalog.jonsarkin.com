@@ -221,7 +221,11 @@ DELETE FROM password_creation;
 UPDATE user SET password_hash = CONCAT('!locked-', SHA2(RAND(), 256));
 SELECT COUNT(*) items FROM item; SELECT COUNT(*) media FROM media;
 SQL
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" -N omeka -e \
+  "SELECT COALESCE(MAX(id), 0) FROM collector_submission; SELECT COALESCE(MAX(id), 0) FROM prelaunch_signup"' | tee ~/cutoffs.txt
 ```
+
+`~/cutoffs.txt` holds the restored cutoffs `N1` (submissions) and `N2` (signups). Write them here as well. Step 8 needs these values, because after cutover the new VM takes public writes of its own.
 
 Files: restore from the bucket (recovery runbook §4), then sweep for code and script-bearing files.
 
@@ -311,23 +315,59 @@ curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/     
 
 Run this once the new VM serves the traffic (step 7.4). The old VM's final exports use the old identity, so they go first.
 
-Late public rows: compare the newest restored IDs with the old DB. The old VM runs `db` from the dev compose file, as `make pull-db` assumes.
+Late public rows: list the old DB's rows above the step 5 cutoffs `N1` and `N2`. Use the recorded values; the new VM's live maximum now includes its own post-cutover rows. The old VM runs `db` from the dev compose file, as `make pull-db` assumes.
 
 ```bash
-cd /opt/catalog      # new VM
-docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" -N omeka -e \
-  "SELECT COALESCE(MAX(id), 0) FROM collector_submission; SELECT COALESCE(MAX(id), 0) FROM prelaunch_signup"'
 ssh omeka.us-east1-b.folkloric-rite-468520-r2 'cd /opt/catalog && . ./.env && docker compose exec -T db \
   mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" omeka -e \
   "SELECT id, email, created FROM collector_submission WHERE id > <N1>; SELECT id, email, created FROM prelaunch_signup WHERE id > <N2>"'
 ```
 
-Expect zero rows. For each late row, copy it before the stop:
+Expect zero rows. On any row, merge the late rows before the stop. Both VMs hand out the next IDs after the cutoffs, so the late rows go through staging tables and take fresh IDs on the new VM. A signup whose email is already on the new VM is skipped. The confirmation email cites only the submitter's name, so a new ID changes nothing for the submitter. Tested 2026-10-31 against a simulated collision.
 
-1. Old VM: `backup-to-gcs.sh files` puts the submission photos (`files/submissions/`) in the bucket.
-2. Old VM: `mariadb-dump --no-create-info --where='id > <N>'` for each of the two tables, piped to a file on the laptop.
-3. Read that file. It must hold `INSERT`s into those two tables only.
-4. New VM: import it as the app user, `$G rsync` the bucket's `files/submissions/` into `/var/www/omeka-s/files/submissions/`, and run the step 5 sweep on the new photos.
+Laptop: dump the late rows into staging-table names, then check the file.
+
+```bash
+OLDDUMP() { ssh omeka.us-east1-b.folkloric-rite-468520-r2 "cd /opt/catalog && . ./.env && docker compose exec -T db \
+  mariadb-dump -u\"\$MYSQL_USER\" -p\"\$MYSQL_PASSWORD\" --compact --no-create-info --skip-extended-insert --where='id > $2' omeka $1"; }
+{ OLDDUMP collector_submission <N1>; OLDDUMP prelaunch_signup <N2>; } \
+  | sed -E 's/^INSERT INTO `(collector_submission|prelaunch_signup)`/INSERT INTO `late_\1`/' > late.sql
+grep -v -E '^INSERT INTO `late_(collector_submission|prelaunch_signup)` VALUES |enable the sandbox mode' late.sql   # expect nothing
+ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh files'   # late photos to the bucket
+scp late.sql $NEW.$Z.$P:
+```
+
+New VM: merge through the staging tables as the app user.
+
+```bash
+cd /opt/catalog
+APP() { docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" omeka'; }
+echo "CREATE TABLE late_collector_submission LIKE collector_submission;
+      CREATE TABLE late_prelaunch_signup LIKE prelaunch_signup;" | APP
+APP < ~/late.sql
+APP <<'SQL'
+SELECT GROUP_CONCAT('`', COLUMN_NAME, '`' ORDER BY ORDINAL_POSITION) INTO @c FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = 'omeka' AND TABLE_NAME = 'collector_submission' AND COLUMN_NAME <> 'id';
+SET @s = CONCAT('INSERT INTO collector_submission (', @c, ') SELECT ', @c, ' FROM late_collector_submission ORDER BY id');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+INSERT IGNORE INTO prelaunch_signup (email, created, ip_address, user_agent)
+  SELECT email, created, ip_address, user_agent FROM late_prelaunch_signup ORDER BY id;
+DROP TABLE late_collector_submission, late_prelaunch_signup;
+SQL
+```
+
+New VM: stage the photos in a directory the SSH user owns, check them, then copy the new ones into the live tree as `33:33`. The live tree belongs to UID 33 since step 5.
+
+```bash
+G="gcloud storage --impersonate-service-account=catalog-backups@folkloric-rite-468520-r2.iam.gserviceaccount.com"
+S=~/late-photos; mkdir -p $S
+$G rsync --recursive gs://catalog-jonsarkin-backups/files/submissions/ $S/
+find $S -type f -print0 | xargs -0 file --mime-type | grep -vE ': image/'   # expect nothing
+sudo cp -n $S/* /var/www/omeka-s/files/submissions/
+sudo chown -R 33:33 /var/www/omeka-s/files/submissions
+```
+
+Then stop the old VM and contain its identity:
 
 ```bash
 ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh accesslog $(date -u +%Y-%m)'
