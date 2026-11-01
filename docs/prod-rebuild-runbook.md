@@ -325,26 +325,42 @@ ssh omeka.us-east1-b.folkloric-rite-468520-r2 'cd /opt/catalog && . ./.env && do
 
 Expect zero rows. On any row, merge the late rows before the stop. Both VMs hand out the next IDs after the cutoffs, so the late rows go through staging tables and take fresh IDs on the new VM. A signup whose email is already on the new VM is skipped. The confirmation email cites only the submitter's name, so a new ID changes nothing for the submitter. Tested 2026-10-31 against a simulated collision.
 
-Laptop: dump the late rows into staging-table names, then check the file.
+The old VM's dump is untrusted SQL, so it follows step 5's pattern. It runs only in a scratch container, and the live DB gets a fresh dump of that container. A prefix check on the old dump is too weak, because a line can carry an `INSERT` and then any other statement.
+
+Laptop: dump the late rows and copy the file to the new VM.
 
 ```bash
 OLDDUMP() { ssh omeka.us-east1-b.folkloric-rite-468520-r2 "cd /opt/catalog && . ./.env && docker compose exec -T db \
   mariadb-dump -u\"\$MYSQL_USER\" -p\"\$MYSQL_PASSWORD\" --compact --no-create-info --skip-extended-insert --where='id > $2' omeka $1"; }
-{ OLDDUMP collector_submission <N1>; OLDDUMP prelaunch_signup <N2>; } \
-  | sed -E 's/^INSERT INTO `(collector_submission|prelaunch_signup)`/INSERT INTO `late_\1`/' > late.sql
-grep -v -E '^INSERT INTO `late_(collector_submission|prelaunch_signup)` VALUES |enable the sandbox mode' late.sql   # expect nothing
+{ OLDDUMP collector_submission <N1>; OLDDUMP prelaunch_signup <N2>; } > late.sql
 ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh files'   # late photos to the bucket
 scp late.sql $NEW.$Z.$P:
 ```
 
-New VM: merge through the staging tables as the app user.
+New VM: load `late.sql` into a scratch container that holds only the two empty tables, with the live schema. Then re-export the rows and list the photo names they cite.
 
 ```bash
 cd /opt/catalog
+docker run -d --name late -e MARIADB_ROOT_PASSWORD=scratch -e MARIADB_DATABASE=omeka mariadb:10.11
+until docker exec late healthcheck.sh --connect; do sleep 1; done
+LATE() { docker exec -i -e MYSQL_PWD=scratch late "$@"; }
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb-dump -u"$MARIADB_USER" --no-data --skip-triggers \
+  omeka collector_submission prelaunch_signup' | LATE mariadb -uroot omeka
+LATE mariadb -uroot omeka < ~/late.sql      # any error: stop, keep the container, review late.sql with Mark
+LATE mariadb-dump -uroot --compact --no-create-info --skip-extended-insert --skip-triggers omeka collector_submission prelaunch_signup \
+  | sed -E 's/^INSERT INTO `(collector_submission|prelaunch_signup)`/INSERT INTO `late_\1`/' > ~/late-clean.sql
+LATE mariadb -uroot -N omeka -e "SELECT jt.f FROM collector_submission,
+  JSON_TABLE(files, '\$[*]' COLUMNS (f VARCHAR(512) PATH '\$')) jt" > ~/late-files.txt
+docker rm -f late
+```
+
+New VM: merge `late-clean.sql` through the staging tables as the app user. Its row count must match the old VM's listing above.
+
+```bash
 APP() { docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" omeka'; }
 echo "CREATE TABLE late_collector_submission LIKE collector_submission;
       CREATE TABLE late_prelaunch_signup LIKE prelaunch_signup;" | APP
-APP < ~/late.sql
+APP < ~/late-clean.sql
 APP <<'SQL'
 SELECT GROUP_CONCAT('`', COLUMN_NAME, '`' ORDER BY ORDINAL_POSITION) INTO @c FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = 'omeka' AND TABLE_NAME = 'collector_submission' AND COLUMN_NAME <> 'id';
@@ -356,16 +372,18 @@ DROP TABLE late_collector_submission, late_prelaunch_signup;
 SQL
 ```
 
-New VM: stage the photos in a directory the SSH user owns, check them, then copy the new ones into the live tree as `33:33`. The live tree belongs to UID 33 since step 5.
+New VM: fetch only the photos the late rows cite, into a directory the SSH user owns. Both checks use the collector form's own allowlist: the names it generates (`<time>_<8 hex>_<safe name>.jpg` or `.png`; HEIC uploads become `.jpg`) and the MIME types it accepts. Any hit stops the copy for review with Mark. Then install the files into the live tree as `33:33`, which owns it since step 5.
 
 ```bash
+grep -vE '^submissions/[0-9]+_[0-9a-f]{8}_[A-Za-z0-9._-]*\.(jpg|png)$' ~/late-files.txt   # expect nothing
 G="gcloud storage --impersonate-service-account=catalog-backups@folkloric-rite-468520-r2.iam.gserviceaccount.com"
 S=~/late-photos; mkdir -p $S
-$G rsync --recursive gs://catalog-jonsarkin-backups/files/submissions/ $S/
-find $S -type f -print0 | xargs -0 file --mime-type | grep -vE ': image/'   # expect nothing
-sudo cp -n $S/* /var/www/omeka-s/files/submissions/
-sudo chown -R 33:33 /var/www/omeka-s/files/submissions
+while read -r f; do $G cp "gs://catalog-jonsarkin-backups/files/$f" $S/; done < ~/late-files.txt
+file --mime-type $S/* | grep -vE ': image/(jpeg|png|heic|heif)$'                           # expect nothing
+sudo install -o 33 -g 33 -m 644 $S/* /var/www/omeka-s/files/submissions/
 ```
+
+Tested 2026-11-01 with a hostile `late.sql`: an `UPDATE` appended to an `INSERT` line failed inside the scratch container and stopped the import, the re-export held only `INSERT`s, the name check caught a `../` path, and the MIME check caught an SVG named `.jpg`.
 
 Then stop the old VM and contain its identity:
 
