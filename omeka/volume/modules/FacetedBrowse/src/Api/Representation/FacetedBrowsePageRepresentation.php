@@ -21,6 +21,7 @@ class FacetedBrowsePageRepresentation extends AbstractEntityRepresentation
             'o:modified' => $modified ? $this->getDateTime($modified) : null,
             'o:title' => $this->title(),
             'o-module-faceted_browse:resource_type' => $this->resourceType(),
+            'o-module-faceted_browse:thumbnail_type' => $this->thumbnailType(),
         ];
     }
 
@@ -34,6 +35,23 @@ class FacetedBrowsePageRepresentation extends AbstractEntityRepresentation
                 'controller' => 'page',
                 'action' => $action,
                 'page-id' => $this->id(),
+            ],
+            ['force_canonical' => $canonical]
+        );
+    }
+
+    public function siteUrl($siteSlug = null, $canonical = false)
+    {
+        if (null === $siteSlug) {
+            $siteSlug = $this->site()->slug();
+        }
+        $url = $this->getViewHelper('Url');
+        return $url(
+            'site/faceted-browse',
+            [
+                'site-slug' => $siteSlug,
+                'page-id' => $this->id(),
+                'action' => 'page',
             ],
             ['force_canonical' => $canonical]
         );
@@ -77,5 +95,10 @@ class FacetedBrowsePageRepresentation extends AbstractEntityRepresentation
             $categories[] = $adapter->getRepresentation($categoryEntity);
         }
         return $categories;
+    }
+
+    public function thumbnailType()
+    {
+        return $this->resource->getThumbnailType();
     }
 }

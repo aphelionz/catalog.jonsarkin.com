@@ -23,7 +23,7 @@ class FacetedBrowsePreview extends AbstractBlockLayout
         return 'Faceted browse preview'; // @translate
     }
 
-    public function form(PhpRenderer $view, SiteRepresentation $site, SitePageRepresentation $page = null, SitePageBlockRepresentation $block = null
+    public function form(PhpRenderer $view, SiteRepresentation $site, ?SitePageRepresentation $page = null, ?SitePageBlockRepresentation $block = null
     ) {
         // Get all pages of this site.
         $pages = $view->api()->search('faceted_browse_pages', ['site_id' => $site->id()])->getContent();
@@ -136,21 +136,12 @@ class FacetedBrowsePreview extends AbstractBlockLayout
         // Build the link out.
         $linkOut = null;
         if ($blockData['link_out_text']) {
-            $fragment = [
-                'categoryId' => $category->id(),
-                'categoryQuery' => $category->query(),
-                'sortBy' => $category->sortBy(),
-                'sortOrder' => $category->sortOrder(),
-                'page' => 1,
-                'facetStates' => [],
-                'facetQueries' => [],
-            ];
-            $url = $view->url('site/faceted-browse', ['page-id' => $page->id(), 'action' => 'page'], ['fragment' => json_encode($fragment)], true);
-            $linkOut = $view->hyperlink($blockData['link_out_text'], $url, ['class' => 'button']);
+            $linkOut = $view->hyperlink($blockData['link_out_text'], $category->siteUrl(), ['class' => 'button']);
         }
 
         // Render the block.
         return $view->partial($templateViewScript, [
+            'page' => $page,
             'columns' => $columns,
             'items' => $items,
             'heading' => $heading,

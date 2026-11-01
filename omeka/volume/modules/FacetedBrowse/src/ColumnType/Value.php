@@ -88,12 +88,21 @@ class Value implements ColumnTypeInterface
             $values = array_slice($values, 0, $maxValues);
         }
 
-        // Prepare the content.
-        $content = [];
-        foreach ($values as $value) {
-            $content[] = $value->asHtml();
+        if (!$values) {
+            return '';
         }
 
-        return implode('<br>', $content);
+        // Prepare the content.
+        if (count($values) > 1) {
+            $content = '<ul>';
+            foreach ($values as $value) {
+                $content .= sprintf('<li>%s</li>', $value->asHtml());
+            }
+            $content .= '</ul>';
+        } else {
+            $content = $values[0]->asHtml();
+        }
+
+        return $content;
     }
 }

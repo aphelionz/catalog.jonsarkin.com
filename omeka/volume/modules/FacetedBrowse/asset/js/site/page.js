@@ -3,6 +3,9 @@ $(document).ready(function() {
 const container = $('#container');
 const sectionSidebar = $('#section-sidebar');
 const sectionContent = $('#section-content');
+const browseStatus = $('#browse-status');
+let focusOnLoad = false;
+let browseStatusClearTimeout;
 
 const urlCategories = container.data('urlCategories');
 const urlFacets = container.data('urlFacets');
@@ -12,54 +15,84 @@ const modalToggleButton = $("#section-sidebar-modal-toggle");
 const modalCloseButton = $('#section-sidebar-modal-close');
 
 // Callbacks that handle  request errors.
-const failBrowse = data => sectionContent.html(`${Omeka.jsTranslate('Error fetching browse markup.')} ${data.status} (${data.statusText})`);
-const failFacet = data => sectionContent.html(`${Omeka.jsTranslate('Error fetching facet markup.')} ${data.status} (${data.statusText})`);
-const failCategory = data => sectionContent.html(`${Omeka.jsTranslate('Error fetching category markup.')} ${data.status} (${data.statusText})`);
+const makeFail = function(msg) {
+    return function(data) {
+        focusOnLoad = false;
+        sectionContent.html(`${Omeka.jsTranslate(msg)} ${data.status} (${data.statusText})`).removeClass('loading');
+    };
+};
+const failBrowse = makeFail('Error fetching browse markup.');
+const failFacet = makeFail('Error fetching facet markup.');
+const failCategory = makeFail('Error fetching category markup.');
+
+const setBrowseStatus = function() {
+    clearTimeout(browseStatusClearTimeout);
+    const rowCount = sectionContent.find('.row-count').first().text();
+    browseStatus.text(rowCount || Omeka.jsTranslate('No results'));
+    // Delayed clear resets the region so an identical count on the next update still triggers
+    // an announcement. Clearing synchronously would cause some screen readers to announce the
+    // empty string as a second event before the count.
+    browseStatusClearTimeout = setTimeout(function() {
+        browseStatus.text('');
+    }, 1000);
+};
 
 // Set breakpoint for using facet modal window.
-const mediaQuery = window.matchMedia('(min-width: 896px)');
+const mediaQuery = window.matchMedia('(max-width: 39.9988em)');
 
 // Reset modal attributes for desktop widths.
 const handleTabletChange = function(e) {
-    modalToggleButton.attr('aria-expanded', 'false');
-    sectionContent.attr('aria-hidden', 'true').removeClass('open');
     if (e.matches) {
-        sectionSidebar.attr('aria-hidden', 'false');
-        modalToggleButton.attr('aria-expanded', 'false');
+        const dialogWrapper = $('<dialog id="section-sidebar-dialog" aria-label="Mobile dialog" aria-labelledby="section-sidebar-dialog section-sidebar"></dialog>');
+        sectionSidebar.wrap(dialogWrapper);
+    } else if (document.getElementById('section-sidebar-dialog')) {
+        closeModal();
+        sectionSidebar.unwrap();
     }
 };
 
 // Implements modal behavior for facet sidebar on mobile widths.
 const enableModal = function() {
-    var lastFocus;
-
     container.on('click', '#section-sidebar-modal-toggle', function() {
-        sectionSidebar.toggleClass('open');
-        if (modalToggleButton.attr('aria-expanded') == 'true') {
+        const activeDialog = document.getElementById('section-sidebar-dialog');
+        modalToggleButton.attr('aria-expanded', 'true');
+        activeDialog.showModal();
+        sectionSidebar.find('button').first().focus();
+        activeDialog.addEventListener('close', function() {
             modalToggleButton.attr('aria-expanded', 'false');
-            sectionSidebar.attr('aria-hidden', 'true');
-        } else {
-            modalToggleButton.attr('aria-expanded', 'true');
-            sectionSidebar.attr('aria-hidden', 'false');
-        }
-        sectionSidebar.trigger('toggle');
+            // Results may still be loading if the user closes the modal quickly.
+            if (sectionContent.hasClass('loading')) {
+                focusOnLoad = true;
+            } else {
+                sectionContent.focus();
+            }
+        });
     });
 
-    sectionSidebar.on('click', '.close-button', function() {
-        lastFocus.trigger('click').trigger('focus');
+    container.on('click', '#section-sidebar .close-button', function() {
+        closeModal();
     });
+};
 
-    container.on('toggle', '#section-sidebar', function() {
-        if (sectionSidebar.attr('aria-hidden') == 'false') {
-            sectionSidebar.attr('aria-hidden', 'true');
-            modalCloseButton.trigger('focus');
-            lastFocus = modalToggleButton;
-        } else {
-            sectionSidebar.attr('aria-hidden', 'false');
-            lastFocus.trigger('focus');
-            lastFocus = modalCloseButton;
-        }
-    });
+const closeModal = function() {
+    const activeModal = document.getElementById('section-sidebar-dialog');
+    if (activeModal) {
+        activeModal.close();
+    }
+    modalToggleButton.attr('aria-expanded', 'false');
+}
+
+// Show that a copy to clipboard was successful.
+const showClipboardCopySuccessful = () => {
+    // Indicate successful copy here
+    $('.permalink .success').addClass('active').show();
+    $('.permalink .default').addClass('inactive');
+    setTimeout(function() {
+        $('.permalink .success').fadeOut(1000, function() {
+            $(this).removeClass('active');
+            $('.permalink .default').removeClass('inactive');
+        });
+    }, 1500);
 };
 
 /**
@@ -74,14 +107,24 @@ const applyPreviousState = function() {
 };
 
 /**
+ * Set the permalink fragment.
+ */
+const setPermalinkFragment = function() {
+    const fragment = encodeURIComponent(JSON.stringify(FacetedBrowse.state))
+    $('.permalink').data('fragment', fragment);
+};
+
+/**
  * Render the categories of this page.
  */
 const renderCategories = function() {
     $.get(urlCategories).done(function(html) {
         sectionSidebar.html(html);
+        $('.categories-container').find('a,input,button,select').first().focus();
         $.get(urlBrowse).done(function(html) {
             sectionContent.html(html);
-    
+            setBrowseStatus();
+            setPermalinkFragment();
         }).fail(failBrowse);
     }).fail(failCategory);
 };
@@ -103,19 +146,26 @@ FacetedBrowse.setStateChangeHandler(function(facetsQuery, sortBy, sortOrder, pag
     sectionContent.text(Omeka.jsTranslate('Loading results…')).addClass('loading');
     $.get(`${urlBrowse}?${queries.join('&')}`).done(function(html) {
         sectionContent.html(html).removeClass('loading');
-
+        setBrowseStatus();
+        setPermalinkFragment();
+        if (focusOnLoad) {
+            sectionContent.focus();
+            focusOnLoad = false;
+        }
     }).fail(failBrowse);
 });
 
 // Then, set up the page for first load.
 if (FacetedBrowse.getState('categoryId')) {
     // This page has a previously saved category state.
+    focusOnLoad = true;
     $.get(urlFacets, {category_id: FacetedBrowse.getState('categoryId')}).done(function(html) {
         sectionSidebar.html(html);
         applyPreviousState();
     }).fail(failFacet);
 } else if (container.data('categoryId')) {
     // There is one category. Skip categories list and show facets list.
+    focusOnLoad = true;
     $.get(urlFacets, {category_id: container.data('categoryId')}).done(function(html) {
         sectionSidebar.html(html);
         applyPreviousState();
@@ -141,14 +191,15 @@ container.on('click', '.category', function(e) {
         queries.push(`faceted_browse_category_id=${thisCategory.data('categoryId')}`);
         $.get(`${urlBrowse}?${queries.join('&')}`).done(function(html) {
             sectionContent.html(html);
-    
+            setBrowseStatus();
+            setPermalinkFragment();
+            sectionContent.focus();
         }).fail(failBrowse);
     }).fail(failFacet);
 });
 
 // Handle a categories return click.
 container.on('click', '#categories-return', function(e) {
-    e.preventDefault();
     FacetedBrowse.resetState();
     renderCategories();
 });
@@ -162,6 +213,7 @@ container.on('click', '.next', function(e) {
         FacetedBrowse.setPaginationState(page);
         $.get(thisButton.prop('href'), function(html) {
             sectionContent.html(html);
+            setBrowseStatus();
         });
     }
 });
@@ -175,6 +227,7 @@ container.on('click', '.previous', function(e) {
         FacetedBrowse.setPaginationState(page);
         $.get(thisButton.prop('href'), function(html) {
             sectionContent.html(html);
+            setBrowseStatus();
         });
     }
 });
@@ -186,7 +239,8 @@ container.on('submit', '.pagination form', function(e) {
     FacetedBrowse.setPaginationState(thisForm.find('input[name="page"]').val());
     $.get(`${urlBrowse}?${$(this).serialize()}`, {}, function(html) {
         sectionContent.html(html);
-
+        setBrowseStatus();
+        setPermalinkFragment();
     });
 });
 
@@ -200,11 +254,34 @@ container.on('submit', 'form.sorting', function(e) {
     );
     $.get(`${urlBrowse}?${$(this).serialize()}`, {}, function(html) {
         sectionContent.html(html);
-
+        setBrowseStatus();
+        setPermalinkFragment();
     });
 });
 
-enableModal('#section-content', '#section-sidebar', '#section-sidebar-modal-toggle');
+// Handle permalink button (copy to clipboard button).
+container.on('click', '.permalink', function(e) {
+    e.preventDefault();
+    const thisButton = $(this);
+    const permalink = `${thisButton.data('url')}#${thisButton.data('fragment')}`;
+
+    if (navigator.clipboard && window.isSecureContext) {
+        // Use the browser's clipboard API if possible.
+        navigator.clipboard.writeText(permalink).then(function() {
+            showClipboardCopySuccessful();
+        });
+    } else {
+        // Fall back on the temporary input / execCommand('copy') hack.
+        const tempInput = $('<input>');
+        $('body').append(tempInput);
+        tempInput.val(permalink).select();
+        document.execCommand('copy');
+        tempInput.remove();
+        showClipboardCopySuccessful();
+    }
+});
+
+enableModal();
 mediaQuery.addListener(handleTabletChange);
 handleTabletChange(mediaQuery);
 
