@@ -11,6 +11,7 @@ Status on 2026-10-31:
 
 | Component | Prod today | Target | Notes |
 |---|---|---|---|
+| Host OS | Ubuntu, kernel 6.17.0-1022-gcp | Debian 13 (trixie) | Mark, 2026-11-07: move off Ubuntu for faster CVE fixes. Nightly unattended-upgrades and needrestart; a kernel update reboots at 07:30 UTC. |
 | PHP | 8.4.18 | 8.5.12 | 8.4 active support ends 2026-12-31. 8.5 has security support to 2029-12-31. Prod is 9 patch releases behind (8.4.27 is current). |
 | Base image | `giocomai/omeka-s-docker:v4.2.0` | `v4.2.1@sha256:9fe00058…` | Pinned by digest. The maintainer pinned PHP 8.5.12 for two PHP CVEs. Apache 2.4.65 to 2.4.69. |
 | Omeka S | 4.2.0 | 4.2.1 | Security fixes: `javascript:` URLs in navigation, cross-site search leak of private sites, `has_media=1` leak of private media. Zero schema migrations. |
@@ -127,5 +128,6 @@ Rollback: restore the dump taken before step 3, then rebuild with the previous D
 - [ ] Approve the assume-breach rebuild in the runbook (new VM, new service account, rotated secrets).
 - [ ] CustomVocab: uninstall it (inactive since the 2026-03-22 literal conversion; uninstall drops its tables) or keep it pinned at 2.1.0. Recommendation: uninstall after the rebuild.
 - [ ] Qdrant and the search index: the runbook now starts both empty and fills them with "Ingest All Items" after cutover. A restored store would keep points that no audited item backs. Cost: similar works and visual search stay empty until the ingest finishes. Accept that window, or ask for a restore-and-reconcile step instead.
+- [ ] The official `mariadb:10.11` image runs Ubuntu 22.04 on any host. Keep it, or move to Debian 13's own MariaDB 11.8 in a Debian image (a major-version upgrade and a Compose change).
 - [ ] Report the Common `--batch` bug upstream.
 - [ ] After the rebuild, move `make deploy` from laptop rsync to `git checkout <sha>` plus `scripts/fetch-omeka-modules.sh` on the VM, so prod always equals a known commit.

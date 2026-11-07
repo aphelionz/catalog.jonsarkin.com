@@ -109,25 +109,66 @@ gcloud iam service-accounts add-iam-policy-binding catalog-backups@$P.iam.gservi
 gcloud compute addresses create catalog-2026-11 --region $R --project $P
 gcloud compute instances create $NEW --zone $Z --project $P \
   --machine-type <old machine type> --boot-disk-size <old size>GB \
-  --image-family ubuntu-2404-lts-amd64 --image-project ubuntu-os-cloud \
+  --image-family debian-13 --image-project debian-cloud \
   --service-account $VMSA --scopes cloud-platform \
   --address catalog-2026-11 --tags <old tags> \
   --shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring
 gcloud compute config-ssh --project $P
 ```
 
-New VM: packages from the Ubuntu archive and Google's Ops Agent. The host gets Docker, git and unzip only.
+New VM: Debian 13 (trixie). Packages come from the Debian archive, Docker's signed apt repo and Google's repos. The host gets Docker, git, unzip and the patch tools only.
 
 ```bash
 ssh $NEW.$Z.$P
-sudo apt-get update && sudo apt-get -y upgrade
-sudo apt-get -y install docker.io docker-compose-v2 git unzip
-sudo usermod -aG docker $USER              # applies at the next login, before the Images block
+sudo apt-get update && sudo apt-get -y full-upgrade
+sudo apt-get -y install git unzip gnupg unattended-upgrades needrestart
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+gpg --show-keys /etc/apt/keyrings/docker.asc   # expect 9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
+sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<'EOF'
+Types: deb
+URIs: https://download.docker.com/linux/debian
+Suites: trixie
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+sudo apt-get update
+sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER              # applies after the reboot below
 curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh && sudo bash add-google-cloud-ops-agent-repo.sh --also-install
 sudo mkdir -p /opt/catalog /var/www/omeka-s/files && sudo chown $USER /opt/catalog /var/www/omeka-s/files
 git clone https://github.com/aphelionz/catalog.jonsarkin.com.git /opt/catalog
 cd /opt/catalog && git checkout <SHA> && git log -1 --oneline
 bash scripts/fetch-omeka-modules.sh
+```
+
+Patching: every night, unattended-upgrades installs fixes from Debian security, Docker and Google's repos. Apt's timer starts it between 06:00 and 07:00 UTC, after the backup jobs. needrestart restarts each service whose libraries changed. An update that needs a reboot (a new kernel) reboots the VM at 07:30 UTC. The compose services come back on their `restart` policies.
+
+```bash
+sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
+sudo tee /etc/apt/apt.conf.d/52catalog-upgrades >/dev/null <<'EOF'
+Unattended-Upgrade::Origins-Pattern {
+  "origin=Docker";
+  "site=packages.cloud.google.com";
+};
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "07:30";
+EOF
+echo '$nrconf{restart} = "a";' | sudo tee /etc/needrestart/conf.d/catalog.conf
+sudo unattended-upgrade --dry-run --debug 2>&1 | grep -i 'allowed origins'   # expect Debian-Security, Docker, packages.cloud.google.com
+sudo reboot
+```
+
+SSH in again. The reboot loads the patched kernel and applies the docker group.
+
+```bash
+ssh $NEW.$Z.$P
+uname -r; [ -e /run/reboot-required ] && echo "REBOOT STILL REQUIRED"
+docker compose version; gcloud version | head -1   # gcloud ships with GCE Debian images
+df / | tail -1                                     # root device, for ROOT_DEVICE in step 9
 ```
 
 Secrets: generate new ones. Create the new Anthropic key and the new Gmail app password first, then paste them.
@@ -149,7 +190,7 @@ touch acme.json && chmod 600 acme.json
 
 `COMPOSE_FILE` makes every plain `docker compose` on the VM (the backup scripts included) read the prod file. The old VM ran `db`, `qdrant` and `clip-api` from the dev file.
 
-Images: build both locally. The prod compose names `aphelionz/sarkin-clip-api`; a local build keeps Docker Hub out of the path, so skip `docker compose pull`. Log out and SSH in again first, so the docker group applies.
+Images: build both locally. The prod compose names `aphelionz/sarkin-clip-api`; a local build keeps Docker Hub out of the path, so skip `docker compose pull`.
 
 ```bash
 cd /opt/catalog
@@ -413,7 +454,7 @@ sudo install -o $USER -m 644 /dev/null /var/log/catalog-backup.log
 /opt/catalog/scripts/backup-monitor.sh bootstrap   # weekly and monthly stamps from the bucket
 ls -l /var/lib/catalog-backup                      # expect four last-success-* stamps
 crontab - <<'EOF'
-PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SHELL=/bin/bash
 0 2 * * *  /opt/catalog/scripts/backup-to-gcs.sh daily
 0 3 * * *  /opt/catalog/scripts/backup-to-gcs.sh files
@@ -424,7 +465,7 @@ SHELL=/bin/bash
 EOF
 ```
 
-Laptop: re-run `scripts/setup-gcp-monitoring.sh` so host alerts follow the new instance. Update the SSH host alias in `Makefile` (`PROD_HOST`) and `omeka/ansible/inventory.ini` to `$NEW.$Z.$P`. That ends the deploy freeze from step 0.
+Laptop: in `scripts/setup-gcp-monitoring.sh`, set `VM_NAME` to `$NEW` and `ROOT_DEVICE` to the device step 4's `df /` printed. Re-run it so host alerts follow the new instance. Update the SSH host alias in `Makefile` (`PROD_HOST`) and `omeka/ansible/inventory.ini` to `$NEW.$Z.$P`. That ends the deploy freeze from step 0.
 
 End the content freeze.
 
