@@ -11,7 +11,7 @@ Status on 2026-10-31:
 
 | Component | Prod today | Target | Notes |
 |---|---|---|---|
-| Host OS | Ubuntu, kernel 6.17.0-1022-gcp | Debian 13 (trixie) | Mark, 2026-11-07: move off Ubuntu for faster CVE fixes. Nightly unattended-upgrades and needrestart; a kernel update reboots at 07:30 UTC. |
+| Host OS | Ubuntu, kernel 6.17.0-1022-gcp | Debian 13 (trixie) | Mark, 2026-11-07: move off Ubuntu for faster CVE fixes. Nightly unattended-upgrades (on from step 9) and needrestart. Docker stays on one major with live-restore. A kernel update reboots at 07:30 UTC. |
 | PHP | 8.4.18 | 8.5.12 | 8.4 active support ends 2026-12-31. 8.5 has security support to 2029-12-31. Prod is 9 patch releases behind (8.4.27 is current). |
 | Base image | `giocomai/omeka-s-docker:v4.2.0` | `v4.2.1@sha256:9fe00058…` | Pinned by digest. The maintainer pinned PHP 8.5.12 for two PHP CVEs. Apache 2.4.65 to 2.4.69. |
 | Omeka S | 4.2.0 | 4.2.1 | Security fixes: `javascript:` URLs in navigation, cross-site search leak of private sites, `has_media=1` leak of private media. Zero schema migrations. |

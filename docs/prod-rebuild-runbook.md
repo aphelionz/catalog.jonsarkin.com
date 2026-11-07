@@ -116,15 +116,24 @@ gcloud compute instances create $NEW --zone $Z --project $P \
 gcloud compute config-ssh --project $P
 ```
 
-New VM: Debian 13 (trixie). Packages come from the Debian archive, Docker's signed apt repo and Google's repos. The host gets Docker, git, unzip and the patch tools only.
+New VM: Debian 13 (trixie). Packages come from the Debian archive, Docker's signed apt repo and Google's repos. The host gets Docker, git, unzip, cron, file and the patch tools only.
+
+`apt_get` runs apt with zero prompts, so a pasted block runs line by line. The needrestart and Docker settings go in before the packages that read them. A Docker key mismatch deletes the key, so apt refuses Docker's repo and the docker-ce install fails.
 
 ```bash
 ssh $NEW.$Z.$P
-sudo apt-get update && sudo apt-get -y full-upgrade
-sudo apt-get -y install git unzip gnupg unattended-upgrades needrestart
+apt_get() { sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o DPkg::Lock::Timeout=600 \
+  -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$@"; }
+sudo install -d /etc/needrestart/conf.d /etc/docker
+printf '%s\n' '$nrconf{restart} = "a";' '$nrconf{kernelhints} = -1;' | sudo tee /etc/needrestart/conf.d/catalog.conf >/dev/null
+echo '{"live-restore": true}' | sudo tee /etc/docker/daemon.json >/dev/null
+apt_get update && apt_get full-upgrade
+apt_get install git unzip gnupg cron file unattended-upgrades needrestart
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-gpg --show-keys /etc/apt/keyrings/docker.asc   # expect 9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
+gpg --show-keys --with-colons /etc/apt/keyrings/docker.asc \
+  | grep -qx 'fpr:::::::::9DC858229FC7DD38854AE2D88D81803C0EBFCD88:' \
+  || { sudo rm -f /etc/apt/keyrings/docker.asc; echo "DOCKER KEY MISMATCH: stop and investigate"; }
 sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<'EOF'
 Types: deb
 URIs: https://download.docker.com/linux/debian
@@ -132,23 +141,22 @@ Suites: trixie
 Components: stable
 Signed-By: /etc/apt/keyrings/docker.asc
 EOF
-sudo apt-get update
-sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt_get update
+apt_get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo usermod -aG docker $USER              # applies after the reboot below
-curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh && sudo bash add-google-cloud-ops-agent-repo.sh --also-install
+curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh \
+  && sudo DEBIAN_FRONTEND=noninteractive bash add-google-cloud-ops-agent-repo.sh --also-install
 sudo mkdir -p /opt/catalog /var/www/omeka-s/files && sudo chown $USER /opt/catalog /var/www/omeka-s/files
 git clone https://github.com/aphelionz/catalog.jonsarkin.com.git /opt/catalog
 cd /opt/catalog && git checkout <SHA> && git log -1 --oneline
 bash scripts/fetch-omeka-modules.sh
 ```
 
-Patching: every night, unattended-upgrades installs fixes from Debian security, Docker and Google's repos. Apt's timer starts it between 06:00 and 07:00 UTC, after the backup jobs. needrestart restarts each service whose libraries changed. An update that needs a reboot (a new kernel) reboots the VM at 07:30 UTC. The compose services come back on their `restart` policies.
+Patching: unattended-upgrades installs fixes from Debian security, Docker and Google's repos. Apt's timer runs it between 06:00 and 07:00 UTC, after the backup jobs. needrestart restarts each service whose libraries changed. An update that needs a reboot (a new kernel) reboots the VM at 07:30 UTC. The compose services come back on their `restart` policies.
+
+Docker stays on the major version installed here, and live-restore keeps containers up while the daemon updates. To move to a new Docker major, test it first, then edit `/etc/apt/preferences.d/docker-major`. The nightly run stays off until step 9, so the box stays up through restore and cutover.
 
 ```bash
-sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null <<'EOF'
-APT::Periodic::Update-Package-Lists "1";
-APT::Periodic::Unattended-Upgrade "1";
-EOF
 sudo tee /etc/apt/apt.conf.d/52catalog-upgrades >/dev/null <<'EOF'
 Unattended-Upgrade::Origins-Pattern {
   "origin=Docker";
@@ -157,8 +165,21 @@ Unattended-Upgrade::Origins-Pattern {
 Unattended-Upgrade::Automatic-Reboot "true";
 Unattended-Upgrade::Automatic-Reboot-Time "07:30";
 EOF
-echo '$nrconf{restart} = "a";' | sudo tee /etc/needrestart/conf.d/catalog.conf
-sudo unattended-upgrade --dry-run --debug 2>&1 | grep -i 'allowed origins'   # expect Debian-Security, Docker, packages.cloud.google.com
+sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "0";
+EOF
+major() { dpkg-query -W -f='${Version}' "$1" | sed -E 's/^([0-9]+:)?([0-9]+)\..*/\1\2/'; }
+sudo tee /etc/apt/preferences.d/docker-major >/dev/null <<EOF
+Package: docker-ce docker-ce-cli
+Pin: version $(major docker-ce).*
+Pin-Priority: 990
+
+Package: containerd.io
+Pin: version $(major containerd.io).*
+Pin-Priority: 990
+EOF
+grep Pin: /etc/apt/preferences.d/docker-major   # expect two majors, such as 5:29.* and 2.*
 sudo reboot
 ```
 
@@ -166,9 +187,16 @@ SSH in again. The reboot loads the patched kernel and applies the docker group.
 
 ```bash
 ssh $NEW.$Z.$P
-uname -r; [ -e /run/reboot-required ] && echo "REBOOT STILL REQUIRED"
-docker compose version; gcloud version | head -1   # gcloud ships with GCE Debian images
-df / | tail -1                                     # root device, for ROOT_DEVICE in step 9
+sudo needrestart -b -k | grep KSTA         # expect NEEDRESTART-KSTA: 1 (newest kernel running)
+docker compose version; docker info -f '{{.LiveRestoreEnabled}}'   # expect true
+command -v gcloud crontab file             # expect three paths; Google lists gcloud as installed on Debian 13
+df / | tail -1                             # root device, for ROOT_DEVICE in step 9
+```
+
+Laptop: accept the patched kernel's boot measurements as the Shielded VM integrity baseline.
+
+```bash
+gcloud compute instances update $NEW --zone $Z --project $P --shielded-learn-integrity-policy
 ```
 
 Secrets: generate new ones. Create the new Anthropic key and the new Gmail app password first, then paste them.
@@ -465,7 +493,20 @@ SHELL=/bin/bash
 EOF
 ```
 
-Laptop: in `scripts/setup-gcp-monitoring.sh`, set `VM_NAME` to `$NEW` and `ROOT_DEVICE` to the device step 4's `df /` printed. Re-run it so host alerts follow the new instance. Update the SSH host alias in `Makefile` (`PROD_HOST`) and `omeka/ansible/inventory.ini` to `$NEW.$Z.$P`. That ends the deploy freeze from step 0.
+Turn on nightly patching. From here on, a kernel update reboots the VM at 07:30 UTC.
+
+```bash
+sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
+apt-config dump | grep 'Origins-Pattern::'   # expect Debian-Security, origin=Docker, site=packages.cloud.google.com
+apt-cache policy docker-ce | sed -n 2,3p     # Installed and Candidate on the same major
+```
+
+Each kernel reboot changes the boot measurements, so Shielded VM logs a late-boot integrity failure. When one appears, look for a kernel install just before 07:30 UTC in `/var/log/unattended-upgrades/unattended-upgrades.log`. If one matches, re-learn the baseline with step 4's `--shielded-learn-integrity-policy` command. Treat any other integrity failure as an incident.
+
+Laptop: in `scripts/setup-gcp-monitoring.sh`, set `VM_NAME="catalog-2026-11"`. Set `ROOT_DEVICE` to the device from step 4's `df /` once Metrics Explorer shows that same device name on `agent.googleapis.com/disk/percent_used` for the new VM. Commit the change to `main`, so a later re-run keeps both values. Re-run the script so host alerts follow the new instance. Update the SSH host alias in `Makefile` (`PROD_HOST`) and `omeka/ansible/inventory.ini` to `$NEW.$Z.$P`. That ends the deploy freeze from step 0.
 
 End the content freeze.
 
