@@ -32,9 +32,9 @@ OLDSA=915596988253-compute@developer.gserviceaccount.com
 2. In the main checkout. The dev DB moves to MariaDB 11.8 by dump and restore, the same logical path prod takes in step 5:
 
 ```bash
+make backup-db                                 # dev DB on 10.11, before the pull changes the db image
 git pull
 make modules                                   # pinned third-party modules
-make backup-db                                 # dev DB, before the engine change
 docker compose rm -sf db && docker volume rm catalogjonsarkincom_dbdata
 docker compose up -d --build db omeka          # MariaDB 11.8, PHP 8.5.12 + Omeka 4.2.1
 make restore-db BACKUP=$(ls -t backups/omeka-*.sql.gz | head -1)
@@ -471,7 +471,7 @@ Keep the old disk and the forensic snapshot for 90 days. Deletion is Mark's call
 
 ## 9. Backups and monitoring on the new VM
 
-The backup jobs run as the SSH user. They write a log, a lock and per-job success stamps. Provision the root-owned paths, prove one full run, and seed the weekly and monthly stamps from the bucket before cron starts. Without those stamps the monitor reports both jobs as stale at once. The jobs keep their own log, so `MAILTO=""` keeps their output out of exim4's local mailbox. Debian's MariaDB fixes reach the `db` container only through a rebuild, so a Sunday 05:30 UTC job rebuilds the image and recreates the container (about 15 s of DB downtime, after the weekly backup and before the apt window).
+The backup jobs run as the SSH user. They write a log, a lock and per-job success stamps. Provision the root-owned paths, prove one full run, and seed the weekly and monthly stamps from the bucket before cron starts. Without those stamps the monitor reports both jobs as stale at once. The jobs keep their own log, so `MAILTO=""` keeps their output out of exim4's local mailbox. Debian's MariaDB fixes reach the `db` container only through a rebuild, so a Sunday 05:30 UTC job rebuilds the image and recreates the container (about 15 s of DB downtime, after the weekly backup and before the apt window). `backup-monitor.sh` reports the running image's age, and the "Catalog DB image stale" alert fires after 8 days.
 
 ```bash
 sudo install -d -o $USER /var/lib/catalog-backup
@@ -489,7 +489,7 @@ MAILTO=""
 0 5 1 * *  /opt/catalog/scripts/backup-to-gcs.sh monthly
 17 * * * * /opt/catalog/scripts/backup-monitor.sh >/dev/null 2>&1
 30 1 * * * /opt/catalog/scripts/prune-sessions.sh >/dev/null 2>&1
-30 5 * * 0 cd /opt/catalog && { docker compose build --pull --no-cache db && docker compose up -d db && docker image prune -f; } >> /var/log/catalog-backup.log 2>&1
+30 5 * * 0 cd /opt/catalog && { docker compose build --no-cache db && docker compose up -d db && docker image prune -f; } >> /var/log/catalog-backup.log 2>&1
 EOF
 ```
 
@@ -534,8 +534,28 @@ End the content freeze.
 
 - Before step 7: users still reach the old VM. Stop or delete the new one.
 - Upgrade problem on the new VM: restore `/tmp/pre-upgrade.sql.gz`. Check out `omeka/Dockerfile` and `omeka/volume/modules/FacetedBrowse` from `19acfb1`, the last `main` commit before the upgrade (`git checkout 19acfb1 -- <paths>`). Keep the current `scripts/fetch-omeka-modules.sh` (it is new in this upgrade) and change its `PINS` to the versions, checksums and URLs below. Then run `bash scripts/fetch-omeka-modules.sh`, `docker compose build omeka && docker compose up -d omeka`.
-- MariaDB 11.8 problem: dump the DB (`mariadb-dump -uroot omeka`), set `db` back to `image: mariadb:10.11` (a Compose change), start it on a new volume and import the dump. Tested 2026-11-08: an upgraded 11.8 DB imported into 10.11 with all 53 tables checksum-identical.
+- MariaDB 11.8 problem: move the DB to `mariadb:10.11` on a new volume, as below. The 11.8 volume stays as it is.
 - New VM unusable after cutover: point DNS back to the old IP and start the old VM. It counts as compromised, so use it for hours at most.
+
+MariaDB rollback. Dump the DB and check the dump first:
+
+```bash
+cd /opt/catalog
+docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb-dump -uroot --single-transaction omeka' | gzip > /tmp/rollback.sql.gz
+gunzip -c /tmp/rollback.sql.gz | grep -c '^INSERT INTO `item`'   # expect 1 or more
+docker compose stop omeka db
+```
+
+Then a Compose change in `docker-compose.prod.yml`: replace `build:` and `image:` on `db` with `image: mariadb:10.11`, mount `dbdata1011:/var/lib/mysql`, and add `dbdata1011:` under `volumes:`. Then load the dump as the app user:
+
+```bash
+docker compose up -d db
+until [ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q db)")" = healthy ]; do sleep 2; done
+gunzip -c /tmp/rollback.sql.gz | docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" omeka'
+docker compose up -d omeka
+```
+
+Tested 2026-11-08: a dump of an upgraded 11.8 DB imported into 10.11 with all 53 tables checksum-identical.
 
 Pre-upgrade pins:
 

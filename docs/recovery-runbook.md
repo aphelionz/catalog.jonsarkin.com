@@ -74,7 +74,7 @@ docker compose -f docker-compose.prod.yml start omeka
 
 On a fresh VM with an empty `dbdata` volume, `docker compose -f docker-compose.prod.yml up -d db` first, wait for healthy, then import.
 
-A dump taken on MariaDB 10.11 (every backup from before the 2026-11 rebuild) carries 10.11's `mysql` system tables. After importing one, and before the restart, run `mariadb-upgrade --force -uroot` in the `db` container with the password that worked for the import. The datadir already reads as 11.8, so a plain `mariadb-upgrade` skips the work. Tested 2026-11-08 on a dev dump: zero errors, and the restart loaded the dump's grants.
+Every backup from before the 2026-11 rebuild comes from the VM treated as compromised, and its `mysql` tables hold that VM's DB users and passwords. Restore one only through [prod-rebuild-runbook.md](prod-rebuild-runbook.md) step 5: the scratch import with `--one-database`, the audit queries, the re-export and the app-user import.
 
 ## 4. Restore files (about 15 min for everything)
 
