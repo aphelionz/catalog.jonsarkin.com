@@ -7,8 +7,8 @@ Each numbered step needs Mark's explicit go-ahead (CLAUDE.md guardrails). Run `g
 ```mermaid
 flowchart LR
   S0[0 Merge, dev stack] --> S1[1 Snapshot old VM] --> S2[2 GCP audit]
-  S2 --> S4[4 Build new VM] --> S5[5 Restore + audit data] --> S6[6 Upgrade + verify]
-  S6 --> S7[7 Cutover + ingest] --> S8[8 Stop old VM, contain its SA]
+  S2 --> S4[4 Build new VM] --> S5[5 Restore + audit data] --> S6[6 Upgrade, verify, ingest]
+  S6 --> S7[7 Cutover] --> S8[8 Stop old VM, contain its SA]
   S8 --> S9[9 Backups + monitoring] --> S10[10 Rotate + revoke]
 ```
 
@@ -28,12 +28,16 @@ OLDSA=915596988253-compute@developer.gserviceaccount.com
 > [!warning] Deploy freeze
 > From the merge until step 9 changes `PROD_HOST`, run zero `make deploy`. `PROD_HOST` still names the old VM. A deploy there would push the new modules onto the old DB and break faceted browse on the live site.
 
-1. Merge the upgrade branch into `main`. Record the merge commit as `SHA`.
-2. In the main checkout:
+1. Merge the MariaDB 11.8 PR into `main`. Record its merge commit as `SHA`.
+2. In the main checkout. The dev DB moves to MariaDB 11.8 by dump and restore, the same logical path prod takes in step 5:
 
 ```bash
+git pull
 make modules                                   # pinned third-party modules
-docker compose up -d --build omeka             # PHP 8.5.12 + Omeka 4.2.1 image
+make backup-db                                 # dev DB, before the engine change
+docker compose rm -sf db && docker volume rm catalogjonsarkincom_dbdata
+docker compose up -d --build db omeka          # MariaDB 11.8, PHP 8.5.12 + Omeka 4.2.1
+make restore-db BACKUP=$(ls -t backups/omeka-*.sql.gz | head -1)
 ```
 
 3. Admin > Modules at localhost:8888: Upgrade Common, then Log, BulkEdit, Custom Vocab, Faceted Browse. The Faceted Browse upgrade adds the missing `thumbnail_type` column itself.
@@ -213,11 +217,11 @@ touch acme.json && chmod 600 acme.json
 
 `COMPOSE_FILE` makes every plain `docker compose` on the VM (the backup scripts included) read the prod file. The old VM ran `db`, `qdrant` and `clip-api` from the dev file.
 
-Images: build both locally. The prod compose names `aphelionz/sarkin-clip-api`; a local build keeps Docker Hub out of the path, so skip `docker compose pull`.
+Images: build all three locally. `db` is MariaDB 11.8 from Debian 13 packages (`mariadb/`). The prod compose names `aphelionz/sarkin-clip-api`; a local build keeps Docker Hub out of the path, so skip `docker compose pull`.
 
 ```bash
 cd /opt/catalog
-docker compose build omeka
+docker compose build db omeka
 docker build -t aphelionz/sarkin-clip-api:latest -f sarkin-clip/Dockerfile.api sarkin-clip/
 docker compose up -d db
 ```
@@ -239,7 +243,7 @@ G="gcloud storage --impersonate-service-account=catalog-backups@folkloric-rite-4
 D=/tmp/restore; mkdir -p $D
 $G ls -l gs://catalog-jonsarkin-backups/daily/ | tail -3
 $G cp gs://catalog-jonsarkin-backups/daily/omeka-<stamp>.sql.gz $D/
-docker run -d --name audit -e MARIADB_ROOT_PASSWORD=scratch mariadb:10.11
+docker run -d --name audit -e MARIADB_ROOT_PASSWORD=scratch catalog-mariadb:11.8
 until docker exec audit healthcheck.sh --connect; do sleep 1; done
 docker exec -e MYSQL_PWD=scratch audit mariadb -uroot -e "CREATE DATABASE omeka"
 gunzip -c $D/omeka-*.sql.gz | docker exec -i -e MYSQL_PWD=scratch audit mariadb -uroot --one-database omeka
@@ -306,7 +310,7 @@ sudo chown -R 33:33 /var/www/omeka-s/files
 
 The first `find` is an inventory of extensions. Delete every hit from the second `find`, the code sweep (PHP, PHTML, PHAR, `.htaccess`, JavaScript). Review the SVG, HTML and MIME-type hits with Mark before deleting.
 
-Qdrant and the search index start empty; skip recovery runbook §5. A restored store keeps every point and row it held, and an ingest only overwrites the items it touches. Points for deleted items, or an attacker's points, would survive. Step 7 fills both stores from the audited DB. The FTS index needs nothing: clip-api creates it on the first ingest. Qdrant needs the empty collection (tested against Qdrant v1.16 on 2026-10-31):
+Qdrant and the search index start empty; skip recovery runbook §5. A restored store keeps every point and row it held, and an ingest only overwrites the items it touches. Points for deleted items, or an attacker's points, would survive. Step 6 fills both stores from the audited DB, before cutover. The FTS index needs nothing: clip-api creates it on the first ingest. Qdrant needs the empty collection (tested against Qdrant v1.16 on 2026-10-31):
 
 ```bash
 cd /opt/catalog && docker compose up -d qdrant clip-api
@@ -325,7 +329,7 @@ for field, kind in [("omeka_item_id", "integer"), ("year", "integer"), ("subject
 PY
 ```
 
-## 6. Upgrade and verify on the new VM (30 min)
+## 6. Upgrade, verify and ingest on the new VM (30 min plus the ingest)
 
 ```bash
 cd /opt/catalog
@@ -359,7 +363,8 @@ docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot
   "ALTER TABLE value ADD INDEX idx_property_value_resource (property_id, value_resource_id), ALGORITHM=INPLACE, LOCK=NONE"'
 ```
 
-3. Check: faceted browse with a filter, an item page, RapidEditor loads, Enrich Fields loads, ICC Thumbnailer page, a test upload through Simple Upload (its thumbnails keep the ICC profile), "Forgot password" email arrives. Similar works and visual search stay empty until the ingest in step 7.
+3. Check: faceted browse with a filter, an item page, RapidEditor loads, Enrich Fields loads, ICC Thumbnailer page, a test upload through Simple Upload (its thumbnails keep the ICC profile), "Forgot password" email arrives.
+4. Admin > Enrich Fields > Ingest All Items. It calls clip-api only (zero Claude cost) and fills Qdrant and the search index from the audited DB. The job rewrites each image URL to `http://omeka:80/files/`, so it reads over the internal Docker network and runs before the DNS switch. Users stay on the old VM until step 7, so similar works have zero empty window. Follow the job in Admin > Jobs. When it finishes, check similar works on an item page and a visual search, by IP.
 
 ## 7. Cutover (15 min plus DNS)
 
@@ -372,8 +377,6 @@ docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot
 curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/api/items   # 200
 curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/            # 301
 ```
-
-5. Admin > Enrich Fields > Ingest All Items. It calls clip-api only (zero Claude cost) and fills Qdrant and the search index from the audited DB. It runs after the DNS switch because clip-api fetches each image from `catalog.jonsarkin.com`, which named the old VM until now. Follow it in Admin > Jobs. When it finishes, check similar works on an item page and a visual search.
 
 ## 8. Stop the old VM and contain its identity
 
@@ -405,7 +408,7 @@ New VM: load `late.sql` into a scratch container that holds only the two empty t
 
 ```bash
 cd /opt/catalog
-docker run -d --name late -e MARIADB_ROOT_PASSWORD=scratch -e MARIADB_DATABASE=omeka mariadb:10.11
+docker run -d --name late -e MARIADB_ROOT_PASSWORD=scratch -e MARIADB_DATABASE=omeka catalog-mariadb:11.8
 until docker exec late healthcheck.sh --connect; do sleep 1; done
 LATE() { docker exec -i -e MYSQL_PWD=scratch late "$@"; }
 docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb-dump -u"$MARIADB_USER" --no-data --skip-triggers \
@@ -468,7 +471,7 @@ Keep the old disk and the forensic snapshot for 90 days. Deletion is Mark's call
 
 ## 9. Backups and monitoring on the new VM
 
-The backup jobs run as the SSH user. They write a log, a lock and per-job success stamps. Provision the root-owned paths, prove one full run, and seed the weekly and monthly stamps from the bucket before cron starts. Without those stamps the monitor reports both jobs as stale at once. The jobs keep their own log, so `MAILTO=""` keeps their output out of exim4's local mailbox.
+The backup jobs run as the SSH user. They write a log, a lock and per-job success stamps. Provision the root-owned paths, prove one full run, and seed the weekly and monthly stamps from the bucket before cron starts. Without those stamps the monitor reports both jobs as stale at once. The jobs keep their own log, so `MAILTO=""` keeps their output out of exim4's local mailbox. Debian's MariaDB fixes reach the `db` container only through a rebuild, so a Sunday 05:30 UTC job rebuilds the image and recreates the container (about 15 s of DB downtime, after the weekly backup and before the apt window).
 
 ```bash
 sudo install -d -o $USER /var/lib/catalog-backup
@@ -486,6 +489,7 @@ MAILTO=""
 0 5 1 * *  /opt/catalog/scripts/backup-to-gcs.sh monthly
 17 * * * * /opt/catalog/scripts/backup-monitor.sh >/dev/null 2>&1
 30 1 * * * /opt/catalog/scripts/prune-sessions.sh >/dev/null 2>&1
+30 5 * * 0 cd /opt/catalog && { docker compose build --pull --no-cache db && docker compose up -d db && docker image prune -f; } >> /var/log/catalog-backup.log 2>&1
 EOF
 ```
 
@@ -529,7 +533,8 @@ End the content freeze.
 ## Rollback
 
 - Before step 7: users still reach the old VM. Stop or delete the new one.
-- Upgrade problem on the new VM: restore `/tmp/pre-upgrade.sql.gz`. Check out `omeka/Dockerfile` and `omeka/volume/modules/FacetedBrowse` from the merge's first parent (`git checkout <SHA>^1 -- <paths>`). Keep the current `scripts/fetch-omeka-modules.sh` (it is new in this upgrade) and change its `PINS` to the versions, checksums and URLs below. Then run `bash scripts/fetch-omeka-modules.sh`, `docker compose build omeka && docker compose up -d omeka`.
+- Upgrade problem on the new VM: restore `/tmp/pre-upgrade.sql.gz`. Check out `omeka/Dockerfile` and `omeka/volume/modules/FacetedBrowse` from `19acfb1`, the last `main` commit before the upgrade (`git checkout 19acfb1 -- <paths>`). Keep the current `scripts/fetch-omeka-modules.sh` (it is new in this upgrade) and change its `PINS` to the versions, checksums and URLs below. Then run `bash scripts/fetch-omeka-modules.sh`, `docker compose build omeka && docker compose up -d omeka`.
+- MariaDB 11.8 problem: dump the DB (`mariadb-dump -uroot omeka`), set `db` back to `image: mariadb:10.11` (a Compose change), start it on a new volume and import the dump. Tested 2026-11-08: an upgraded 11.8 DB imported into 10.11 with all 53 tables checksum-identical.
 - New VM unusable after cutover: point DNS back to the old IP and start the old VM. It counts as compromised, so use it for hours at most.
 
 Pre-upgrade pins:

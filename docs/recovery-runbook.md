@@ -44,7 +44,7 @@ Use the newest `daily/` unless the problem is bad data that is already in it; th
 Prove the dump in a throwaway container before it goes anywhere near prod.
 
 ```bash
-docker run -d --name restore-scratch -e MARIADB_ROOT_PASSWORD=scratch mariadb:10.11
+docker run -d --name restore-scratch -e MARIADB_ROOT_PASSWORD=scratch catalog-mariadb:11.8   # docker compose build db
 until docker exec restore-scratch healthcheck.sh --connect; do sleep 1; done
 gunzip -c $D/omeka-*.sql.gz | docker exec -i -e MYSQL_PWD=scratch restore-scratch mariadb -uroot
 docker exec -e MYSQL_PWD=scratch restore-scratch mariadb -uroot -N -e \
@@ -73,6 +73,8 @@ docker compose -f docker-compose.prod.yml start omeka
 ```
 
 On a fresh VM with an empty `dbdata` volume, `docker compose -f docker-compose.prod.yml up -d db` first, wait for healthy, then import.
+
+A dump taken on MariaDB 10.11 (every backup from before the 2026-11 rebuild) carries 10.11's `mysql` system tables. After importing one, and before the restart, run `mariadb-upgrade --force -uroot` in the `db` container with the password that worked for the import. The datadir already reads as 11.8, so a plain `mariadb-upgrade` skips the work. Tested 2026-11-08 on a dev dump: zero errors, and the restart loaded the dump's grants.
 
 ## 4. Restore files (about 15 min for everything)
 
