@@ -43,6 +43,7 @@ STALE_DAILY=26
 STALE_FILES=26
 STALE_WEEKLY=192     # 8 days
 STALE_MONTHLY=792    # 33 days
+STALE_DBIMAGE=192    # 8 days; the db image is rebuilt every Sunday
 HEARTBEAT_ABSENT=10800   # seconds; watchdog runs hourly, alert after 3 misses
 DISK_PCT=75
 
@@ -244,7 +245,7 @@ upsert_descriptor "custom.googleapis.com/catalog/backup_age_hours" '{
   "metricKind": "GAUGE", "valueType": "DOUBLE", "unit": "h",
   "displayName": "Catalog backup age (hours)",
   "description": "Hours since the named backup job last completed successfully, reported hourly by backup-monitor.sh on the catalog VM.",
-  "labels": [{"key": "job", "valueType": "STRING", "description": "daily, weekly, monthly, or files"}]
+  "labels": [{"key": "job", "valueType": "STRING", "description": "daily, weekly, monthly, files, or dbimage"}]
 }'
 upsert_descriptor "custom.googleapis.com/catalog/monitor_heartbeat" '{
   "type": "custom.googleapis.com/catalog/monitor_heartbeat",
@@ -282,6 +283,11 @@ upsert_policy "Catalog backup stale: monthly" \
   "$(threshold_policy "Monthly DB backup older than ${STALE_MONTHLY}h" \
      "${AGE} AND metric.labels.job=\"monthly\"" "$STALE_MONTHLY" \
      "The 1st-of-month 05:00 UTC DB dump has not completed successfully.")"
+
+upsert_policy "Catalog DB image stale" \
+  "$(threshold_policy "DB container image older than ${STALE_DBIMAGE}h" \
+     "${AGE} AND metric.labels.job=\"dbimage\"" "$STALE_DBIMAGE" \
+     "The Sunday 05:30 UTC rebuild of the db image has failed, so the DB container misses Debian's MariaDB fixes. Check /var/log/catalog-backup.log on ${VM_NAME} and run the crontab's rebuild line by hand.")"
 
 echo "Watchdog liveness:"
 upsert_policy "Catalog backup watchdog down" "$(jq -n \
