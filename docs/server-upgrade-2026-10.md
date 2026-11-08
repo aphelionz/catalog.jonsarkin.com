@@ -11,7 +11,7 @@ Status on 2026-10-31:
 
 | Component | Prod today | Target | Notes |
 |---|---|---|---|
-| Host OS | Ubuntu, kernel 6.17.0-1022-gcp | Debian 13 (trixie) | Mark, 2026-11-07: move off Ubuntu for faster CVE fixes. Nightly unattended-upgrades (on from step 9) and needrestart. Docker stays on one major with live-restore. A kernel update reboots at 07:30 UTC. |
+| Host OS | Ubuntu, kernel 6.17.0-1022-gcp | Debian 13 (trixie) | Mark, 2026-11-07: move off Ubuntu for faster CVE fixes. Nightly unattended-upgrades (on from step 9) and needrestart. Docker stays on one major; a Docker update restarts the containers. A kernel update reboots at 07:30 UTC. |
 | PHP | 8.4.18 | 8.5.12 | 8.4 active support ends 2026-12-31. 8.5 has security support to 2029-12-31. Prod is 9 patch releases behind (8.4.27 is current). |
 | Base image | `giocomai/omeka-s-docker:v4.2.0` | `v4.2.1@sha256:9fe00058…` | Pinned by digest. The maintainer pinned PHP 8.5.12 for two PHP CVEs. Apache 2.4.65 to 2.4.69. |
 | Omeka S | 4.2.0 | 4.2.1 | Security fixes: `javascript:` URLs in navigation, cross-site search leak of private sites, `has_media=1` leak of private media. Zero schema migrations. |
@@ -97,7 +97,7 @@ Pre-existing, seen on both stacks: a `$ is not defined` console error on the fac
 
 ## Debian 13 test VM, 2026-11-07
 
-A throwaway `debian-13` VM (e2-standard-2, Shielded VM, no service account) ran the runbook's step 4 blocks as an operator paste, then got deleted. The fresh image shipped Debian 13.7 with unattended-upgrades already on, and with gcloud, cron and file installed.
+A throwaway `debian-13` VM (e2-standard-2, Shielded VM, zero GCP identity) ran the runbook's step 4 blocks as an operator paste, then got deleted. The fresh image shipped Debian 13.7 with unattended-upgrades already on, and with gcloud, cron and file installed.
 
 | Check | Result |
 |---|---|
@@ -106,7 +106,16 @@ A throwaway `debian-13` VM (e2-standard-2, Shielded VM, no service account) ran 
 | Post-reboot checks | `NEEDRESTART-KSTA: 1`, live-restore `true`, gcloud, crontab and file present, root device `/dev/sda1`. |
 | Shielded VM | The reboot onto the new kernel logged a late-boot failure. After `--shielded-learn-integrity-policy`, the next three boots passed. |
 | MariaDB stops | `docker compose stop db` shut down cleanly in 1 s with a 60 s stop timeout. A host reboot under write load (343,500 rows) came back with zero crash recovery. |
-| Step 9 patching block | Origins list Debian security, `origin=Docker` and `site=packages.cloud.google.com`; Google's repos sit on that site. |
+| Step 9 patching block | Origins list Debian stable and security, `origin=Docker` and `site=packages.cloud.google.com`; Google's repos sit on that site. |
+
+The review on 2026-11-08 changed the key check, the pins and live-restore (now off). Local tests of those changes:
+
+| Check | Result |
+|---|---|
+| Key check, `debian:trixie` container | Docker's key file passed. Docker's key with a second key appended or prepended, the second key alone, and an HTML page all got deleted. |
+| Major pins, same container | Installed Docker 28.5.2, containerd 1.7.29, Compose 2.40.3 and buildx 0.37.1. The pin wrote six lines. Candidates stayed on 28.x, 1.x and 2.x while 29.9.3, 2.4.2 and 5.7.0 sat in the repo. A missing package printed `DOCKER PIN FAILED` and wrote zero pins. |
+| Nightly run, same container | unattended-upgrade upgraded buildx to 0.38.1 and a Debian package and held the other Docker packages. The kernel hook's `/var/run/reboot-required` then made it call `shutdown -r 07:30`. needrestart's default config skips `^docker`. |
+| Docker update with live-restore off, nested Docker 29.9.3 | `db` from the prod compose file (stop timeout 60 s) under write load. Stopping the daemon shut MariaDB down cleanly; it came back on its restart policy at the same LSN, with zero crash recovery. |
 
 ## Prod findings, 2026-10-31 (read-only)
 

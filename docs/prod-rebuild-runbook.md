@@ -116,23 +116,22 @@ gcloud compute instances create $NEW --zone $Z --project $P \
 gcloud compute config-ssh --project $P
 ```
 
-New VM: Debian 13 (trixie). Packages come from the Debian archive, Docker's signed apt repo and Google's repos. The host gets Docker, git, unzip, cron, file and the patch tools only.
+New VM: Debian 13 (trixie). Packages come from the Debian archive, Docker's signed apt repo and Google's repos. On top of the stock image, the host gets Docker, git, unzip, gnupg and the patch tools. The stock image also runs exim4 for local mail.
 
-`apt_get` runs apt with zero prompts, so a pasted block runs line by line. The needrestart and Docker settings go in before the packages that read them. A Docker key mismatch deletes the key, so apt refuses Docker's repo and the docker-ce install fails.
+`apt_get` runs apt with zero prompts, so a pasted block runs line by line. The needrestart settings go in before the package that reads them. The key check accepts exactly one primary key, Docker's. On a mismatch it deletes the key, so apt refuses Docker's repo and the docker-ce install fails.
 
 ```bash
 ssh $NEW.$Z.$P
 apt_get() { sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o DPkg::Lock::Timeout=600 \
   -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$@"; }
-sudo install -d /etc/needrestart/conf.d /etc/docker
+sudo install -d /etc/needrestart/conf.d
 printf '%s\n' '$nrconf{restart} = "a";' '$nrconf{kernelhints} = -1;' | sudo tee /etc/needrestart/conf.d/catalog.conf >/dev/null
-echo '{"live-restore": true}' | sudo tee /etc/docker/daemon.json >/dev/null
 apt_get update && apt_get full-upgrade
 apt_get install git unzip gnupg cron file unattended-upgrades needrestart
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-gpg --show-keys --with-colons /etc/apt/keyrings/docker.asc \
-  | grep -qx 'fpr:::::::::9DC858229FC7DD38854AE2D88D81803C0EBFCD88:' \
+[ "$(gpg --show-keys --with-colons /etc/apt/keyrings/docker.asc | awk -F: '$1=="pub" {getline; print $10}')" \
+  = 9DC858229FC7DD38854AE2D88D81803C0EBFCD88 ] \
   || { sudo rm -f /etc/apt/keyrings/docker.asc; echo "DOCKER KEY MISMATCH: stop and investigate"; }
 sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<'EOF'
 Types: deb
@@ -152,9 +151,9 @@ cd /opt/catalog && git checkout <SHA> && git log -1 --oneline
 bash scripts/fetch-omeka-modules.sh
 ```
 
-Patching: unattended-upgrades installs fixes from Debian security, Docker and Google's repos. Apt's timer runs it between 06:00 and 07:00 UTC, after the backup jobs. needrestart restarts each service whose libraries changed. An update that needs a reboot (a new kernel) reboots the VM at 07:30 UTC. The compose services come back on their `restart` policies.
+Patching: unattended-upgrades installs updates from Debian stable and security, Docker and Google's repos. Apt's timer runs it between 06:00 and 07:00 UTC, after the backup jobs. needrestart restarts each service whose libraries changed. Docker is on needrestart's default skip list, so dockerd picks up library fixes at the next Docker update or reboot. A Docker update restarts the daemon and its containers, about one minute of downtime. An update that needs a reboot (a new kernel) reboots the VM at 07:30 UTC. The compose services come back on their `restart` policies.
 
-Docker stays on the major version installed here, and live-restore keeps containers up while the daemon updates. To move to a new Docker major, test it first, then edit `/etc/apt/preferences.d/docker-major`. The nightly run stays off until step 9, so the box stays up through restore and cutover.
+The six Docker packages stay on the major versions installed here. To move one to a new major, test it first, then edit `/etc/apt/preferences.d/docker-major`. A failed pin prints `DOCKER PIN FAILED` and writes zero pins. The nightly run stays off until step 9, so the box stays up through restore and cutover.
 
 ```bash
 sudo tee /etc/apt/apt.conf.d/52catalog-upgrades >/dev/null <<'EOF'
@@ -169,17 +168,13 @@ sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "0";
 EOF
-major() { dpkg-query -W -f='${Version}' "$1" | sed -E 's/^([0-9]+:)?([0-9]+)\..*/\1\2/'; }
-sudo tee /etc/apt/preferences.d/docker-major >/dev/null <<EOF
-Package: docker-ce docker-ce-cli
-Pin: version $(major docker-ce).*
-Pin-Priority: 990
-
-Package: containerd.io
-Pin: version $(major containerd.io).*
-Pin-Priority: 990
-EOF
-grep Pin: /etc/apt/preferences.d/docker-major   # expect two majors, such as 5:29.* and 2.*
+pin() { local v; v=$(dpkg-query -W -f='${Version}' "$1" | sed -nE 's/^([0-9]+:)?([0-9]+)\..*/\1\2/p')
+  [ -n "$v" ] && printf 'Package: %s\nPin: version %s.*\nPin-Priority: 990\n\n' "$1" "$v"; }
+pins=$(for p in docker-ce docker-ce-cli docker-ce-rootless-extras containerd.io docker-compose-plugin \
+  docker-buildx-plugin; do pin $p || exit 1; done) \
+  && printf '%s\n' "$pins" | sudo tee /etc/apt/preferences.d/docker-major >/dev/null \
+  || echo "DOCKER PIN FAILED: stop and investigate"
+grep Pin: /etc/apt/preferences.d/docker-major   # expect six lines, such as 5:29.*, 2.*, 5.* and 0.*
 sudo reboot
 ```
 
@@ -188,7 +183,7 @@ SSH in again. The reboot loads the patched kernel and applies the docker group.
 ```bash
 ssh $NEW.$Z.$P
 sudo needrestart -b -k | grep KSTA         # expect NEEDRESTART-KSTA: 1 (newest kernel running)
-docker compose version; docker info -f '{{.LiveRestoreEnabled}}'   # expect true
+docker info -f '{{.ServerVersion}}'; docker compose version   # the docker group works
 command -v gcloud crontab file             # expect three paths; Google lists gcloud as installed on Debian 13
 df / | tail -1                             # root device, for ROOT_DEVICE in step 9
 ```
@@ -473,7 +468,7 @@ Keep the old disk and the forensic snapshot for 90 days. Deletion is Mark's call
 
 ## 9. Backups and monitoring on the new VM
 
-The backup jobs run as the SSH user. They write a log, a lock and per-job success stamps. Provision the root-owned paths, prove one full run, and seed the weekly and monthly stamps from the bucket before cron starts. Without those stamps the monitor reports both jobs as stale at once.
+The backup jobs run as the SSH user. They write a log, a lock and per-job success stamps. Provision the root-owned paths, prove one full run, and seed the weekly and monthly stamps from the bucket before cron starts. Without those stamps the monitor reports both jobs as stale at once. The jobs keep their own log, so `MAILTO=""` keeps their output out of exim4's local mailbox.
 
 ```bash
 sudo install -d -o $USER /var/lib/catalog-backup
@@ -484,6 +479,7 @@ ls -l /var/lib/catalog-backup                      # expect four last-success-* 
 crontab - <<'EOF'
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SHELL=/bin/bash
+MAILTO=""
 0 2 * * *  /opt/catalog/scripts/backup-to-gcs.sh daily
 0 3 * * *  /opt/catalog/scripts/backup-to-gcs.sh files
 0 4 * * 0  /opt/catalog/scripts/backup-to-gcs.sh weekly
@@ -500,11 +496,17 @@ sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 EOF
-apt-config dump | grep 'Origins-Pattern::'   # expect Debian-Security, origin=Docker, site=packages.cloud.google.com
+apt-config dump | grep 'Origins-Pattern::'   # expect Debian, Debian-Security, origin=Docker, site=packages.cloud.google.com
 apt-cache policy docker-ce | sed -n 2,3p     # Installed and Candidate on the same major
 ```
 
-Each kernel reboot changes the boot measurements, so Shielded VM logs a late-boot integrity failure. When one appears, look for a kernel install just before 07:30 UTC in `/var/log/unattended-upgrades/unattended-upgrades.log`. If one matches, re-learn the baseline with step 4's `--shielded-learn-integrity-policy` command. Treat any other integrity failure as an incident.
+A kernel, shim, GRUB or initramfs update changes the boot measurements, so the next boot logs a Shielded VM integrity failure. The "Catalog VM boot integrity failed" alert emails each one. When it fires, look for one of those updates before that boot:
+
+```bash
+grep -E ' (install|upgrade) (linux-image|shim|grub)|trigproc initramfs' /var/log/dpkg.log | tail
+```
+
+If one matches, re-learn the baseline with step 4's `--shielded-learn-integrity-policy` command. Treat any other integrity failure as an incident.
 
 Laptop: in `scripts/setup-gcp-monitoring.sh`, set `VM_NAME="catalog-2026-11"`. Set `ROOT_DEVICE` to the device from step 4's `df /` once Metrics Explorer shows that same device name on `agent.googleapis.com/disk/percent_used` for the new VM. Commit the change to `main`, so a later re-run keeps both values. Re-run the script so host alerts follow the new instance. Update the SSH host alias in `Makefile` (`PROD_HOST`) and `omeka/ansible/inventory.ini` to `$NEW.$Z.$P`. That ends the deploy freeze from step 0.
 
