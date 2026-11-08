@@ -30,6 +30,7 @@ services:
   db:
     image: mariadb:10.11
     restart: unless-stopped
+    stop_grace_period: 60s   # Docker's 10 s default can SIGKILL MariaDB mid-shutdown
     environment:
       MARIADB_DATABASE: ${MYSQL_DATABASE}
       MARIADB_USER: ${MYSQL_USER}
