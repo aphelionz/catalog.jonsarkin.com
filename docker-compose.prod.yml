@@ -37,6 +37,7 @@ services:
       MARIADB_USER: ${MYSQL_USER}
       MARIADB_PASSWORD: ${MYSQL_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"   # runs mariadb-upgrade when a rebuilt image changes the version
     volumes:
       - dbdata:/var/lib/mysql
     healthcheck:
