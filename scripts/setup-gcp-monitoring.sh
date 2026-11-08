@@ -311,6 +311,27 @@ upsert_policy "Catalog VM disk high" \
      "$DISK_PCT" \
      "Root disk on ${VM_NAME} is above ${DISK_PCT}%. Usual suspects: /var/www originals, /var/lib/docker, /var/log.")"
 
+# Shielded VM logs every boot whose measurements differ from the learned
+# baseline. Kernel, shim, GRUB and initramfs updates cause this on purpose,
+# so each failure needs a human to match it to an update and re-learn.
+upsert_policy "Catalog VM boot integrity failed" "$(jq -n \
+  --argjson ch "$CHANNELS_JSON" --arg p "$PROJECT_ID" --arg vm "$VM_NAME" '{
+  displayName: "Catalog VM boot integrity failed",
+  combiner: "OR",
+  conditions: [{
+    displayName: "Shielded VM integrity check failed",
+    conditionMatchedLog: {
+      filter: ("logName=\"projects/" + $p + "/logs/compute.googleapis.com%2Fshielded_vm_integrity\" AND (jsonPayload.earlyBootReportEvent.policyEvaluationPassed=false OR jsonPayload.lateBootReportEvent.policyEvaluationPassed=false)")
+    }
+  }],
+  notificationChannels: $ch,
+  alertStrategy: {notificationRateLimit: {period: "3600s"}, autoClose: "604800s"},
+  documentation: {
+    content: ("A boot on " + $vm + " failed its Shielded VM integrity check. Match it to a kernel, shim, GRUB or initramfs update in /var/log/dpkg.log, then re-learn the baseline (docs/prod-rebuild-runbook.md, step 9). Treat any other failure as an incident."),
+    mimeType: "text/markdown"
+  }
+}')"
+
 echo "Uptime checks:"
 # Only the API check is managed here. The HTML side is already covered by the
 # hand-made "catalog-jonsarkin-com" check on /item (which returns a real 200,
