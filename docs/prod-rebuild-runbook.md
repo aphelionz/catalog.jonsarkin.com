@@ -94,11 +94,13 @@ sudo last -Faiw | head -40; sudo lastb -Fai | head -20
 sudo grep -h "Accepted" /var/log/auth.log* | awk '{print $1,$2,$3,$9,$11}' | sort | uniq -c | sort -rn | head
 for u in root ubuntu mark; do echo "== $u"; sudo cat /home/$u/.ssh/authorized_keys /root/.ssh/authorized_keys 2>/dev/null; done
 sudo ls -la /etc/cron.d /etc/systemd/system; for u in root ubuntu mark; do sudo crontab -l -u $u; done
-sudo find /etc /usr/local /opt /root /home -xdev -newer /etc/hostname -type f -mtime -120 | grep -vE '/\.cache/|/opt/catalog/' | head -50
+sudo find /etc /usr/local /opt /root /home -xdev -type f -mtime -120 | grep -vE '/\.cache/|/opt/catalog/' | head -50
 sudo ss -tunap | grep -v -E '127.0.0.1|::1'
 docker ps -a; docker images
 sudo debsums -s 2>/dev/null | head      # sudo apt-get install debsums first
 ```
+
+The `find` also lists files that package updates changed; `debsums` checks those against their packages. Results from 2026-11-08 are in the plan.
 
 ## 4. Build the new VM (45 min)
 
