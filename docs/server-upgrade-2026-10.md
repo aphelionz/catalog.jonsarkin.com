@@ -159,6 +159,21 @@ Integrity check against known-good sources:
 
 These checks found zero signs of tampering in the application layer. The host OS, the database, the media files and GCP IAM remain unchecked, and a host-level compromise would hide from these checks. The runbook therefore rebuilds from scratch.
 
+## Rebuild steps 1 to 3, 2026-11-08
+
+Main was at `f0edcee`, the runbook's `SHA`. Step 0 moved the laptop dev stack to MariaDB 11.8 the same day.
+
+| Step | Result |
+|---|---|
+| 1. Snapshot | `omeka-forensic-20261108`, READY. Keep it to 2027-02-06. The old VM: e2-standard-2, tags `http-server` and `https-server`, IP 34.73.95.33, 96 GB boot disk. |
+| 2. Service account | The default compute SA holds `logging.logWriter` and `monitoring.metricWriter`, plus `serviceAccountTokenCreator` on `catalog-backups`. Zero user-managed keys. Zero Admin Activity entries in 400 days. |
+| 2. Logs and bucket | Data Access logging is off, so object-level history is unknown. The bucket keeps deleted objects 7 days (soft delete) and has versioning and retention off, and `catalog-backups` holds `storage.objectAdmin`. Older backups are therefore equally suspect; step 5 already audits the dump as untrusted. |
+| 2. Firewall | The internet reaches 22, 80, 443, 3389 and ICMP. Qdrant (6333) and clip-api (8000) were reachable only from 10.128.0.0/9. |
+| 3. Packages | `debsums -s`: zero changed package files. Setuid binaries outside packages exist only inside container image layers. |
+| 3. Access | One SSH key, Mark's (Google-managed). Zero keys for root and ubuntu. Every accepted login since 2026-10-31 (the oldest auth log) is `mark` from 4 IPs, all confirmed by Mark. Zero sudo by other users. Crontabs: Mark's backup jobs only. |
+
+These checks found zero signs of a host compromise. A rootkit can hide from them, so the rebuild still goes ahead.
+
 ## Upgrade order
 
 1. Base image (PHP 8.5.12 + Omeka 4.2.1): rebuild the Omeka image.
@@ -176,3 +191,4 @@ Rollback: restore the dump taken before step 3, then rebuild with the previous D
 - [x] MariaDB (Mark, 2026-11-08): move to Debian 13's MariaDB 11.8 in our own image before the rebuild.
 - [ ] Report the Common `--batch` bug upstream.
 - [ ] After the rebuild, move `make deploy` from laptop rsync to `git checkout <sha>` plus `scripts/fetch-omeka-modules.sh` on the VM, so prod always equals a known commit.
+- [ ] After the rebuild, harden GCP: turn on bucket versioning with a retention policy, allow SSH only from IAP (35.235.240.0/20), and delete the `default-allow-rdp` rule.
