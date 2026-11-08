@@ -329,9 +329,22 @@ class FacetedBrowse extends AbstractPlugin
                 $qb->andWhere($qb->expr()->in('v.value', ':configValues'))
                     ->setParameter('configValues', $configuredValues, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY);
 
+                // The column collation ignores case, accents and trailing spaces,
+                // so one group can hold "Paper", "paper" and "Paper ", and the
+                // group's value comes from whichever row the server reads first.
+                // The views look counts up by the configured value, so key each
+                // count by that, folded the same way.
+                $fold = fn(string $s): string => mb_strtolower(rtrim(preg_replace(
+                    '/\p{Mn}+/u', '', \Normalizer::normalize($s, \Normalizer::FORM_D) ?: $s
+                ), ' '));
+                $configuredByFold = [];
+                foreach ($configuredValues as $configured) {
+                    $configuredByFold[$fold($configured)] = $configured;
+                }
                 $counts = [];
                 foreach ($qb->getQuery()->getResult() as $row) {
-                    $counts[$row['val']] = (int)$row['cnt'];
+                    $key = $configuredByFold[$fold($row['val'])] ?? $row['val'];
+                    $counts[$key] = ($counts[$key] ?? 0) + (int)$row['cnt'];
                 }
                 return $counts;
 

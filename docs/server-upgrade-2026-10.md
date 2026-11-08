@@ -22,7 +22,9 @@ Status on 2026-10-31:
 | FacetedBrowse (fork) | labeled 1.9.2, based on 1.8.0 | based on 1.10.0 | See next section. |
 | Our modules | unchanged versions | explicit nullable types | CollectorSubmission, EnrichItem, Exhibitions, IccThumbnailer, IconographicProfile, Press, RapidEditor, ShieldedRegistryAssets, SimilarPieces, SimpleUpload, SiteLockdown. |
 
-Out of scope, unchanged: MariaDB 10.11, Traefik v2.11.32, Qdrant v1.16, ImageMagick 7.1.1-43, Python 3.13.5.
+| MariaDB | 10.11.16, official image (Ubuntu 22.04 inside) | 11.8.6 from Debian 13 packages, image built from `mariadb/` | Mark, 2026-11-08. Collation defaults pinned to 10.11's. Debian fixes arrive through a weekly image rebuild. Debian ships 11.8.6; MariaDB's own image has 11.8.9. |
+
+Out of scope, unchanged: Traefik v2.11.32, Qdrant v1.16, ImageMagick 7.1.1-43, Python 3.13.5.
 
 Third-party module versions now live in `scripts/fetch-omeka-modules.sh` with SHA-256 pins. `make modules` installs them. `make deploy` stops when local versions differ from the pins.
 
@@ -117,6 +119,27 @@ The review on 2026-11-08 changed the key check, the pins and live-restore (now o
 | Nightly run, same container | unattended-upgrade upgraded buildx to 0.38.1 and a Debian package and held the other Docker packages. The kernel hook's `/var/run/reboot-required` then made it call `shutdown -r 07:30`. needrestart's default config skips `^docker`. |
 | Docker update with live-restore off, nested Docker 29.9.3 | `db` from the prod compose file (stop timeout 60 s) under write load. Stopping the daemon shut MariaDB down cleanly; it came back on its restart policy at the same LSN, with zero crash recovery. |
 
+## MariaDB 11.8 local test, 2026-11-08
+
+Two isolated stacks ran this branch's code on the same dev DB: one on `mariadb:10.11`, one on `catalog-mariadb:11.8`. Mark's dev stack stayed untouched.
+
+| Check | Result |
+|---|---|
+| Image | Debian `mariadb-server` 11.8.6 on a digest-pinned `debian:trixie-slim`, fully upgraded at build (zero upgradable packages left). `mysql` as UID/GID 999. A fresh volume initialized from the `MARIADB_*` variables with zero errors, and `healthcheck.sh --su-mysql --connect` passed. The first build lacked `pwgen`, so the healthcheck accounts got empty passwords (found in review); they now get generated ones. |
+| In-place upgrade | A 10.11 volume started on 11.8 with `MARIADB_AUTO_UPGRADE=1`. The entrypoint saved the system tables (zstd), ran `mariadb-upgrade`, and kept all 6,711 items. |
+| Step 5 audit flow on 11.8 | A backup-style 10.11 dump (`--all-databases`) went through the scratch import with `--one-database`, the re-export and the app-user import. Zero triggers, routines, events or views. |
+| Data | All 53 tables checksum-identical to the 10.11 copy. Table and column collations identical (48 `unicode_ci`, 5 `general_ci`). |
+| Upgrade steps on 11.8 | Core 4.2.1 and the five module upgrades ran; `thumbnail_type` and both Common indexes appeared, as on 10.11. |
+| 56 public pages and API calls | 55 identical at first. The odd one exposed a FacetedBrowse bug (next section). After the fix: 56 of 56 identical. |
+| Faceted browse timings, median of 5 | Equal within noise on 8 of 10 combinations. Medium = Ink and Medium = Marker: 0.51 s on 11.8, 0.90 s on 10.11. |
+| Backup and maintenance SQL | `backup-to-gcs.sh`'s dump flags, `prune-sessions.sh`'s `DELETE`, and step 8's late-rows flow with `JSON_TABLE` all ran on 11.8. |
+| Ingest | The IngestClip job embedded 3 items through clip-api into Qdrant; item pages returned 200. The clip-api image builds from `Dockerfile.api` again, and drops `git`. |
+| DB image age gauge | `backup-monitor.sh`'s parse of Docker's image `Created` time ran under GNU date on the pinned Debian image and gave the expected age. |
+| sarkin-catalog MCP | PyMySQL queries (`corpus_statistics`, `search_catalog`, `fulltext_search`, `get_item`) ran against 11.8. |
+| Rollback | A dump of the upgraded 11.8 DB imported into `mariadb:10.11` with all 53 tables checksum-identical. |
+
+FacetedBrowse bug: the value facet counts group by `value` under a case-insensitive collation. "Cardboard Album Sleeve" exists in two cases (3,137 and 1,208 rows), so the group's value comes from whichever row the server reads first. The theme looks counts up by the configured value, so a lowercase group hides the option. 11.8 picked the lowercase row on one filter combination. `computeValueFacetCounts` now keys each count by the configured value, folded like the collation: case, accents and trailing spaces. A planted test held: with "Paper", "PAPER", "Paper " and "Pâper" in the data and "Paper " as the group's spelling, the facet still showed Paper (933). An SQL `CASE` that let the collation pick the configured value tripled faceted page time (about 1 s more per page), so the fold stays in PHP.
+
 ## Prod findings, 2026-10-31 (read-only)
 
 Configuration:
@@ -148,8 +171,8 @@ Rollback: restore the dump taken before step 3, then rebuild with the previous D
 ## Decisions for Mark
 
 - [ ] Approve the assume-breach rebuild in the runbook (new VM, new service account, rotated secrets).
-- [ ] CustomVocab: uninstall it (inactive since the 2026-03-22 literal conversion; uninstall drops its tables) or keep it pinned at 2.1.0. Recommendation: uninstall after the rebuild.
-- [ ] Qdrant and the search index: the runbook now starts both empty and fills them with "Ingest All Items" after cutover. A restored store would keep points that no audited item backs. Cost: similar works and visual search stay empty until the ingest finishes. Accept that window, or ask for a restore-and-reconcile step instead.
-- [ ] The official `mariadb:10.11` image runs Ubuntu 22.04 on any host. Keep it, or move to Debian 13's own MariaDB 11.8 in a Debian image (a major-version upgrade and a Compose change).
+- [x] CustomVocab (Mark, 2026-11-08): upgrade it with the others, uninstall it once the new VM is stable. Uninstall drops its tables.
+- [x] Qdrant and the search index (Mark, 2026-11-08): start empty, and run "Ingest All Items" in step 6, before the DNS switch. The job reads images over the internal Docker network, so similar works have zero empty window and every point comes from the audited DB.
+- [x] MariaDB (Mark, 2026-11-08): move to Debian 13's MariaDB 11.8 in our own image before the rebuild.
 - [ ] Report the Common `--batch` bug upstream.
 - [ ] After the rebuild, move `make deploy` from laptop rsync to `git checkout <sha>` plus `scripts/fetch-omeka-modules.sh` on the VM, so prod always equals a known commit.

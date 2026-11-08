@@ -1,0 +1,15 @@
+# Catalog settings, read after Debian's defaults.
+[mariadb]
+skip-name-resolve
+host-cache-size = 0
+
+# Keep MariaDB 10.11's defaults. 11.x maps a bare utf8mb4 to
+# utf8mb4_uca1400_ai_ci; tables created that way would mix collations with the
+# existing general_ci and unicode_ci tables.
+character-set-server = utf8mb4
+collation-server = utf8mb4_general_ci
+character-set-collations = utf8mb4=utf8mb4_general_ci
+
+# 10.11 locking behavior for concurrent Omeka jobs and edits (11.6+ turns
+# snapshot isolation on by default).
+innodb-snapshot-isolation = OFF

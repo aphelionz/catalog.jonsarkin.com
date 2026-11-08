@@ -1,6 +1,7 @@
 services:
   db:
-    image: mariadb:10.11
+    build: ./mariadb
+    image: catalog-mariadb:11.8
     stop_grace_period: 60s   # Docker's 10 s default can SIGKILL MariaDB mid-shutdown
     ports:
       - "3306:3306"
@@ -9,6 +10,7 @@ services:
       MARIADB_USER: omeka
       MARIADB_PASSWORD: omeka
       MARIADB_ROOT_PASSWORD: root
+      MARIADB_AUTO_UPGRADE: "1"   # runs mariadb-upgrade when a rebuilt image changes the version
     volumes:
       - dbdata:/var/lib/mysql
     healthcheck:

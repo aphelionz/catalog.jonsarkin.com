@@ -76,8 +76,8 @@ The catalog runs on **Omeka S v4.2**, a PHP/MySQL digital collections CMS. Stock
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `omeka` | giocomai/omeka-s-docker:v4.2.0 | Catalog CMS, public site, admin UI |
-| `db` | mariadb:10.11 | Omeka's relational store |
+| `omeka` | giocomai/omeka-s-docker:v4.2.1 | Catalog CMS, public site, admin UI |
+| `db` | catalog-mariadb:11.8 (Debian 13 MariaDB, built from `mariadb/`) | Omeka's relational store |
 | `clip-api` | Custom (Dockerfile.api) | CLIP embeddings, similarity, hybrid search |
 | `qdrant` | qdrant/qdrant:v1.16 | Vector database (512-dim CLIP embeddings) |
 | `traefik` | traefik:v2.11 (prod only) | Reverse proxy, Let's Encrypt SSL |

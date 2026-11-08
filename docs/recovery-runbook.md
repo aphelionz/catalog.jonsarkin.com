@@ -44,7 +44,7 @@ Use the newest `daily/` unless the problem is bad data that is already in it; th
 Prove the dump in a throwaway container before it goes anywhere near prod.
 
 ```bash
-docker run -d --name restore-scratch -e MARIADB_ROOT_PASSWORD=scratch mariadb:10.11
+docker run -d --name restore-scratch -e MARIADB_ROOT_PASSWORD=scratch catalog-mariadb:11.8   # docker compose build db
 until docker exec restore-scratch healthcheck.sh --connect; do sleep 1; done
 gunzip -c $D/omeka-*.sql.gz | docker exec -i -e MYSQL_PWD=scratch restore-scratch mariadb -uroot
 docker exec -e MYSQL_PWD=scratch restore-scratch mariadb -uroot -N -e \
@@ -73,6 +73,8 @@ docker compose -f docker-compose.prod.yml start omeka
 ```
 
 On a fresh VM with an empty `dbdata` volume, `docker compose -f docker-compose.prod.yml up -d db` first, wait for healthy, then import.
+
+Every backup from before the 2026-11 rebuild comes from the VM treated as compromised, and its `mysql` tables hold that VM's DB users and passwords. Restore one only through [prod-rebuild-runbook.md](prod-rebuild-runbook.md) step 5: the scratch import with `--one-database`, the audit queries, the re-export and the app-user import.
 
 ## 4. Restore files (about 15 min for everything)
 

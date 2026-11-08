@@ -6,7 +6,9 @@
 # backup-to-gcs.sh drops in /var/lib/catalog-backup/ and publishes one
 # gauge per job:
 #
-#   custom.googleapis.com/catalog/backup_age_hours{job="daily|weekly|monthly|files"}
+#   custom.googleapis.com/catalog/backup_age_hours{job="daily|weekly|monthly|files|dbimage"}
+#
+# dbimage is the age of the image the db container runs (weekly rebuild).
 #   custom.googleapis.com/catalog/monitor_heartbeat
 #
 # Alert policies then threshold on backup_age_hours (see
@@ -35,6 +37,7 @@ SA="catalog-backups@${PROJECT_ID}.iam.gserviceaccount.com"
 STATE_DIR="/var/lib/catalog-backup"
 JOBS="daily weekly monthly files"
 LOG_FILE="/var/log/catalog-backup.log"
+COMPOSE_DIR="/opt/catalog"
 
 # ── Helpers ────────────────────────────────────────────────────────────
 log() {
@@ -127,6 +130,20 @@ main() {
     entries+=("$(series backup_age_hours "{\"job\": \"${job}\"}" "$age")")
     log "${job} age ${age}h"
   done
+
+  # The db container's image age, under the same gauge. The Sunday rebuild in
+  # the crontab replaces it weekly to pick up Debian's MariaDB fixes, so an
+  # old image means a failed rebuild or recreate. A missing container reports
+  # 9999h like a missing stamp.
+  local created db_epoch db_age=9999
+  if created="$(cd "$COMPOSE_DIR" && docker inspect -f '{{.Created}}' \
+      "$(docker inspect -f '{{.Image}}' "$(docker compose ps -q db)")" 2>/dev/null)" \
+      && db_epoch="$(date -u -d "$created" +%s)"; then
+    db_age="$(awk "BEGIN { printf \"%.3f\", (${NOW_EPOCH} - ${db_epoch}) / 3600 }")"
+  fi
+  entries+=("$(series backup_age_hours '{"job": "dbimage"}' "$db_age")")
+  log "dbimage age ${db_age}h"
+
   entries+=("$(series monitor_heartbeat '{}' 1)")
 
   local payload
