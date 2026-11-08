@@ -95,6 +95,19 @@ Left to verify on prod: Apple HDR gain-map re-embedding (2,000 recent originals 
 
 Pre-existing, seen on both stacks: a `$ is not defined` console error on the faceted browse page. EnrichItem adds zero tabs to the item page; the "Enrich tab" note in CLAUDE.md is stale.
 
+## Debian 13 test VM, 2026-11-07
+
+A throwaway `debian-13` VM (e2-standard-2, Shielded VM, no service account) ran the runbook's step 4 blocks as an operator paste, then got deleted. The fresh image shipped Debian 13.7 with unattended-upgrades already on, and with gcloud, cron and file installed.
+
+| Check | Result |
+|---|---|
+| Step 4 setup and patching blocks, pasted into an interactive shell | Ran to the end in 3.5 min with zero dialogs. full-upgrade installed kernel 6.12.115 from `trixie-security`. Docker 29.9.3, Compose v5.7.0, Ops Agent installed. Module pins matched. |
+| Docker key and major pin | The key check passed. The pin wrote `5:29.*` and `2.*`; every 29.x version shows priority 990. |
+| Post-reboot checks | `NEEDRESTART-KSTA: 1`, live-restore `true`, gcloud, crontab and file present, root device `/dev/sda1`. |
+| Shielded VM | The reboot onto the new kernel logged a late-boot failure. After `--shielded-learn-integrity-policy`, the next three boots passed. |
+| MariaDB stops | `docker compose stop db` shut down cleanly in 1 s with a 60 s stop timeout. A host reboot under write load (343,500 rows) came back with zero crash recovery. |
+| Step 9 patching block | Origins list Debian security, `origin=Docker` and `site=packages.cloud.google.com`; Google's repos sit on that site. |
+
 ## Prod findings, 2026-10-31 (read-only)
 
 Configuration:
