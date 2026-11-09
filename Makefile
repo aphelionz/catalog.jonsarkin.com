@@ -99,7 +99,7 @@ deploy: ## Push code (modules/themes) to production and restart Omeka
 		--exclude='.env' --exclude='omeka/volume/files/' --exclude='backups/' \
 		--exclude='.hf_cache/' --exclude='__pycache__/' --exclude='.venv/' \
 		--exclude='harvest/' --exclude='search_index/' --exclude='.DS_Store' \
-		--exclude='.git/' --exclude='node_modules/' --exclude='.claude/' \
+		--exclude='.git' --exclude='node_modules/' --exclude='.claude/' \
 		--exclude='acme.json' --exclude='omeka/volume/logs/' \
 		--exclude='omeka/volume/config/database.ini' --exclude='social/' \
 		--exclude='cookies.txt' --exclude='.mcp.json' --exclude='exports/' \
