@@ -31,6 +31,8 @@
       {{ product.metafields.artwork.medium | strip }}{% if product.metafields.artwork.support %} on {{ product.metafields.artwork.support | strip | downcase }}{% endif %}{% if work_year != blank %}, {{ work_year }}{% endif %} — Jon Sarkin ({{ product.title }})
     {%- elsif template.name == 'collection' and collection.handle == 'all' -%}
       Available Works — {{ shop.name }}
+    {%- elsif template.name == 'index' -%}
+      {{ page_title }}
     {%- else -%}
       {{ page_title }}{% unless page_title contains shop.name %} — {{ shop.name }}{% endunless %}
     {%- endif -%}
