@@ -174,6 +174,21 @@ Main was at `f0edcee`, the runbook's `SHA`. Step 0 moved the laptop dev stack to
 
 These checks found zero signs of a host compromise. A rootkit can hide from them, so the rebuild still goes ahead.
 
+## Rebuild steps 4 to 9, 2026-11-08 and 09
+
+Main was at `6aca340`. Prod now runs on `catalog-2026-11` (34.23.45.33). The old VM is stopped.
+
+| Step | Result |
+|---|---|
+| 4. Build | e2-standard-2, 96 GB, Shielded VM, SA `catalog-vm`, Docker 29.9.3. The `catalog-backups` binding needed Service Account Admin on `mark@mrh.io`. |
+| 5. Audit | Dump `omeka-20261108T190150Z`. Two users, both confirmed by Mark and both locked. Two API keys deleted, sessions truncated, zero stored code objects. Cutoffs `N1` = 77, `N2` = 5. 6,782 items, 6,358 media. |
+| 5. Files | 33 GB, counts equal to the old VM. 616 `tmp` files and `lexical-corpus-cache.json` deleted. Two non-media originals: item 10915 (`.docx`, legitimate) and item 10072 (`Owl Moon #4.ttf`, for Mark to review). |
+| 6. Upgrade | Core 4.2.1 and the five modules, by CLI. The first CLI run stops at Log, and the second completes. Both indexes and `thumbnail_type` in place. |
+| 6. Ingest | 6,096 points; the old VM had 6,109. 120 failures: 111 videos, 6 HEIC photos, a PDF, a `.ttf` and a `.docx`. The old VM had 2 of the HEIC items. Similar works and visual search match the old VM. |
+| 7. Cutover | A record changed at 00:09 UTC. DreamHost's anycast nodes disagreed until 00:17, so the first certificate order failed; the second, at 00:21, passed. The "Catalog API" uptime check failed from 00:10 to 00:18 on the self-signed cert. The apex `jonsarkin.com` record also pointed at the new VM by mistake until 00:53. |
+| 8. Old VM | Zero late rows. November access log uploaded at 00:59. VM stopped. The old SA lost its token binding and both project roles; it has zero keys. |
+| 9. Backups | Started at 01:57, about 2 minutes before the old VM's last token (minted 00:59) expired. That daily dump holds Mark's new admin password hash. Stamps, crontab, nightly patching and both new alerts in place. |
+
 ## Upgrade order
 
 1. Base image (PHP 8.5.12 + Omeka 4.2.1): rebuild the Omeka image.
@@ -185,10 +200,12 @@ Rollback: restore the dump taken before step 3, then rebuild with the previous D
 
 ## Decisions for Mark
 
-- [ ] Approve the assume-breach rebuild in the runbook (new VM, new service account, rotated secrets).
+- [x] Approve the assume-breach rebuild in the runbook (new VM, new service account, rotated secrets). Done 2026-11-09, except step 10's rotations.
 - [x] CustomVocab (Mark, 2026-11-08): upgrade it with the others, uninstall it once the new VM is stable. Uninstall drops its tables.
 - [x] Qdrant and the search index (Mark, 2026-11-08): start empty, and run "Ingest All Items" in step 6, before the DNS switch. The job reads images over the internal Docker network, so similar works have zero empty window and every point comes from the audited DB.
 - [x] MariaDB (Mark, 2026-11-08): move to Debian 13's MariaDB 11.8 in our own image before the rebuild.
 - [ ] Report the Common `--batch` bug upstream.
 - [ ] After the rebuild, move `make deploy` from laptop rsync to `git checkout <sha>` plus `scripts/fetch-omeka-modules.sh` on the VM, so prod always equals a known commit.
 - [ ] After the rebuild, harden GCP: turn on bucket versioning with a retention policy, allow SSH only from IAP (35.235.240.0/20), and delete the `default-allow-rdp` rule.
+- [ ] Web headers: send HSTS, and hide Apache's version in `Server` (`ServerTokens Prod`).
+- [ ] clip-api: decode HEIC, so the 6 HEIC items get similar works.

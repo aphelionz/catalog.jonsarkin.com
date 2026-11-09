@@ -5,7 +5,7 @@
 export
 
 # Production host (matches omeka/ansible/inventory.ini)
-PROD_HOST  := omeka.us-east1-b.folkloric-rite-468520-r2
+PROD_HOST  := catalog-2026-11.us-east1-b.folkloric-rite-468520-r2
 PROD_USER  := mark
 PROD_DIR   := /opt/catalog
 BACKUP_DIR := backups

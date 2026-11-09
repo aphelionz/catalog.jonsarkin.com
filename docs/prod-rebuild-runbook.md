@@ -104,7 +104,7 @@ The `find` also lists files that package updates changed; `debsums` checks those
 
 ## 4. Build the new VM (45 min)
 
-Laptop: a dedicated service account with minimal roles, a new static IP, the VM.
+Laptop: a dedicated service account with minimal roles, a new static IP, the VM. The binding on `catalog-backups` (here and in step 8) needs Service Account Admin (`roles/iam.serviceAccountAdmin`) on the laptop account, because Editor cannot set IAM policy on a service account. A new grant takes about 90 s to apply.
 
 ```bash
 gcloud iam service-accounts create catalog-vm --project $P --display-name "catalog VM"
@@ -215,6 +215,7 @@ SMTP_USER=<smtp user>
 SMTP_PASS=<new app password>
 EOF
 touch acme.json && chmod 600 acme.json
+sudo install -d -o 33 -g 33 -m 755 omeka/volume/logs   # gitignored; Omeka writes application.log here
 ```
 
 `COMPOSE_FILE` makes every plain `docker compose` on the VM (the backup scripts included) read the prod file. The old VM ran `db`, `qdrant` and `clip-api` from the dev file.
@@ -238,7 +239,7 @@ Old VM: take a fresh dump and a fresh files sync into the bucket. `all` runs bot
 ssh omeka.us-east1-b.folkloric-rite-468520-r2 '/opt/catalog/scripts/backup-to-gcs.sh all'
 ```
 
-New VM: fetch the dump and audit it in a scratch container first.
+New VM: fetch the dump and audit it in a scratch container first. Run all of step 5 in one shell session, because its blocks share `G` and `D`.
 
 ```bash
 G="gcloud storage --impersonate-service-account=catalog-backups@folkloric-rite-468520-r2.iam.gserviceaccount.com"
@@ -288,7 +289,7 @@ docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB
 TRUNCATE session;
 DELETE FROM api_key;
 DELETE FROM password_creation;
-UPDATE user SET password_hash = CONCAT('!locked-', SHA2(RAND(), 256));
+UPDATE user SET password_hash = CONCAT('!', LEFT(SHA2(RAND(), 256), 59));   -- password_hash is varchar(60)
 SELECT COUNT(*) items FROM item; SELECT COUNT(*) media FROM media;
 SQL
 docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" -N omeka -e \
@@ -306,7 +307,7 @@ cd /var/www/omeka-s/files
 find . -type f | sed -nE 's/.*\.([^./]+)$/\1/p' | tr A-Z a-z | sort | uniq -c | sort -rn
 find . -type f \( -iname '*.php*' -o -iname '*.phtml' -o -iname '*.phar' -o -iname '.htaccess' -o -iname '*.js' \) -print
 find . -type f \( -iname '*.svg' -o -iname '*.htm*' -o -iname '*.xml' \) -print0 | xargs -0 -r grep -lis '<script\|onload=\|javascript:'
-find original -type f -print0 | xargs -0 file --mime-type | grep -vE ': (image|video|audio)/|: application/pdf$'
+find original -type f -print0 | xargs -0 file --mime-type | grep -vE ':[[:space:]]+(image|video|audio)/|:[[:space:]]+application/pdf$'
 sudo chown -R 33:33 /var/www/omeka-s/files
 ```
 
@@ -337,7 +338,10 @@ PY
 cd /opt/catalog
 docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb-dump -uroot omeka' | gzip > /tmp/pre-upgrade.sql.gz
 docker compose up -d
+docker compose ps --format '{{.Service}} {{.State}}'   # expect every service running
 ```
+
+On 2026-11-08 the first `up -d` left `omeka` and `traefik` stopped, and a second `up -d` started them.
 
 Set Mark's admin password. The prompt reads it silently; the hash goes to the DB.
 
@@ -366,14 +370,20 @@ docker compose exec -T db sh -c 'MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb -uroot
 ```
 
 3. Check: faceted browse with a filter, an item page, RapidEditor loads, Enrich Fields loads, ICC Thumbnailer page, a test upload through Simple Upload (its thumbnails keep the ICC profile), "Forgot password" email arrives.
-4. Admin > Enrich Fields > Ingest All Items. It calls clip-api only (zero Claude cost) and fills Qdrant and the search index from the audited DB. The job rewrites each image URL to `http://omeka:80/files/`, so it reads over the internal Docker network and runs before the DNS switch. Users stay on the old VM until step 7, so similar works have zero empty window. Follow the job in Admin > Jobs. When it finishes, check similar works on an item page and a visual search, by IP.
+4. Admin > Enrich Fields > Ingest All Items. It calls clip-api only (zero Claude cost) and fills Qdrant and the search index from the audited DB. The job rewrites each image URL to `http://omeka:80/files/`, so it reads over the internal Docker network and runs before the DNS switch. Users stay on the old VM until step 7, so similar works have zero empty window. Follow the job in Admin > Jobs. When it finishes, check similar works on an item page and a visual search, by IP. Non-image media fail with "cannot identify image file": on 2026-11-08, 120 of 6,216 items (videos, HEIC photos and documents) failed, and 6,096 went in.
 
 ## 7. Cutover (15 min plus DNS)
 
 1. One day ahead: lower the TTL of the `catalog.jonsarkin.com` A record at DreamHost to 300.
-2. Point the A record at `$NEWIP`.
-3. Watch Traefik get the certificate: `docker compose logs -f traefik | grep -i acme`.
-4. Verify from the laptop:
+2. Point the `catalog` A record at `$NEWIP`. Leave the apex `jonsarkin.com` record alone: it points at Shopify (`23.227.38.65`).
+3. Wait until every DreamHost nameserver returns `$NEWIP`. They are anycast, and their nodes disagreed for about 8 minutes on 2026-11-09. Let's Encrypt validates from several locations, so one stale answer fails the order.
+
+```bash
+for ns in ns1 ns2 ns3; do for ip in $(dig +short $ns.dreamhost.com); do dig +short catalog.jonsarkin.com @$ip; done; done
+```
+
+4. Traefik tried once at startup and does not retry. Restart it, then watch it get the certificate: `docker compose restart traefik && docker compose logs -f traefik | grep -i acme`.
+5. Verify from the laptop:
 
 ```bash
 curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/api/items   # 200
@@ -382,7 +392,7 @@ curl -4 -sS -o /dev/null -w "%{http_code}\n" https://catalog.jonsarkin.com/     
 
 ## 8. Stop the old VM and contain its identity
 
-Run this once the new VM serves the traffic (step 7.4). The old VM's final exports use the old identity, so they go first.
+Run this once the new VM serves the traffic (step 7.5). The old VM's final exports use the old identity, so they go first.
 
 Late public rows: list the old DB's rows above the step 5 cutoffs `N1` and `N2`. Use the recorded values; the new VM's live maximum now includes its own post-cutover rows. The old VM runs `db` from the dev compose file, as `make pull-db` assumes.
 

@@ -200,7 +200,7 @@ These facts get re-explained across sessions. Reference this section instead.
 - **Transcription format:** Opus uses `//` as line separator in transcriptions. Haiku used `\n`. The canonical format is `//`.
 - **Medium vocabulary:** Normalized values include: Marker, Ink, Oil pastel, Crayon, Colored pencil, Graphite, Paint, Pen, Watercolor, Charcoal, Collage, Mixed media. Compounds use "and" (e.g., "Marker and ink"). Don't invent new medium terms without checking existing vocabulary via `corpus_statistics(breakdown="by_medium")`.
 - **Catalog numbers:** Format is `JS-YYYY-NNNNN` (e.g., JS-2016-00042). Generated from item date + sequence. Writing items use `WRT-NNN`.
-- **Prod SSH:** `ssh omeka.us-east1-b.folkloric-rite-468520-r2` — but prefer `make` targets over hand-crafted SSH commands.
+- **Prod SSH:** `ssh catalog-2026-11.us-east1-b.folkloric-rite-468520-r2` (VM `catalog-2026-11`, Debian 13, since 2026-11-09). Prefer `make` targets over hand-crafted SSH commands.
 
 ## Make targets for prod operations
 
@@ -217,7 +217,7 @@ Use these instead of hand-crafting SSH+Docker+MariaDB chains:
 
 When raw SQL on prod is truly needed (no make target covers it), use:
 ```
-ssh omeka.us-east1-b.folkloric-rite-468520-r2 'docker compose -f /opt/catalog/docker-compose.prod.yml exec -T db mariadb -u root -proot omeka -e "YOUR SQL HERE"'
+ssh catalog-2026-11.us-east1-b.folkloric-rite-468520-r2 'cd /opt/catalog && docker compose exec -T db sh -c "MYSQL_PWD=\$MARIADB_ROOT_PASSWORD mariadb -uroot omeka -e \"YOUR SQL HERE\""'
 ```
 Always `make backup-db` before mutations on prod.
 
