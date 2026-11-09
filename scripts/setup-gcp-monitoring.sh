@@ -28,7 +28,7 @@ set -euo pipefail
 PROJECT_ID="folkloric-rite-468520-r2"
 ALERT_EMAILS="mark@fishcitystudios.com"   # space separated for more
 HOST="catalog.jonsarkin.com"
-VM_NAME="omeka"
+VM_NAME="catalog-2026-11"
 
 # The Ops Agent labels disk metrics by underlying device, not mount point, so
 # this cannot be "/dev/root". It must also be pinned to the real root device:
