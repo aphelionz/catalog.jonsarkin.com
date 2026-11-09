@@ -122,7 +122,7 @@ gcloud compute instances create $NEW --zone $Z --project $P \
 gcloud compute config-ssh --project $P
 ```
 
-New VM: Debian 13 (trixie). Packages come from the Debian archive, Docker's signed apt repo and Google's repos. On top of the stock image, the host gets Docker, git, unzip, gnupg and the patch tools. The stock image also runs exim4 for local mail.
+New VM: Debian 13 (trixie). Packages come from the Debian archive, Docker's signed apt repo and Google's repos. On top of the stock image, the host gets Docker, git, rsync (for `make deploy`), unzip, gnupg and the patch tools. The stock image also runs exim4 for local mail.
 
 `apt_get` runs apt with zero prompts, so a pasted block runs line by line. The needrestart settings go in before the package that reads them. The key check accepts exactly one primary key, Docker's. On a mismatch it deletes the key, so apt refuses Docker's repo and the docker-ce install fails.
 
@@ -133,7 +133,7 @@ apt_get() { sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o DPkg::Lock::Timeou
 sudo install -d /etc/needrestart/conf.d
 printf '%s\n' '$nrconf{restart} = "a";' '$nrconf{kernelhints} = -1;' | sudo tee /etc/needrestart/conf.d/catalog.conf >/dev/null
 apt_get update && apt_get full-upgrade
-apt_get install git unzip gnupg cron file unattended-upgrades needrestart
+apt_get install git rsync unzip gnupg cron file unattended-upgrades needrestart
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
 [ "$(gpg --show-keys --with-colons /etc/apt/keyrings/docker.asc | awk -F: '$1=="pub" {getline; print $10}')" \
