@@ -174,7 +174,7 @@ Main was at `f0edcee`, the runbook's `SHA`. Step 0 moved the laptop dev stack to
 
 These checks found zero signs of a host compromise. A rootkit can hide from them, so the rebuild still goes ahead.
 
-## Rebuild steps 4 to 9, 2026-11-08 and 09
+## Rebuild steps 4 to 10, 2026-11-08 and 09
 
 Main was at `6aca340`. Prod now runs on `catalog-2026-11` (34.23.45.33). The old VM is stopped.
 
@@ -188,6 +188,7 @@ Main was at `6aca340`. Prod now runs on `catalog-2026-11` (34.23.45.33). The old
 | 7. Cutover | A record changed at 00:09 UTC. DreamHost's anycast nodes disagreed until 00:17, so the first certificate order failed; the second, at 00:21, passed. The "Catalog API" uptime check failed from 00:10 to 00:18 on the self-signed cert. The apex `jonsarkin.com` record also pointed at the new VM by mistake until 00:53. |
 | 8. Old VM | Zero late rows. November access log uploaded at 00:59. VM stopped. The old SA lost its token binding and both project roles; it has zero keys. |
 | 9. Backups | Started at 01:57, about 2 minutes before the old VM's last token (minted 00:59) expired. That daily dump holds Mark's new admin password hash. Stamps, crontab, nightly patching and both new alerts in place. |
+| 10. Rotate | Mark revoked the old Anthropic key and the old Gmail app password, set a new SiteLockdown password and reset his admin password. Project metadata holds one SSH key, the one the new VM uses. `ForwardAgent` is off for both VMs, so the laptop key stays. |
 
 ## Upgrade order
 
@@ -200,7 +201,7 @@ Rollback: restore the dump taken before step 3, then rebuild with the previous D
 
 ## Decisions for Mark
 
-- [x] Approve the assume-breach rebuild in the runbook (new VM, new service account, rotated secrets). Done 2026-11-09, except step 10's rotations.
+- [x] Approve the assume-breach rebuild in the runbook (new VM, new service account, rotated secrets). Done 2026-11-09, through step 10. Day 90 (2027-02-06): delete the old disk and the forensic snapshot, and release the old IP.
 - [x] CustomVocab (Mark, 2026-11-08): upgrade it with the others, uninstall it once the new VM is stable. Uninstall drops its tables.
 - [x] Qdrant and the search index (Mark, 2026-11-08): start empty, and run "Ingest All Items" in step 6, before the DNS switch. The job reads images over the internal Docker network, so similar works have zero empty window and every point comes from the audited DB.
 - [x] MariaDB (Mark, 2026-11-08): move to Debian 13's MariaDB 11.8 in our own image before the rebuild.
